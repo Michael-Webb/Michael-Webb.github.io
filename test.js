@@ -1,4 +1,4 @@
-define(["bi/glass/common/ui/ProgressToast"], function (n) {
+define(["baglass/core-client/js/core-client/ui/ProgressToast"], function (n) {
   "use strict";
 
   var CognosModule = (function () {
