@@ -1,39 +1,23 @@
-define(["baglass/core-client/js/core-client/ui/ProgressToast"], function (n) {
+define(["baglass/core-client/js/core-client/ui/ProgressToast"], function (
+  toast
+) {
   "use strict";
+  function adminModule() {}
 
-  var CognosModule = (function () {
+  adminModule.prototype.initialize = function (
+    oControlHost,
+    fnDoneInitializing
+  ) {
+    console.log("start");
+    this.pToastdSR = new toast();
+    this.pToastdSR.show("Download Specifications: Collecting objects");
+    this.pToastdSR.hideButton("cancel");
+    this.pToastdSR.setMessage("Download Specifications: Writing file");
+    this.pToastdSR.setComplete(0x64, {
+      isComplete: 0x1,
+    });
+    console.log('End')
+  };
 
-
-    CognosModule.prototype.initialize = function initialize() {
-      var _this = this;
-
-      var mapContent = this.canvas.getContent(STORE_MAP_CONTENT_ID);
-      var state = mapContent.getFeature("state");
-      state.whenStatusChanges(state.STATUS.RENDERED).then(function () {
-        window.parent.postMessage("dashboard.ready", "*");
-        __getDashboardAPI();
-      });
-
-      this._createProgressToast = function () {
-        return new n();
-      };
-
-      try {
-        this.progressBar = this._createProgressToast();
-        this.progressBar.show({
-          type: "file",
-          id: "idUploadUIElement",
-          name: "uploadfiles",
-          style: "display: none;",
-          multiple: !1,
-        });
-        this.progressBar.progress();
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-    return CognosModule;
-  })();
-
+  return adminModule;
 });
