@@ -143,10 +143,11 @@ define(function () {
         border: 2px solid #595859;
         border-radius: 4px;
         padding-right: 30px;
+        width: calc(100% - 90px); /* Adjust width to make room for Apply button */
     }
     ${sID} #search-icon {
         position: absolute;
-        right: ${!oConfig.AutoSubmit ? '70px' : '10px'};
+        right: ${!oConfig.AutoSubmit ? '100px' : '10px'};
         top: 50%;
         transform: translateY(-50%);
     }
@@ -154,15 +155,17 @@ define(function () {
         cursor: pointer;
         color: #4178BE;
         font-size: 14px;
-        background: none;
-        border: none;
-        padding: 0 0 0 10px;
+        padding: 6px 12px;
+        background-color: white;
+        border: 1px solid #4178BE;
+        border-radius: 4px;
         margin-left: 10px;
         white-space: nowrap;
-        transition: color 0.3s ease;
+        transition: all 0.3s ease;
     }
     ${sID} #applyFilter-btn:hover {
-        color: #2a4d78;
+        background-color: #4178BE;
+        color: white;
     }
     ${sID} #container-body {
         color: #595859;
