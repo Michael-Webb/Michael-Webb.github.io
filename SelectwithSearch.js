@@ -319,21 +319,20 @@ define(function () {
     var filterType = oControlHost.container.querySelector("#filter-options").value;
 
     for (var i = 0; i < labels.length; i++) {
-      var label = labels[i];
-      var checkbox = label.querySelector("input");
-      var span = label.querySelector("span");
-      var txtValue = span.textContent || span.innerText;
-
-      if (this.shouldDisplayItem(txtValue.trim().toUpperCase(), filterText, filterType)) {
-        checkbox.checked = true;
-      }
+        var label = labels[i];
+        var checkbox = label.querySelector("input");
+        
+        // Check if the label is currently visible
+        if (window.getComputedStyle(label).display !== "none") {
+            checkbox.checked = true;
+        }
     }
 
     oControlHost.valueChanged();
     if (oControlHost.configuration.AutoSubmit) {
-      oControlHost.next();
+        oControlHost.next();
     }
-  };
+};
 
   MyStyledSelect.prototype.f_onSearch = function (oControlHost) {
     var filterText = oControlHost.container.querySelector("#myInput").value.toUpperCase();
