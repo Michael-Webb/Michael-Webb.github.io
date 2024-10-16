@@ -106,23 +106,6 @@ define(function () {
 					${sID} BUTTON:hover #main-container{
 						display: block;
 					}
-                    ${sID} #selectAll-btn {
-                        height:32px; 
-                        width:140px; 
-                        cursor:pointer; 
-                        margin-left:10px; 
-                        color:#4178BE; 
-                        font-size:14px; 
-                        padding:6px 12px 6px 12px; 
-                        background-color:white; 
-                        border:1px solid #4178BE;
-                        text-align: center;
-                    }
-                    ${sID} #selectAll-btn:hover {
-                        background-color:#4178BE; 
-                        color:white; 
-                        border:1px solid #4178BE; 
-                    }
   
 					${sID} BUTTON:hover #main-container,
 					${sID} #main-container:hover {
@@ -163,25 +146,6 @@ define(function () {
 					${sID} BUTTON:hover > svg{
 						transform: scaleY(-1);
 					}
-	
-					${sID} #clearFilter-btn{
-						height:32px; 
-						width:120px; 
-						cursor:pointer; 
-						margin-left:10px; 
-						color:#4178BE; 
-						font-size:14px; 
-						padding:6px 12px 6px 12px; 
-						background-color:white; 
-						border:1px solid #4178BE;
-						text-align: center;
-					  }
-					  ${sID} #clearFilter-btn:hover {
-						  background-color:#4178BE; 
-						  color:white; 
-						  border:1px solid #4178BE; 
-					  }
-	
 					${sID} #container-footer{
 						display: flex;
 						justify-content: space-between;
@@ -272,8 +236,9 @@ define(function () {
     						   <option value="startAny">Starts with Any of these Keywords</option>
     						   <option value="containAny">Contains any of these Keywords</option>
 						  </select>
-						  <span id="selectAll">Select All Filtered</span>
-						  <span id="clearFilter">Deselect All</span>
+						  
+						  <span id="clearFilter-btn">Clear Filter</span>
+              <span id="selectAll-btn">Select All Filtered</span>
               ${!oConfig.AutoSubmit ? '<span id="applyFilter-btn">Apply Filter</span>' : ""}
 					  </div>
 				  </div>
@@ -294,14 +259,15 @@ define(function () {
 
     el.querySelector("#myInput").onkeyup = this.f_onSearch.bind(this, oControlHost);
     el.querySelector("#filter-options").onchange = this.f_onFilterTypeChange.bind(this, oControlHost);
-    el.querySelector("#clearFilter").onclick = this.f_onClearFilter.bind(this, oControlHost);
+    el.querySelector("#clearFilter-btn").onclick = this.f_onClearFilter.bind(this, oControlHost);
 
     if (!oConfig.AutoSubmit) {
       el.querySelector("#applyFilter-btn").onclick = this.f_onApplyFilter.bind(this, oControlHost);
     }
-    var selectAllBtn = el.querySelector("#selectAll");
+    var selectAllBtn = el.querySelector("#selectAll-btn");
     if (selectAllBtn) {
       selectAllBtn.onclick = function () {
+        console.log("Select All button clicked");
         this.f_onSelectAllFiltered(oControlHost);
       }.bind(this);
     } else {
