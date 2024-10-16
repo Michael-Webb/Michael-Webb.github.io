@@ -294,12 +294,12 @@ define(function () {
 
     el.querySelector("#myInput").onkeyup = this.f_onSearch.bind(this, oControlHost);
     el.querySelector("#filter-options").onchange = this.f_onFilterTypeChange.bind(this, oControlHost);
-    el.querySelector("#clearFilter-btn").onclick = this.f_onClearFilter.bind(this, oControlHost);
+    el.querySelector("#clearFilter").onclick = this.f_onClearFilter.bind(this, oControlHost);
 
     if (!oConfig.AutoSubmit) {
       el.querySelector("#applyFilter-btn").onclick = this.f_onApplyFilter.bind(this, oControlHost);
     }
-    var selectAllBtn = el.querySelector("#selectAll-btn");
+    var selectAllBtn = el.querySelector("#selectAll");
     if (selectAllBtn) {
       selectAllBtn.onclick = function () {
         this.f_onSelectAllFiltered(oControlHost);
