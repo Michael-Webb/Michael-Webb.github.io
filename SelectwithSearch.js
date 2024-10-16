@@ -299,6 +299,17 @@ define(function () {
     if (!oConfig.AutoSubmit) {
       el.querySelector("#applyFilter-btn").onclick = this.f_onApplyFilter.bind(this, oControlHost);
     }
+    console.log("Drawing control...");
+    var selectAllBtn = el.querySelector("#selectAll-btn");
+    if (selectAllBtn) {
+      console.log("Select All button found");
+      selectAllBtn.onclick = function () {
+        console.log("Select All button clicked");
+        this.f_onSelectAllFiltered(oControlHost);
+      }.bind(this);
+    } else {
+      console.log("Select All button not found");
+    }
   };
 
   MyStyledSelect.prototype.f_onApplyFilter = function (oControlHost) {
@@ -319,24 +330,24 @@ define(function () {
     var visibleCount = 0;
 
     for (var i = 0; i < labels.length; i++) {
-        var label = labels[i];
-        var checkbox = label.querySelector("input");
-        
-        // Check if the label is currently visible
-        if (label.style.display !== "none") {
-            visibleCount++;
-            checkbox.checked = true;
-            checkedCount++;
-        }
+      var label = labels[i];
+      var checkbox = label.querySelector("input");
+
+      // Check if the label is currently visible
+      if (label.style.display !== "none") {
+        visibleCount++;
+        checkbox.checked = true;
+        checkedCount++;
+      }
     }
 
     console.log(`Checked ${checkedCount} out of ${visibleCount} visible items`);
 
     oControlHost.valueChanged();
     if (oControlHost.configuration.AutoSubmit) {
-        oControlHost.next();
+      oControlHost.next();
     }
-};
+  };
 
   MyStyledSelect.prototype.f_onSearch = function (oControlHost) {
     var filterText = oControlHost.container.querySelector("#myInput").value.toUpperCase();
