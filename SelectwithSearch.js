@@ -234,10 +234,10 @@ ${sID} #filter-options {
       }
     }
 
-    // Sort dataItems based on sortValue
-    dataItems.sort(function (a, b) {
-      return String(a.sortValue).localeCompare(String(b.sortValue));
-    });
+    // // Sort dataItems based on sortValue
+    // dataItems.sort(function (a, b) {
+    //   return String(a.sortValue).localeCompare(String(b.sortValue));
+    // });
 
     // Prepare variables for building checkboxValues
     var bMultiSelect = oConfig.MultiSelect !== false;
@@ -294,8 +294,8 @@ ${sID} #filter-options {
             </div>
             <hr>
             <div id="container-footer">
-              <span id="clearFilter-btn">Deselect All</span>
               <span id="selectAll-btn">Select All</span>
+              <span id="clearFilter-btn">Deselect All</span>
               ${!oConfig.AutoSubmit ? '<span id="applyFilter-btn">Apply</span>' : ""}
             </div>
           </div>
