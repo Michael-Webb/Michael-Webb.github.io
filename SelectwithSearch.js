@@ -106,6 +106,23 @@ define(function () {
 					${sID} BUTTON:hover #main-container{
 						display: block;
 					}
+					${sID} #selectAll-btn {
+					height:32px; 
+					width:140px; 
+					cursor:pointer; 
+					margin-left:10px; 
+					color:#4178BE; 
+					font-size:14px; 
+					padding:6px 12px 6px 12px; 
+					background-color:white; 
+					border:1px solid #4178BE;
+					text-align: center;
+					}
+					${sID} #selectAll-btn:hover {
+					background-color:#4178BE; 
+					color:white; 
+					border:1px solid #4178BE; 
+					}
   
 					${sID} BUTTON:hover #main-container,
 					${sID} #main-container:hover {
@@ -146,6 +163,25 @@ define(function () {
 					${sID} BUTTON:hover > svg{
 						transform: scaleY(-1);
 					}
+	
+					${sID} #clearFilter-btn{
+						height:32px; 
+						width:120px; 
+						cursor:pointer; 
+						margin-left:10px; 
+						color:#4178BE; 
+						font-size:14px; 
+						padding:6px 12px 6px 12px; 
+						background-color:white; 
+						border:1px solid #4178BE;
+						text-align: center;
+					  }
+					  ${sID} #clearFilter-btn:hover {
+						  background-color:#4178BE; 
+						  color:white; 
+						  border:1px solid #4178BE; 
+					  }
+	
 					${sID} #container-footer{
 						display: flex;
 						justify-content: space-between;
@@ -216,7 +252,7 @@ define(function () {
 			  <button class="myBtn">
 				  <div id="main-container">
 					  <div id="container-header">
-						  <input id="myInput" type="text" placeholder="Search.."/>
+						  <input id="myInput" type="text" placeholder="Search.." autocomplete="off"/>
 						  <span id="search-icon" >
 							  <svg  xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
 								  <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
