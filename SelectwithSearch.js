@@ -152,7 +152,7 @@ define(function () {
     ${sID} #search-icon {
         position: absolute;
         color: black;
-        right: ${!oConfig.AutoSubmit ? '170px' : '10px'};
+        right: ${!oConfig.AutoSubmit ? "170px" : "10px"};
         top: 50%;
         transform: translateY(-50%);
     }
@@ -208,6 +208,36 @@ define(function () {
     var iRowCount = oDataStore.rowCount;
     console.log("iRowCount : ", iRowCount);
 
+    // Get the number of columns
+    var numColumns = oDataStore.columnNames.length;
+
+    // Determine if the third column exists
+    var hasThirdColumn = numColumns >= 3;
+
+    // Collect data into an array
+    var dataItems = [];
+    var sValues = [];
+    for (var iRow = 0; iRow < iRowCount; iRow++) {
+      var sValue = oDataStore.getCellValue(iRow, columnNumber);
+      var sDisplayValue = hasDisplay ? oDataStore.getCellValue(iRow, displayColumnNumber) : sValue;
+      var sortValue = hasThirdColumn ? oDataStore.getCellValue(iRow, 2) : sValue;
+
+      if (!sValues.includes(sValue)) {
+        dataItems.push({
+          sValue: sValue,
+          sDisplayValue: sDisplayValue,
+          sortValue: sortValue,
+        });
+        sValues.push(sValue);
+      }
+    }
+
+    // Sort dataItems based on sortValue
+    dataItems.sort(function (a, b) {
+      return String(a.sortValue).localeCompare(String(b.sortValue));
+    });
+
+    // Prepare variables for building checkboxValues
     var bMultiSelect = oConfig.MultiSelect !== false;
     var bSuppressSelection = false;
     var sClass = bMultiSelect ? "clsCheckbox" : "clsRadioButton";
@@ -215,25 +245,23 @@ define(function () {
     var sName = bMultiSelect ? "" : ' name="' + (el.id + "__radio__") + '"';
     var iScrollIfMoreThan = 12;
 
-    var checkboxValues = ``;
-    var sValues = [];
-    for (var iRow = 0; iRow < iRowCount; iRow++) {
-      var sValue = oDataStore.getCellValue(iRow, columnNumber);
-      var sDisplayValue = hasDisplay ? oDataStore.getCellValue(iRow, displayColumnNumber) : sValue;
+    // Now build checkboxValues
+    var checkboxValues = "";
+    for (var i = 0; i < dataItems.length; i++) {
+      var item = dataItems[i];
+      var sValue = item.sValue;
+      var sDisplayValue = item.sDisplayValue;
 
-      if (!sValues.includes(sValue)) {
-        var bSelected = !bSuppressSelection && oParameterValues.has(sValue);
-        if (bSelected && !bMultiSelect) {
-          bSuppressSelection = true;
-        }
-        checkboxValues += `
-				<label class="${sClass}" style="margin: 10px 20px;${iRow > 0 ? "margin-top:16px;" : ""}">
-					<input type="${sType}" ${bSelected ? ' checked="true"' : ""} ${sName} value="${sValue}" />
-					<span>${sDisplayValue}</span>
-				</label>
-			`;
-        sValues.push(sValue);
+      var bSelected = !bSuppressSelection && oParameterValues.has(sValue);
+      if (bSelected && !bMultiSelect) {
+        bSuppressSelection = true;
       }
+      checkboxValues += `
+    <label class="${sClass}" style="margin: 10px 20px;${i > 0 ? "margin-top:16px;" : ""}">
+      <input type="${sType}" ${bSelected ? ' checked="true"' : ""} ${sName} value="${sValue}" />
+      <span>${sDisplayValue}</span>
+    </label>
+  `;
     }
 
     sHtml += `
