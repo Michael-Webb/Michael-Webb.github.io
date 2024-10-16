@@ -102,8 +102,10 @@ ${sID} #main-container {
     font-weight: normal;
     width: ${oConfig.dropDownWidth ? oConfig.dropDownWidth : "250px"};
 }
-${sID} BUTTON:hover #main-container {
-    display: block;
+${sID} BUTTON.open #main-container { /* Added this line */
+    visibility: visible;
+    opacity: 1;
+    transition-delay: 0s;
 }
 ${sID} #selectAll-btn, ${sID} #clearFilter-btn {
     cursor: pointer;
@@ -119,12 +121,6 @@ ${sID} #selectAll-btn, ${sID} #clearFilter-btn {
 ${sID} #selectAll-btn:hover, ${sID} #clearFilter-btn:hover {
     color: #2a4d78;
 }
-${sID} BUTTON:hover #main-container,
-${sID} #main-container:hover {
-    visibility: visible;
-    opacity: 1;
-    transition-delay: 0s;
-}
 ${sID} #container-header {
     margin-top: 10px;
     display: flex;
@@ -138,7 +134,7 @@ ${sID} #search-container {
     margin-bottom: 10px;
 }
 ${sID} #search-input-container {
-    position: relative; /* Added this line */
+    position: relative;
     flex-grow: 1;
     align-items: center;
 }
@@ -147,8 +143,8 @@ ${sID} #myInput {
     line-height: 2;
     border: 2px solid #595859;
     border-radius: 4px;
-    padding-right: 40px; /* Increased padding to accommodate icon */
-    width: 100%; /* Ensure input takes full width */
+    padding-right: 40px;
+    width: 100%;
 }
 ${sID} #search-icon {
     position: absolute;
@@ -156,7 +152,7 @@ ${sID} #search-icon {
     right: 10px;
     top: 50%;
     transform: translateY(-50%);
-    cursor: pointer; /* Ensure the icon is clickable */
+    cursor: pointer;
 }
 ${sID} #applyFilter-btn {
     cursor: pointer;
@@ -188,7 +184,7 @@ ${sID} BUTTON > svg {
     transition-timing-function: ease-out;
     transition-property: transform;
 }
-${sID} BUTTON:hover > svg {
+${sID} BUTTON.open > svg { /* Modified this line */
     transform: scaleY(-1);
 }
 ${sID} #container-footer {
@@ -233,11 +229,6 @@ ${sID} #filter-options {
         sValues.push(sValue);
       }
     }
-
-    // // Sort dataItems based on sortValue
-    // dataItems.sort(function (a, b) {
-    //   return String(a.sortValue).localeCompare(String(b.sortValue));
-    // });
 
     // Prepare variables for building checkboxValues
     var bMultiSelect = oConfig.MultiSelect !== false;
@@ -309,6 +300,20 @@ ${sID} #filter-options {
     el.innerHTML = sHtml;
     //el.onclick = this.f_onChange.bind( this, oControlHost, oConfig.AutoSubmit );
 
+    // Add event listener to toggle 'open' class
+    var myBtn = el.querySelector('.myBtn');
+    myBtn.addEventListener('click', function(e) {
+        e.stopPropagation(); // Prevent the click event from bubbling up
+        myBtn.classList.toggle('open');
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!el.contains(e.target)) {
+            myBtn.classList.remove('open');
+        }
+    });
+
     var labels = el.querySelectorAll("label");
     for (let x = 0; x < labels.length; x++) {
       labels[x].onclick = this.f_onChange.bind(this, oControlHost, oConfig.AutoSubmit);
@@ -316,14 +321,18 @@ ${sID} #filter-options {
 
     el.querySelector("#myInput").onkeyup = this.f_onSearch.bind(this, oControlHost);
     el.querySelector("#filter-options").onchange = this.f_onFilterTypeChange.bind(this, oControlHost);
-    el.querySelector("#clearFilter-btn").onclick = this.f_onClearFilter.bind(this, oControlHost);
-
+    el.querySelector("#clearFilter-btn").onclick = function (e) {
+      e.stopPropagation();
+      this.f_onClearFilter(oControlHost, e);
+    }.bind(this);
+    
     if (!oConfig.AutoSubmit) {
       el.querySelector("#applyFilter-btn").onclick = this.f_onApplyFilter.bind(this, oControlHost);
     }
     var selectAllBtn = el.querySelector("#selectAll-btn");
     if (selectAllBtn) {
       selectAllBtn.onclick = function () {
+        e.stopPropagation(); // Prevent the click event from closing the dropdown
         console.log("Select All button clicked");
         this.f_onSelectAllFiltered(oControlHost);
       }.bind(this);
@@ -429,7 +438,9 @@ ${sID} #filter-options {
       labels[i].style.display = this.shouldDisplayItem(txtValue, filterText, filterType) ? "" : "none";
     }
   };
-  MyStyledSelect.prototype.f_onClearFilter = function (oControlHost) {
+  // Modify f_onClearFilter to prevent dropdown from closing
+  MyStyledSelect.prototype.f_onClearFilter = function (oControlHost, e) {
+    if (e) e.stopPropagation(); // Prevent the click event from closing the dropdown
     var nl = this.m_oControlHost.container.querySelectorAll("input");
     for (var i = 0; i < nl.length; i++) {
       var elInput = nl.item(i);
