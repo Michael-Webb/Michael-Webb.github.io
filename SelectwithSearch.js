@@ -287,7 +287,17 @@ ${sID} #filter-options {
                 <option value="contain">Contains the Keyword</option>  
               </select>
             </div>
-            <!-- ... [rest of the HTML] -->
+            <div id="container-body" ${
+              iRowCount > iScrollIfMoreThan ? 'style="overflow-y:auto; height:' + iScrollIfMoreThan * 32 + 'px"' : ""
+            }>
+              ${checkboxValues}
+            </div>
+            <hr>
+            <div id="container-footer">
+              <span id="clearFilter-btn">Deselect All</span>
+              <span id="selectAll-btn">Select All</span>
+              ${!oConfig.AutoSubmit ? '<span id="applyFilter-btn">Apply</span>' : ""}
+            </div>
           </div>
           <span>${sLabel}</span>
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16">
