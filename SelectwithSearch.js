@@ -151,7 +151,8 @@ define(function () {
     }
     ${sID} #search-icon {
         position: absolute;
-        right: ${!oConfig.AutoSubmit ? '160px' : '10px'};
+        color: black;
+        right: ${!oConfig.AutoSubmit ? '170px' : '10px'};
         top: 50%;
         transform: translateY(-50%);
     }
@@ -248,7 +249,7 @@ define(function () {
                     </svg>
                   </span>
                 </div>
-                ${!oConfig.AutoSubmit ? '<span id="applyFilter-btn">Apply</span>' : ""}
+              
               </div>
               <select id="filter-options">
                 <option value="startAny">Starts with any of these Keywords</option>
@@ -266,6 +267,7 @@ define(function () {
             <div id="container-footer">
               <span id="clearFilter-btn">Deselect All</span>
               <span id="selectAll-btn">Select All</span>
+              ${!oConfig.AutoSubmit ? '<span id="applyFilter-btn">Apply</span>' : ""}
             </div>
           </div>
           <span>${sLabel}</span>
