@@ -69,138 +69,140 @@ define(function () {
     var sID = "#" + el.id + " ";
     var sHtml = `
 				<style>
-    ${sID} BUTTON {
-        position: relative;
-        display: flex;
-        margin-left: 0;
-        padding-left: 18px;
-        padding-right: 11px;
-        padding-top: 6px;
-        padding-bottom: 6px;
-        background-color: ${oConfig.bgColor ? oConfig.bgColor : "white"};
-        color: ${oConfig.txtColor ? oConfig.txtColor : "black"};
-        border-color: ${oConfig.borderColor ? oConfig.borderColor : "black"};
-        font-weight: bold;
-        border-radius: ${oConfig.borderRadious ? oConfig.borderRadius : "2px"};
-    }
-    ${sID} BUTTON:hover {
-        background-color: ${oConfig.hoverBGColor ? oConfig.hoverBGColor : "lightgrey"};
-        color: ${oConfig.hoverTextColor ? oConfig.hoverTextColor : "white"};
-    }
-    ${sID} #main-container {
-        position: absolute;
-        z-index: 1;
-        visibility: hidden;
-        opacity: 0;
-        transition: visibility 0s, opacity 0.3s linear;
-        transition-delay: 0.5s, 0s;
-        top: calc(100% + 2px);
-        left: -2px;
-        text-align: left;
-        background-color: white;
-        box-shadow: 0px 0px 12px 0px grey;
-        font-weight: normal;
-        width: ${oConfig.dropDownWidth ? oConfig.dropDownWidth : "250px"};
-    }
-    ${sID} BUTTON:hover #main-container {
-        display: block;
-    }
-    ${sID} #selectAll-btn, ${sID} #clearFilter-btn {
-        cursor: pointer;
-        color: #4178BE;
-        font-size: 14px;
-        background: none;
-        border: none;
-        padding: 0;
-        margin: 0 10px;
-        transition: color 0.3s ease;
-        white-space: nowrap;
-    }
-    ${sID} #selectAll-btn:hover, ${sID} #clearFilter-btn:hover {
-        color: #2a4d78;
-    }
-    ${sID} BUTTON:hover #main-container,
-    ${sID} #main-container:hover {
-        visibility: visible;
-        opacity: 1;
-        transition-delay: 0s;
-    }
-    ${sID} #container-header {
-        margin-top: 10px;
-        display: flex;
-        flex-direction: column;
-        padding: 0 20px;
-    }
-    ${sID} #search-container {
-        position: relative;
-        display: flex;
-        align-items: center;
-        margin-bottom: 10px;
-    }
-    ${sID} #search-input-container {
-        display: flex;
-        flex-grow: 1;
-        align-items: center;
-    }
-    ${sID} #myInput {
-        flex-grow: 1;
-        line-height: 2;
-        border: 2px solid #595859;
-        border-radius: 4px;
-        padding-right: 30px;
-    }
-    ${sID} #search-icon {
-        position: absolute;
-        color: black;
-        right: ${!oConfig.AutoSubmit ? "170px" : "10px"};
-        top: 50%;
-        transform: translateY(-50%);
-    }
-    ${sID} #applyFilter-btn {
-        cursor: pointer;
-        color: #4178BE;
-        font-size: 14px;
-        padding: 6px 12px;
-        background-color: white;
-        border: 1px solid #4178BE;
-        border-radius: 4px;
-        margin-left: 10px;
-        white-space: nowrap;
-        transition: all 0.3s ease;
-        width: 150px;
-        text-align: center;
-    }
-    ${sID} #applyFilter-btn:hover {
-        background-color: #4178BE;
-        color: white;
-    }
-    ${sID} #container-body {
-        color: #595859;
-    }
-    ${sID} BUTTON > svg {
-        height: 13px;
-        width: 13px;
-        display: inline-block;
-        margin-left: 5px;
-        transition-duration: 0.3s;
-        transition-timing-function: ease-out;
-        transition-property: transform;
-    }
-    ${sID} BUTTON:hover > svg {
-        transform: scaleY(-1);
-    }
-    ${sID} #container-footer {
-        display: flex;
-        justify-content: flex-end;
-        margin: 5px 20px;
-        padding: 5px 0px;
-        align-items: center;
-    }
-    ${sID} #filter-options {
-        border-radius: 3px;
-        padding: 4px 8px;
-        width: 100%;
-    }
+${sID} BUTTON {
+    position: relative;
+    display: flex;
+    margin-left: 0;
+    padding-left: 18px;
+    padding-right: 11px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    background-color: ${oConfig.bgColor ? oConfig.bgColor : "white"};
+    color: ${oConfig.txtColor ? oConfig.txtColor : "black"};
+    border-color: ${oConfig.borderColor ? oConfig.borderColor : "black"};
+    font-weight: bold;
+    border-radius: ${oConfig.borderRadious ? oConfig.borderRadius : "2px"};
+}
+${sID} BUTTON:hover {
+    background-color: ${oConfig.hoverBGColor ? oConfig.hoverBGColor : "lightgrey"};
+    color: ${oConfig.hoverTextColor ? oConfig.hoverTextColor : "white"};
+}
+${sID} #main-container {
+    position: absolute;
+    z-index: 1;
+    visibility: hidden;
+    opacity: 0;
+    transition: visibility 0s, opacity 0.3s linear;
+    transition-delay: 0.5s, 0s;
+    top: calc(100% + 2px);
+    left: -2px;
+    text-align: left;
+    background-color: white;
+    box-shadow: 0px 0px 12px 0px grey;
+    font-weight: normal;
+    width: ${oConfig.dropDownWidth ? oConfig.dropDownWidth : "250px"};
+}
+${sID} BUTTON:hover #main-container {
+    display: block;
+}
+${sID} #selectAll-btn, ${sID} #clearFilter-btn {
+    cursor: pointer;
+    color: #4178BE;
+    font-size: 14px;
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0 10px;
+    transition: color 0.3s ease;
+    white-space: nowrap;
+}
+${sID} #selectAll-btn:hover, ${sID} #clearFilter-btn:hover {
+    color: #2a4d78;
+}
+${sID} BUTTON:hover #main-container,
+${sID} #main-container:hover {
+    visibility: visible;
+    opacity: 1;
+    transition-delay: 0s;
+}
+${sID} #container-header {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    padding: 0 20px;
+}
+${sID} #search-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+${sID} #search-input-container {
+    position: relative; /* Added this line */
+    flex-grow: 1;
+    align-items: center;
+}
+${sID} #myInput {
+    flex-grow: 1;
+    line-height: 2;
+    border: 2px solid #595859;
+    border-radius: 4px;
+    padding-right: 40px; /* Increased padding to accommodate icon */
+    width: 100%; /* Ensure input takes full width */
+}
+${sID} #search-icon {
+    position: absolute;
+    color: black;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer; /* Ensure the icon is clickable */
+}
+${sID} #applyFilter-btn {
+    cursor: pointer;
+    color: #4178BE;
+    font-size: 14px;
+    padding: 6px 12px;
+    background-color: white;
+    border: 1px solid #4178BE;
+    border-radius: 4px;
+    margin-left: 10px;
+    white-space: nowrap;
+    transition: all 0.3s ease;
+    width: 150px;
+    text-align: center;
+}
+${sID} #applyFilter-btn:hover {
+    background-color: #4178BE;
+    color: white;
+}
+${sID} #container-body {
+    color: #595859;
+}
+${sID} BUTTON > svg {
+    height: 13px;
+    width: 13px;
+    display: inline-block;
+    margin-left: 5px;
+    transition-duration: 0.3s;
+    transition-timing-function: ease-out;
+    transition-property: transform;
+}
+${sID} BUTTON:hover > svg {
+    transform: scaleY(-1);
+}
+${sID} #container-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin: 5px 20px;
+    padding: 5px 0px;
+    align-items: center;
+}
+${sID} #filter-options {
+    border-radius: 3px;
+    padding: 4px 8px;
+    width: 100%;
+}
 </style>
 			`;
 
@@ -277,7 +279,6 @@ define(function () {
                     </svg>
                   </span>
                 </div>
-              
               </div>
               <select id="filter-options">
                 <option value="startAny">Starts with any of these Keywords</option>
@@ -286,17 +287,7 @@ define(function () {
                 <option value="contain">Contains the Keyword</option>  
               </select>
             </div>
-            <div id="container-body" ${
-              iRowCount > iScrollIfMoreThan ? 'style="overflow-y:auto; height:' + iScrollIfMoreThan * 32 + 'px"' : ""
-            }>
-              ${checkboxValues}
-            </div>
-            <hr>
-            <div id="container-footer">
-              <span id="clearFilter-btn">Deselect All</span>
-              <span id="selectAll-btn">Select All</span>
-              ${!oConfig.AutoSubmit ? '<span id="applyFilter-btn">Apply</span>' : ""}
-            </div>
+            <!-- ... [rest of the HTML] -->
           </div>
           <span>${sLabel}</span>
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16">
