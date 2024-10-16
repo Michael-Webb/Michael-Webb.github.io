@@ -267,10 +267,10 @@ define(function () {
 					  <hr>
 					  <div id="container-footer">
 						  <select id="filter-options">
-							   <option value="start">Starts With</option>
-    						   <option value="contain">Contains</option>
-    						   <option value="startAny">Starts with Any of these Keywords</option>
-    						   <option value="containAny">Contains any of these Keywords</option>
+                <option value="startAny">Starts with any of these Keywords</option>
+    						<option value="containAny">Contains any of these Keywords</option>
+							  <option value="start">Starts With The Keyword</option>
+    						<option value="contain">Contains the Keyword</option>  
 						  </select>
 						  
 						  <span id="clearFilter-btn">Clear Filter</span>
