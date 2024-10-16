@@ -137,17 +137,21 @@ define(function () {
         align-items: center;
         margin-bottom: 10px;
     }
+    ${sID} #search-input-container {
+        display: flex;
+        flex-grow: 1;
+        align-items: center;
+    }
     ${sID} #myInput {
         flex-grow: 1;
         line-height: 2;
         border: 2px solid #595859;
         border-radius: 4px;
         padding-right: 30px;
-        width: calc(100% - 90px); /* Adjust width to make room for Apply button */
     }
     ${sID} #search-icon {
         position: absolute;
-        right: ${!oConfig.AutoSubmit ? '100px' : '10px'};
+        right: ${!oConfig.AutoSubmit ? '160px' : '10px'};
         top: 50%;
         transform: translateY(-50%);
     }
@@ -162,6 +166,8 @@ define(function () {
         margin-left: 10px;
         white-space: nowrap;
         transition: all 0.3s ease;
+        width: 150px;
+        text-align: center;
     }
     ${sID} #applyFilter-btn:hover {
         background-color: #4178BE;
@@ -233,12 +239,14 @@ define(function () {
 			  <button class="myBtn">
 				  <div id="main-container">
 					  <div id="container-header">
+             <div id="search-input-container">
 						  <input id="myInput" type="text" placeholder="Search.." autocomplete="off"/>
-						  <span id="search-icon" >
-							  <svg  xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
-								  <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
-							  </svg>
-						  </span>
+						    <span id="search-icon" >
+							    <svg  xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+								    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+							    </svg>
+						    </span>
+              </div>
 						  ${!oConfig.AutoSubmit ? '<span id="applyFilter-btn">Apply</span>' : ""}
 
 					  </div>
