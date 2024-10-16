@@ -272,9 +272,9 @@ define(function () {
     						   <option value="startAny">Starts with Any of these Keywords</option>
     						   <option value="containAny">Contains any of these Keywords</option>
 						  </select>
-						  ${!oConfig.AutoSubmit ? '<span id="applyFilter-btn">Apply Filter</span>' : ""}
-						  <span id="clearFilter-btn">Clear Filter</span>
-                          <span id="selectAll-btn">Select All Filtered</span>
+						  <span id="selectAll">Select All Filtered</span>
+						  <span id="clearFilter">Deselect All</span>
+              ${!oConfig.AutoSubmit ? '<span id="applyFilter-btn">Apply Filter</span>' : ""}
 					  </div>
 				  </div>
 				  <span>${sLabel}</span>
@@ -299,12 +299,9 @@ define(function () {
     if (!oConfig.AutoSubmit) {
       el.querySelector("#applyFilter-btn").onclick = this.f_onApplyFilter.bind(this, oControlHost);
     }
-    console.log("Drawing control...");
     var selectAllBtn = el.querySelector("#selectAll-btn");
     if (selectAllBtn) {
-      console.log("Select All button found");
       selectAllBtn.onclick = function () {
-        console.log("Select All button clicked");
         this.f_onSelectAllFiltered(oControlHost);
       }.bind(this);
     } else {
