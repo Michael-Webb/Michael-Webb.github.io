@@ -106,23 +106,6 @@ define(function () {
 					${sID} BUTTON:hover #main-container{
 						display: block;
 					}
-					${sID} #selectAll-btn {
-					height:32px; 
-					width:140px; 
-					cursor:pointer; 
-					margin-left:10px; 
-					color:#4178BE; 
-					font-size:14px; 
-					padding:6px 12px 6px 12px; 
-					background-color:white; 
-					border:1px solid #4178BE;
-					text-align: center;
-					}
-					${sID} #selectAll-btn:hover {
-					background-color:#4178BE; 
-					color:white; 
-					border:1px solid #4178BE; 
-					}
   
 					${sID} BUTTON:hover #main-container,
 					${sID} #main-container:hover {
@@ -164,23 +147,20 @@ define(function () {
 						transform: scaleY(-1);
 					}
 	
-					${sID} #clearFilter-btn{
-						height:32px; 
-						width:120px; 
-						cursor:pointer; 
-						margin-left:10px; 
-						color:#4178BE; 
-						font-size:14px; 
-						padding:6px 12px 6px 12px; 
-						background-color:white; 
-						border:1px solid #4178BE;
-						text-align: center;
-					  }
-					  ${sID} #clearFilter-btn:hover {
-						  background-color:#4178BE; 
-						  color:white; 
-						  border:1px solid #4178BE; 
-					  }
+					${sID} #selectAll-btn, ${sID} #clearFilter-btn {
+            cursor: pointer;
+            color: #4178BE;
+            font-size: 14px;
+            background: none;
+            border: none;
+            padding: 0;
+            margin: 0 10px;
+            transition: color 0.3s ease;
+        }
+        
+        ${sID} #selectAll-btn:hover, ${sID} #clearFilter-btn:hover {
+            color: #2a4d78;
+        }
 	
 					${sID} #container-footer{
 						display: flex;
@@ -272,10 +252,9 @@ define(function () {
 							  <option value="start">Starts With The Keyword</option>
     						<option value="contain">Contains the Keyword</option>  
 						  </select>
-						  
-						  <span id="clearFilter-btn">Clear Filter</span>
-              <span id="selectAll-btn">Select All Filtered</span>
-              ${!oConfig.AutoSubmit ? '<span id="applyFilter-btn">Apply Filter</span>' : ""}
+						  <span id="clearFilter-btn">Deselect All</span>
+              <span id="selectAll-btn">Select All</span>
+              ${!oConfig.AutoSubmit ? '<span id="applyFilter-btn">Apply</span>' : ""}
 					  </div>
 				  </div>
 				  <span>${sLabel}</span>
