@@ -315,18 +315,22 @@ define(function () {
 
   MyStyledSelect.prototype.f_onSelectAllFiltered = function (oControlHost) {
     var labels = oControlHost.container.querySelectorAll(".myBtn label");
-    var filterText = oControlHost.container.querySelector("#myInput").value.toUpperCase();
-    var filterType = oControlHost.container.querySelector("#filter-options").value;
+    var checkedCount = 0;
+    var visibleCount = 0;
 
     for (var i = 0; i < labels.length; i++) {
         var label = labels[i];
         var checkbox = label.querySelector("input");
         
         // Check if the label is currently visible
-        if (window.getComputedStyle(label).display !== "none") {
+        if (label.style.display !== "none") {
+            visibleCount++;
             checkbox.checked = true;
+            checkedCount++;
         }
     }
+
+    console.log(`Checked ${checkedCount} out of ${visibleCount} visible items`);
 
     oControlHost.valueChanged();
     if (oControlHost.configuration.AutoSubmit) {
