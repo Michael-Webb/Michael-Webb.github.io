@@ -28,7 +28,6 @@ define(function () {
     var oConfig = oControlHost.configuration || {};
     var columnNumber = oConfig["Column Number"] || 0;
     var hasDisplay = oConfig["hasDisplay"] || false;
-    var numericSort = oConfig["Sort Numeric"] || false;
     var displayColumnNumber = hasDisplay ? columnNumber + 1 : columnNumber;
 
     var oControl =
@@ -233,6 +232,11 @@ define(function () {
       }
     }
 
+    // Sort dataItems based on sortValue
+    dataItems.sort(function (a, b) {
+      return String(a.sortValue).localeCompare(String(b.sortValue));
+    });
+
     // Prepare variables for building checkboxValues
     var bMultiSelect = oConfig.MultiSelect !== false;
     var bSuppressSelection = false;
@@ -240,19 +244,6 @@ define(function () {
     var sType = bMultiSelect ? "checkbox" : "radio";
     var sName = bMultiSelect ? "" : ' name="' + (el.id + "__radio__") + '"';
     var iScrollIfMoreThan = 12;
-
-    // Sort dataItems based on oConfig['Sort Numeric']
-    if (oConfig["Sort Numeric"] === true) {
-      // Sort numerically
-      dataItems.sort(function (a, b) {
-        return parseFloat(a.sortValue) - parseFloat(b.sortValue);
-      });
-    } else {
-      // Sort lexicographically
-      dataItems.sort(function (a, b) {
-        return String(a.sortValue).localeCompare(String(b.sortValue));
-      });
-    }
 
     // Now build checkboxValues
     var checkboxValues = "";
