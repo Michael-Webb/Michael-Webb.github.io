@@ -318,9 +318,9 @@ ${sID} #filter-options {
       }
     });
 
-    // Close dropdown when clicking outside
+    // Modify the document-level click event listener
     document.addEventListener("click", function (e) {
-      if (!el.contains(e.target)) {
+      if (!el.contains(e.target) && !e.target.closest("#myInput")) {
         myBtn.classList.remove("open");
       }
     });
@@ -343,6 +343,7 @@ ${sID} #filter-options {
       // Optionally prevent default action for spacebar
       if (e.key === " " || e.key === "Spacebar") {
         e.preventDefault();
+        e.stopImmediatePropagation();
       }
     });
     myInput.addEventListener("keyup", function (e) {
