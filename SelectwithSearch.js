@@ -71,6 +71,12 @@ define(function () {
             background-color: ${oConfig.hoverBGColor ? oConfig.hoverBGColor : "lightgrey"};
             color: ${oConfig.hoverTextColor ? oConfig.hoverTextColor : "white"};
         }
+        ${sID} BUTTON.myBtn {
+          cursor: pointer;
+        }
+        ${sID} BUTTON.myBtn > * {
+          pointer-events: none;
+        }
         ${sID} #main-container {
             position: absolute;
             z-index: 1;
@@ -286,27 +292,20 @@ define(function () {
     // Add event listener to toggle 'open' class
     var myBtn = el.querySelector(".myBtn");
     myBtn.addEventListener("click", function (e) {
-      // Check if the event target is the input field or inside it
-      if (e.target.closest("#myInput")) {
-        e.stopPropagation();
-        return; // Do not toggle the dropdown
-      }
-
-      // Only toggle the dropdown when clicking on the button itself
-      if (e.target === myBtn || e.target === myBtn.querySelector("span") || e.target === myBtn.querySelector("svg")) {
-        e.stopPropagation();
+      e.stopPropagation();
+      if (!e.target.closest("#main-container")) {
         myBtn.classList.toggle("open");
-      } else {
-        e.stopPropagation();
       }
     });
 
-    // Modify the document-level click event listener
-    document.addEventListener("click", function (e) {
-      if (!this.isInputActive && !el.contains(e.target)) {
-        myBtn.classList.remove("open");
-      }
-    }.bind(this));
+    document.addEventListener(
+      "click",
+      function (e) {
+        if (!this.isInputActive && !el.contains(e.target)) {
+          myBtn.classList.remove("open");
+        }
+      }.bind(this)
+    );
 
     // Prevent clicks inside the dropdown from closing it
     var mainContainer = el.querySelector("#main-container");
@@ -319,34 +318,49 @@ define(function () {
       labels[x].onclick = this.f_onChange.bind(this, oControlHost, oConfig.AutoSubmit);
     }
 
-    // Handle events for the input field
     var myInput = el.querySelector("#myInput");
-    myInput.addEventListener("keydown", function (e) {
-      e.stopPropagation();
-      this.isInputActive = true;
-    }.bind(this));
+    myInput.addEventListener(
+      "keydown",
+      function (e) {
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        this.isInputActive = true;
+        if (e.key === " " || e.key === "Spacebar") {
+          e.preventDefault();
+          this.value += " ";
+          this.f_onSearch(oControlHost);
+        }
+      }.bind(this)
+    );
 
-    myInput.addEventListener("keyup", function (e) {
-      e.stopPropagation();
-      this.f_onSearch(oControlHost);
-    }.bind(this));
+    myInput.addEventListener(
+      "keyup",
+      function (e) {
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        if (e.key !== " " && e.key !== "Spacebar") {
+          this.f_onSearch(oControlHost);
+        }
+      }.bind(this)
+    );
 
-    myInput.addEventListener("click", function (e) {
-      e.stopPropagation();
-      this.isInputActive = true;
-      myBtn.classList.add("open");
-    }.bind(this));
+    myInput.addEventListener(
+      "click",
+      function (e) {
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        this.isInputActive = true;
+      }.bind(this)
+    );
 
-    myInput.addEventListener("focus", function (e) {
-      e.stopPropagation();
-      this.isInputActive = true;
-    }.bind(this));
-
-    myInput.addEventListener("blur", function (e) {
-      setTimeout(() => {
-        this.isInputActive = false;
-      }, 100);
-    }.bind(this));
+    myInput.addEventListener(
+      "focus",
+      function (e) {
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        this.isInputActive = true;
+      }.bind(this)
+    );
 
     el.querySelector("#filter-options").onchange = this.f_onFilterTypeChange.bind(this, oControlHost);
 
