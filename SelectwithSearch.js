@@ -258,7 +258,7 @@ ${sID} #filter-options {
     }
 
     sHtml += `
-			  <button class="myBtn">
+			  <button class="myBtn" tabindex="-1">
             <div id="main-container">
               <div id="container-header">
                 <div id="search-container">
@@ -301,28 +301,34 @@ ${sID} #filter-options {
     //el.onclick = this.f_onChange.bind( this, oControlHost, oConfig.AutoSubmit );
 
     // Add event listener to toggle 'open' class
-    var myBtn = el.querySelector('.myBtn');
-    myBtn.addEventListener('click', function(e) {
-        // Only toggle the dropdown when clicking on the button itself, not on its children
-        if (e.target === myBtn || e.target === myBtn.querySelector('span') || e.target === myBtn.querySelector('svg')) {
-            e.stopPropagation(); // Prevent the click event from bubbling up
-            myBtn.classList.toggle('open');
-        } else {
-            e.stopPropagation();
-        }
+    var myBtn = el.querySelector(".myBtn");
+    myBtn.addEventListener("click", function (e) {
+      // Check if the event target is the input field or inside it
+      if (e.target.closest("#myInput")) {
+        e.stopPropagation();
+        return; // Do not toggle the dropdown
+      }
+
+      // Only toggle the dropdown when clicking on the button itself
+      if (e.target === myBtn || e.target === myBtn.querySelector("span") || e.target === myBtn.querySelector("svg")) {
+        e.stopPropagation();
+        myBtn.classList.toggle("open");
+      } else {
+        e.stopPropagation();
+      }
     });
 
     // Close dropdown when clicking outside
-    document.addEventListener('click', function(e) {
-        if (!el.contains(e.target)) {
-            myBtn.classList.remove('open');
-        }
+    document.addEventListener("click", function (e) {
+      if (!el.contains(e.target)) {
+        myBtn.classList.remove("open");
+      }
     });
 
     // Prevent clicks inside the dropdown from closing it
-    var mainContainer = el.querySelector('#main-container');
-    mainContainer.addEventListener('click', function(e) {
-        e.stopPropagation();
+    var mainContainer = el.querySelector("#main-container");
+    mainContainer.addEventListener("click", function (e) {
+      e.stopPropagation();
     });
 
     var labels = el.querySelectorAll("label");
@@ -330,22 +336,24 @@ ${sID} #filter-options {
       labels[x].onclick = this.f_onChange.bind(this, oControlHost, oConfig.AutoSubmit);
     }
 
-    el.querySelector("#myInput").onkeyup = this.f_onSearch.bind(this, oControlHost);
-
-    // Prevent events in the input from closing the dropdown
-    el.querySelector("#myInput").addEventListener('click', function(e) {
-        e.stopPropagation();
+    // Handle events for the input field
+    var myInput = el.querySelector("#myInput");
+    myInput.addEventListener("keydown", function (e) {
+      e.stopPropagation();
+      // Optionally prevent default action for spacebar
+      if (e.key === " " || e.key === "Spacebar") {
+        e.preventDefault();
+      }
     });
-    el.querySelector("#myInput").addEventListener('keydown', function(e) {
-        e.stopPropagation();
+    myInput.addEventListener("keyup", function (e) {
+      e.stopPropagation();
     });
-    el.querySelector("#myInput").addEventListener('keyup', function(e) {
-        e.stopPropagation();
+    myInput.addEventListener("click", function (e) {
+      e.stopPropagation();
     });
-    el.querySelector("#myInput").addEventListener('focus', function(e) {
-        e.stopPropagation();
+    myInput.addEventListener("focus", function (e) {
+      e.stopPropagation();
     });
-
 
     el.querySelector("#filter-options").onchange = this.f_onFilterTypeChange.bind(this, oControlHost);
 
@@ -380,8 +388,8 @@ ${sID} #filter-options {
     }
   };
 
-   // Modify f_onSelectAllFiltered to use this.m_oControlHost
-   MyStyledSelect.prototype.f_onSelectAllFiltered = function () {
+  // Modify f_onSelectAllFiltered to use this.m_oControlHost
+  MyStyledSelect.prototype.f_onSelectAllFiltered = function () {
     var labels = this.m_oControlHost.container.querySelectorAll(".myBtn label");
     var checkedCount = 0;
     var visibleCount = 0;
