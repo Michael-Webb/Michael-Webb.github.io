@@ -1,25 +1,9 @@
-/*
-
-This is a custom control for Cognos Analytics originally created by VERACiTiZ 
-and extended by Michael Webb. 
-
-michael.webb@outlook.com
-
-Extended features include:
-- A manual apply filter button
-- Use/Display values for the drop down search
-- And converted into an IBM Cognos Native Custom Control. 
-
-You can find the custom control in the Authored controls section of Insertable Objects
- for reports. The tutorial how to setup the custom control can be found at the link below:
-https://veracitiz.com/blog/custom-dropdown-flexi-search-cognos-analytics/
-https://accelerator.ca.analytics.ibm.com/bi/?perspective=authoring&pathRef=.public_folders%2FIBM%2BAccelerator%2BCatalog%2FContent%2FCCT00046&id=iA62D7252B58743F1B91A33F114CBFB8E&objRef=iA62D7252B58743F1B91A33F114CBFB8E&action=run&format=HTML&cmPropStr=%7B%22id%22%3A%22iA62D7252B58743F1B91A33F114CBFB8E%22%2C%22type%22%3A%22reportView%22%2C%22defaultName%22%3A%22CCT00046%22%2C%22permissions%22%3A%5B%22execute%22%2C%22read%22%2C%22traverse%22%5D%7D
-*/
-
 define(function () {
   "use strict";
 
-  function MyStyledSelect() {}
+  function MyStyledSelect() {
+    this.isInputActive = false;
+  }
 
   MyStyledSelect.prototype.draw = function (oControlHost) {
     this.m_oControlHost = oControlHost;
@@ -68,139 +52,139 @@ define(function () {
     var el = oControlHost.container;
     var sID = "#" + el.id + " ";
     var sHtml = `
-				<style>
-${sID} BUTTON {
-    position: relative;
-    display: flex;
-    margin-left: 0;
-    padding-left: 18px;
-    padding-right: 11px;
-    padding-top: 6px;
-    padding-bottom: 6px;
-    background-color: ${oConfig.bgColor ? oConfig.bgColor : "white"};
-    color: ${oConfig.txtColor ? oConfig.txtColor : "black"};
-    border-color: ${oConfig.borderColor ? oConfig.borderColor : "black"};
-    font-weight: bold;
-    border-radius: ${oConfig.borderRadious ? oConfig.borderRadius : "2px"};
-}
-${sID} BUTTON:hover {
-    background-color: ${oConfig.hoverBGColor ? oConfig.hoverBGColor : "lightgrey"};
-    color: ${oConfig.hoverTextColor ? oConfig.hoverTextColor : "white"};
-}
-${sID} #main-container {
-    position: absolute;
-    z-index: 1;
-    visibility: hidden;
-    opacity: 0;
-    transition: visibility 0s, opacity 0.3s linear;
-    transition-delay: 0.5s, 0s;
-    top: calc(100% + 2px);
-    left: -2px;
-    text-align: left;
-    background-color: white;
-    box-shadow: 0px 0px 12px 0px grey;
-    font-weight: normal;
-    width: ${oConfig.dropDownWidth ? oConfig.dropDownWidth : "250px"};
-}
-${sID} BUTTON.open #main-container {
-    visibility: visible;
-    opacity: 1;
-    transition-delay: 0s;
-}
-${sID} #selectAll-btn, ${sID} #clearFilter-btn {
-    cursor: pointer;
-    color: #4178BE;
-    font-size: 14px;
-    background: none;
-    border: none;
-    padding: 0;
-    margin: 0 10px;
-    transition: color 0.3s ease;
-    white-space: nowrap;
-}
-${sID} #selectAll-btn:hover, ${sID} #clearFilter-btn:hover {
-    color: #2a4d78;
-}
-${sID} #container-header {
-    margin-top: 10px;
-    display: flex;
-    flex-direction: column;
-    padding: 0 20px;
-}
-${sID} #search-container {
-    position: relative;
-    display: flex;
-    align-items: center;
-    margin-bottom: 10px;
-}
-${sID} #search-input-container {
-    position: relative;
-    flex-grow: 1;
-    align-items: center;
-}
-${sID} #myInput {
-    flex-grow: 1;
-    line-height: 2;
-    border: 2px solid #595859;
-    border-radius: 4px;
-    padding-right: 40px;
-    width: 100%;
-}
-${sID} #search-icon {
-    position: absolute;
-    color: black;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    cursor: pointer;
-}
-${sID} #applyFilter-btn {
-    cursor: pointer;
-    color: #4178BE;
-    font-size: 14px;
-    padding: 6px 12px;
-    background-color: white;
-    border: 1px solid #4178BE;
-    border-radius: 4px;
-    margin-left: 10px;
-    white-space: nowrap;
-    transition: all 0.3s ease;
-    width: 150px;
-    text-align: center;
-}
-${sID} #applyFilter-btn:hover {
-    background-color: #4178BE;
-    color: white;
-}
-${sID} #container-body {
-    color: #595859;
-}
-${sID} BUTTON > svg {
-    height: 13px;
-    width: 13px;
-    display: inline-block;
-    margin-left: 5px;
-    transition-duration: 0.3s;
-    transition-timing-function: ease-out;
-    transition-property: transform;
-}
-${sID} BUTTON.open > svg {
-    transform: scaleY(-1);
-}
-${sID} #container-footer {
-    display: flex;
-    justify-content: flex-end;
-    margin: 5px 20px;
-    padding: 5px 0px;
-    align-items: center;
-}
-${sID} #filter-options {
-    border-radius: 3px;
-    padding: 4px 8px;
-    width: 100%;
-}
-</style>
-			`;
+        <style>
+        ${sID} BUTTON {
+            position: relative;
+            display: flex;
+            margin-left: 0;
+            padding-left: 18px;
+            padding-right: 11px;
+            padding-top: 6px;
+            padding-bottom: 6px;
+            background-color: ${oConfig.bgColor ? oConfig.bgColor : "white"};
+            color: ${oConfig.txtColor ? oConfig.txtColor : "black"};
+            border-color: ${oConfig.borderColor ? oConfig.borderColor : "black"};
+            font-weight: bold;
+            border-radius: ${oConfig.borderRadious ? oConfig.borderRadius : "2px"};
+        }
+        ${sID} BUTTON:hover {
+            background-color: ${oConfig.hoverBGColor ? oConfig.hoverBGColor : "lightgrey"};
+            color: ${oConfig.hoverTextColor ? oConfig.hoverTextColor : "white"};
+        }
+        ${sID} #main-container {
+            position: absolute;
+            z-index: 1;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0s, opacity 0.3s linear;
+            transition-delay: 0.5s, 0s;
+            top: calc(100% + 2px);
+            left: -2px;
+            text-align: left;
+            background-color: white;
+            box-shadow: 0px 0px 12px 0px grey;
+            font-weight: normal;
+            width: ${oConfig.dropDownWidth ? oConfig.dropDownWidth : "250px"};
+        }
+        ${sID} BUTTON.open #main-container {
+            visibility: visible;
+            opacity: 1;
+            transition-delay: 0s;
+        }
+        ${sID} #selectAll-btn, ${sID} #clearFilter-btn {
+            cursor: pointer;
+            color: #4178BE;
+            font-size: 14px;
+            background: none;
+            border: none;
+            padding: 0;
+            margin: 0 10px;
+            transition: color 0.3s ease;
+            white-space: nowrap;
+        }
+        ${sID} #selectAll-btn:hover, ${sID} #clearFilter-btn:hover {
+            color: #2a4d78;
+        }
+        ${sID} #container-header {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            padding: 0 20px;
+        }
+        ${sID} #search-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        ${sID} #search-input-container {
+            position: relative;
+            flex-grow: 1;
+            align-items: center;
+        }
+        ${sID} #myInput {
+            flex-grow: 1;
+            line-height: 2;
+            border: 2px solid #595859;
+            border-radius: 4px;
+            padding-right: 40px;
+            width: 100%;
+        }
+        ${sID} #search-icon {
+            position: absolute;
+            color: black;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+        }
+        ${sID} #applyFilter-btn {
+            cursor: pointer;
+            color: #4178BE;
+            font-size: 14px;
+            padding: 6px 12px;
+            background-color: white;
+            border: 1px solid #4178BE;
+            border-radius: 4px;
+            margin-left: 10px;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+            width: 150px;
+            text-align: center;
+        }
+        ${sID} #applyFilter-btn:hover {
+            background-color: #4178BE;
+            color: white;
+        }
+        ${sID} #container-body {
+            color: #595859;
+        }
+        ${sID} BUTTON > svg {
+            height: 13px;
+            width: 13px;
+            display: inline-block;
+            margin-left: 5px;
+            transition-duration: 0.3s;
+            transition-timing-function: ease-out;
+            transition-property: transform;
+        }
+        ${sID} BUTTON.open > svg {
+            transform: scaleY(-1);
+        }
+        ${sID} #container-footer {
+            display: flex;
+            justify-content: flex-end;
+            margin: 5px 20px;
+            padding: 5px 0px;
+            align-items: center;
+        }
+        ${sID} #filter-options {
+            border-radius: 3px;
+            padding: 4px 8px;
+            width: 100%;
+        }
+        </style>
+    `;
 
     // dataset row count
     var iRowCount = oDataStore.rowCount;
@@ -258,47 +242,46 @@ ${sID} #filter-options {
     }
 
     sHtml += `
-			  <button class="myBtn" tabindex="-1">
-            <div id="main-container">
-              <div id="container-header">
-                <div id="search-container">
-                  <div id="search-input-container">
-                    <input id="myInput" type="text" placeholder="Search.." autocomplete="off"/>
-                    <span id="search-icon">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
-                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
-                      </svg>
-                    </span>
-                  </div>
-                </div>
-                <select id="filter-options">
-                  <option value="startAny">Starts with any of these Keywords</option>
-                  <option value="containAny">Contains any of these Keywords</option>
-                  <option value="start">Starts With The Keyword</option>
-                  <option value="contain">Contains the Keyword</option>  
-                </select>
-              </div>
-              <div id="container-body" ${
-                iRowCount > iScrollIfMoreThan ? 'style="overflow-y:auto; height:' + iScrollIfMoreThan * 32 + 'px"' : ""
-              }>
-                ${checkboxValues}
-              </div>
-              <hr>
-              <div id="container-footer">
-                <span id="clearFilter-btn">Deselect All</span>
-                <span id="selectAll-btn">Select All</span>
-                ${!oConfig.AutoSubmit ? '<span id="applyFilter-btn">Apply</span>' : ""}
+      <button class="myBtn" tabindex="-1">
+        <div id="main-container">
+          <div id="container-header">
+            <div id="search-container">
+              <div id="search-input-container">
+                <input id="myInput" type="text" placeholder="Search.." autocomplete="off"/>
+                <span id="search-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                  </svg>
+                </span>
               </div>
             </div>
-            <span>${sLabel}</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16">
-              <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
-            </svg>
-          </button>
-		  `;
+            <select id="filter-options">
+              <option value="startAny">Starts with any of these Keywords</option>
+              <option value="containAny">Contains any of these Keywords</option>
+              <option value="start">Starts With The Keyword</option>
+              <option value="contain">Contains the Keyword</option>  
+            </select>
+          </div>
+          <div id="container-body" ${
+            iRowCount > iScrollIfMoreThan ? 'style="overflow-y:auto; height:' + iScrollIfMoreThan * 32 + 'px"' : ""
+          }>
+            ${checkboxValues}
+          </div>
+          <hr>
+          <div id="container-footer">
+            <span id="clearFilter-btn">Deselect All</span>
+            <span id="selectAll-btn">Select All</span>
+            ${!oConfig.AutoSubmit ? '<span id="applyFilter-btn">Apply</span>' : ""}
+          </div>
+        </div>
+        <span>${sLabel}</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+        </svg>
+      </button>
+    `;
 
     el.innerHTML = sHtml;
-    //el.onclick = this.f_onChange.bind( this, oControlHost, oConfig.AutoSubmit );
 
     // Add event listener to toggle 'open' class
     var myBtn = el.querySelector(".myBtn");
@@ -320,10 +303,10 @@ ${sID} #filter-options {
 
     // Modify the document-level click event listener
     document.addEventListener("click", function (e) {
-      if (!el.contains(e.target) && !e.target.closest("#myInput")) {
+      if (!this.isInputActive && !el.contains(e.target)) {
         myBtn.classList.remove("open");
       }
-    });
+    }.bind(this));
 
     // Prevent clicks inside the dropdown from closing it
     var mainContainer = el.querySelector("#main-container");
@@ -340,25 +323,30 @@ ${sID} #filter-options {
     var myInput = el.querySelector("#myInput");
     myInput.addEventListener("keydown", function (e) {
       e.stopPropagation();
-      // // Optionally prevent default action for spacebar
-      // if (e.key === " " || e.key === "Spacebar") {
-      //   e.preventDefault();
-      //   e.stopImmediatePropagation();
-      // }
-    });
-    myInput.addEventListener(
-      "keyup",
-      function (e) {
-        e.stopPropagation();
-        this.f_onSearch(oControlHost);
-      }.bind(this)
-    );
+      this.isInputActive = true;
+    }.bind(this));
+
+    myInput.addEventListener("keyup", function (e) {
+      e.stopPropagation();
+      this.f_onSearch(oControlHost);
+    }.bind(this));
+
     myInput.addEventListener("click", function (e) {
       e.stopPropagation();
-    });
+      this.isInputActive = true;
+      myBtn.classList.add("open");
+    }.bind(this));
+
     myInput.addEventListener("focus", function (e) {
       e.stopPropagation();
-    });
+      this.isInputActive = true;
+    }.bind(this));
+
+    myInput.addEventListener("blur", function (e) {
+      setTimeout(() => {
+        this.isInputActive = false;
+      }, 100);
+    }.bind(this));
 
     el.querySelector("#filter-options").onchange = this.f_onFilterTypeChange.bind(this, oControlHost);
 
@@ -385,7 +373,6 @@ ${sID} #filter-options {
     oControlHost.valueChanged();
     oControlHost.next();
   };
-
   MyStyledSelect.prototype.f_onChange = function (oControlHost, bAutoSubmit) {
     oControlHost.valueChanged();
     if (bAutoSubmit) {
@@ -393,7 +380,6 @@ ${sID} #filter-options {
     }
   };
 
-  // Modify f_onSelectAllFiltered to use this.m_oControlHost
   MyStyledSelect.prototype.f_onSelectAllFiltered = function () {
     var labels = this.m_oControlHost.container.querySelectorAll(".myBtn label");
     var checkedCount = 0;
@@ -428,8 +414,8 @@ ${sID} #filter-options {
       oControlHost.container.querySelector(
         "#search-icon"
       ).innerHTML = `<svg  xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16">
-			  <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
-			</svg>`;
+          <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+        </svg>`;
       oControlHost.container.querySelector("#search-icon").onclick = function (e) {
         e.stopPropagation(); // Prevent closing the dropdown
         oControlHost.container.querySelector("#myInput").value = "";
@@ -440,8 +426,8 @@ ${sID} #filter-options {
       oControlHost.container.querySelector(
         "#search-icon"
       ).innerHTML = `<svg  xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
-			  <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
-			</svg>`;
+          <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+        </svg>`;
     }
 
     this.applyFilter(oControlHost, filterText, filterType, label);
@@ -480,7 +466,7 @@ ${sID} #filter-options {
       labels[i].style.display = this.shouldDisplayItem(txtValue, filterText, filterType) ? "" : "none";
     }
   };
-  // Modify f_onClearFilter to prevent dropdown from closing
+
   MyStyledSelect.prototype.f_onClearFilter = function (oControlHost, e) {
     if (e) e.stopPropagation(); // Prevent the click event from closing the dropdown
     var nl = this.m_oControlHost.container.querySelectorAll("input");
