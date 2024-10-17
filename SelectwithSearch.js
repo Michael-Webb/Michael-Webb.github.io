@@ -102,7 +102,7 @@ ${sID} #main-container {
     font-weight: normal;
     width: ${oConfig.dropDownWidth ? oConfig.dropDownWidth : "250px"};
 }
-${sID} BUTTON.open #main-container { /* Added this line */
+${sID} BUTTON.open #main-container {
     visibility: visible;
     opacity: 1;
     transition-delay: 0s;
@@ -184,7 +184,7 @@ ${sID} BUTTON > svg {
     transition-timing-function: ease-out;
     transition-property: transform;
 }
-${sID} BUTTON.open > svg { /* Modified this line */
+${sID} BUTTON.open > svg {
     transform: scaleY(-1);
 }
 ${sID} #container-footer {
@@ -259,42 +259,42 @@ ${sID} #filter-options {
 
     sHtml += `
 			  <button class="myBtn">
-          <div id="main-container">
-            <div id="container-header">
-              <div id="search-container">
-                <div id="search-input-container">
-                  <input id="myInput" type="text" placeholder="Search.." autocomplete="off"/>
-                  <span id="search-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
-                      <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
-                    </svg>
-                  </span>
+            <div id="main-container">
+              <div id="container-header">
+                <div id="search-container">
+                  <div id="search-input-container">
+                    <input id="myInput" type="text" placeholder="Search.." autocomplete="off"/>
+                    <span id="search-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                      </svg>
+                    </span>
+                  </div>
                 </div>
+                <select id="filter-options">
+                  <option value="startAny">Starts with any of these Keywords</option>
+                  <option value="containAny">Contains any of these Keywords</option>
+                  <option value="start">Starts With The Keyword</option>
+                  <option value="contain">Contains the Keyword</option>  
+                </select>
               </div>
-              <select id="filter-options">
-                <option value="startAny">Starts with any of these Keywords</option>
-                <option value="containAny">Contains any of these Keywords</option>
-                <option value="start">Starts With The Keyword</option>
-                <option value="contain">Contains the Keyword</option>  
-              </select>
+              <div id="container-body" ${
+                iRowCount > iScrollIfMoreThan ? 'style="overflow-y:auto; height:' + iScrollIfMoreThan * 32 + 'px"' : ""
+              }>
+                ${checkboxValues}
+              </div>
+              <hr>
+              <div id="container-footer">
+                <span id="clearFilter-btn">Deselect All</span>
+                <span id="selectAll-btn">Select All</span>
+                ${!oConfig.AutoSubmit ? '<span id="applyFilter-btn">Apply</span>' : ""}
+              </div>
             </div>
-            <div id="container-body" ${
-              iRowCount > iScrollIfMoreThan ? 'style="overflow-y:auto; height:' + iScrollIfMoreThan * 32 + 'px"' : ""
-            }>
-              ${checkboxValues}
-            </div>
-            <hr>
-            <div id="container-footer">
-              <span id="selectAll-btn">Select All</span>
-              <span id="clearFilter-btn">Deselect All</span>
-              ${!oConfig.AutoSubmit ? '<span id="applyFilter-btn">Apply</span>' : ""}
-            </div>
-          </div>
-          <span>${sLabel}</span>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16">
-            <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
-          </svg>
-        </button>
+            <span>${sLabel}</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16">
+              <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+            </svg>
+          </button>
 		  `;
 
     el.innerHTML = sHtml;
@@ -303,8 +303,13 @@ ${sID} #filter-options {
     // Add event listener to toggle 'open' class
     var myBtn = el.querySelector('.myBtn');
     myBtn.addEventListener('click', function(e) {
-        e.stopPropagation(); // Prevent the click event from bubbling up
-        myBtn.classList.toggle('open');
+        // Only toggle the dropdown when clicking on the button itself, not on its children
+        if (e.target === myBtn || e.target === myBtn.querySelector('span') || e.target === myBtn.querySelector('svg')) {
+            e.stopPropagation(); // Prevent the click event from bubbling up
+            myBtn.classList.toggle('open');
+        } else {
+            e.stopPropagation();
+        }
     });
 
     // Close dropdown when clicking outside
@@ -314,26 +319,47 @@ ${sID} #filter-options {
         }
     });
 
+    // Prevent clicks inside the dropdown from closing it
+    var mainContainer = el.querySelector('#main-container');
+    mainContainer.addEventListener('click', function(e) {
+        e.stopPropagation();
+    });
+
     var labels = el.querySelectorAll("label");
     for (let x = 0; x < labels.length; x++) {
       labels[x].onclick = this.f_onChange.bind(this, oControlHost, oConfig.AutoSubmit);
     }
 
     el.querySelector("#myInput").onkeyup = this.f_onSearch.bind(this, oControlHost);
+
+    // Prevent events in the input from closing the dropdown
+    el.querySelector("#myInput").addEventListener('click', function(e) {
+        e.stopPropagation();
+    });
+    el.querySelector("#myInput").addEventListener('keydown', function(e) {
+        e.stopPropagation();
+    });
+    el.querySelector("#myInput").addEventListener('keyup', function(e) {
+        e.stopPropagation();
+    });
+    el.querySelector("#myInput").addEventListener('focus', function(e) {
+        e.stopPropagation();
+    });
+
     el.querySelector("#filter-options").onchange = this.f_onFilterTypeChange.bind(this, oControlHost);
+
     el.querySelector("#clearFilter-btn").onclick = function (e) {
       e.stopPropagation();
       this.f_onClearFilter(oControlHost, e);
     }.bind(this);
-    
+
     if (!oConfig.AutoSubmit) {
       el.querySelector("#applyFilter-btn").onclick = this.f_onApplyFilter.bind(this, oControlHost);
     }
     var selectAllBtn = el.querySelector("#selectAll-btn");
     if (selectAllBtn) {
-      selectAllBtn.onclick = function () {
+      selectAllBtn.onclick = function (e) {
         e.stopPropagation(); // Prevent the click event from closing the dropdown
-        console.log("Select All button clicked");
         this.f_onSelectAllFiltered(oControlHost);
       }.bind(this);
     } else {
