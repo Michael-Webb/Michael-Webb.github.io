@@ -340,15 +340,19 @@ ${sID} #filter-options {
     var myInput = el.querySelector("#myInput");
     myInput.addEventListener("keydown", function (e) {
       e.stopPropagation();
-      // Optionally prevent default action for spacebar
-      if (e.key === " " || e.key === "Spacebar") {
-        e.preventDefault();
-        e.stopImmediatePropagation();
-      }
+      // // Optionally prevent default action for spacebar
+      // if (e.key === " " || e.key === "Spacebar") {
+      //   e.preventDefault();
+      //   e.stopImmediatePropagation();
+      // }
     });
-    myInput.addEventListener("keyup", function (e) {
-      e.stopPropagation();
-    });
+    myInput.addEventListener(
+      "keyup",
+      function (e) {
+        e.stopPropagation();
+        this.f_onSearch(oControlHost);
+      }.bind(this)
+    );
     myInput.addEventListener("click", function (e) {
       e.stopPropagation();
     });
