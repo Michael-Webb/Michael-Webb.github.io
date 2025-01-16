@@ -24,6 +24,13 @@ define(function() {
             const showGroups = config["Show Groups"] !== undefined ? config["Show Groups"] : true; // Default to true
 
             const selectElement = document.createElement('select');
+            selectElement.addEventListener('change', (event) => {
+                const selectedOption = event.target.options[event.target.selectedIndex];
+                const selectedValue = selectedOption.value;
+                const selectedDisplayValue = selectedOption.textContent;
+                console.log("Selected Value:", selectedValue);
+                console.log("Selected Display Value:", selectedDisplayValue);
+            });
 
             this._groupedData.forEach(groupInfo => {
                 if (showGroups) {
@@ -69,13 +76,13 @@ define(function() {
                 return;
             }
 
-            const valueColumnIndex = config["Value"] - 1;
-            const displayColumnIndex = config["Display"] - 1;
+            const valueColumnIndex = config["Use Value"] - 1; // Changed key
+            const displayColumnIndex = config["Display Value"] - 1; // Changed key
             const groupColumnIndexConfig = config["Group"];
             const groupColumnIndex = !isNaN(groupColumnIndexConfig) ? parseInt(groupColumnIndexConfig) - 1 : undefined;
 
             if (isNaN(valueColumnIndex) || isNaN(displayColumnIndex)) {
-                console.warn("MyDataLoggingControl - Invalid column configuration. Ensure 'Value Column' and 'Display Column' are numeric in the configuration.");
+                console.warn("MyDataLoggingControl - Invalid column configuration. Ensure 'Use Value' and 'Display Value' are numeric in the configuration.");
                 this._groupedData = null;
                 this.draw(oControlHost);
                 return;
@@ -84,7 +91,7 @@ define(function() {
             const columnCount = oDataStore.columnCount;
             if (valueColumnIndex < 0 || valueColumnIndex >= columnCount ||
                 displayColumnIndex < 0 || displayColumnIndex >= columnCount) {
-                console.warn("MyDataLoggingControl - Configured 'Value Column' or 'Display Column' index is out of bounds for the Data Store.");
+                console.warn("MyDataLoggingControl - Configured 'Use Value' or 'Display Value' index is out of bounds for the Data Store.");
                 this._groupedData = null;
                 this.draw(oControlHost);
                 return;
