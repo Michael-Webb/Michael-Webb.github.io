@@ -5,102 +5,107 @@ define(function() {
         initialize(oControlHost, fnDoneInitializing) {
             console.log("MyDataLoggingControl - Initializing");
             this._container = oControlHost.container;
-            this._selectedItems = []; // Initialize an array to store selected items
+            this._selectedItems = [];
+            this._isOpen = false; // Track dropdown state
             fnDoneInitializing();
         }
 
         draw(oControlHost) {
             console.log("MyDataLoggingControl - Drawing");
-            // Clear any existing content
             this._container.innerHTML = '';
-            this._container.classList.add('custom-dropdown-container'); // Add container class for CSS
+            this._container.classList.add('custom-dropdown-container');
+
+            const config = oControlHost.configuration;
+            this._labelText = config["Label Text"] || "Select Options"; // Default label
+
+            const dropdownHeader = document.createElement('div');
+            dropdownHeader.classList.add('dropdown-header');
+            dropdownHeader.textContent = this._selectedItems.length > 0 ? `${this._selectedItems.length} options selected` : this._labelText;
+            dropdownHeader.addEventListener('click', this.toggleDropdown.bind(this));
+            this._container.appendChild(dropdownHeader);
+
+            const dropdownListContainer = document.createElement('div');
+            dropdownListContainer.classList.add('dropdown-list-container');
+            dropdownListContainer.style.display = this._isOpen ? 'block' : 'none';
 
             if (!this._groupedData) {
                 const messageDiv = document.createElement('div');
                 messageDiv.textContent = 'No data available to display.';
-                this._container.appendChild(messageDiv);
-                return;
+                dropdownListContainer.appendChild(messageDiv);
+            } else {
+                const showGroups = config["Show Groups"] !== undefined ? config["Show Groups"] : true;
+                const multiSelectDropdown = document.createElement('div');
+                multiSelectDropdown.classList.add('multi-select-dropdown');
+
+                this._groupedData.forEach(groupInfo => {
+                    if (showGroups) {
+                        const groupDiv = document.createElement('div');
+                        groupDiv.classList.add('group');
+                        const groupCheckboxDiv = document.createElement('div');
+                        groupCheckboxDiv.classList.add('group-checkbox-item');
+                        const groupCheckboxId = oControlHost.generateUniqueID();
+                        const groupCheckbox = document.createElement('input');
+                        groupCheckbox.type = 'checkbox';
+                        groupCheckbox.id = groupCheckboxId;
+                        groupCheckbox.dataset.groupName = groupInfo.name;
+                        groupCheckbox.addEventListener('change', this.handleGroupCheckboxChange.bind(this, groupInfo.name));
+                        const groupLabel = document.createElement('label');
+                        groupLabel.classList.add('group-label');
+                        groupLabel.setAttribute('for', groupCheckboxId);
+                        groupLabel.textContent = groupInfo.name;
+                        groupCheckboxDiv.appendChild(groupCheckbox);
+                        groupCheckboxDiv.appendChild(groupLabel);
+                        groupDiv.appendChild(groupCheckboxDiv);
+
+                        groupInfo.items.forEach(item => {
+                            const checkboxDiv = document.createElement('div');
+                            checkboxDiv.classList.add('checkbox-item');
+                            const checkboxId = oControlHost.generateUniqueID();
+                            const checkbox = document.createElement('input');
+                            checkbox.type = 'checkbox';
+                            checkbox.value = item.value;
+                            checkbox.id = checkboxId;
+                            checkbox.dataset.group = groupInfo.name;
+                            checkbox.dataset.displayValue = item.displayValue;
+                            checkbox.addEventListener('change', this.handleCheckboxChange.bind(this, item.value, item.displayValue, groupInfo.name));
+                            const label = document.createElement('label');
+                            label.setAttribute('for', checkboxId);
+                            label.textContent = item.displayValue;
+                            checkboxDiv.appendChild(checkbox);
+                            checkboxDiv.appendChild(label);
+                            groupDiv.appendChild(checkboxDiv);
+                        });
+                        multiSelectDropdown.appendChild(groupDiv);
+                    } else {
+                        groupInfo.items.forEach(item => {
+                            const checkboxDiv = document.createElement('div');
+                            checkboxDiv.classList.add('checkbox-item', 'no-group');
+                            const checkboxId = oControlHost.generateUniqueID();
+                            const checkbox = document.createElement('input');
+                            checkbox.type = 'checkbox';
+                            checkbox.value = item.value;
+                            checkbox.id = checkboxId;
+                            checkbox.dataset.group = groupInfo.name;
+                            checkbox.dataset.displayValue = item.displayValue;
+                            checkbox.addEventListener('change', this.handleCheckboxChange.bind(this, item.value, item.displayValue, groupInfo.name));
+                            const label = document.createElement('label');
+                            label.setAttribute('for', checkboxId);
+                            label.textContent = item.displayValue;
+                            checkboxDiv.appendChild(checkbox);
+                            checkboxDiv.appendChild(label);
+                            multiSelectDropdown.appendChild(checkboxDiv);
+                        });
+                    }
+                });
+                dropdownListContainer.appendChild(multiSelectDropdown);
             }
 
-            const config = oControlHost.configuration;
-            const showGroups = config["Show Groups"] !== undefined ? config["Show Groups"] : true; // Default to true
-
-            const dropdownContainer = document.createElement('div'); // Container for the multi-select
-            dropdownContainer.classList.add('multi-select-dropdown');
-
-            this._groupedData.forEach(groupInfo => {
-                if (showGroups) {
-                    const groupDiv = document.createElement('div');
-                    groupDiv.classList.add('group');
-
-                    // Group Level Checkbox
-                    const groupCheckboxDiv = document.createElement('div');
-                    groupCheckboxDiv.classList.add('group-checkbox-item');
-                    const groupCheckboxId = oControlHost.generateUniqueID();
-                    const groupCheckbox = document.createElement('input');
-                    groupCheckbox.type = 'checkbox';
-                    groupCheckbox.id = groupCheckboxId;
-                    groupCheckbox.dataset.groupName = groupInfo.name;
-                    groupCheckbox.addEventListener('change', this.handleGroupCheckboxChange.bind(this, groupInfo.name));
-                    const groupLabel = document.createElement('label');
-                    groupLabel.classList.add('group-label');
-                    groupLabel.setAttribute('for', groupCheckboxId);
-                    groupLabel.textContent = groupInfo.name;
-                    groupCheckboxDiv.appendChild(groupCheckbox);
-                    groupCheckboxDiv.appendChild(groupLabel);
-                    groupDiv.appendChild(groupCheckboxDiv);
-
-                    groupInfo.items.forEach(item => {
-                        const checkboxDiv = document.createElement('div');
-                        checkboxDiv.classList.add('checkbox-item');
-                        const checkboxId = oControlHost.generateUniqueID();
-                        const checkbox = document.createElement('input');
-                        checkbox.type = 'checkbox';
-                        checkbox.value = item.value;
-                        checkbox.id = checkboxId;
-                        checkbox.dataset.group = groupInfo.name;
-                        checkbox.dataset.displayValue = item.displayValue;
-                        checkbox.addEventListener('change', this.handleCheckboxChange.bind(this, item.value, item.displayValue, groupInfo.name));
-
-                        const label = document.createElement('label');
-                        label.setAttribute('for', checkboxId);
-                        label.textContent = item.displayValue;
-
-                        checkboxDiv.appendChild(checkbox);
-                        checkboxDiv.appendChild(label);
-                        groupDiv.appendChild(checkboxDiv);
-                    });
-                    dropdownContainer.appendChild(groupDiv);
-                } else {
-                    groupInfo.items.forEach(item => {
-                        const checkboxDiv = document.createElement('div');
-                        checkboxDiv.classList.add('checkbox-item', 'no-group'); // Add 'no-group' class
-                        const checkboxId = oControlHost.generateUniqueID();
-                        const checkbox = document.createElement('input');
-                        checkbox.type = 'checkbox';
-                        checkbox.value = item.value;
-                        checkbox.id = checkboxId;
-                        checkbox.dataset.group = groupInfo.name;
-                        checkbox.dataset.displayValue = item.displayValue;
-                        checkbox.addEventListener('change', this.handleCheckboxChange.bind(this, item.value, item.displayValue, groupInfo.name));
-
-                        const label = document.createElement('label');
-                        label.setAttribute('for', checkboxId);
-                        label.textContent = item.displayValue;
-
-                        checkboxDiv.appendChild(checkbox);
-                        checkboxDiv.appendChild(label);
-                        dropdownContainer.appendChild(checkboxDiv);
-                    });
-                }
-            });
-
-            this._container.appendChild(dropdownContainer);
+            this._container.appendChild(dropdownListContainer);
         }
 
         setData(oControlHost, oDataStore) {
             console.log("MyDataLoggingControl - Received Data");
-
+            // ... (same as before)
             if (!oDataStore) {
                 console.warn("MyDataLoggingControl - No data store provided.");
                 this._groupedData = null;
@@ -173,6 +178,11 @@ define(function() {
             this.draw(oControlHost); // Redraw the control to display the dropdown
         }
 
+        toggleDropdown() {
+            this._isOpen = !this._isOpen;
+            this.draw(this._oControlHost); // Re-render to show/hide the list
+        }
+
         handleGroupCheckboxChange(groupName, event) {
             const isChecked = event.target.checked;
             const groupDiv = event.target.closest('.group');
@@ -203,9 +213,10 @@ define(function() {
                 const allSubCheckboxesChecked = Array.from(checkboxes).every(cb => cb.checked);
                 groupCheckbox.checked = allSubCheckboxesChecked;
             }
-
-            if (this._selectedItems.length >= 0) { // Changed to >= 0 to log on any change
-                console.log("Selected Items:", this._selectedItems);
+            // Update the dropdown header text
+            const dropdownHeader = this._container.querySelector('.dropdown-header');
+            if (dropdownHeader) {
+                dropdownHeader.textContent = this._selectedItems.length > 0 ? `${this._selectedItems.length} options selected` : this._labelText;
             }
         }
 
