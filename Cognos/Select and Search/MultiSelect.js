@@ -19,6 +19,7 @@ define(function() {
             const config = oControlHost.configuration;
             this._labelText = config["Label Text"] || "Select Options";
 
+            // Apply container width if configured
             if (config["Container Width"]) {
                 this._container.style.width = config["Container Width"];
             }
@@ -29,14 +30,17 @@ define(function() {
                 ? `${this._selectedItems.length} options selected` 
                 : this._labelText;
             
+            // Apply dropdown width and height if configured
             if (config["Dropdown Width"]) {
                 dropdownHeader.style.width = config["Dropdown Width"];
+            }
+            if (config["Dropdown Height"]) {
+                dropdownHeader.style.height = config["Dropdown Height"];
             }
 
             // Create and append the chevron element
             const chevron = document.createElement('span');
             chevron.classList.add('chevron');
-            // Use Unicode characters for up/down arrows based on the state
             chevron.innerHTML = this._isOpen ? '&#x25B2;' : '&#x25BC;';
             dropdownHeader.appendChild(chevron);
 
@@ -47,11 +51,15 @@ define(function() {
             dropdownListContainer.classList.add('dropdown-list-container');
             dropdownListContainer.style.display = this._isOpen ? 'block' : 'none';
 
+            // Apply list container width and height if configured
             if (config["List Container Width"]) {
                 dropdownListContainer.style.width = config["List Container Width"];
-                // If using a custom width, adjust positioning if needed:
                 dropdownListContainer.style.left = 'auto';
                 dropdownListContainer.style.right = 'auto';
+            }
+            if (config["List Container Height"]) {
+                dropdownListContainer.style.height = config["List Container Height"];
+                dropdownListContainer.style.overflowY = 'auto'; 
             }
 
             if (!this._groupedData) {
@@ -238,11 +246,12 @@ define(function() {
 
             const dropdownHeader = this._container.querySelector('.dropdown-header');
             if (dropdownHeader) {
+                // Only update the text content, preserving the chevron element
+                const chevron = dropdownHeader.querySelector('.chevron');
                 dropdownHeader.firstChild.textContent = this._selectedItems.length > 0 
                     ? `${this._selectedItems.length} options selected` 
                     : this._labelText;
                 // Update chevron orientation
-                const chevron = dropdownHeader.querySelector('.chevron');
                 if (chevron) {
                     chevron.innerHTML = this._isOpen ? '&#x25B2;' : '&#x25BC;';
                 }
