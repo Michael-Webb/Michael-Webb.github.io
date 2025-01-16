@@ -30,8 +30,6 @@ define(function() {
             const displayColumnIndex = config["Display"] - 1;
             const sortConfigString = config["Sort"];
             const groupColumnIndex = config["Group"] - 1;
-            const sortNumeric = config["Sort Numeric"] ?? false; // Keep the config option
-            const sortOrder = config["Sort Order"]?.toLowerCase() ?? "ascending"; // Keep the config option
 
             if (isNaN(valueColumnIndex) || isNaN(displayColumnIndex) || isNaN(groupColumnIndex)) {
                 console.warn("MyDataLoggingControl - Invalid column configuration. Ensure 'Value Column', 'Display Column', and 'Group Column' are numeric in the configuration.");
@@ -68,7 +66,8 @@ define(function() {
                     const parts = instruction.split(':');
                     return {
                         columnIndex: parseInt(parts[0]) - 1, // Convert to 0-based index
-                        sortOrder: parts[1]?.toLowerCase() === 'desc' ? 'desc' : 'asc'
+                        sortOrder: parts[1]?.toLowerCase() === 'desc' ? 'desc' : 'asc',
+                        sortType: parts[2]?.toLowerCase() === 'numeric' ? 'numeric' : 'alpha' // Default to alpha
                     };
                 });
 
@@ -83,15 +82,39 @@ define(function() {
                     for (const sortInfo of sortInstructions) {
                         const columnIndex = sortInfo.columnIndex;
                         const sortOrder = sortInfo.sortOrder;
+                        const sortType = sortInfo.sortType;
 
                         const valueA = oDataStore.getCellValue(a.originalRowIndex, columnIndex);
                         const valueB = oDataStore.getCellValue(b.originalRowIndex, columnIndex);
 
-                        if (valueA < valueB) {
-                            return sortOrder === 'asc' ? -1 : 1;
-                        }
-                        if (valueA > valueB) {
-                            return sortOrder === 'asc' ? 1 : -1;
+                        if (sortType === 'numeric') {
+                            const numA = Number(valueA);
+                            const numB = Number(valueB);
+
+                            if (!isNaN(numA) && !isNaN(numB)) {
+                                if (numA < numB) {
+                                    return sortOrder === 'asc' ? -1 : 1;
+                                }
+                                if (numA > numB) {
+                                    return sortOrder === 'asc' ? 1 : -1;
+                                }
+                            } else {
+                                // Handle cases where conversion to number fails, default to string comparison or handle as needed
+                                console.warn(`MyDataLoggingControl - Non-numeric values encountered during numeric sort in column ${columnIndex + 1}. Falling back to string comparison.`);
+                                if (valueA < valueB) {
+                                    return sortOrder === 'asc' ? -1 : 1;
+                                }
+                                if (valueA > valueB) {
+                                    return sortOrder === 'asc' ? 1 : -1;
+                                }
+                            }
+                        } else { // Default to alphabetical sort
+                            if (valueA < valueB) {
+                                return sortOrder === 'asc' ? -1 : 1;
+                            }
+                            if (valueA > valueB) {
+                                return sortOrder === 'asc' ? 1 : -1;
+                            }
                         }
                     }
                     return 0; // Values are equal, move to the next sort instruction or keep original order
