@@ -19,7 +19,7 @@ define(function() {
                 console.warn("MyDataLoggingControl - No data store provided.");
                 return;
             }
-            console.log("Datastore Logging",oDataStore)
+            console.log("Data Store Object",oDataStore)
 
             const config = oControlHost.configuration;
             if (!config) {
@@ -27,10 +27,12 @@ define(function() {
                 return;
             }
 
-            const valueColumnIndex = config["Value"] - 1;
-            const displayColumnIndex = config["Display"] - 1;
-            const sortColumnIndex = config["Sort"] - 1;
-            const groupColumnIndex = config["Group"] - 1;
+            const valueColumnIndex = config["Value Column"] - 1;
+            const displayColumnIndex = config["Display Column"] - 1;
+            const sortColumnIndex = config["Sort Column"] - 1;
+            const groupColumnIndex = config["Group Column"] - 1;
+            const sortNumeric = config["Sort Numeric"];
+            const sortOrder = config["Sort Order"];
 
             if (isNaN(valueColumnIndex) || isNaN(displayColumnIndex) || isNaN(sortColumnIndex) || isNaN(groupColumnIndex)) {
                 console.warn("MyDataLoggingControl - Invalid column configuration. Ensure 'Value Column', 'Display Column', 'Sort Column', and 'Group Column' are numeric in the configuration.");
@@ -60,6 +62,33 @@ define(function() {
                     groupingValue: oDataStore.getCellValue(i, groupColumnIndex)
                 };
                 dataStructure.push(rowData);
+            }
+
+            // Sort the data structure
+            if (sortColumnIndex >= 0) {
+                const sortKey = "sortValue"; // The property in the rowData to sort by
+                const isNumericSort = sortNumeric === true;
+                const isDescending = sortOrder === "Descending";
+
+                dataStructure.sort((a, b) => {
+                    const valueA = a[sortKey];
+                    const valueB = b[sortKey];
+                    let comparisonResult = 0;
+
+                    if (isNumericSort) {
+                        const numA = Number(valueA);
+                        const numB = Number(valueB);
+                        if (!isNaN(numA) && !isNaN(numB)) {
+                            comparisonResult = numA - numB;
+                        } else {
+                            comparisonResult = String(valueA).localeCompare(String(valueB));
+                        }
+                    } else {
+                        comparisonResult = String(valueA).localeCompare(String(valueB));
+                    }
+
+                    return isDescending ? comparisonResult * -1 : comparisonResult;
+                });
             }
 
             console.log(dataStructure);
