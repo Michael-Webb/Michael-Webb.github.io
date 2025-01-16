@@ -42,13 +42,14 @@ define(function() {
                         const checkbox = document.createElement('input');
                         checkbox.type = 'checkbox';
                         checkbox.value = item.value;
-                        checkbox.id = `checkbox-${item.value}-${groupInfo.name.replace(/\s/g, '')}`; // Unique ID
+                        const checkboxId = oControlHost.generateUniqueID(); // Generate unique ID
+                        checkbox.id = checkboxId;
                         checkbox.dataset.group = groupInfo.name;
                         checkbox.dataset.displayValue = item.displayValue;
                         checkbox.addEventListener('change', this.handleCheckboxChange.bind(this, item.value, item.displayValue, groupInfo.name));
 
                         const label = document.createElement('label');
-                        label.setAttribute('for', `checkbox-${item.value}-${groupInfo.name.replace(/\s/g, '')}`);
+                        label.setAttribute('for', checkboxId);
                         label.textContent = item.displayValue;
 
                         checkboxDiv.appendChild(checkbox);
@@ -63,13 +64,14 @@ define(function() {
                         const checkbox = document.createElement('input');
                         checkbox.type = 'checkbox';
                         checkbox.value = item.value;
-                        checkbox.id = `checkbox-${item.value}-ungrouped`; // Unique ID for ungrouped
+                        const checkboxId = oControlHost.generateUniqueID(); // Generate unique ID
+                        checkbox.id = checkboxId;
                         checkbox.dataset.group = groupInfo.name;
                         checkbox.dataset.displayValue = item.displayValue;
                         checkbox.addEventListener('change', this.handleCheckboxChange.bind(this, item.value, item.displayValue, groupInfo.name));
 
                         const label = document.createElement('label');
-                        label.setAttribute('for', `checkbox-${item.value}-ungrouped`);
+                        label.setAttribute('for', checkboxId);
                         label.textContent = item.displayValue;
 
                         checkboxDiv.appendChild(checkbox);
@@ -159,12 +161,12 @@ define(function() {
 
         handleCheckboxChange(value, displayValue, groupName, event) {
             const isChecked = event.target.checked;
-            const itemData = { value: value, displayValue: displayValue, group: groupName };
+            const itemData = { use: value, display: displayValue, group: groupName };
 
             if (isChecked) {
                 this._selectedItems.push(itemData);
             } else {
-                this._selectedItems = this._selectedItems.filter(item => item.value !== value);
+                this._selectedItems = this._selectedItems.filter(item => item.use !== value);
             }
 
             if (this._selectedItems.length > 1) {
