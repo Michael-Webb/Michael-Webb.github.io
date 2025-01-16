@@ -4,10 +4,10 @@ define(function() {
     class MyDataLoggingControl {
         initialize(oControlHost, fnDoneInitializing) {
             console.log("MyDataLoggingControl - Initializing");
-            this._oControlHost = oControlHost;  // Store the host reference for later use
+            this._oControlHost = oControlHost;  
             this._container = oControlHost.container;
             this._selectedItems = [];
-            this._isOpen = false; // Track dropdown state
+            this._isOpen = false; 
             fnDoneInitializing();
         }
 
@@ -17,9 +17,8 @@ define(function() {
             this._container.classList.add('custom-dropdown-container');
 
             const config = oControlHost.configuration;
-            this._labelText = config["Label Text"] || "Select Options"; // Default label
+            this._labelText = config["Label Text"] || "Select Options";
 
-            // Optionally set container width if configured
             if (config["Container Width"]) {
                 this._container.style.width = config["Container Width"];
             }
@@ -30,10 +29,16 @@ define(function() {
                 ? `${this._selectedItems.length} options selected` 
                 : this._labelText;
             
-            // Apply Dropdown Width if configured
             if (config["Dropdown Width"]) {
                 dropdownHeader.style.width = config["Dropdown Width"];
             }
+
+            // Create and append the chevron element
+            const chevron = document.createElement('span');
+            chevron.classList.add('chevron');
+            // Use Unicode characters for up/down arrows based on the state
+            chevron.innerHTML = this._isOpen ? '&#x25B2;' : '&#x25BC;';
+            dropdownHeader.appendChild(chevron);
 
             dropdownHeader.addEventListener('click', this.toggleDropdown.bind(this));
             this._container.appendChild(dropdownHeader);
@@ -42,9 +47,11 @@ define(function() {
             dropdownListContainer.classList.add('dropdown-list-container');
             dropdownListContainer.style.display = this._isOpen ? 'block' : 'none';
 
-            // Apply List Container Width if configured
             if (config["List Container Width"]) {
                 dropdownListContainer.style.width = config["List Container Width"];
+                // If using a custom width, adjust positioning if needed:
+                dropdownListContainer.style.left = 'auto';
+                dropdownListContainer.style.right = 'auto';
             }
 
             if (!this._groupedData) {
@@ -195,7 +202,7 @@ define(function() {
 
         toggleDropdown() {
             this._isOpen = !this._isOpen;
-            this.draw(this._oControlHost); // Use stored host reference
+            this.draw(this._oControlHost);
         }
 
         handleGroupCheckboxChange(groupName, event) {
@@ -231,9 +238,14 @@ define(function() {
 
             const dropdownHeader = this._container.querySelector('.dropdown-header');
             if (dropdownHeader) {
-                dropdownHeader.textContent = this._selectedItems.length > 0 
+                dropdownHeader.firstChild.textContent = this._selectedItems.length > 0 
                     ? `${this._selectedItems.length} options selected` 
                     : this._labelText;
+                // Update chevron orientation
+                const chevron = dropdownHeader.querySelector('.chevron');
+                if (chevron) {
+                    chevron.innerHTML = this._isOpen ? '&#x25B2;' : '&#x25BC;';
+                }
             }
         }
 
