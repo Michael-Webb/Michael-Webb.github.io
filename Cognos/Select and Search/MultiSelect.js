@@ -299,18 +299,18 @@ define(function() {
 
         applyFilter() {
             if (!this._isOpen) return;
-
+        
             const dropdownListContainer = this._container.querySelector('.dropdown-list-container');
             if (!dropdownListContainer) return;
-
+        
             const searchTerms = this._currentFilter.terms;
             const searchType = this._currentFilter.type || 'contains';
-
+        
             const checkboxItems = dropdownListContainer.querySelectorAll('.checkbox-item');
             checkboxItems.forEach(item => {
                 const label = item.querySelector('label');
                 const displayValue = label ? label.textContent.toLowerCase() : '';
-
+        
                 let isVisible = true;
                 if (searchTerms.length > 0) {
                     isVisible = searchTerms.some(term => {
@@ -321,24 +321,25 @@ define(function() {
                         }
                     });
                 }
-
+        
                 if (isVisible) {
                     item.classList.remove('hidden');
                 } else {
                     item.classList.add('hidden');
-                    const checkbox = item.querySelector('input[type="checkbox"]');
-                    if (checkbox && checkbox.checked) {
-                        checkbox.checked = false;
-                        this.handleCheckboxChange(
-                            checkbox.value, 
-                            checkbox.dataset.displayValue, 
-                            checkbox.dataset.group, 
-                            { target: checkbox }
-                        );
-                    }
+                    // Removed logic that deselects hidden items to preserve selections
+                    // const checkbox = item.querySelector('input[type="checkbox"]');
+                    // if (checkbox && checkbox.checked) {
+                    //     checkbox.checked = false;
+                    //     this.handleCheckboxChange(
+                    //         checkbox.value, 
+                    //         checkbox.dataset.displayValue, 
+                    //         checkbox.dataset.group, 
+                    //         { target: checkbox }
+                    //     );
+                    // }
                 }
             });
-
+        
             const groups = dropdownListContainer.querySelectorAll('.group');
             groups.forEach(group => {
                 const visibleSubItems = group.querySelectorAll('.checkbox-item:not(.hidden)');
@@ -348,9 +349,10 @@ define(function() {
                     group.classList.remove('hidden');
                 }
             });
-
+        
             this.updateGroupCheckboxStates();
         }
+        
 
         updateGroupCheckboxStates() {
             const dropdownListContainer = this._container.querySelector('.dropdown-list-container');
