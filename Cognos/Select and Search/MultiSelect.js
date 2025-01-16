@@ -20,30 +20,49 @@ define(function() {
                 return;
             }
 
-            const rowCount = oDataStore.rowCount;
-            const columnCount = oDataStore.columnCount;
-
-            if (columnCount < 4) {
-                console.warn(`MyDataLoggingControl - Data store has less than 4 columns (${columnCount}). Cannot log requested columns.`);
+            const config = oControlHost.configuration;
+            if (!config) {
+                console.warn("MyDataLoggingControl - No configuration provided.");
                 return;
             }
 
-            console.log("MyDataLoggingControl - Logging data structure from Data Store:");
+            const valueColumnIndex = config["Value Column"] - 1;
+            const displayColumnIndex = config["Display Column"] - 1;
+            const sortColumnIndex = config["Sort Column"] - 1;
+            const groupColumnIndex = config["Group Column"] - 1;
+
+            if (isNaN(valueColumnIndex) || isNaN(displayColumnIndex) || isNaN(sortColumnIndex) || isNaN(groupColumnIndex)) {
+                console.warn("MyDataLoggingControl - Invalid column configuration. Ensure 'Value Column', 'Display Column', 'Sort Column', and 'Group Column' are numeric in the configuration.");
+                return;
+            }
+
+            const columnCount = oDataStore.columnCount;
+            if (valueColumnIndex < 0 || valueColumnIndex >= columnCount ||
+                displayColumnIndex < 0 || displayColumnIndex >= columnCount ||
+                sortColumnIndex < 0 || sortColumnIndex >= columnCount ||
+                groupColumnIndex < 0 || groupColumnIndex >= columnCount) {
+                console.warn("MyDataLoggingControl - Configured column index is out of bounds for the Data Store.");
+                return;
+            }
+
+            const rowCount = oDataStore.rowCount;
+
+            console.log("MyDataLoggingControl - Logging data structure from Data Store (configured columns):");
 
             const dataStructure = [];
 
             for (let i = 0; i < rowCount; i++) {
                 const rowData = {
-                    value: oDataStore.getCellValue(i, 0),
-                    displayValue: oDataStore.getCellValue(i, 1),
-                    sortValue: oDataStore.getCellValue(i, 2),
-                    groupingValue: oDataStore.getCellValue(i, 3)
+                    value: oDataStore.getCellValue(i, valueColumnIndex),
+                    displayValue: oDataStore.getCellValue(i, displayColumnIndex),
+                    sortValue: oDataStore.getCellValue(i, sortColumnIndex),
+                    groupingValue: oDataStore.getCellValue(i, groupColumnIndex)
                 };
                 dataStructure.push(rowData);
             }
 
-            console.log(dataStructure); // Logs the array of objects
-            // Alternatively, for a tabular view in the console:
+            console.log(dataStructure);
+            // Alternatively, for a tabular view:
             // console.table(dataStructure);
         }
 
