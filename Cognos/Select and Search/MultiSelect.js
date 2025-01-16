@@ -19,7 +19,6 @@ define(function() {
                 console.warn("MyDataLoggingControl - No data store provided.");
                 return;
             }
-            console.log("Data Store Object",oDataStore)
 
             const config = oControlHost.configuration;
             if (!config) {
@@ -27,22 +26,21 @@ define(function() {
                 return;
             }
 
-            const valueColumnIndex = config["Value Column"] - 1;
-            const displayColumnIndex = config["Display Column"] - 1;
-            const sortColumnIndex = config["Sort Column"] - 1;
-            const groupColumnIndex = config["Group Column"] - 1;
-            const sortNumeric = config["Sort Numeric"];
-            const sortOrder = config["Sort Order"];
+            const valueColumnIndex = config["Value"] - 1;
+            const displayColumnIndex = config["Display"] - 1;
+            const sortConfigString = config["Sort"];
+            const groupColumnIndex = config["Group"] - 1;
+            const sortNumeric = config["Sort Numeric"] ?? false; // Keep the config option
+            const sortOrder = config["Sort Order"]?.toLowerCase() ?? "ascending"; // Keep the config option
 
-            if (isNaN(valueColumnIndex) || isNaN(displayColumnIndex) || isNaN(sortColumnIndex) || isNaN(groupColumnIndex)) {
-                console.warn("MyDataLoggingControl - Invalid column configuration. Ensure 'Value Column', 'Display Column', 'Sort Column', and 'Group Column' are numeric in the configuration.");
+            if (isNaN(valueColumnIndex) || isNaN(displayColumnIndex) || isNaN(groupColumnIndex)) {
+                console.warn("MyDataLoggingControl - Invalid column configuration. Ensure 'Value Column', 'Display Column', and 'Group Column' are numeric in the configuration.");
                 return;
             }
 
             const columnCount = oDataStore.columnCount;
             if (valueColumnIndex < 0 || valueColumnIndex >= columnCount ||
                 displayColumnIndex < 0 || displayColumnIndex >= columnCount ||
-                sortColumnIndex < 0 || sortColumnIndex >= columnCount ||
                 groupColumnIndex < 0 || groupColumnIndex >= columnCount) {
                 console.warn("MyDataLoggingControl - Configured column index is out of bounds for the Data Store.");
                 return;
@@ -50,50 +48,60 @@ define(function() {
 
             const rowCount = oDataStore.rowCount;
 
-            console.log("MyDataLoggingControl - Logging data structure from Data Store (configured columns):");
-
+            console.log("MyDataLoggingControl - Initial Data Structure:");
             const dataStructure = [];
-
             for (let i = 0; i < rowCount; i++) {
                 const rowData = {
                     value: oDataStore.getCellValue(i, valueColumnIndex),
                     displayValue: oDataStore.getCellValue(i, displayColumnIndex),
-                    sortValue: oDataStore.getCellValue(i, sortColumnIndex),
-                    groupingValue: oDataStore.getCellValue(i, groupColumnIndex)
+                    groupingValue: oDataStore.getCellValue(i, groupColumnIndex),
+                    originalRowIndex: i // Keep track of the original row index if needed
                 };
                 dataStructure.push(rowData);
             }
+            console.log(dataStructure);
 
-            // Sort the data structure
-            if (sortColumnIndex >= 0) {
-                const sortKey = "sortValue"; // The property in the rowData to sort by
-                const isNumericSort = sortNumeric === true;
-                const isDescending = sortOrder === "Descending";
+            // Implement custom sorting logic
+            if (sortConfigString && sortConfigString !== "" && sortConfigString != null && (config["Sort"] - 1) !== valueColumnIndex) {
+                console.log("MyDataLoggingControl - Applying custom sort.");
+                const sortInstructions = sortConfigString.split(',').map(instruction => {
+                    const parts = instruction.split(':');
+                    return {
+                        columnIndex: parseInt(parts[0]) - 1, // Convert to 0-based index
+                        sortOrder: parts[1]?.toLowerCase() === 'desc' ? 'desc' : 'asc'
+                    };
+                });
+
+                for (const sortInfo of sortInstructions) {
+                    if (isNaN(sortInfo.columnIndex) || sortInfo.columnIndex < 0 || sortInfo.columnIndex >= columnCount) {
+                        console.warn(`MyDataLoggingControl - Invalid sort column index: ${sortInfo.columnIndex + 1}. Skipping this sort instruction.`);
+                        continue;
+                    }
+                }
 
                 dataStructure.sort((a, b) => {
-                    const valueA = a[sortKey];
-                    const valueB = b[sortKey];
-                    let comparisonResult = 0;
+                    for (const sortInfo of sortInstructions) {
+                        const columnIndex = sortInfo.columnIndex;
+                        const sortOrder = sortInfo.sortOrder;
 
-                    if (isNumericSort) {
-                        const numA = Number(valueA);
-                        const numB = Number(valueB);
-                        if (!isNaN(numA) && !isNaN(numB)) {
-                            comparisonResult = numA - numB;
-                        } else {
-                            comparisonResult = String(valueA).localeCompare(String(valueB));
+                        const valueA = oDataStore.getCellValue(a.originalRowIndex, columnIndex);
+                        const valueB = oDataStore.getCellValue(b.originalRowIndex, columnIndex);
+
+                        if (valueA < valueB) {
+                            return sortOrder === 'asc' ? -1 : 1;
                         }
-                    } else {
-                        comparisonResult = String(valueA).localeCompare(String(valueB));
+                        if (valueA > valueB) {
+                            return sortOrder === 'asc' ? 1 : -1;
+                        }
                     }
-
-                    return isDescending ? comparisonResult * -1 : comparisonResult;
+                    return 0; // Values are equal, move to the next sort instruction or keep original order
                 });
-            }
+                console.log("MyDataLoggingControl - Data structure after custom sort:");
+                console.log(dataStructure);
 
-            console.log(dataStructure);
-            // Alternatively, for a tabular view:
-            // console.table(dataStructure);
+            } else {
+                console.log("MyDataLoggingControl - No custom sort applied based on configuration.");
+            }
         }
 
         destroy(oControlHost) {
