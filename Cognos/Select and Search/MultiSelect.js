@@ -5,6 +5,7 @@ define(function() {
         initialize(oControlHost, fnDoneInitializing) {
             console.log("MyDataLoggingControl - Initializing");
             this._container = oControlHost.container;
+            this._selectedItems = []; // Initialize an array to store selected items
             fnDoneInitializing();
         }
 
@@ -23,39 +24,62 @@ define(function() {
             const config = oControlHost.configuration;
             const showGroups = config["Show Groups"] !== undefined ? config["Show Groups"] : true; // Default to true
 
-            const selectElement = document.createElement('select');
-            selectElement.addEventListener('change', (event) => {
-                const selectedOption = event.target.options[event.target.selectedIndex];
-                const selectedValue = selectedOption.value;
-                const selectedDisplayValue = selectedOption.textContent;
-                console.log("Selected Value:", selectedValue);
-                console.log("Selected Display Value:", selectedDisplayValue);
-            });
+            const dropdownContainer = document.createElement('div'); // Container for the multi-select
+            dropdownContainer.classList.add('multi-select-dropdown');
 
             this._groupedData.forEach(groupInfo => {
                 if (showGroups) {
-                    const optgroupElement = document.createElement('optgroup');
-                    optgroupElement.label = groupInfo.name;
+                    const groupDiv = document.createElement('div');
+                    groupDiv.classList.add('group');
+                    const groupLabel = document.createElement('div');
+                    groupLabel.classList.add('group-label');
+                    groupLabel.textContent = groupInfo.name;
+                    groupDiv.appendChild(groupLabel);
 
                     groupInfo.items.forEach(item => {
-                        const optionElement = document.createElement('option');
-                        optionElement.value = item.value;
-                        optionElement.textContent = item.displayValue;
-                        optgroupElement.appendChild(optionElement);
-                    });
+                        const checkboxDiv = document.createElement('div');
+                        checkboxDiv.classList.add('checkbox-item');
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.value = item.value;
+                        checkbox.id = `checkbox-${item.value}-${groupInfo.name.replace(/\s/g, '')}`; // Unique ID
+                        checkbox.dataset.group = groupInfo.name;
+                        checkbox.dataset.displayValue = item.displayValue;
+                        checkbox.addEventListener('change', this.handleCheckboxChange.bind(this, item.value, item.displayValue, groupInfo.name));
 
-                    selectElement.appendChild(optgroupElement);
+                        const label = document.createElement('label');
+                        label.setAttribute('for', `checkbox-${item.value}-${groupInfo.name.replace(/\s/g, '')}`);
+                        label.textContent = item.displayValue;
+
+                        checkboxDiv.appendChild(checkbox);
+                        checkboxDiv.appendChild(label);
+                        groupDiv.appendChild(checkboxDiv);
+                    });
+                    dropdownContainer.appendChild(groupDiv);
                 } else {
                     groupInfo.items.forEach(item => {
-                        const optionElement = document.createElement('option');
-                        optionElement.value = item.value;
-                        optionElement.textContent = item.displayValue;
-                        selectElement.appendChild(optionElement);
+                        const checkboxDiv = document.createElement('div');
+                        checkboxDiv.classList.add('checkbox-item');
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.value = item.value;
+                        checkbox.id = `checkbox-${item.value}-ungrouped`; // Unique ID for ungrouped
+                        checkbox.dataset.group = groupInfo.name;
+                        checkbox.dataset.displayValue = item.displayValue;
+                        checkbox.addEventListener('change', this.handleCheckboxChange.bind(this, item.value, item.displayValue, groupInfo.name));
+
+                        const label = document.createElement('label');
+                        label.setAttribute('for', `checkbox-${item.value}-ungrouped`);
+                        label.textContent = item.displayValue;
+
+                        checkboxDiv.appendChild(checkbox);
+                        checkboxDiv.appendChild(label);
+                        dropdownContainer.appendChild(checkboxDiv);
                     });
                 }
             });
 
-            this._container.appendChild(selectElement);
+            this._container.appendChild(dropdownContainer);
         }
 
         setData(oControlHost, oDataStore) {
@@ -80,6 +104,7 @@ define(function() {
             const displayColumnIndex = config["Display Value"] - 1; // Changed key
             const groupColumnIndexConfig = config["Group"];
             const groupColumnIndex = !isNaN(groupColumnIndexConfig) ? parseInt(groupColumnIndexConfig) - 1 : undefined;
+            this._parameterName = config["Parameter Name"]; // Get the parameter name
 
             if (isNaN(valueColumnIndex) || isNaN(displayColumnIndex)) {
                 console.warn("MyDataLoggingControl - Invalid column configuration. Ensure 'Use Value' and 'Display Value' are numeric in the configuration.");
@@ -130,6 +155,21 @@ define(function() {
             console.log("MyDataLoggingControl - Grouped Data:", this._groupedData);
 
             this.draw(oControlHost); // Redraw the control to display the dropdown
+        }
+
+        handleCheckboxChange(value, displayValue, groupName, event) {
+            const isChecked = event.target.checked;
+            const itemData = { value: value, displayValue: displayValue, group: groupName };
+
+            if (isChecked) {
+                this._selectedItems.push(itemData);
+            } else {
+                this._selectedItems = this._selectedItems.filter(item => item.value !== value);
+            }
+
+            if (this._selectedItems.length > 1) {
+                console.log("Selected Items:", this._selectedItems);
+            }
         }
 
         destroy(oControlHost) {
