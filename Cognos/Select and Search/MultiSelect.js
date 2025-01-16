@@ -70,62 +70,96 @@ define(function () {
       }
 
       if (this._isOpen) {
-        const searchContainer = document.createElement("div");
-        searchContainer.classList.add("search-container");
-
-        const searchInput = document.createElement("input");
-        searchInput.type = "text";
-        searchInput.classList.add("search-input");
-        searchInput.placeholder = "Search...";
-        searchInput.value = this._currentFilter.rawInput || "";
-        searchContainer.appendChild(searchInput);
-
+        const searchContainer = document.createElement('div');
+        searchContainer.classList.add('search-container');
+    
+        const searchInputContainer = document.createElement('div');
+        searchInputContainer.classList.add('search-input-container');
+    
+        const searchInput = document.createElement('input');
+        searchInput.type = 'text';
+        searchInput.classList.add('search-input');
+        searchInput.placeholder = 'Search...';
+        searchInput.value = this._currentFilter.rawInput || '';
+        searchInputContainer.appendChild(searchInput);
+    
+        const clearButton = document.createElement('span');
+        clearButton.classList.add('clear-button');
+        clearButton.innerHTML = '&times;';
+        searchInputContainer.appendChild(clearButton);
+    
+        const magnifier = document.createElement('span');
+        magnifier.classList.add('magnifier');
+        magnifier.innerHTML = '&#128269;'; // Unicode for magnifying glass
+        searchInputContainer.appendChild(magnifier);
+    
+        searchContainer.appendChild(searchInputContainer);
+    
         // Create a separate container for controls below search input
-        const controlsContainer = document.createElement("div");
-        controlsContainer.classList.add("search-controls");
-
-        const searchType = document.createElement("select");
-        searchType.classList.add("search-type");
-
-        const optionStartsWith = document.createElement("option");
-        optionStartsWith.value = "startsWith";
-        optionStartsWith.textContent = "Starts with";
+        const controlsContainer = document.createElement('div');
+        controlsContainer.classList.add('search-controls');
+    
+        const searchType = document.createElement('select');
+        searchType.classList.add('search-type');
+    
+        const optionStartsWith = document.createElement('option');
+        optionStartsWith.value = 'startsWith';
+        optionStartsWith.textContent = 'Starts with';
         searchType.appendChild(optionStartsWith);
-
-        const optionContains = document.createElement("option");
-        optionContains.value = "contains";
-        optionContains.textContent = "Contains";
+    
+        const optionContains = document.createElement('option');
+        optionContains.value = 'contains';
+        optionContains.textContent = 'Contains';
         searchType.appendChild(optionContains);
-
-        searchType.value = this._currentFilter.type || "contains";
+    
+        searchType.value = this._currentFilter.type || 'contains';
         controlsContainer.appendChild(searchType);
-
-        const filterButton = document.createElement("button");
-        filterButton.type = "button";
-        filterButton.classList.add("filter-button");
-        filterButton.textContent = "Select/Deselect All";
+    
+        const filterButton = document.createElement('button');
+        filterButton.type = 'button';
+        filterButton.classList.add('filter-button');
+        filterButton.textContent = 'Select/Deselect All';
         controlsContainer.appendChild(filterButton);
-
+    
         searchContainer.appendChild(controlsContainer);
-
-        searchInput.addEventListener("input", (e) => {
-          const rawInput = e.target.value;
-          this._currentFilter.rawInput = rawInput;
-          this._currentFilter.terms = this.parseSearchTerms(rawInput);
-          this.applyFilter();
+    
+        searchInput.addEventListener('input', (e) => {
+            const rawInput = e.target.value;
+            this._currentFilter.rawInput = rawInput;
+            this._currentFilter.terms = this.parseSearchTerms(rawInput);
+            this.applyFilter();
+    
+            if(rawInput.length > 0) {
+                clearButton.style.display = 'block';
+                magnifier.style.display = 'none';
+            } else {
+                clearButton.style.display = 'none';
+                magnifier.style.display = 'block';
+            }
         });
-
-        searchType.addEventListener("change", (e) => {
-          this._currentFilter.type = e.target.value;
-          this.applyFilter();
+    
+        clearButton.addEventListener('click', () => {
+            searchInput.value = '';
+            const rawInput = '';
+            this._currentFilter.rawInput = rawInput;
+            this._currentFilter.terms = [];
+            this.applyFilter();
+            clearButton.style.display = 'none';
+            magnifier.style.display = 'block';
         });
-
-        filterButton.addEventListener("click", () => {
-          this.toggleSelectDeselectFiltered();
+    
+        searchType.addEventListener('change', (e) => {
+            this._currentFilter.type = e.target.value;
+            this.applyFilter();
         });
-
+    
+        filterButton.addEventListener('click', () => {
+            this.toggleSelectDeselectFiltered();
+        });
+    
         dropdownListContainer.appendChild(searchContainer);
-      }
+    }
+    
 
       if (!this._groupedData) {
         const messageDiv = document.createElement("div");
