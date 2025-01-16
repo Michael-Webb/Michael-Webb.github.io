@@ -19,7 +19,7 @@ define(function() {
                 console.warn("MyDataLoggingControl - No data store provided.");
                 return;
             }
-
+            console.log("DataStore: ",oDataStore)
             const config = oControlHost.configuration;
             if (!config) {
                 console.warn("MyDataLoggingControl - No configuration provided.");
