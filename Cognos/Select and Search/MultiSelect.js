@@ -311,70 +311,88 @@ define(function () {
     }
 
     applyFilter() {
-      if (!this._isOpen) return;
-
-      const config = this._oControlHost.configuration;
-      const dropdownListContainer = this._container.querySelector(".dropdown-list-container");
-      if (!dropdownListContainer) return;
-
-      const searchTerms = this._currentFilter.terms;
-      const searchType = this._currentFilter.type || "contains";
-
-      const checkboxItems = dropdownListContainer.querySelectorAll(".checkbox-item");
-      checkboxItems.forEach(item => {
-        // Retrieve the display text from the label inside the checkbox-item
-        const label = item.querySelector('label');
-        const displayValue = label ? label.textContent.toLowerCase() : '';
+        if (!this._isOpen) return;
     
-        let isVisible = true;
-        if (searchTerms.length > 0) {
-            isVisible = searchTerms.some(term => {
-                if (searchType === 'startsWith') {
-                    return displayValue.startsWith(term);
-                } else { // 'contains'
-                    return displayValue.includes(term);
-                }
-            });
-        }
+        const dropdownListContainer = this._container.querySelector('.dropdown-list-container');
+        if (!dropdownListContainer) return;
     
-        if (isVisible) {
-            item.classList.remove('hidden');
-        } else {
-            item.classList.add('hidden');
-            // Optionally, deselect hidden items
-            const checkbox = item.querySelector('input[type="checkbox"]');
-            if (checkbox && checkbox.checked) {
-                checkbox.checked = false;
-                this.handleCheckboxChange(checkbox.value, checkbox.dataset.displayValue, checkbox.dataset.group, { target: checkbox });
+        const searchTerms = this._currentFilter.terms;
+        const searchType = this._currentFilter.type || 'contains';
+    
+        const checkboxItems = dropdownListContainer.querySelectorAll('.checkbox-item');
+        checkboxItems.forEach(item => {
+            // Retrieve the display text from the label inside the checkbox-item
+            const label = item.querySelector('label');
+            const displayValue = label ? label.textContent.toLowerCase() : '';
+    
+            let isVisible = true;
+            if (searchTerms.length > 0) {
+                isVisible = searchTerms.some(term => {
+                    if (searchType === 'startsWith') {
+                        return displayValue.startsWith(term);
+                    } else { // 'contains'
+                        return displayValue.includes(term);
+                    }
+                });
             }
-        }
-    });
     
-
-      // Optionally, update group checkbox states based on visible items
-      this.updateGroupCheckboxStates();
+            if (isVisible) {
+                item.classList.remove('hidden');
+            } else {
+                item.classList.add('hidden');
+                // Optionally, deselect hidden items
+                const checkbox = item.querySelector('input[type="checkbox"]');
+                if (checkbox && checkbox.checked) {
+                    checkbox.checked = false;
+                    this.handleCheckboxChange(
+                        checkbox.value, 
+                        checkbox.dataset.displayValue, 
+                        checkbox.dataset.group, 
+                        { target: checkbox }
+                    );
+                }
+            }
+        });
+    
+        // Hide groups with no visible sub-level items
+        const groups = dropdownListContainer.querySelectorAll('.group');
+        groups.forEach(group => {
+            const visibleSubItems = group.querySelectorAll('.checkbox-item:not(.hidden)');
+            if (visibleSubItems.length === 0) {
+                group.classList.add('hidden');
+            } else {
+                group.classList.remove('hidden');
+            }
+        });
+    
+        // Update group checkbox states for visible groups only
+        this.updateGroupCheckboxStates();
     }
+    
 
     updateGroupCheckboxStates() {
-      const config = this._oControlHost.configuration;
-      const dropdownListContainer = this._container.querySelector(".dropdown-list-container");
-      if (!dropdownListContainer) return;
-
-      const groups = dropdownListContainer.querySelectorAll(".group");
-      groups.forEach((group) => {
-        const groupCheckbox = group.querySelector('.group-checkbox-item input[type="checkbox"]');
-        const visibleCheckboxes = group.querySelectorAll('.checkbox-item:not(.hidden) input[type="checkbox"]');
-        if (visibleCheckboxes.length === 0) {
-          groupCheckbox.checked = false;
-          groupCheckbox.indeterminate = false;
-        } else {
-          const allChecked = Array.from(visibleCheckboxes).every((cb) => cb.checked);
-          const someChecked = Array.from(visibleCheckboxes).some((cb) => cb.checked);
-          groupCheckbox.checked = allChecked;
-          groupCheckbox.indeterminate = !allChecked && someChecked;
-        }
-      });
+        const dropdownListContainer = this._container.querySelector('.dropdown-list-container');
+        if (!dropdownListContainer) return;
+    
+        const groups = dropdownListContainer.querySelectorAll('.group');
+        groups.forEach(group => {
+            // Skip updating if the group is hidden
+            if (group.classList.contains('hidden')) return;
+    
+            const groupCheckbox = group.querySelector('.group-checkbox-item input[type="checkbox"]');
+            const visibleCheckboxes = group.querySelectorAll('.checkbox-item:not(.hidden) input[type="checkbox"]');
+            if (visibleCheckboxes.length === 0) {
+                groupCheckbox.checked = false;
+                groupCheckbox.indeterminate = false;
+            } else {
+                const allChecked = Array.from(visibleCheckboxes).every(cb => cb.checked);
+                const someChecked = Array.from(visibleCheckboxes).some(cb => cb.checked);
+                groupCheckbox.checked = allChecked;
+                groupCheckbox.indeterminate = !allChecked && someChecked;
+            }
+        });
     }
+    
 
     toggleSelectDeselectFiltered() {
       const config = this._oControlHost.configuration;
@@ -407,16 +425,23 @@ define(function () {
     }
 
     handleGroupCheckboxChange(groupName, event) {
-      const isChecked = event.target.checked;
-      const groupDiv = event.target.closest(".group");
-      if (groupDiv) {
-        const checkboxes = groupDiv.querySelectorAll('.checkbox-item input[type="checkbox"]:not(.hidden)');
-        checkboxes.forEach((checkbox) => {
-          checkbox.checked = isChecked;
-          this.handleCheckboxChange(checkbox.value, checkbox.dataset.displayValue, groupName, { target: checkbox });
-        });
-      }
+        const isChecked = event.target.checked;
+        const groupDiv = event.target.closest('.group');
+        if (groupDiv) {
+            // Only select/deselect visible sub-level checkboxes
+            const checkboxes = groupDiv.querySelectorAll('.checkbox-item input[type="checkbox"]:not(.hidden)');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = isChecked;
+                this.handleCheckboxChange(
+                    checkbox.value, 
+                    checkbox.dataset.displayValue, 
+                    groupName, 
+                    { target: checkbox }
+                );
+            });
+        }
     }
+    
 
     handleCheckboxChange(value, displayValue, groupName, event) {
       const isChecked = event.target.checked;
