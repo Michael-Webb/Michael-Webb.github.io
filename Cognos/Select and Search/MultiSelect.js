@@ -26,10 +26,10 @@ define(function() {
                 return;
             }
 
-            const valueColumnIndex = config["Value Column"] - 1;
-            const displayColumnIndex = config["Display Column"] - 1;
-            const sortColumnIndex = config["Sort Column"] - 1;
-            const groupColumnIndex = config["Group Column"] - 1;
+            const valueColumnIndex = config["Value"] - 1;
+            const displayColumnIndex = config["Display"] - 1;
+            const sortColumnIndex = config["Sort"] - 1;
+            const groupColumnIndex = config["Group"] - 1;
 
             if (isNaN(valueColumnIndex) || isNaN(displayColumnIndex) || isNaN(sortColumnIndex) || isNaN(groupColumnIndex)) {
                 console.warn("MyDataLoggingControl - Invalid column configuration. Ensure 'Value Column', 'Display Column', 'Sort Column', and 'Group Column' are numeric in the configuration.");
