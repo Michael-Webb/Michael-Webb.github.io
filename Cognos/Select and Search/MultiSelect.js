@@ -31,18 +31,31 @@ define(function() {
                 if (showGroups) {
                     const groupDiv = document.createElement('div');
                     groupDiv.classList.add('group');
-                    const groupLabel = document.createElement('div');
+
+                    // Group Level Checkbox
+                    const groupCheckboxDiv = document.createElement('div');
+                    groupCheckboxDiv.classList.add('group-checkbox-item');
+                    const groupCheckboxId = oControlHost.generateUniqueID();
+                    const groupCheckbox = document.createElement('input');
+                    groupCheckbox.type = 'checkbox';
+                    groupCheckbox.id = groupCheckboxId;
+                    groupCheckbox.dataset.groupName = groupInfo.name;
+                    groupCheckbox.addEventListener('change', this.handleGroupCheckboxChange.bind(this, groupInfo.name));
+                    const groupLabel = document.createElement('label');
                     groupLabel.classList.add('group-label');
+                    groupLabel.setAttribute('for', groupCheckboxId);
                     groupLabel.textContent = groupInfo.name;
-                    groupDiv.appendChild(groupLabel);
+                    groupCheckboxDiv.appendChild(groupCheckbox);
+                    groupCheckboxDiv.appendChild(groupLabel);
+                    groupDiv.appendChild(groupCheckboxDiv);
 
                     groupInfo.items.forEach(item => {
                         const checkboxDiv = document.createElement('div');
                         checkboxDiv.classList.add('checkbox-item');
+                        const checkboxId = oControlHost.generateUniqueID();
                         const checkbox = document.createElement('input');
                         checkbox.type = 'checkbox';
                         checkbox.value = item.value;
-                        const checkboxId = oControlHost.generateUniqueID(); // Generate unique ID
                         checkbox.id = checkboxId;
                         checkbox.dataset.group = groupInfo.name;
                         checkbox.dataset.displayValue = item.displayValue;
@@ -61,10 +74,10 @@ define(function() {
                     groupInfo.items.forEach(item => {
                         const checkboxDiv = document.createElement('div');
                         checkboxDiv.classList.add('checkbox-item');
+                        const checkboxId = oControlHost.generateUniqueID();
                         const checkbox = document.createElement('input');
                         checkbox.type = 'checkbox';
                         checkbox.value = item.value;
-                        const checkboxId = oControlHost.generateUniqueID(); // Generate unique ID
                         checkbox.id = checkboxId;
                         checkbox.dataset.group = groupInfo.name;
                         checkbox.dataset.displayValue = item.displayValue;
@@ -159,9 +172,22 @@ define(function() {
             this.draw(oControlHost); // Redraw the control to display the dropdown
         }
 
+        handleGroupCheckboxChange(groupName, event) {
+            const isChecked = event.target.checked;
+            const groupDiv = event.target.closest('.group');
+            if (groupDiv) {
+                const checkboxes = groupDiv.querySelectorAll('.checkbox-item input[type="checkbox"]');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = isChecked;
+                    const changeEvent = new Event('change', { bubbles: true });
+                    checkbox.dispatchEvent(changeEvent); // Trigger the individual checkbox change event
+                });
+            }
+        }
+
         handleCheckboxChange(value, displayValue, groupName, event) {
             const isChecked = event.target.checked;
-            const itemData = { use: value, display: displayValue, group: groupName };
+            const itemData = { use: value, display: displayValue, group: groupName }; // Changed keys
 
             if (isChecked) {
                 this._selectedItems.push(itemData);
@@ -169,7 +195,15 @@ define(function() {
                 this._selectedItems = this._selectedItems.filter(item => item.use !== value);
             }
 
-            if (this._selectedItems.length > 1) {
+            const groupDiv = event.target.closest('.group');
+            if (groupDiv) {
+                const groupCheckbox = groupDiv.querySelector('.group-checkbox-item input[type="checkbox"]');
+                const checkboxes = groupDiv.querySelectorAll('.checkbox-item input[type="checkbox"]');
+                const allSubCheckboxesChecked = Array.from(checkboxes).every(cb => cb.checked);
+                groupCheckbox.checked = allSubCheckboxesChecked;
+            }
+
+            if (this._selectedItems.length >= 0) { // Changed to >= 0 to log on any change
                 console.log("Selected Items:", this._selectedItems);
             }
         }
