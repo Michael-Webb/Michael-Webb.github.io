@@ -70,96 +70,103 @@ define(function () {
       }
 
       if (this._isOpen) {
-        const searchContainer = document.createElement('div');
-        searchContainer.classList.add('search-container');
-    
-        const searchInputContainer = document.createElement('div');
-        searchInputContainer.classList.add('search-input-container');
-    
-        const searchInput = document.createElement('input');
-        searchInput.type = 'text';
-        searchInput.classList.add('search-input');
-        searchInput.placeholder = 'Search...';
-        searchInput.value = this._currentFilter.rawInput || '';
+        const searchContainer = document.createElement("div");
+        searchContainer.classList.add("search-container");
+
+        const searchInputContainer = document.createElement("div");
+        searchInputContainer.classList.add("search-input-container");
+
+        const searchInput = document.createElement("input");
+        searchInput.type = "text";
+        searchInput.classList.add("search-input");
+        searchInput.placeholder = "Search...";
+        searchInput.value = this._currentFilter.rawInput || "";
         searchInputContainer.appendChild(searchInput);
-    
-        const clearButton = document.createElement('span');
-        clearButton.classList.add('clear-button');
-        clearButton.innerHTML = '&times;';
+
+        const clearButton = document.createElement("span");
+        clearButton.classList.add("clear-button");
+        // Use provided SVG for close icon
+        clearButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" 
+           viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" 
+           stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x">
+           <path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`;
         searchInputContainer.appendChild(clearButton);
-    
-        const magnifier = document.createElement('span');
-        magnifier.classList.add('magnifier');
-        magnifier.innerHTML = '&#128269;'; // Unicode for magnifying glass
+
+        const magnifier = document.createElement("span");
+        magnifier.classList.add("magnifier");
+        // Use provided SVG for magnifying glass
+        magnifier.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" 
+           viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" 
+           stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search">
+           <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`;
         searchInputContainer.appendChild(magnifier);
-    
+
         searchContainer.appendChild(searchInputContainer);
-    
+
         // Create a separate container for controls below search input
-        const controlsContainer = document.createElement('div');
-        controlsContainer.classList.add('search-controls');
-    
-        const searchType = document.createElement('select');
-        searchType.classList.add('search-type');
-    
-        const optionStartsWith = document.createElement('option');
-        optionStartsWith.value = 'startsWith';
-        optionStartsWith.textContent = 'Starts with';
+        const controlsContainer = document.createElement("div");
+        controlsContainer.classList.add("search-controls");
+
+        const searchType = document.createElement("select");
+        searchType.classList.add("search-type");
+
+        const optionStartsWith = document.createElement("option");
+        optionStartsWith.value = "startsWith";
+        optionStartsWith.textContent = "Starts with";
         searchType.appendChild(optionStartsWith);
-    
-        const optionContains = document.createElement('option');
-        optionContains.value = 'contains';
-        optionContains.textContent = 'Contains';
+
+        const optionContains = document.createElement("option");
+        optionContains.value = "contains";
+        optionContains.textContent = "Contains";
         searchType.appendChild(optionContains);
-    
-        searchType.value = this._currentFilter.type || 'contains';
+
+        searchType.value = this._currentFilter.type || "contains";
         controlsContainer.appendChild(searchType);
-    
-        const filterButton = document.createElement('button');
-        filterButton.type = 'button';
-        filterButton.classList.add('filter-button');
-        filterButton.textContent = 'Select/Deselect All';
+
+        const filterButton = document.createElement("button");
+        filterButton.type = "button";
+        filterButton.classList.add("filter-button");
+        filterButton.textContent = "Select/Deselect All";
         controlsContainer.appendChild(filterButton);
-    
+
         searchContainer.appendChild(controlsContainer);
-    
-        searchInput.addEventListener('input', (e) => {
-            const rawInput = e.target.value;
-            this._currentFilter.rawInput = rawInput;
-            this._currentFilter.terms = this.parseSearchTerms(rawInput);
-            this.applyFilter();
-    
-            if(rawInput.length > 0) {
-                clearButton.style.display = 'block';
-                magnifier.style.display = 'none';
-            } else {
-                clearButton.style.display = 'none';
-                magnifier.style.display = 'block';
-            }
+
+        searchInput.addEventListener("input", (e) => {
+          const rawInput = e.target.value;
+          this._currentFilter.rawInput = rawInput;
+          this._currentFilter.terms = this.parseSearchTerms(rawInput);
+          this.applyFilter();
+
+          if (rawInput.length > 0) {
+            clearButton.style.display = "block";
+            magnifier.style.display = "none";
+          } else {
+            clearButton.style.display = "none";
+            magnifier.style.display = "block";
+          }
         });
-    
-        clearButton.addEventListener('click', () => {
-            searchInput.value = '';
-            const rawInput = '';
-            this._currentFilter.rawInput = rawInput;
-            this._currentFilter.terms = [];
-            this.applyFilter();
-            clearButton.style.display = 'none';
-            magnifier.style.display = 'block';
+
+        clearButton.addEventListener("click", () => {
+          searchInput.value = "";
+          const rawInput = "";
+          this._currentFilter.rawInput = rawInput;
+          this._currentFilter.terms = [];
+          this.applyFilter();
+          clearButton.style.display = "none";
+          magnifier.style.display = "block";
         });
-    
-        searchType.addEventListener('change', (e) => {
-            this._currentFilter.type = e.target.value;
-            this.applyFilter();
+
+        searchType.addEventListener("change", (e) => {
+          this._currentFilter.type = e.target.value;
+          this.applyFilter();
         });
-    
-        filterButton.addEventListener('click', () => {
-            this.toggleSelectDeselectFiltered();
+
+        filterButton.addEventListener("click", () => {
+          this.toggleSelectDeselectFiltered();
         });
-    
+
         dropdownListContainer.appendChild(searchContainer);
-    }
-    
+      }
 
       if (!this._groupedData) {
         const messageDiv = document.createElement("div");
