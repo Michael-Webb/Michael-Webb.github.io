@@ -13,6 +13,7 @@ define(function() {
             console.log("MyDataLoggingControl - Drawing");
             // Clear any existing content
             this._container.innerHTML = '';
+            this._container.classList.add('custom-dropdown-container'); // Add container class for CSS
 
             if (!this._groupedData) {
                 const messageDiv = document.createElement('div');
@@ -73,7 +74,7 @@ define(function() {
                 } else {
                     groupInfo.items.forEach(item => {
                         const checkboxDiv = document.createElement('div');
-                        checkboxDiv.classList.add('checkbox-item');
+                        checkboxDiv.classList.add('checkbox-item', 'no-group'); // Add 'no-group' class
                         const checkboxId = oControlHost.generateUniqueID();
                         const checkbox = document.createElement('input');
                         checkbox.type = 'checkbox';
