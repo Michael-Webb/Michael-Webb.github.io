@@ -2,30 +2,16 @@ define(function() {
     'use strict';
 
     class MyDataLoggingControl {
-        /**
-         * Initializes the custom control.
-         * @param {ControlHost} oControlHost The control host interface.
-         * @param {function} fnDoneInitializing Callback to signal initialization completion.
-         */
         initialize(oControlHost, fnDoneInitializing) {
             console.log("MyDataLoggingControl - Initializing");
             fnDoneInitializing();
         }
 
-        /**
-         * Draws the control. In this case, we don't need to render anything, just log data.
-         * @param {ControlHost} oControlHost The control host interface.
-         */
         draw(oControlHost) {
             console.log("MyDataLoggingControl - Drawing");
-            // No UI to render for this component.
+            // No UI to render.
         }
 
-        /**
-         * Called when data is available for the control.
-         * @param {ControlHost} oControlHost The control host interface.
-         * @param {DataStore} oDataStore The data store associated with the control.
-         */
         setData(oControlHost, oDataStore) {
             console.log("MyDataLoggingControl - Received Data");
 
@@ -42,26 +28,25 @@ define(function() {
                 return;
             }
 
-            console.log("MyDataLoggingControl - Logging data from Data Store:");
+            console.log("MyDataLoggingControl - Logging data structure from Data Store:");
+
+            const dataStructure = [];
 
             for (let i = 0; i < rowCount; i++) {
-                const valueColumn = oDataStore.getCellValue(i, 0);
-                const displayValueColumn = oDataStore.getCellValue(i, 1);
-                const sortValueColumn = oDataStore.getCellValue(i, 2);
-                const groupingValueColumn = oDataStore.getCellValue(i, 3);
-
-                console.log(`Row ${i + 1}:`);
-                console.log(`  Value: ${valueColumn}`);
-                console.log(`  Display Value: ${displayValueColumn}`);
-                console.log(`  Sort Value: ${sortValueColumn}`);
-                console.log(`  Grouping Value: ${groupingValueColumn}`);
+                const rowData = {
+                    value: oDataStore.getCellValue(i, 0),
+                    displayValue: oDataStore.getCellValue(i, 1),
+                    sortValue: oDataStore.getCellValue(i, 2),
+                    groupingValue: oDataStore.getCellValue(i, 3)
+                };
+                dataStructure.push(rowData);
             }
+
+            console.log(dataStructure); // Logs the array of objects
+            // Alternatively, for a tabular view in the console:
+            // console.table(dataStructure);
         }
 
-        /**
-         * Called when the control is being destroyed.
-         * @param {ControlHost} oControlHost The control host interface.
-         */
         destroy(oControlHost) {
             console.log("MyDataLoggingControl - Destroying");
         }
