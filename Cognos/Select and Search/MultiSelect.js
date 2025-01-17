@@ -177,10 +177,7 @@ define(function () {
 
             const groupHeaderDiv = document.createElement("div");
             groupHeaderDiv.classList.add("group-header");
-
-            if (config["Group Color"]) {
-              groupHeaderDiv.style.backgroundColor = config["Group Color"];
-            }
+            groupHeaderDiv.style.backgroundColor = config["Group Color"] || "#f0f0f0"; //light gray default
 
             const groupLabel = document.createElement("span");
             groupLabel.classList.add("group-label");
