@@ -1,0 +1,195 @@
+/* Dropdown Header */
+.custom-dropdown-container .dropdown-header {
+    border: 1px solid #ccc;
+    padding: 8px;
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.custom-dropdown-container .dropdown-header .chevron {
+    margin-left: 10px;
+    font-size: 12px;
+}
+
+/* Dropdown Outer Container and List Container */
+.custom-dropdown-container {
+    position: relative;  /* Add this to contain absolute positioning */
+}
+
+.custom-dropdown-container .dropdown-outer-container {
+    border-top: none;
+    position: absolute;
+    left: 0;
+    right: 0;
+    width: 100%;  /* Change from inherit to 100% */
+    background-color: white;
+    z-index: 10;
+    box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.custom-dropdown-container .dropdown-list-container {
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 5px;
+    box-sizing: border-box;
+}
+
+/* Search Container and Controls */
+.custom-dropdown-container .search-container {
+    display: flex;
+    flex-direction: column;
+    padding: 5px;
+    background-color: white;
+}
+
+.custom-dropdown-container .search-input-container {
+    position: relative;
+    width: auto;
+}
+
+.custom-dropdown-container .search-input {
+    width: 100%;
+    padding: 5px;
+    margin-bottom: 5px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    box-sizing: border-box;
+    padding-right: 40px;
+}
+
+.custom-dropdown-container .search-controls {
+    display: flex;
+    flex-direction: row;
+    gap: 5px;
+    margin-top: 5px;
+}
+
+.custom-dropdown-container .search-type {
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+.custom-dropdown-container .filter-button {
+    padding: 5px 10px;
+    border: none;
+    background-color: #007BFF;
+    color: white;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.custom-dropdown-container .filter-button:hover {
+    background-color: #0056b3;
+}
+
+/* Search Icons */
+.custom-dropdown-container .clear-button,
+.custom-dropdown-container .magnifier {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.custom-dropdown-container .clear-button {
+    right: 20px;
+    cursor: pointer;
+    display: none;
+}
+
+.custom-dropdown-container .magnifier {
+    right: 5px;
+    pointer-events: none;
+}
+
+/* Group Header and Buttons */
+.custom-dropdown-container .group-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+    margin-bottom: 5px;
+    padding: 5px;
+    border-radius: 3px;
+}
+
+.custom-dropdown-container .group-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.custom-dropdown-container .group-select-button,
+.custom-dropdown-container .group-deselect-button {
+    background: none;
+    border: none;
+    color: blue;
+    cursor: pointer;
+    text-decoration: underline;
+    font-size: 0.9em;
+    padding: 2px 4px;
+}
+
+.custom-dropdown-container .group-deselect-button:disabled {
+    color: #666666;
+    cursor: not-allowed;
+    text-decoration: none;
+    opacity: 0.8;
+    font-weight: 500;
+}
+
+/* Checkbox Items */
+.custom-dropdown-container .checkbox-item {
+    display: flex;
+    align-items: center;
+    padding-left: 15px;
+}
+
+.custom-dropdown-container .checkbox-item.no-group {
+    padding-left: 0px;
+}
+
+.custom-dropdown-container .checkbox-item label {
+    margin-left: 5px;
+}
+
+.custom-dropdown-container .checkbox-item.hidden {
+    display: none;
+}
+
+/* Scrollbar Styling */
+.custom-dropdown-container .dropdown-list-container::-webkit-scrollbar {
+    width: 5px;
+}
+
+.custom-dropdown-container .dropdown-list-container::-webkit-scrollbar-track {
+    background: #f0f1f3;
+}
+
+.custom-dropdown-container .dropdown-list-container::-webkit-scrollbar-thumb {
+    background: #cdcfd1;
+}
+
+.custom-dropdown-container .dropdown-list-container::-webkit-scrollbar-thumb:hover {
+    background: #b2b6b9;
+}
+
+.custom-dropdown-container .case-sensitivity-container {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: 10px;
+}
+
+.custom-dropdown-container .case-checkbox {
+    margin: 0;
+}
+
+.custom-dropdown-container .case-label {
+    font-size: 0.9em;
+    user-select: none;
+}

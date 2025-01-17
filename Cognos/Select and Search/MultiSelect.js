@@ -10,283 +10,314 @@ define(function () {
       this._isOpen = false;
       this._currentFilter = {
         terms: [],
-        type: "contains",
+        type: "containsAny",
         rawInput: "",
+        caseInsensitive: true,
       };
       fnDoneInitializing();
     }
 
     draw(oControlHost) {
-        console.log("MyDataLoggingControl - Drawing");
-        this._container.innerHTML = "";
-        this._container.classList.add("custom-dropdown-container");
-      
-        const config = oControlHost.configuration;
-        this._labelText = config["Label Text"] || "Select Options";
-      
-        if (config["Container Width"]) {
-          this._container.style.width = config["Container Width"];
-        }
-      
-        // Create dropdown header
-        const dropdownHeader = document.createElement("div");
-        dropdownHeader.classList.add("dropdown-header");
-      
-        const labelSpan = document.createElement("span");
-        labelSpan.textContent = this._selectedItems.length > 0 
-          ? `${this._selectedItems.length} options selected` 
-          : this._labelText;
-        dropdownHeader.appendChild(labelSpan);
-      
-        if (config["Dropdown Width"]) {
-          dropdownHeader.style.width = config["Dropdown Width"];
-        }
-        if (config["Dropdown Height"]) {
-          dropdownHeader.style.height = config["Dropdown Height"];
-        }
-      
-        const chevron = document.createElement("span");
-        chevron.classList.add("chevron");
-        chevron.innerHTML = this._isOpen ? "&#x25B2;" : "&#x25BC;";
-        dropdownHeader.appendChild(chevron);
-      
-        dropdownHeader.addEventListener("click", this.toggleDropdown.bind(this));
-        this._container.appendChild(dropdownHeader);
-      
-        // Create outer container
-        const dropdownOuterContainer = document.createElement("div");
-        dropdownOuterContainer.classList.add("dropdown-outer-container");
-        dropdownOuterContainer.style.display = this._isOpen ? "block" : "none";
-      
-        if (this._isOpen) {
-          // Create search container
-          const searchContainer = document.createElement("div");
-          searchContainer.classList.add("search-container");
-      
-          const searchInputContainer = document.createElement("div");
-          searchInputContainer.classList.add("search-input-container");
-      
-          const searchInput = document.createElement("input");
-          searchInput.type = "text";
-          searchInput.classList.add("search-input");
-          searchInput.placeholder = "Search...";
-          searchInput.value = this._currentFilter.rawInput || "";
-          searchInputContainer.appendChild(searchInput);
-      
-          const clearButton = document.createElement("span");
-          clearButton.classList.add("clear-button");
-          clearButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" 
+      console.log("MyDataLoggingControl - Drawing");
+      this._container.innerHTML = "";
+      this._container.classList.add("custom-dropdown-container");
+
+      const config = oControlHost.configuration;
+      this._labelText = config["Label Text"] || "Select Options";
+
+      if (config["Container Width"]) {
+        this._container.style.width = config["Container Width"];
+      }
+
+      // Create dropdown header
+      const dropdownHeader = document.createElement("div");
+      dropdownHeader.classList.add("dropdown-header");
+
+      const labelSpan = document.createElement("span");
+      labelSpan.textContent =
+        this._selectedItems.length > 0 ? `${this._selectedItems.length} options selected` : this._labelText;
+      dropdownHeader.appendChild(labelSpan);
+
+      if (config["Dropdown Width"]) {
+        dropdownHeader.style.width = config["Dropdown Width"];
+      }
+      if (config["Dropdown Height"]) {
+        dropdownHeader.style.height = config["Dropdown Height"];
+      }
+
+      const chevron = document.createElement("span");
+      chevron.classList.add("chevron");
+      chevron.innerHTML = this._isOpen ? "&#x25B2;" : "&#x25BC;";
+      dropdownHeader.appendChild(chevron);
+
+      dropdownHeader.addEventListener("click", this.toggleDropdown.bind(this));
+      this._container.appendChild(dropdownHeader);
+
+      // Create outer container
+      const dropdownOuterContainer = document.createElement("div");
+      dropdownOuterContainer.classList.add("dropdown-outer-container");
+      dropdownOuterContainer.style.display = this._isOpen ? "block" : "none";
+
+      if (this._isOpen) {
+        // Create search container
+        const searchContainer = document.createElement("div");
+        searchContainer.classList.add("search-container");
+
+        const searchInputContainer = document.createElement("div");
+        searchInputContainer.classList.add("search-input-container");
+
+        const searchInput = document.createElement("input");
+        searchInput.type = "text";
+        searchInput.classList.add("search-input");
+        searchInput.placeholder = "Search...";
+        searchInput.value = this._currentFilter.rawInput || "";
+        searchInputContainer.appendChild(searchInput);
+
+        const clearButton = document.createElement("span");
+        clearButton.classList.add("clear-button");
+        clearButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" 
             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" 
             stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x">
             <path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`;
-          searchInputContainer.appendChild(clearButton);
-      
-          const magnifier = document.createElement("span");
-          magnifier.classList.add("magnifier");
-          magnifier.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" 
+        searchInputContainer.appendChild(clearButton);
+
+        const magnifier = document.createElement("span");
+        magnifier.classList.add("magnifier");
+        magnifier.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" 
             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" 
             stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search">
             <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`;
-          searchInputContainer.appendChild(magnifier);
-      
-          searchContainer.appendChild(searchInputContainer);
-      
-          const controlsContainer = document.createElement("div");
-          controlsContainer.classList.add("search-controls");
-      
-          const searchType = document.createElement("select");
-          searchType.classList.add("search-type");
-      
-          const optionStartsWith = document.createElement("option");
-          optionStartsWith.value = "startsWith";
-          optionStartsWith.textContent = "Starts with";
-          searchType.appendChild(optionStartsWith);
-      
-          const optionContains = document.createElement("option");
-          optionContains.value = "contains";
-          optionContains.textContent = "Contains";
-          searchType.appendChild(optionContains);
-      
-          searchType.value = this._currentFilter.type || "contains";
-          controlsContainer.appendChild(searchType);
-      
-          const filterButton = document.createElement("button");
-          filterButton.type = "button";
-          filterButton.classList.add("filter-button");
-          filterButton.textContent = "Select/Deselect All";
-          controlsContainer.appendChild(filterButton);
-      
-          searchContainer.appendChild(controlsContainer);
-      
-          dropdownOuterContainer.appendChild(searchContainer);
-      
-          // Set up search event listeners
-          searchInput.addEventListener("input", (e) => {
-            const rawInput = e.target.value;
-            this._currentFilter.rawInput = rawInput;
-            this._currentFilter.terms = this.parseSearchTerms(rawInput);
-            this.applyFilter();
-      
-            if (rawInput.length > 0) {
-              clearButton.style.display = "block";
-              magnifier.style.display = "none";
-            } else {
-              clearButton.style.display = "none";
-              magnifier.style.display = "block";
-            }
-          });
-      
-          clearButton.addEventListener("click", () => {
-            searchInput.value = "";
-            const rawInput = "";
-            this._currentFilter.rawInput = rawInput;
-            this._currentFilter.terms = [];
-            this.applyFilter();
+        searchInputContainer.appendChild(magnifier);
+
+        searchContainer.appendChild(searchInputContainer);
+
+        const controlsContainer = document.createElement("div");
+        controlsContainer.classList.add("search-controls");
+
+        const searchType = document.createElement("select");
+        searchType.classList.add("search-type");
+
+        const options = [
+          { value: "containsAny", text: "Contains any of these keywords", default: true },
+          { value: "containsAll", text: "Contains all of these keywords" },
+          { value: "startsWithAny", text: "Starts with any of these keywords" },
+          { value: "startsWithFirstContainsRest", text: "Starts with first, contains rest" },
+        ];
+
+        options.forEach((option) => {
+          const optionElement = document.createElement("option");
+          optionElement.value = option.value;
+          optionElement.textContent = option.text;
+          if (option.default) optionElement.selected = true;
+          searchType.appendChild(optionElement);
+        });
+
+        searchType.value = this._currentFilter.type || "containsAny";
+        controlsContainer.appendChild(searchType);
+
+        // Add after the search type select in the controlsContainer
+        const caseSensitivityContainer = document.createElement("div");
+        caseSensitivityContainer.classList.add("case-sensitivity-container");
+
+        const caseCheckbox = document.createElement("input");
+        caseCheckbox.type = "checkbox";
+        caseCheckbox.id = oControlHost.generateUniqueID();
+        caseCheckbox.checked = this._currentFilter.caseInsensitive !== false; // Default to true
+        caseCheckbox.classList.add("case-checkbox");
+
+        const caseLabel = document.createElement("label");
+        caseLabel.setAttribute("for", caseCheckbox.id);
+        caseLabel.textContent = "Case Insensitive";
+        caseLabel.classList.add("case-label");
+
+        caseSensitivityContainer.appendChild(caseCheckbox);
+        caseSensitivityContainer.appendChild(caseLabel);
+
+        controlsContainer.appendChild(caseSensitivityContainer);
+
+        // Add event listener for the checkbox
+        caseCheckbox.addEventListener("change", (e) => {
+          this._currentFilter.caseInsensitive = e.target.checked;
+          this.applyFilter();
+        });
+
+        const filterButton = document.createElement("button");
+        filterButton.type = "button";
+        filterButton.classList.add("filter-button");
+        filterButton.textContent = "Select/Deselect All";
+        controlsContainer.appendChild(filterButton);
+
+        searchContainer.appendChild(controlsContainer);
+
+        dropdownOuterContainer.appendChild(searchContainer);
+
+        // Set up search event listeners
+        searchInput.addEventListener("input", (e) => {
+          const rawInput = e.target.value;
+          this._currentFilter.rawInput = rawInput;
+          this._currentFilter.terms = this.parseSearchTerms(rawInput);
+          this.applyFilter();
+
+          if (rawInput.length > 0) {
+            clearButton.style.display = "block";
+            magnifier.style.display = "none";
+          } else {
             clearButton.style.display = "none";
             magnifier.style.display = "block";
-          });
-      
-          searchType.addEventListener("change", (e) => {
-            this._currentFilter.type = e.target.value;
-            this.applyFilter();
-          });
-      
-          filterButton.addEventListener("click", () => {
-            this.toggleSelectDeselectFiltered();
-          });
-        }
-      
-        // Create scrollable list container
-        const dropdownListContainer = document.createElement("div");
-        dropdownListContainer.classList.add("dropdown-list-container");
-      
-        if (config["List Container Width"]) {
-          dropdownListContainer.style.width = config["List Container Width"];
-          dropdownListContainer.style.left = "auto";
-          dropdownListContainer.style.right = "auto";
-        }
-        if (config["List Container Height"]) {
-          dropdownListContainer.style.height = config["List Container Height"];
-        }
-      
-        if (!this._groupedData) {
-          const messageDiv = document.createElement("div");
-          messageDiv.textContent = "No data available to display.";
-          dropdownListContainer.appendChild(messageDiv);
-        } else {
-          const showGroups = config["Show Groups"] !== undefined ? config["Show Groups"] : true;
-          const multiSelectDropdown = document.createElement("div");
-          multiSelectDropdown.classList.add("multi-select-dropdown");
-      
-          this._groupedData.forEach((groupInfo) => {
-            if (showGroups) {
-              const groupDiv = document.createElement("div");
-              groupDiv.classList.add("group");
-      
-              const groupHeaderDiv = document.createElement("div");
-              groupHeaderDiv.classList.add("group-header");
-      
-              // Set background color with default gray if not specified
-              const groupColor = config["Group Color"] || "#f0f0f0";
-              groupHeaderDiv.style.backgroundColor = groupColor;
-      
-              const groupLabel = document.createElement("span");
-              groupLabel.classList.add("group-label");
-              groupLabel.textContent = groupInfo.name;
-              groupHeaderDiv.appendChild(groupLabel);
-      
-              const buttonContainer = document.createElement("div");
-              buttonContainer.classList.add("group-buttons");
-      
-              const selectButton = document.createElement("button");
-              selectButton.type = "button";
-              selectButton.classList.add("group-select-button");
-              selectButton.textContent = "Select All";
-              selectButton.addEventListener("click", () => {
-                this.selectAllInGroup(groupInfo.name, groupDiv);
-              });
-      
-              const deselectButton = document.createElement("button");
-              deselectButton.type = "button";
-              deselectButton.classList.add("group-deselect-button");
-              deselectButton.textContent = "Deselect All";
-              deselectButton.disabled = true;
-              deselectButton.addEventListener("click", () => {
-                this.deselectAllInGroup(groupInfo.name, groupDiv);
-              });
-      
-              buttonContainer.appendChild(selectButton);
-              buttonContainer.appendChild(deselectButton);
-              groupHeaderDiv.appendChild(buttonContainer);
-      
-              groupDiv.appendChild(groupHeaderDiv);
-      
-              groupInfo.items.forEach((item) => {
-                const checkboxDiv = document.createElement("div");
-                checkboxDiv.classList.add("checkbox-item");
-                checkboxDiv.dataset.itemValue = item.value;
-      
-                const checkboxId = oControlHost.generateUniqueID();
-                const checkbox = document.createElement("input");
-                checkbox.type = "checkbox";
-                checkbox.value = item.value;
-                checkbox.id = checkboxId;
-                checkbox.dataset.group = groupInfo.name;
-                checkbox.dataset.displayValue = item.displayValue;
-                checkbox.addEventListener(
-                  "change",
-                  this.handleCheckboxChange.bind(this, item.value, item.displayValue, groupInfo.name)
-                );
-      
-                const label = document.createElement("label");
-                label.setAttribute("for", checkboxId);
-                label.textContent = item.displayValue;
-      
-                checkboxDiv.appendChild(checkbox);
-                checkboxDiv.appendChild(label);
-                groupDiv.appendChild(checkboxDiv);
-              });
-      
-              multiSelectDropdown.appendChild(groupDiv);
-            } else {
-              groupInfo.items.forEach((item) => {
-                const checkboxDiv = document.createElement("div");
-                checkboxDiv.classList.add("checkbox-item", "no-group");
-                checkboxDiv.dataset.itemValue = item.value;
-      
-                const checkboxId = oControlHost.generateUniqueID();
-                const checkbox = document.createElement("input");
-                checkbox.type = "checkbox";
-                checkbox.value = item.value;
-                checkbox.id = checkboxId;
-                checkbox.dataset.group = groupInfo.name;
-                checkbox.dataset.displayValue = item.displayValue;
-                checkbox.addEventListener(
-                  "change",
-                  this.handleCheckboxChange.bind(this, item.value, item.displayValue, groupInfo.name)
-                );
-      
-                const label = document.createElement("label");
-                label.setAttribute("for", checkboxId);
-                label.textContent = item.displayValue;
-      
-                checkboxDiv.appendChild(checkbox);
-                checkboxDiv.appendChild(label);
-                multiSelectDropdown.appendChild(checkboxDiv);
-              });
-            }
-          });
-          dropdownListContainer.appendChild(multiSelectDropdown);
-        }
-      
-        dropdownOuterContainer.appendChild(dropdownListContainer);
-        this._container.appendChild(dropdownOuterContainer);
-      
-        if (this._isOpen) {
+          }
+        });
+
+        clearButton.addEventListener("click", () => {
+          searchInput.value = "";
+          const rawInput = "";
+          this._currentFilter.rawInput = rawInput;
+          this._currentFilter.terms = [];
           this.applyFilter();
-          this.updateDeselectButtonStates();
-        }
+          clearButton.style.display = "none";
+          magnifier.style.display = "block";
+        });
+
+        searchType.addEventListener("change", (e) => {
+          this._currentFilter.type = e.target.value;
+          this.applyFilter();
+        });
+
+        filterButton.addEventListener("click", () => {
+          this.toggleSelectDeselectFiltered();
+        });
       }
+
+      // Create scrollable list container
+      const dropdownListContainer = document.createElement("div");
+      dropdownListContainer.classList.add("dropdown-list-container");
+
+      if (config["List Container Width"]) {
+        dropdownListContainer.style.width = config["List Container Width"];
+        dropdownListContainer.style.left = "auto";
+        dropdownListContainer.style.right = "auto";
+      }
+      if (config["List Container Height"]) {
+        dropdownListContainer.style.height = config["List Container Height"];
+      }
+
+      if (!this._groupedData) {
+        const messageDiv = document.createElement("div");
+        messageDiv.textContent = "No data available to display.";
+        dropdownListContainer.appendChild(messageDiv);
+      } else {
+        const showGroups = config["Show Groups"] !== undefined ? config["Show Groups"] : true;
+        const multiSelectDropdown = document.createElement("div");
+        multiSelectDropdown.classList.add("multi-select-dropdown");
+
+        this._groupedData.forEach((groupInfo) => {
+          if (showGroups) {
+            const groupDiv = document.createElement("div");
+            groupDiv.classList.add("group");
+
+            const groupHeaderDiv = document.createElement("div");
+            groupHeaderDiv.classList.add("group-header");
+
+            // Set background color with default gray if not specified
+            const groupColor = config["Group Color"] || "#f0f0f0";
+            groupHeaderDiv.style.backgroundColor = groupColor;
+
+            const groupLabel = document.createElement("span");
+            groupLabel.classList.add("group-label");
+            groupLabel.textContent = groupInfo.name;
+            groupHeaderDiv.appendChild(groupLabel);
+
+            const buttonContainer = document.createElement("div");
+            buttonContainer.classList.add("group-buttons");
+
+            const selectButton = document.createElement("button");
+            selectButton.type = "button";
+            selectButton.classList.add("group-select-button");
+            selectButton.textContent = "Select All";
+            selectButton.addEventListener("click", () => {
+              this.selectAllInGroup(groupInfo.name, groupDiv);
+            });
+
+            const deselectButton = document.createElement("button");
+            deselectButton.type = "button";
+            deselectButton.classList.add("group-deselect-button");
+            deselectButton.textContent = "Deselect All";
+            deselectButton.disabled = true;
+            deselectButton.addEventListener("click", () => {
+              this.deselectAllInGroup(groupInfo.name, groupDiv);
+            });
+
+            buttonContainer.appendChild(selectButton);
+            buttonContainer.appendChild(deselectButton);
+            groupHeaderDiv.appendChild(buttonContainer);
+
+            groupDiv.appendChild(groupHeaderDiv);
+
+            groupInfo.items.forEach((item) => {
+              const checkboxDiv = document.createElement("div");
+              checkboxDiv.classList.add("checkbox-item");
+              checkboxDiv.dataset.itemValue = item.value;
+
+              const checkboxId = oControlHost.generateUniqueID();
+              const checkbox = document.createElement("input");
+              checkbox.type = "checkbox";
+              checkbox.value = item.value;
+              checkbox.id = checkboxId;
+              checkbox.dataset.group = groupInfo.name;
+              checkbox.dataset.displayValue = item.displayValue;
+              checkbox.addEventListener(
+                "change",
+                this.handleCheckboxChange.bind(this, item.value, item.displayValue, groupInfo.name)
+              );
+
+              const label = document.createElement("label");
+              label.setAttribute("for", checkboxId);
+              label.textContent = item.displayValue;
+
+              checkboxDiv.appendChild(checkbox);
+              checkboxDiv.appendChild(label);
+              groupDiv.appendChild(checkboxDiv);
+            });
+
+            multiSelectDropdown.appendChild(groupDiv);
+          } else {
+            groupInfo.items.forEach((item) => {
+              const checkboxDiv = document.createElement("div");
+              checkboxDiv.classList.add("checkbox-item", "no-group");
+              checkboxDiv.dataset.itemValue = item.value;
+
+              const checkboxId = oControlHost.generateUniqueID();
+              const checkbox = document.createElement("input");
+              checkbox.type = "checkbox";
+              checkbox.value = item.value;
+              checkbox.id = checkboxId;
+              checkbox.dataset.group = groupInfo.name;
+              checkbox.dataset.displayValue = item.displayValue;
+              checkbox.addEventListener(
+                "change",
+                this.handleCheckboxChange.bind(this, item.value, item.displayValue, groupInfo.name)
+              );
+
+              const label = document.createElement("label");
+              label.setAttribute("for", checkboxId);
+              label.textContent = item.displayValue;
+
+              checkboxDiv.appendChild(checkbox);
+              checkboxDiv.appendChild(label);
+              multiSelectDropdown.appendChild(checkboxDiv);
+            });
+          }
+        });
+        dropdownListContainer.appendChild(multiSelectDropdown);
+      }
+
+      dropdownOuterContainer.appendChild(dropdownListContainer);
+      this._container.appendChild(dropdownOuterContainer);
+
+      if (this._isOpen) {
+        this.applyFilter();
+        this.updateDeselectButtonStates();
+      }
+    }
 
     setData(oControlHost, oDataStore) {
       console.log("MyDataLoggingControl - Received Data");
@@ -370,7 +401,11 @@ define(function () {
 
     parseSearchTerms(rawInput) {
       if (!rawInput) return [];
-      return rawInput
+
+      // First replace ", " with "," to normalize separators
+      const normalizedInput = rawInput.replace(/, /g, ",");
+
+      return normalizedInput
         .split(",")
         .map((term) => term.trim().toLowerCase())
         .filter((term) => term.length > 0);
@@ -383,22 +418,37 @@ define(function () {
       if (!dropdownListContainer) return;
 
       const searchTerms = this._currentFilter.terms;
-      const searchType = this._currentFilter.type || "contains";
+      const searchType = this._currentFilter.type || "containsAny";
+      const isCaseInsensitive = this._currentFilter.caseInsensitive !== false;
 
       const checkboxItems = dropdownListContainer.querySelectorAll(".checkbox-item");
       checkboxItems.forEach((item) => {
         const label = item.querySelector("label");
-        const displayValue = label ? label.textContent.toLowerCase() : "";
+        const displayValue = label ? label.textContent : "";
+        const compareValue = isCaseInsensitive ? displayValue.toLowerCase() : displayValue;
+        const compareTerms = isCaseInsensitive ? searchTerms : searchTerms.map((term) => term.toLowerCase());
 
         let isVisible = true;
         if (searchTerms.length > 0) {
-          isVisible = searchTerms.some((term) => {
-            if (searchType === "startsWith") {
-              return displayValue.startsWith(term);
-            } else {
-              return displayValue.includes(term);
-            }
-          });
+          switch (searchType) {
+            case "containsAny":
+              isVisible = compareTerms.some((term) => compareValue.includes(term));
+              break;
+            case "containsAll":
+              isVisible = compareTerms.every((term) => compareValue.includes(term));
+              break;
+            case "startsWithAny":
+              isVisible = compareTerms.some((term) => compareValue.startsWith(term));
+              break;
+            case "startsWithFirstContainsRest":
+              if (compareTerms.length > 0) {
+                isVisible = compareValue.startsWith(compareTerms[0]);
+                if (isVisible && compareTerms.length > 1) {
+                  isVisible = compareTerms.slice(1).every((term) => compareValue.includes(term));
+                }
+              }
+              break;
+          }
         }
 
         if (isVisible) {
@@ -408,6 +458,7 @@ define(function () {
         }
       });
 
+      // Update visibility of groups and checkbox states
       const groups = dropdownListContainer.querySelectorAll(".group");
       groups.forEach((group) => {
         const visibleSubItems = group.querySelectorAll(".checkbox-item:not(.hidden)");
