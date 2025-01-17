@@ -17,264 +17,276 @@ define(function () {
     }
 
     draw(oControlHost) {
-      console.log("MyDataLoggingControl - Drawing");
-      this._container.innerHTML = "";
-      this._container.classList.add("custom-dropdown-container");
-
-      const config = oControlHost.configuration;
-      this._labelText = config["Label Text"] || "Select Options";
-
-      if (config["Container Width"]) {
-        this._container.style.width = config["Container Width"];
-      }
-
-      const dropdownHeader = document.createElement("div");
-      dropdownHeader.classList.add("dropdown-header");
-
-      const labelSpan = document.createElement("span");
-      labelSpan.textContent =
-        this._selectedItems.length > 0 ? `${this._selectedItems.length} options selected` : this._labelText;
-      dropdownHeader.appendChild(labelSpan);
-
-      if (config["Dropdown Width"]) {
-        dropdownHeader.style.width = config["Dropdown Width"];
-      }
-      if (config["Dropdown Height"]) {
-        dropdownHeader.style.height = config["Dropdown Height"];
-      }
-
-      const chevron = document.createElement("span");
-      chevron.classList.add("chevron");
-      chevron.innerHTML = this._isOpen ? "&#x25B2;" : "&#x25BC;";
-      dropdownHeader.appendChild(chevron);
-
-      dropdownHeader.addEventListener("click", this.toggleDropdown.bind(this));
-      this._container.appendChild(dropdownHeader);
-
-      const dropdownListContainer = document.createElement("div");
-      dropdownListContainer.classList.add("dropdown-list-container");
-      dropdownListContainer.style.display = this._isOpen ? "block" : "none";
-
-      if (config["List Container Width"]) {
-        dropdownListContainer.style.width = config["List Container Width"];
-        dropdownListContainer.style.left = "auto";
-        dropdownListContainer.style.right = "auto";
-      }
-      if (config["List Container Height"]) {
-        dropdownListContainer.style.height = config["List Container Height"];
-        dropdownListContainer.style.overflowY = "auto";
-      }
-
-      if (this._isOpen) {
-        const searchContainer = document.createElement("div");
-        searchContainer.classList.add("search-container");
-
-        const searchInputContainer = document.createElement("div");
-        searchInputContainer.classList.add("search-input-container");
-
-        const searchInput = document.createElement("input");
-        searchInput.type = "text";
-        searchInput.classList.add("search-input");
-        searchInput.placeholder = "Search...";
-        searchInput.value = this._currentFilter.rawInput || "";
-        searchInputContainer.appendChild(searchInput);
-
-        const clearButton = document.createElement("span");
-        clearButton.classList.add("clear-button");
-        clearButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" 
-             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" 
-             stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x">
-             <path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`;
-        searchInputContainer.appendChild(clearButton);
-
-        const magnifier = document.createElement("span");
-        magnifier.classList.add("magnifier");
-        magnifier.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" 
-             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" 
-             stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search">
-             <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`;
-        searchInputContainer.appendChild(magnifier);
-
-        searchContainer.appendChild(searchInputContainer);
-
-        const controlsContainer = document.createElement("div");
-        controlsContainer.classList.add("search-controls");
-
-        const searchType = document.createElement("select");
-        searchType.classList.add("search-type");
-
-        const optionStartsWith = document.createElement("option");
-        optionStartsWith.value = "startsWith";
-        optionStartsWith.textContent = "Starts with";
-        searchType.appendChild(optionStartsWith);
-
-        const optionContains = document.createElement("option");
-        optionContains.value = "contains";
-        optionContains.textContent = "Contains";
-        searchType.appendChild(optionContains);
-
-        searchType.value = this._currentFilter.type || "contains";
-        controlsContainer.appendChild(searchType);
-
-        const filterButton = document.createElement("button");
-        filterButton.type = "button";
-        filterButton.classList.add("filter-button");
-        filterButton.textContent = "Select/Deselect All";
-        controlsContainer.appendChild(filterButton);
-
-        searchContainer.appendChild(controlsContainer);
-
-        searchInput.addEventListener("input", (e) => {
-          const rawInput = e.target.value;
-          this._currentFilter.rawInput = rawInput;
-          this._currentFilter.terms = this.parseSearchTerms(rawInput);
-          this.applyFilter();
-
-          if (rawInput.length > 0) {
-            clearButton.style.display = "block";
-            magnifier.style.display = "none";
-          } else {
+        console.log("MyDataLoggingControl - Drawing");
+        this._container.innerHTML = "";
+        this._container.classList.add("custom-dropdown-container");
+      
+        const config = oControlHost.configuration;
+        this._labelText = config["Label Text"] || "Select Options";
+      
+        if (config["Container Width"]) {
+          this._container.style.width = config["Container Width"];
+        }
+      
+        // Create dropdown header
+        const dropdownHeader = document.createElement("div");
+        dropdownHeader.classList.add("dropdown-header");
+      
+        const labelSpan = document.createElement("span");
+        labelSpan.textContent = this._selectedItems.length > 0 
+          ? `${this._selectedItems.length} options selected` 
+          : this._labelText;
+        dropdownHeader.appendChild(labelSpan);
+      
+        if (config["Dropdown Width"]) {
+          dropdownHeader.style.width = config["Dropdown Width"];
+        }
+        if (config["Dropdown Height"]) {
+          dropdownHeader.style.height = config["Dropdown Height"];
+        }
+      
+        const chevron = document.createElement("span");
+        chevron.classList.add("chevron");
+        chevron.innerHTML = this._isOpen ? "&#x25B2;" : "&#x25BC;";
+        dropdownHeader.appendChild(chevron);
+      
+        dropdownHeader.addEventListener("click", this.toggleDropdown.bind(this));
+        this._container.appendChild(dropdownHeader);
+      
+        // Create outer container
+        const dropdownOuterContainer = document.createElement("div");
+        dropdownOuterContainer.classList.add("dropdown-outer-container");
+        dropdownOuterContainer.style.display = this._isOpen ? "block" : "none";
+      
+        if (this._isOpen) {
+          // Create search container
+          const searchContainer = document.createElement("div");
+          searchContainer.classList.add("search-container");
+      
+          const searchInputContainer = document.createElement("div");
+          searchInputContainer.classList.add("search-input-container");
+      
+          const searchInput = document.createElement("input");
+          searchInput.type = "text";
+          searchInput.classList.add("search-input");
+          searchInput.placeholder = "Search...";
+          searchInput.value = this._currentFilter.rawInput || "";
+          searchInputContainer.appendChild(searchInput);
+      
+          const clearButton = document.createElement("span");
+          clearButton.classList.add("clear-button");
+          clearButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" 
+            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" 
+            stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x">
+            <path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`;
+          searchInputContainer.appendChild(clearButton);
+      
+          const magnifier = document.createElement("span");
+          magnifier.classList.add("magnifier");
+          magnifier.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" 
+            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" 
+            stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`;
+          searchInputContainer.appendChild(magnifier);
+      
+          searchContainer.appendChild(searchInputContainer);
+      
+          const controlsContainer = document.createElement("div");
+          controlsContainer.classList.add("search-controls");
+      
+          const searchType = document.createElement("select");
+          searchType.classList.add("search-type");
+      
+          const optionStartsWith = document.createElement("option");
+          optionStartsWith.value = "startsWith";
+          optionStartsWith.textContent = "Starts with";
+          searchType.appendChild(optionStartsWith);
+      
+          const optionContains = document.createElement("option");
+          optionContains.value = "contains";
+          optionContains.textContent = "Contains";
+          searchType.appendChild(optionContains);
+      
+          searchType.value = this._currentFilter.type || "contains";
+          controlsContainer.appendChild(searchType);
+      
+          const filterButton = document.createElement("button");
+          filterButton.type = "button";
+          filterButton.classList.add("filter-button");
+          filterButton.textContent = "Select/Deselect All";
+          controlsContainer.appendChild(filterButton);
+      
+          searchContainer.appendChild(controlsContainer);
+      
+          dropdownOuterContainer.appendChild(searchContainer);
+      
+          // Set up search event listeners
+          searchInput.addEventListener("input", (e) => {
+            const rawInput = e.target.value;
+            this._currentFilter.rawInput = rawInput;
+            this._currentFilter.terms = this.parseSearchTerms(rawInput);
+            this.applyFilter();
+      
+            if (rawInput.length > 0) {
+              clearButton.style.display = "block";
+              magnifier.style.display = "none";
+            } else {
+              clearButton.style.display = "none";
+              magnifier.style.display = "block";
+            }
+          });
+      
+          clearButton.addEventListener("click", () => {
+            searchInput.value = "";
+            const rawInput = "";
+            this._currentFilter.rawInput = rawInput;
+            this._currentFilter.terms = [];
+            this.applyFilter();
             clearButton.style.display = "none";
             magnifier.style.display = "block";
-          }
-        });
-
-        clearButton.addEventListener("click", () => {
-          searchInput.value = "";
-          const rawInput = "";
-          this._currentFilter.rawInput = rawInput;
-          this._currentFilter.terms = [];
+          });
+      
+          searchType.addEventListener("change", (e) => {
+            this._currentFilter.type = e.target.value;
+            this.applyFilter();
+          });
+      
+          filterButton.addEventListener("click", () => {
+            this.toggleSelectDeselectFiltered();
+          });
+        }
+      
+        // Create scrollable list container
+        const dropdownListContainer = document.createElement("div");
+        dropdownListContainer.classList.add("dropdown-list-container");
+      
+        if (config["List Container Width"]) {
+          dropdownListContainer.style.width = config["List Container Width"];
+          dropdownListContainer.style.left = "auto";
+          dropdownListContainer.style.right = "auto";
+        }
+        if (config["List Container Height"]) {
+          dropdownListContainer.style.height = config["List Container Height"];
+        }
+      
+        if (!this._groupedData) {
+          const messageDiv = document.createElement("div");
+          messageDiv.textContent = "No data available to display.";
+          dropdownListContainer.appendChild(messageDiv);
+        } else {
+          const showGroups = config["Show Groups"] !== undefined ? config["Show Groups"] : true;
+          const multiSelectDropdown = document.createElement("div");
+          multiSelectDropdown.classList.add("multi-select-dropdown");
+      
+          this._groupedData.forEach((groupInfo) => {
+            if (showGroups) {
+              const groupDiv = document.createElement("div");
+              groupDiv.classList.add("group");
+      
+              const groupHeaderDiv = document.createElement("div");
+              groupHeaderDiv.classList.add("group-header");
+      
+              // Set background color with default gray if not specified
+              const groupColor = config["Group Color"] || "#f0f0f0";
+              groupHeaderDiv.style.backgroundColor = groupColor;
+      
+              const groupLabel = document.createElement("span");
+              groupLabel.classList.add("group-label");
+              groupLabel.textContent = groupInfo.name;
+              groupHeaderDiv.appendChild(groupLabel);
+      
+              const buttonContainer = document.createElement("div");
+              buttonContainer.classList.add("group-buttons");
+      
+              const selectButton = document.createElement("button");
+              selectButton.type = "button";
+              selectButton.classList.add("group-select-button");
+              selectButton.textContent = "Select All";
+              selectButton.addEventListener("click", () => {
+                this.selectAllInGroup(groupInfo.name, groupDiv);
+              });
+      
+              const deselectButton = document.createElement("button");
+              deselectButton.type = "button";
+              deselectButton.classList.add("group-deselect-button");
+              deselectButton.textContent = "Deselect All";
+              deselectButton.disabled = true;
+              deselectButton.addEventListener("click", () => {
+                this.deselectAllInGroup(groupInfo.name, groupDiv);
+              });
+      
+              buttonContainer.appendChild(selectButton);
+              buttonContainer.appendChild(deselectButton);
+              groupHeaderDiv.appendChild(buttonContainer);
+      
+              groupDiv.appendChild(groupHeaderDiv);
+      
+              groupInfo.items.forEach((item) => {
+                const checkboxDiv = document.createElement("div");
+                checkboxDiv.classList.add("checkbox-item");
+                checkboxDiv.dataset.itemValue = item.value;
+      
+                const checkboxId = oControlHost.generateUniqueID();
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.value = item.value;
+                checkbox.id = checkboxId;
+                checkbox.dataset.group = groupInfo.name;
+                checkbox.dataset.displayValue = item.displayValue;
+                checkbox.addEventListener(
+                  "change",
+                  this.handleCheckboxChange.bind(this, item.value, item.displayValue, groupInfo.name)
+                );
+      
+                const label = document.createElement("label");
+                label.setAttribute("for", checkboxId);
+                label.textContent = item.displayValue;
+      
+                checkboxDiv.appendChild(checkbox);
+                checkboxDiv.appendChild(label);
+                groupDiv.appendChild(checkboxDiv);
+              });
+      
+              multiSelectDropdown.appendChild(groupDiv);
+            } else {
+              groupInfo.items.forEach((item) => {
+                const checkboxDiv = document.createElement("div");
+                checkboxDiv.classList.add("checkbox-item", "no-group");
+                checkboxDiv.dataset.itemValue = item.value;
+      
+                const checkboxId = oControlHost.generateUniqueID();
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.value = item.value;
+                checkbox.id = checkboxId;
+                checkbox.dataset.group = groupInfo.name;
+                checkbox.dataset.displayValue = item.displayValue;
+                checkbox.addEventListener(
+                  "change",
+                  this.handleCheckboxChange.bind(this, item.value, item.displayValue, groupInfo.name)
+                );
+      
+                const label = document.createElement("label");
+                label.setAttribute("for", checkboxId);
+                label.textContent = item.displayValue;
+      
+                checkboxDiv.appendChild(checkbox);
+                checkboxDiv.appendChild(label);
+                multiSelectDropdown.appendChild(checkboxDiv);
+              });
+            }
+          });
+          dropdownListContainer.appendChild(multiSelectDropdown);
+        }
+      
+        dropdownOuterContainer.appendChild(dropdownListContainer);
+        this._container.appendChild(dropdownOuterContainer);
+      
+        if (this._isOpen) {
           this.applyFilter();
-          clearButton.style.display = "none";
-          magnifier.style.display = "block";
-        });
-
-        searchType.addEventListener("change", (e) => {
-          this._currentFilter.type = e.target.value;
-          this.applyFilter();
-        });
-
-        filterButton.addEventListener("click", () => {
-          this.toggleSelectDeselectFiltered();
-        });
-
-        dropdownListContainer.appendChild(searchContainer);
+          this.updateDeselectButtonStates();
+        }
       }
-
-      if (!this._groupedData) {
-        const messageDiv = document.createElement("div");
-        messageDiv.textContent = "No data available to display.";
-        dropdownListContainer.appendChild(messageDiv);
-      } else {
-        const showGroups = config["Show Groups"] !== undefined ? config["Show Groups"] : true;
-        const multiSelectDropdown = document.createElement("div");
-        multiSelectDropdown.classList.add("multi-select-dropdown");
-
-        this._groupedData.forEach((groupInfo) => {
-          if (showGroups) {
-            const groupDiv = document.createElement("div");
-            groupDiv.classList.add("group");
-
-            const groupHeaderDiv = document.createElement("div");
-            groupHeaderDiv.classList.add("group-header");
-            groupHeaderDiv.style.backgroundColor = config["Group Color"] || "#f0f0f0"; //light gray default
-
-            const groupLabel = document.createElement("span");
-            groupLabel.classList.add("group-label");
-            groupLabel.textContent = groupInfo.name;
-            groupHeaderDiv.appendChild(groupLabel);
-
-            const buttonContainer = document.createElement("div");
-            buttonContainer.classList.add("group-buttons");
-
-            const selectButton = document.createElement("button");
-            selectButton.type = "button";
-            selectButton.classList.add("group-select-button");
-            selectButton.textContent = "Select All";
-            selectButton.addEventListener("click", () => {
-              this.selectAllInGroup(groupInfo.name, groupDiv);
-            });
-
-            const deselectButton = document.createElement("button");
-            deselectButton.type = "button";
-            deselectButton.classList.add("group-deselect-button");
-            deselectButton.textContent = "Deselect All";
-            deselectButton.disabled = true;
-            deselectButton.addEventListener("click", () => {
-              this.deselectAllInGroup(groupInfo.name, groupDiv);
-            });
-
-            buttonContainer.appendChild(selectButton);
-            buttonContainer.appendChild(deselectButton);
-            groupHeaderDiv.appendChild(buttonContainer);
-
-            groupDiv.appendChild(groupHeaderDiv);
-
-            groupInfo.items.forEach((item) => {
-              const checkboxDiv = document.createElement("div");
-              checkboxDiv.classList.add("checkbox-item");
-              checkboxDiv.dataset.itemValue = item.value;
-
-              const checkboxId = oControlHost.generateUniqueID();
-              const checkbox = document.createElement("input");
-              checkbox.type = "checkbox";
-              checkbox.value = item.value;
-              checkbox.id = checkboxId;
-              checkbox.dataset.group = groupInfo.name;
-              checkbox.dataset.displayValue = item.displayValue;
-              checkbox.addEventListener(
-                "change",
-                this.handleCheckboxChange.bind(this, item.value, item.displayValue, groupInfo.name)
-              );
-
-              const label = document.createElement("label");
-              label.setAttribute("for", checkboxId);
-              label.textContent = item.displayValue;
-
-              checkboxDiv.appendChild(checkbox);
-              checkboxDiv.appendChild(label);
-              groupDiv.appendChild(checkboxDiv);
-            });
-
-            multiSelectDropdown.appendChild(groupDiv);
-          } else {
-            groupInfo.items.forEach((item) => {
-              const checkboxDiv = document.createElement("div");
-              checkboxDiv.classList.add("checkbox-item", "no-group");
-              checkboxDiv.dataset.itemValue = item.value;
-
-              const checkboxId = oControlHost.generateUniqueID();
-              const checkbox = document.createElement("input");
-              checkbox.type = "checkbox";
-              checkbox.value = item.value;
-              checkbox.id = checkboxId;
-              checkbox.dataset.group = groupInfo.name;
-              checkbox.dataset.displayValue = item.displayValue;
-              checkbox.addEventListener(
-                "change",
-                this.handleCheckboxChange.bind(this, item.value, item.displayValue, groupInfo.name)
-              );
-
-              const label = document.createElement("label");
-              label.setAttribute("for", checkboxId);
-              label.textContent = item.displayValue;
-
-              checkboxDiv.appendChild(checkbox);
-              checkboxDiv.appendChild(label);
-              multiSelectDropdown.appendChild(checkboxDiv);
-            });
-          }
-        });
-        dropdownListContainer.appendChild(multiSelectDropdown);
-      }
-
-      this._container.appendChild(dropdownListContainer);
-
-      if (this._isOpen) {
-        this.applyFilter();
-        this.updateDeselectButtonStates();
-      }
-    }
 
     setData(oControlHost, oDataStore) {
       console.log("MyDataLoggingControl - Received Data");
