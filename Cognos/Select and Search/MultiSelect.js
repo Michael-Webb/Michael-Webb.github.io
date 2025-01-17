@@ -76,23 +76,34 @@ define(function () {
         const clearButton = document.createElement("span");
         clearButton.classList.add("clear-button");
         clearButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" 
-            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" 
-            stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x">
-            <path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`;
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" 
+              stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x">
+              <path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`;
         searchInputContainer.appendChild(clearButton);
 
         const magnifier = document.createElement("span");
         magnifier.classList.add("magnifier");
         magnifier.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" 
-            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" 
-            stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search">
-            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`;
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" 
+              stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`;
         searchInputContainer.appendChild(magnifier);
 
         searchContainer.appendChild(searchInputContainer);
 
+        // Create controls container with two sections
         const controlsContainer = document.createElement("div");
         controlsContainer.classList.add("search-controls");
+
+        // Create toggle button and options section
+        const optionsToggle = document.createElement("button");
+        optionsToggle.type = "button";
+        optionsToggle.classList.add("options-toggle");
+        optionsToggle.textContent = "Options";
+
+        const optionsContainer = document.createElement("div");
+        optionsContainer.classList.add("options-container");
+        optionsContainer.style.display = "none";
 
         const searchType = document.createElement("select");
         searchType.classList.add("search-type");
@@ -113,16 +124,15 @@ define(function () {
         });
 
         searchType.value = this._currentFilter.type || "containsAny";
-        controlsContainer.appendChild(searchType);
+        optionsContainer.appendChild(searchType);
 
-        // Add after the search type select in the controlsContainer
         const caseSensitivityContainer = document.createElement("div");
         caseSensitivityContainer.classList.add("case-sensitivity-container");
 
         const caseCheckbox = document.createElement("input");
         caseCheckbox.type = "checkbox";
         caseCheckbox.id = oControlHost.generateUniqueID();
-        caseCheckbox.checked = this._currentFilter.caseInsensitive !== false; // Default to true
+        caseCheckbox.checked = this._currentFilter.caseInsensitive !== false;
         caseCheckbox.classList.add("case-checkbox");
 
         const caseLabel = document.createElement("label");
@@ -132,23 +142,26 @@ define(function () {
 
         caseSensitivityContainer.appendChild(caseCheckbox);
         caseSensitivityContainer.appendChild(caseLabel);
+        optionsContainer.appendChild(caseSensitivityContainer);
 
-        controlsContainer.appendChild(caseSensitivityContainer);
-
-        // Add event listener for the checkbox
-        caseCheckbox.addEventListener("change", (e) => {
-          this._currentFilter.caseInsensitive = e.target.checked;
-          this.applyFilter();
+        // Add toggle functionality
+        optionsToggle.addEventListener("click", () => {
+          const isHidden = optionsContainer.style.display === "none";
+          optionsContainer.style.display = isHidden ? "flex" : "none";
+          optionsToggle.classList.toggle("active");
         });
 
         const filterButton = document.createElement("button");
         filterButton.type = "button";
         filterButton.classList.add("filter-button");
         filterButton.textContent = "Select/Deselect All";
+
+        // Assemble the controls
+        controlsContainer.appendChild(optionsToggle);
+        controlsContainer.appendChild(optionsContainer);
         controlsContainer.appendChild(filterButton);
 
         searchContainer.appendChild(controlsContainer);
-
         dropdownOuterContainer.appendChild(searchContainer);
 
         // Set up search event listeners
@@ -179,6 +192,11 @@ define(function () {
 
         searchType.addEventListener("change", (e) => {
           this._currentFilter.type = e.target.value;
+          this.applyFilter();
+        });
+
+        caseCheckbox.addEventListener("change", (e) => {
+          this._currentFilter.caseInsensitive = e.target.checked;
           this.applyFilter();
         });
 
