@@ -66,10 +66,9 @@
 
 .custom-dropdown-container .search-controls {
     display: flex;
-    flex-wrap: wrap; /* Add this to allow wrapping */
+    flex-direction: column;
     gap: 5px;
     margin-top: 5px;
-
 }
 
 .custom-dropdown-container .options-toggle {
@@ -87,11 +86,18 @@
     opacity: 0.8;
 }
 
+.custom-dropdown-container .primary-buttons-container {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
 .custom-dropdown-container .options-container {
     display: none;
     flex-wrap: wrap;
     gap: 5px;
     width: 100%;
+    margin-top: 5px;
 }
 
 .custom-dropdown-container .search-type {

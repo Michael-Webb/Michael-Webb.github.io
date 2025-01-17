@@ -95,16 +95,28 @@ define(function () {
         const controlsContainer = document.createElement("div");
         controlsContainer.classList.add("search-controls");
 
+        // Create primary buttons container for top row
+        const primaryButtonsContainer = document.createElement("div");
+        primaryButtonsContainer.classList.add("primary-buttons-container");
+
         // Create toggle button and options section
         const optionsToggle = document.createElement("button");
         optionsToggle.type = "button";
         optionsToggle.classList.add("options-toggle");
         optionsToggle.textContent = "Options";
 
+        const filterButton = document.createElement("button");
+        filterButton.type = "button";
+        filterButton.classList.add("filter-button");
+        filterButton.textContent = "Select/Deselect All";
+
+        // Add primary buttons to their container
+        primaryButtonsContainer.appendChild(optionsToggle);
+        primaryButtonsContainer.appendChild(filterButton);
+
         const optionsContainer = document.createElement("div");
         optionsContainer.classList.add("options-container");
         optionsContainer.style.display = "none";
-
         const searchType = document.createElement("select");
         searchType.classList.add("search-type");
 
@@ -151,15 +163,9 @@ define(function () {
           optionsToggle.classList.toggle("active");
         });
 
-        const filterButton = document.createElement("button");
-        filterButton.type = "button";
-        filterButton.classList.add("filter-button");
-        filterButton.textContent = "Select/Deselect All";
-
         // Assemble the controls
-        controlsContainer.appendChild(optionsToggle);
+        controlsContainer.appendChild(primaryButtonsContainer);
         controlsContainer.appendChild(optionsContainer);
-        controlsContainer.appendChild(filterButton);
 
         searchContainer.appendChild(controlsContainer);
         dropdownOuterContainer.appendChild(searchContainer);
