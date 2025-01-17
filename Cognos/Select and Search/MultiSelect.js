@@ -24,7 +24,6 @@ define(function () {
       const config = oControlHost.configuration;
       this._labelText = config["Label Text"] || "Select Options";
 
-      // Apply container width if configured
       if (config["Container Width"]) {
         this._container.style.width = config["Container Width"];
       }
@@ -37,7 +36,6 @@ define(function () {
         this._selectedItems.length > 0 ? `${this._selectedItems.length} options selected` : this._labelText;
       dropdownHeader.appendChild(labelSpan);
 
-      // Apply dropdown width and height if configured
       if (config["Dropdown Width"]) {
         dropdownHeader.style.width = config["Dropdown Width"];
       }
@@ -45,7 +43,6 @@ define(function () {
         dropdownHeader.style.height = config["Dropdown Height"];
       }
 
-      // Chevron
       const chevron = document.createElement("span");
       chevron.classList.add("chevron");
       chevron.innerHTML = this._isOpen ? "&#x25B2;" : "&#x25BC;";
@@ -58,7 +55,6 @@ define(function () {
       dropdownListContainer.classList.add("dropdown-list-container");
       dropdownListContainer.style.display = this._isOpen ? "block" : "none";
 
-      // Apply list container width and height if configured
       if (config["List Container Width"]) {
         dropdownListContainer.style.width = config["List Container Width"];
         dropdownListContainer.style.left = "auto";
@@ -85,25 +81,22 @@ define(function () {
 
         const clearButton = document.createElement("span");
         clearButton.classList.add("clear-button");
-        // Use provided SVG for close icon
         clearButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" 
-           viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" 
-           stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x">
-           <path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`;
+             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" 
+             stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x">
+             <path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`;
         searchInputContainer.appendChild(clearButton);
 
         const magnifier = document.createElement("span");
         magnifier.classList.add("magnifier");
-        // Use provided SVG for magnifying glass
         magnifier.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" 
-           viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" 
-           stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search">
-           <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`;
+             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" 
+             stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search">
+             <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`;
         searchInputContainer.appendChild(magnifier);
 
         searchContainer.appendChild(searchInputContainer);
 
-        // Create a separate container for controls below search input
         const controlsContainer = document.createElement("div");
         controlsContainer.classList.add("search-controls");
 
@@ -190,6 +183,9 @@ define(function () {
             groupLabel.textContent = groupInfo.name;
             groupHeaderDiv.appendChild(groupLabel);
 
+            const buttonContainer = document.createElement("div");
+            buttonContainer.classList.add("group-buttons");
+
             const selectButton = document.createElement("button");
             selectButton.type = "button";
             selectButton.classList.add("group-select-button");
@@ -197,7 +193,19 @@ define(function () {
             selectButton.addEventListener("click", () => {
               this.selectAllInGroup(groupInfo.name, groupDiv);
             });
-            groupHeaderDiv.appendChild(selectButton);
+
+            const deselectButton = document.createElement("button");
+            deselectButton.type = "button";
+            deselectButton.classList.add("group-deselect-button");
+            deselectButton.textContent = "Deselect All";
+            deselectButton.disabled = true;
+            deselectButton.addEventListener("click", () => {
+              this.deselectAllInGroup(groupInfo.name, groupDiv);
+            });
+
+            buttonContainer.appendChild(selectButton);
+            buttonContainer.appendChild(deselectButton);
+            groupHeaderDiv.appendChild(buttonContainer);
 
             groupDiv.appendChild(groupHeaderDiv);
 
@@ -263,6 +271,7 @@ define(function () {
 
       if (this._isOpen) {
         this.applyFilter();
+        this.updateDeselectButtonStates();
       }
     }
 
@@ -383,17 +392,6 @@ define(function () {
           item.classList.remove("hidden");
         } else {
           item.classList.add("hidden");
-          // Removed logic that deselects hidden items to preserve selections
-          // const checkbox = item.querySelector('input[type="checkbox"]');
-          // if (checkbox && checkbox.checked) {
-          //     checkbox.checked = false;
-          //     this.handleCheckboxChange(
-          //         checkbox.value,
-          //         checkbox.dataset.displayValue,
-          //         checkbox.dataset.group,
-          //         { target: checkbox }
-          //     );
-          // }
         }
       });
 
@@ -409,7 +407,6 @@ define(function () {
 
       this.updateGroupCheckboxStates();
     }
-
     updateGroupCheckboxStates() {
       const dropdownListContainer = this._container.querySelector(".dropdown-list-container");
       if (!dropdownListContainer) return;
@@ -426,6 +423,20 @@ define(function () {
           groupSelectButton.disabled = true;
         } else {
           groupSelectButton.disabled = false;
+        }
+      });
+    }
+
+    updateDeselectButtonStates() {
+      const groups = this._container.querySelectorAll(".group");
+      groups.forEach((group) => {
+        const groupName = group.querySelector(".group-label").textContent;
+        const checkboxes = group.querySelectorAll('input[type="checkbox"]');
+        const hasSelectedItems = Array.from(checkboxes).some((cb) => cb.checked);
+
+        const deselectButton = group.querySelector(".group-deselect-button");
+        if (deselectButton) {
+          deselectButton.disabled = !hasSelectedItems;
         }
       });
     }
@@ -468,6 +479,16 @@ define(function () {
       });
     }
 
+    deselectAllInGroup(groupName, groupDiv) {
+      const checkboxes = groupDiv.querySelectorAll('input[type="checkbox"]');
+      checkboxes.forEach((checkbox) => {
+        if (checkbox.checked) {
+          checkbox.checked = false;
+          this.handleCheckboxChange(checkbox.value, checkbox.dataset.displayValue, groupName, { target: checkbox });
+        }
+      });
+    }
+
     handleCheckboxChange(value, displayValue, groupName, event) {
       const isChecked = event.target.checked;
       const itemData = { use: value, display: displayValue, group: groupName };
@@ -491,6 +512,8 @@ define(function () {
           chevron.innerHTML = this._isOpen ? "&#x25B2;" : "&#x25BC;";
         }
       }
+
+      this.updateDeselectButtonStates();
     }
 
     destroy(oControlHost) {
