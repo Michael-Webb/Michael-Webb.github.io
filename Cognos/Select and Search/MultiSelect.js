@@ -248,6 +248,7 @@ define(function () {
             const groupLabel = document.createElement("span");
             groupLabel.classList.add("group-label");
             groupLabel.textContent = groupInfo.name;
+            groupLabel.title = groupInfo.name; 
             groupHeaderDiv.appendChild(groupLabel);
 
             const buttonContainer = document.createElement("div");
@@ -296,6 +297,7 @@ define(function () {
               const label = document.createElement("label");
               label.setAttribute("for", checkboxId);
               label.textContent = item.displayValue;
+              label.title = item.displayValue; 
 
               checkboxDiv.appendChild(checkbox);
               checkboxDiv.appendChild(label);
