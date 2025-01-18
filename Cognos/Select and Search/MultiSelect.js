@@ -14,6 +14,7 @@ define(function () {
         rawInput: "",
         caseInsensitive: true,
       };
+      this._multipleSelect = true; // Default to true until read from config
       fnDoneInitializing();
     }
 
@@ -25,6 +26,10 @@ define(function () {
       const config = oControlHost.configuration;
       this._labelText = config["Label Text"] || "Select Options";
 
+      // Determine if multiple selection is enabled; default to true
+      const multipleSelect = config["Multiple Select"] !== false;
+      this._multipleSelect = multipleSelect;
+
       if (config["Container Width"]) {
         this._container.style.width = config["Container Width"];
       }
@@ -34,8 +39,16 @@ define(function () {
       dropdownHeader.classList.add("dropdown-header");
 
       const labelSpan = document.createElement("span");
-      labelSpan.textContent =
-        this._selectedItems.length > 0 ? `${this._selectedItems.length} options selected` : this._labelText;
+      if (this._selectedItems.length > 0) {
+        if (!multipleSelect) {
+          // Single-select: Show the selected item's display value
+          labelSpan.textContent = this._selectedItems[0].display;
+        } else {
+          labelSpan.textContent = `${this._selectedItems.length} options selected`;
+        }
+      } else {
+        labelSpan.textContent = this._labelText;
+      }
       dropdownHeader.appendChild(labelSpan);
 
       if (config["Dropdown Width"]) {
@@ -99,73 +112,93 @@ define(function () {
         const primaryButtonsContainer = document.createElement("div");
         primaryButtonsContainer.classList.add("primary-buttons-container");
 
-        // Create toggle button and options section
-        const optionsToggle = document.createElement("button");
-        optionsToggle.type = "button";
-        optionsToggle.classList.add("options-toggle");
-        optionsToggle.textContent = "Options";
+        if (multipleSelect) {
+          const optionsToggle = document.createElement("button");
+          optionsToggle.type = "button";
+          optionsToggle.classList.add("options-toggle");
+          optionsToggle.textContent = "Options";
 
-        const filterButton = document.createElement("button");
-        filterButton.type = "button";
-        filterButton.classList.add("filter-button");
-        filterButton.textContent = "Select/Deselect All";
+          const filterButton = document.createElement("button");
+          filterButton.type = "button";
+          filterButton.classList.add("filter-button");
+          filterButton.textContent = "Select/Deselect All";
 
-        // Add primary buttons to their container
-        primaryButtonsContainer.appendChild(optionsToggle);
-        primaryButtonsContainer.appendChild(filterButton);
+          primaryButtonsContainer.appendChild(optionsToggle);
+          primaryButtonsContainer.appendChild(filterButton);
 
-        const optionsContainer = document.createElement("div");
-        optionsContainer.classList.add("options-container");
-        optionsContainer.style.display = "none";
-        const searchType = document.createElement("select");
-        searchType.classList.add("search-type");
+          // Add primary buttons to their container
+          controlsContainer.appendChild(primaryButtonsContainer);
 
-        const options = [
-          { value: "containsAny", text: "Contains any of these keywords", default: true },
-          { value: "containsAll", text: "Contains all of these keywords" },
-          { value: "startsWithAny", text: "Starts with any of these keywords" },
-          { value: "startsWithFirstContainsRest", text: "Starts with first, contains rest" },
-        ];
+          // Create toggle button and options section container if needed
+          const optionsContainer = document.createElement("div");
+          optionsContainer.classList.add("options-container");
+          optionsContainer.style.display = "none";
+          const searchType = document.createElement("select");
+          searchType.classList.add("search-type");
 
-        options.forEach((option) => {
-          const optionElement = document.createElement("option");
-          optionElement.value = option.value;
-          optionElement.textContent = option.text;
-          if (option.default) optionElement.selected = true;
-          searchType.appendChild(optionElement);
-        });
+          const options = [
+            { value: "containsAny", text: "Contains any of these keywords", default: true },
+            { value: "containsAll", text: "Contains all of these keywords" },
+            { value: "startsWithAny", text: "Starts with any of these keywords" },
+            { value: "startsWithFirstContainsRest", text: "Starts with first, contains rest" },
+          ];
 
-        searchType.value = this._currentFilter.type || "containsAny";
-        optionsContainer.appendChild(searchType);
+          options.forEach((option) => {
+            const optionElement = document.createElement("option");
+            optionElement.value = option.value;
+            optionElement.textContent = option.text;
+            if (option.default) optionElement.selected = true;
+            searchType.appendChild(optionElement);
+          });
 
-        const caseSensitivityContainer = document.createElement("div");
-        caseSensitivityContainer.classList.add("case-sensitivity-container");
+          searchType.value = this._currentFilter.type || "containsAny";
+          optionsContainer.appendChild(searchType);
 
-        const caseCheckbox = document.createElement("input");
-        caseCheckbox.type = "checkbox";
-        caseCheckbox.id = oControlHost.generateUniqueID();
-        caseCheckbox.checked = this._currentFilter.caseInsensitive !== false;
-        caseCheckbox.classList.add("case-checkbox");
+          const caseSensitivityContainer = document.createElement("div");
+          caseSensitivityContainer.classList.add("case-sensitivity-container");
 
-        const caseLabel = document.createElement("label");
-        caseLabel.setAttribute("for", caseCheckbox.id);
-        caseLabel.textContent = "Case Insensitive";
-        caseLabel.classList.add("case-label");
+          const caseCheckbox = document.createElement("input");
+          caseCheckbox.type = "checkbox";
+          caseCheckbox.id = oControlHost.generateUniqueID();
+          caseCheckbox.checked = this._currentFilter.caseInsensitive !== false;
+          caseCheckbox.classList.add("case-checkbox");
 
-        caseSensitivityContainer.appendChild(caseCheckbox);
-        caseSensitivityContainer.appendChild(caseLabel);
-        optionsContainer.appendChild(caseSensitivityContainer);
+          const caseLabel = document.createElement("label");
+          caseLabel.setAttribute("for", caseCheckbox.id);
+          caseLabel.textContent = "Case Insensitive";
+          caseLabel.classList.add("case-label");
 
-        // Add toggle functionality
-        optionsToggle.addEventListener("click", () => {
-          const isHidden = optionsContainer.style.display === "none";
-          optionsContainer.style.display = isHidden ? "flex" : "none";
-          optionsToggle.classList.toggle("active");
-        });
+          caseSensitivityContainer.appendChild(caseCheckbox);
+          caseSensitivityContainer.appendChild(caseLabel);
+          optionsContainer.appendChild(caseSensitivityContainer);
 
-        // Assemble the controls
-        controlsContainer.appendChild(primaryButtonsContainer);
-        controlsContainer.appendChild(optionsContainer);
+          // Add toggle functionality
+          optionsToggle.addEventListener("click", () => {
+            const isHidden = optionsContainer.style.display === "none";
+            optionsContainer.style.display = isHidden ? "flex" : "none";
+            optionsToggle.classList.toggle("active");
+          });
+
+          controlsContainer.appendChild(optionsContainer);
+
+          // Attach event listeners for search type and case sensitivity
+          searchType.addEventListener("change", (e) => {
+            this._currentFilter.type = e.target.value;
+            this.applyFilter();
+          });
+
+          caseCheckbox.addEventListener("change", (e) => {
+            this._currentFilter.caseInsensitive = e.target.checked;
+            this.applyFilter();
+          });
+
+          filterButton.addEventListener("click", () => {
+            this.toggleSelectDeselectFiltered();
+          });
+        } else {
+          // If not multiple select, just append the controls container without buttons
+          controlsContainer.appendChild(primaryButtonsContainer);
+        }
 
         searchContainer.appendChild(controlsContainer);
         dropdownOuterContainer.appendChild(searchContainer);
@@ -194,20 +227,6 @@ define(function () {
           this.applyFilter();
           clearButton.style.display = "none";
           magnifier.style.display = "block";
-        });
-
-        searchType.addEventListener("change", (e) => {
-          this._currentFilter.type = e.target.value;
-          this.applyFilter();
-        });
-
-        caseCheckbox.addEventListener("change", (e) => {
-          this._currentFilter.caseInsensitive = e.target.checked;
-          this.applyFilter();
-        });
-
-        filterButton.addEventListener("click", () => {
-          this.toggleSelectDeselectFiltered();
         });
       }
 
@@ -241,39 +260,40 @@ define(function () {
             const groupHeaderDiv = document.createElement("div");
             groupHeaderDiv.classList.add("group-header");
 
-            // Set background color with default gray if not specified
             const groupColor = config["Group Color"] || "#f0f0f0";
             groupHeaderDiv.style.backgroundColor = groupColor;
 
             const groupLabel = document.createElement("span");
             groupLabel.classList.add("group-label");
             groupLabel.textContent = groupInfo.name;
-            groupLabel.title = groupInfo.name; 
+            groupLabel.title = groupInfo.name;
             groupHeaderDiv.appendChild(groupLabel);
 
-            const buttonContainer = document.createElement("div");
-            buttonContainer.classList.add("group-buttons");
+            if (multipleSelect) {
+              const buttonContainer = document.createElement("div");
+              buttonContainer.classList.add("group-buttons");
 
-            const selectButton = document.createElement("button");
-            selectButton.type = "button";
-            selectButton.classList.add("group-select-button");
-            selectButton.textContent = "Select All";
-            selectButton.addEventListener("click", () => {
-              this.selectAllInGroup(groupInfo.name, groupDiv);
-            });
+              const selectButton = document.createElement("button");
+              selectButton.type = "button";
+              selectButton.classList.add("group-select-button");
+              selectButton.textContent = "Select All";
+              selectButton.addEventListener("click", () => {
+                this.selectAllInGroup(groupInfo.name, groupDiv);
+              });
 
-            const deselectButton = document.createElement("button");
-            deselectButton.type = "button";
-            deselectButton.classList.add("group-deselect-button");
-            deselectButton.textContent = "Deselect All";
-            deselectButton.disabled = true;
-            deselectButton.addEventListener("click", () => {
-              this.deselectAllInGroup(groupInfo.name, groupDiv);
-            });
+              const deselectButton = document.createElement("button");
+              deselectButton.type = "button";
+              deselectButton.classList.add("group-deselect-button");
+              deselectButton.textContent = "Deselect All";
+              deselectButton.disabled = true;
+              deselectButton.addEventListener("click", () => {
+                this.deselectAllInGroup(groupInfo.name, groupDiv);
+              });
 
-            buttonContainer.appendChild(selectButton);
-            buttonContainer.appendChild(deselectButton);
-            groupHeaderDiv.appendChild(buttonContainer);
+              buttonContainer.appendChild(selectButton);
+              buttonContainer.appendChild(deselectButton);
+              groupHeaderDiv.appendChild(buttonContainer);
+            }
 
             groupDiv.appendChild(groupHeaderDiv);
 
@@ -297,7 +317,7 @@ define(function () {
               const label = document.createElement("label");
               label.setAttribute("for", checkboxId);
               label.textContent = item.displayValue;
-              label.title = item.displayValue; 
+              label.title = item.displayValue;
 
               checkboxDiv.appendChild(checkbox);
               checkboxDiv.appendChild(label);
@@ -365,7 +385,9 @@ define(function () {
       const valueColumnIndex = config["Use Value"] - 1;
       const displayColumnIndex = config["Display Value"] - 1;
       const groupColumnIndexConfig = config["Group"];
-      const groupColumnIndex = !isNaN(groupColumnIndexConfig) ? parseInt(groupColumnIndexConfig) - 1 : undefined;
+      const groupColumnIndex = !isNaN(groupColumnIndexConfig)
+        ? parseInt(groupColumnIndexConfig) - 1
+        : undefined;
       this._parameterName = config["Parameter Name"];
 
       if (isNaN(valueColumnIndex) || isNaN(displayColumnIndex)) {
@@ -428,7 +450,6 @@ define(function () {
     parseSearchTerms(rawInput) {
       if (!rawInput) return [];
 
-      // First replace ", " with "," to normalize separators
       const normalizedInput = rawInput.replace(/, /g, ",");
 
       return normalizedInput
@@ -484,7 +505,6 @@ define(function () {
         }
       });
 
-      // Update visibility of groups and checkbox states
       const groups = dropdownListContainer.querySelectorAll(".group");
       groups.forEach((group) => {
         const visibleSubItems = group.querySelectorAll(".checkbox-item:not(.hidden)");
@@ -497,6 +517,7 @@ define(function () {
 
       this.updateGroupCheckboxStates();
     }
+
     updateGroupCheckboxStates() {
       const dropdownListContainer = this._container.querySelector(".dropdown-list-container");
       if (!dropdownListContainer) return;
@@ -520,7 +541,6 @@ define(function () {
     updateDeselectButtonStates() {
       const groups = this._container.querySelectorAll(".group");
       groups.forEach((group) => {
-        const groupName = group.querySelector(".group-label").textContent;
         const checkboxes = group.querySelectorAll('input[type="checkbox"]');
         const hasSelectedItems = Array.from(checkboxes).some((cb) => cb.checked);
 
@@ -532,6 +552,8 @@ define(function () {
     }
 
     toggleSelectDeselectFiltered() {
+      if (!this._multipleSelect) return; // Disable in single-select mode
+
       const dropdownListContainer = this._container.querySelector(".dropdown-list-container");
       if (!dropdownListContainer) return;
 
@@ -560,6 +582,8 @@ define(function () {
     }
 
     selectAllInGroup(groupName, groupDiv) {
+      if (!this._multipleSelect) return; // Disable in single-select mode
+
       const visibleCheckboxes = groupDiv.querySelectorAll('.checkbox-item:not(.hidden) input[type="checkbox"]');
       visibleCheckboxes.forEach((checkbox) => {
         if (!checkbox.checked) {
@@ -570,6 +594,8 @@ define(function () {
     }
 
     deselectAllInGroup(groupName, groupDiv) {
+      if (!this._multipleSelect) return; // Disable in single-select mode
+
       const checkboxes = groupDiv.querySelectorAll('input[type="checkbox"]');
       checkboxes.forEach((checkbox) => {
         if (checkbox.checked) {
@@ -581,6 +607,23 @@ define(function () {
 
     handleCheckboxChange(value, displayValue, groupName, event) {
       const isChecked = event.target.checked;
+
+      // If single select and a new checkbox is being checked, uncheck others
+      if (!this._multipleSelect && isChecked) {
+        this._selectedItems.forEach((item) => {
+          if (item.use !== value) {
+            const otherCheckbox = this._container.querySelector(
+              `input[type="checkbox"][value="${item.use}"]`
+            );
+            if (otherCheckbox) {
+              otherCheckbox.checked = false;
+            }
+          }
+        });
+        // Clear previous selections except current one
+        this._selectedItems = this._selectedItems.filter(item => item.use === value);
+      }
+
       const itemData = { use: value, display: displayValue, group: groupName };
 
       if (isChecked) {
@@ -594,8 +637,14 @@ define(function () {
       const dropdownHeader = this._container.querySelector(".dropdown-header");
       if (dropdownHeader) {
         const labelSpan = dropdownHeader.querySelector("span");
-        labelSpan.textContent =
-          this._selectedItems.length > 0 ? `${this._selectedItems.length} options selected` : this._labelText;
+        if (!this._multipleSelect && this._selectedItems.length > 0) {
+          labelSpan.textContent = this._selectedItems[0].display;
+        } else {
+          labelSpan.textContent =
+            this._selectedItems.length > 0
+              ? `${this._selectedItems.length} options selected`
+              : this._labelText;
+        }
 
         const chevron = dropdownHeader.querySelector(".chevron");
         if (chevron) {
