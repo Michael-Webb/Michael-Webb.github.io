@@ -6,7 +6,9 @@ define(function () {
       console.log("MyDataLoggingControl - Initializing");
       this._oControlHost = oControlHost;
       this._container = oControlHost.container;
-      this._selectedItems = [];
+      if (!this._selectedItems) {
+        this._selectedItems = [];
+      }
       this._isOpen = false;
       this._currentFilter = {
         terms: [],
@@ -16,29 +18,31 @@ define(function () {
       };
       this._multipleSelect = true; // Default to true until read from config
 
-      const config = oControlHost.configuration;
-      this._parameterName = config["Parameter Name"]; // Capture parameter name
+      if (!this._initialLoadComplete) {
+        this._initialLoadComplete = true;
+        const config = oControlHost.configuration;
+        this._parameterName = config["Parameter Name"]; // Capture parameter name
+        if (this._parameterName) {
+          const initialValues = oControlHost.getParameter(this._parameterName);
 
-      if (this._parameterName) {
-        const initialValues = oControlHost.getParameter(this._parameterName);
-        console.log("Initial Values", initialValues);
-        if (initialValues) {
-          const params = Array.isArray(initialValues) ? initialValues : [initialValues];
-
-          params.forEach((param) => {
-            if (param && param.values && Array.isArray(param.values)) {
-              param.values.forEach((item) => {
-                this._selectedItems.push({
-                  use: item.use,
-                  display: item.display,
+          if (initialValues) {
+            const params = Array.isArray(initialValues) ? initialValues : [initialValues];
+            params.forEach((param) => {
+              if (param && param.values && Array.isArray(param.values)) {
+                param.values.forEach((item) => {
+                  this._selectedItems.push({
+                    use: item.use,
+                    display: item.display,
+                  });
                 });
-              });
-            }
-          });
+              }
+            });
+          }
+        } else {
+          console.warn("MyDataLoggingControl - Parameter Name not configured.");
         }
-      } else {
-        console.warn("MyDataLoggingControl - Parameter Name not configured.");
       }
+
       fnDoneInitializing();
     }
 
@@ -581,8 +585,7 @@ define(function () {
     }
 
     toggleSelectDeselectFiltered() {
-      if (!this._multipleSelect) return; // Disable in single-select mode
-
+      if (!this._multipleSelect) return;
       const dropdownListContainer = this._container.querySelector(".dropdown-list-container");
       if (!dropdownListContainer) return;
 
@@ -592,22 +595,27 @@ define(function () {
       if (visibleCheckboxes.length === 0) return;
 
       const anyUnchecked = Array.from(visibleCheckboxes).some((cb) => !cb.checked);
-
       if (anyUnchecked) {
         visibleCheckboxes.forEach((cb) => {
           if (!cb.checked) {
             cb.checked = true;
-            this.handleCheckboxChange(cb.value, cb.dataset.displayValue, cb.dataset.group, { target: cb });
+            const itemData = { use: cb.value, display: cb.dataset.displayValue, group: cb.dataset.group };
+            if (!this._selectedItems.some((item) => item.use === itemData.use)) {
+              this._selectedItems.push(itemData);
+            }
           }
         });
       } else {
         visibleCheckboxes.forEach((cb) => {
           if (cb.checked) {
             cb.checked = false;
-            this.handleCheckboxChange(cb.value, cb.dataset.displayValue, cb.dataset.group, { target: cb });
+            const itemData = { use: cb.value, display: cb.dataset.displayValue, group: cb.dataset.group };
+            this._selectedItems = this._selectedItems.filter((item) => item.use !== itemData.use);
           }
         });
       }
+      this.updateDeselectButtonStates();
+      this._oControlHost.valueChanged();
     }
 
     selectAllInGroup(groupName, groupDiv) {
@@ -623,36 +631,29 @@ define(function () {
     }
 
     deselectAllInGroup(groupName, groupDiv) {
-      if (!this._multipleSelect) return; // Disable in single-select mode
-
+      if (!this._multipleSelect) return;
       const checkboxes = groupDiv.querySelectorAll('input[type="checkbox"]');
       checkboxes.forEach((checkbox) => {
         if (checkbox.checked) {
           checkbox.checked = false;
-          this.handleCheckboxChange(checkbox.value, checkbox.dataset.displayValue, groupName, { target: checkbox });
+          const itemData = { use: checkbox.value, display: checkbox.dataset.displayValue, group: groupName };
+          this._selectedItems = this._selectedItems.filter((item) => item.use !== itemData.use);
         }
       });
+      this.updateDeselectButtonStates();
+      this._oControlHost.valueChanged();
     }
 
     handleCheckboxChange(value, displayValue, groupName, event) {
       const isChecked = event.target.checked;
       const itemData = { use: value, display: displayValue, group: groupName };
-      let hasChanged = false;
-      const previousSelectedItems = [...this._selectedItems];
-
       if (isChecked) {
         if (!this._selectedItems.some((item) => item.use === value)) {
           this._selectedItems.push(itemData);
-          hasChanged = true;
         }
       } else {
-        const previousLength = this._selectedItems.length;
         this._selectedItems = this._selectedItems.filter((item) => item.use !== value);
-        if (previousLength !== this._selectedItems.length) {
-          hasChanged = true;
-        }
       }
-
       const dropdownHeader = this._container.querySelector(".dropdown-header");
       if (dropdownHeader) {
         const labelSpan = dropdownHeader.querySelector("span");
@@ -668,69 +669,9 @@ define(function () {
           chevron.innerHTML = this._isOpen ? "▲" : "▼";
         }
       }
+
       this.updateDeselectButtonStates();
-      if (hasChanged) {
-        this._oControlHost.valueChanged();
-      }
-    }
-
-    deselectAllInGroup(groupName, groupDiv) {
-      if (!this._multipleSelect) return;
-      let hasChanges = false;
-
-      const checkboxes = groupDiv.querySelectorAll('input[type="checkbox"]');
-      checkboxes.forEach((checkbox) => {
-        if (checkbox.checked) {
-          hasChanges = true;
-          checkbox.checked = false;
-          const itemData = { use: checkbox.value, display: checkbox.dataset.displayValue, group: groupName };
-          this._selectedItems = this._selectedItems.filter((item) => item.use !== itemData.use);
-        }
-      });
-      if (hasChanges) {
-        this.updateDeselectButtonStates();
-        this._oControlHost.valueChanged();
-      }
-    }
-
-    toggleSelectDeselectFiltered() {
-      if (!this._multipleSelect) return;
-
-      const dropdownListContainer = this._container.querySelector(".dropdown-list-container");
-      if (!dropdownListContainer) return;
-
-      const visibleCheckboxes = dropdownListContainer.querySelectorAll(
-        '.checkbox-item:not(.hidden) input[type="checkbox"]'
-      );
-      if (visibleCheckboxes.length === 0) return;
-
-      let hasChanges = false;
-      const anyUnchecked = Array.from(visibleCheckboxes).some((cb) => !cb.checked);
-      if (anyUnchecked) {
-        visibleCheckboxes.forEach((cb) => {
-          if (!cb.checked) {
-            hasChanges = true;
-            cb.checked = true;
-            const itemData = { use: cb.value, display: cb.dataset.displayValue, group: cb.dataset.group };
-            if (!this._selectedItems.some((item) => item.use === itemData.use)) {
-              this._selectedItems.push(itemData);
-            }
-          }
-        });
-      } else {
-        visibleCheckboxes.forEach((cb) => {
-          if (cb.checked) {
-            hasChanges = true;
-            cb.checked = false;
-            const itemData = { use: cb.value, display: cb.dataset.displayValue, group: cb.dataset.group };
-            this._selectedItems = this._selectedItems.filter((item) => item.use !== itemData.use);
-          }
-        });
-      }
-      if (hasChanges) {
-        this.updateDeselectButtonStates();
-        this._oControlHost.valueChanged();
-      }
+      this._oControlHost.valueChanged();
     }
 
     // Add getParameters method
@@ -752,6 +693,6 @@ define(function () {
       console.log("MyDataLoggingControl - Destroying");
     }
   }
-  console.log("newnewnew");
+
   return MyDataLoggingControl;
 });
