@@ -41,6 +41,7 @@ define(function () {
             console.log("Initialized Items", this._selectedItems);
           }
         }
+        console.log("Initialized Items", this._selectedItems);
       } else {
         console.warn("MyDataLoggingControl - Parameter Name not configured.");
       }
