@@ -42,7 +42,7 @@ define(function () {
           console.warn("MyDataLoggingControl - Parameter Name not configured.");
         }
       }
-
+      this.getParameters();
       fnDoneInitializing();
     }
 
