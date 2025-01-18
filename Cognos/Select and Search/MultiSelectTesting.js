@@ -21,7 +21,7 @@ define(function () {
 
       if (this._parameterName) {
         const initialValues = oControlHost.getParameter(this._parameterName);
-
+        console.log("Initial Values",initialValues)
         if (initialValues) {
           const params = Array.isArray(initialValues) ? initialValues : [initialValues];
 
