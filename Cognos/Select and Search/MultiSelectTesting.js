@@ -664,6 +664,7 @@ define(function () {
 
       this.updateDeselectButtonStates();
       this._oControlHost.valueChanged(); // Notify Cognos of a change
+      console.log("Parameter after changed checkbox",this._oControlHost.getParameter(this._parameterName))
     }
 
     // Add getParameters method
