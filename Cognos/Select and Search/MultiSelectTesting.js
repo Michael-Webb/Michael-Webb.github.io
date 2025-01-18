@@ -21,7 +21,7 @@ define(function () {
 
       if (this._parameterName) {
         const initialValues = oControlHost.getParameter(this._parameterName);
-        console.log("Initial Values",initialValues)
+        console.log("Initial Values", initialValues);
         if (initialValues) {
           const params = Array.isArray(initialValues) ? initialValues : [initialValues];
 
@@ -636,6 +636,7 @@ define(function () {
 
     handleCheckboxChange(value, displayValue, groupName, event) {
       const isChecked = event.target.checked;
+
       const itemData = { use: value, display: displayValue, group: groupName };
 
       if (isChecked) {
@@ -664,8 +665,68 @@ define(function () {
 
       this.updateDeselectButtonStates();
       this._oControlHost.valueChanged(); // Notify Cognos of a change
-      console.log("Parameter after changed checkbox",this._oControlHost.getParameter(this._parameterName))
-      console.log("Selected Items on change",this._selectedItems)
+    }
+
+    deselectAllInGroup(groupName, groupDiv) {
+      if (!this._multipleSelect) return; // Disable in single-select mode
+
+      const checkboxes = groupDiv.querySelectorAll('input[type="checkbox"]');
+      let hasChanges = false;
+      checkboxes.forEach((checkbox) => {
+        if (checkbox.checked) {
+          hasChanges = true;
+          checkbox.checked = false;
+          const itemData = { use: checkbox.value, display: checkbox.dataset.displayValue, group: groupName };
+          this._selectedItems = this._selectedItems.filter((item) => item.use !== itemData.use);
+        }
+      });
+      if (hasChanges) {
+        this.updateDeselectButtonStates();
+        this._oControlHost.valueChanged();
+      }
+    }
+
+    toggleSelectDeselectFiltered() {
+      if (!this._multipleSelect) return; // Disable in single-select mode
+
+      const dropdownListContainer = this._container.querySelector(".dropdown-list-container");
+      if (!dropdownListContainer) return;
+
+      const visibleCheckboxes = dropdownListContainer.querySelectorAll(
+        '.checkbox-item:not(.hidden) input[type="checkbox"]'
+      );
+      if (visibleCheckboxes.length === 0) return;
+
+      const anyUnchecked = Array.from(visibleCheckboxes).some((cb) => !cb.checked);
+
+      let hasChanges = false;
+      if (anyUnchecked) {
+        visibleCheckboxes.forEach((cb) => {
+          if (!cb.checked) {
+            hasChanges = true;
+            cb.checked = true;
+            const itemData = { use: cb.value, display: cb.dataset.displayValue, group: cb.dataset.group };
+            if (!this._selectedItems.some((item) => item.use === itemData.use)) {
+              this._selectedItems.push(itemData);
+            }
+          }
+        });
+      } else {
+        visibleCheckboxes.forEach((cb) => {
+          if (cb.checked) {
+            hasChanges = true;
+            cb.checked = false;
+            const itemData = { use: cb.value, display: cb.dataset.displayValue, group: cb.dataset.group };
+            this._selectedItems = this._selectedItems.filter((item) => item.use !== itemData.use);
+          }
+        });
+      }
+      if (hasChanges) {
+        this.updateDeselectButtonStates();
+        this._oControlHost.valueChanged();
+        console.log("Parameter after changed checkbox", this._oControlHost.getParameter(this._parameterName));
+        console.log("Selected Items on change", this._selectedItems);
+      }
     }
 
     // Add getParameters method
