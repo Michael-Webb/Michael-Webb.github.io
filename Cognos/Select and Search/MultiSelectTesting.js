@@ -20,6 +20,7 @@ define(function () {
       this._parameterName = config["Parameter Name"]; // Capture parameter name
       if (this._parameterName) {
         const initialValues = oControlHost.getParameter(this._parameterName);
+        console.log("Initialized Items", initialValues);
         if (initialValues && initialValues.length > 0) {
           // Check if the parameter is a range parameter.
           if (initialValues[0].start) {
@@ -38,10 +39,8 @@ define(function () {
               }
               return [];
             });
-            console.log("Initialized Items", this._selectedItems);
           }
         }
-        console.log("Initialized Items", this._selectedItems);
       } else {
         console.warn("MyDataLoggingControl - Parameter Name not configured.");
       }
