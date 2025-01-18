@@ -35,6 +35,7 @@ define(function () {
                               display: item.display
                           }));
                         }
+                        console.log("Initialized Items",this._selectedItems)
                         return [];
                      });
                    }
