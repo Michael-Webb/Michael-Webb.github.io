@@ -45,7 +45,7 @@ define(function () {
       } else {
         console.warn("MyDataLoggingControl - Parameter Name not configured.");
       }
-
+      console.log("Initialized Items", this._selectedItems);
       this.draw(oControlHost);
       fnDoneInitializing();
     }
