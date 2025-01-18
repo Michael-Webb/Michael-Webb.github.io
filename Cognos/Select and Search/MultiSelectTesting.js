@@ -32,6 +32,7 @@ define(function () {
                         return [];
                      });
               }
+              console.log("Initial Selection",this._selectedItems)
          }else{
                console.warn("MyDataLoggingControl - Parameter Name not configured.");
          }
