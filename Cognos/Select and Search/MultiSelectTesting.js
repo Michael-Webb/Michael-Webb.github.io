@@ -668,7 +668,6 @@ define(function () {
           chevron.innerHTML = this._isOpen ? "▲" : "▼";
         }
       }
-
       this.updateDeselectButtonStates();
       if (hasChanged) {
         this._oControlHost.valueChanged();
