@@ -36,7 +36,7 @@ define(function () {
                console.warn("MyDataLoggingControl - Parameter Name not configured.");
          }
 
-         this.draw(oControlHost);
+        //  this.draw(oControlHost);
          fnDoneInitializing();
       }
 
