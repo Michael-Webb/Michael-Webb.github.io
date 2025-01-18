@@ -19,7 +19,7 @@ define(function () {
       const config = oControlHost.configuration;
       this._parameterName = config["Parameter Name"]; // Capture parameter name
       this._promptName = config["Prompt Name"]; // Capture parameter name
-      this._initialValues = getParameters(this._parameterName)
+      this._initialValues = oControlHost.getParameter(this._parameterName)
       console.log(this._initialValues)
 
       if (this._promptName) {
@@ -52,7 +52,6 @@ define(function () {
 
     draw(oControlHost) {
       console.log("MyDataLoggingControl - Drawing");
-      console.log(this._initialValues)
       this._container.innerHTML = "";
       this._container.classList.add("custom-dropdown-container");
 
