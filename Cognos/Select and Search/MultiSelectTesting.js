@@ -636,15 +636,20 @@ define(function () {
 
     handleCheckboxChange(value, displayValue, groupName, event) {
       const isChecked = event.target.checked;
-
       const itemData = { use: value, display: displayValue, group: groupName };
+      let hasChanged = false;
 
       if (isChecked) {
         if (!this._selectedItems.some((item) => item.use === value)) {
+          hasChanged = true;
           this._selectedItems.push(itemData);
         }
       } else {
+        const previousLength = this._selectedItems.length;
         this._selectedItems = this._selectedItems.filter((item) => item.use !== value);
+        if (previousLength !== this._selectedItems.length) {
+          hasChanged = true;
+        }
       }
 
       const dropdownHeader = this._container.querySelector(".dropdown-header");
@@ -664,14 +669,16 @@ define(function () {
       }
 
       this.updateDeselectButtonStates();
-      this._oControlHost.valueChanged(); // Notify Cognos of a change
+      if (hasChanged) {
+        this._oControlHost.valueChanged(); // Notify Cognos of a change
+      }
     }
 
     deselectAllInGroup(groupName, groupDiv) {
-      if (!this._multipleSelect) return; // Disable in single-select mode
+      if (!this._multipleSelect) return;
+      let hasChanges = false;
 
       const checkboxes = groupDiv.querySelectorAll('input[type="checkbox"]');
-      let hasChanges = false;
       checkboxes.forEach((checkbox) => {
         if (checkbox.checked) {
           hasChanges = true;
@@ -687,7 +694,7 @@ define(function () {
     }
 
     toggleSelectDeselectFiltered() {
-      if (!this._multipleSelect) return; // Disable in single-select mode
+      if (!this._multipleSelect) return;
 
       const dropdownListContainer = this._container.querySelector(".dropdown-list-container");
       if (!dropdownListContainer) return;
@@ -697,9 +704,8 @@ define(function () {
       );
       if (visibleCheckboxes.length === 0) return;
 
-      const anyUnchecked = Array.from(visibleCheckboxes).some((cb) => !cb.checked);
-
       let hasChanges = false;
+      const anyUnchecked = Array.from(visibleCheckboxes).some((cb) => !cb.checked);
       if (anyUnchecked) {
         visibleCheckboxes.forEach((cb) => {
           if (!cb.checked) {
@@ -724,8 +730,6 @@ define(function () {
       if (hasChanges) {
         this.updateDeselectButtonStates();
         this._oControlHost.valueChanged();
-        console.log("Parameter after changed checkbox", this._oControlHost.getParameter(this._parameterName));
-        console.log("Selected Items on change", this._selectedItems);
       }
     }
 
