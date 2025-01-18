@@ -20,23 +20,23 @@ define(function () {
       this._parameterName = config["Parameter Name"]; // Capture parameter name
       if (this._parameterName) {
         const initialValues = oControlHost.getParameter(this._parameterName);
+        console.log("Initial Values",initialValues)
         if (initialValues && initialValues.length > 0) {
           initialValues.forEach((param) => {
             if (param.values && param.values.length > 0) {
               param.values.forEach((item) => {
                 this._selectedItems.push({
                   use: item.use,
-                  display: item.display,
+                  display: item.display, 
                 });
               });
             }
           });
         }
+        console.log("Selected Items",this._selectedItems)
       } else {
         console.warn("MyDataLoggingControl - Parameter Name not configured.");
       }
-
-      //this.draw(oControlHost);
       fnDoneInitializing();
     }
 
