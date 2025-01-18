@@ -638,11 +638,12 @@ define(function () {
       const isChecked = event.target.checked;
       const itemData = { use: value, display: displayValue, group: groupName };
       let hasChanged = false;
+      const previousSelectedItems = [...this._selectedItems];
 
       if (isChecked) {
         if (!this._selectedItems.some((item) => item.use === value)) {
-          hasChanged = true;
           this._selectedItems.push(itemData);
+          hasChanged = true;
         }
       } else {
         const previousLength = this._selectedItems.length;
@@ -670,7 +671,7 @@ define(function () {
 
       this.updateDeselectButtonStates();
       if (hasChanged) {
-        this._oControlHost.valueChanged(); // Notify Cognos of a change
+        this._oControlHost.valueChanged();
       }
     }
 
