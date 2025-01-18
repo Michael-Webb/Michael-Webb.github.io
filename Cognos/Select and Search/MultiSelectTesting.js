@@ -22,7 +22,7 @@ define(function () {
       if (this._parameterName) {
         const initialValues = oControlHost.getParameter(this._parameterName);
         console.log("Initial Values",initialValues,initialValues.length)
-        if (initialValues && initialValues.length > 0) {
+        if (initialValues) {
           initialValues.forEach((param) => {
             if (param.values && param.values.length > 0) {
               param.values.forEach((item) => {
