@@ -18,6 +18,7 @@ define(function () {
 
       const config = oControlHost.configuration;
       this._parameterName = config["Parameter Name"]; // Capture parameter name
+      console.log("Parameter Name",this._parameterName)
       if (this._parameterName) {
         const initialValues = oControlHost.getParameter(this._parameterName);
         console.log("Initial Values",initialValues)
