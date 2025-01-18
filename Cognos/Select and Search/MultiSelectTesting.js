@@ -9,37 +9,38 @@ define(function () {
       this._selectedItems = [];
       this._isOpen = false;
       this._currentFilter = {
-        terms: [],
-        type: "containsAny",
-        rawInput: "",
-        caseInsensitive: true,
+          terms: [],
+          type: "containsAny",
+          rawInput: "",
+          caseInsensitive: true,
       };
       this._multipleSelect = true; // Default to true until read from config
-
+  
       const config = oControlHost.configuration;
       this._parameterName = config["Parameter Name"]; // Capture parameter name
-      console.log("Parameter Name",this._parameterName)
       if (this._parameterName) {
-        const initialValues = oControlHost.getParameter(this._parameterName);
-        console.log("Initial Values",initialValues,initialValues.length)
-        if (initialValues) {
-          initialValues.forEach((param) => {
-            if (param.values && param.values.length > 0) {
-              param.values.forEach((item) => {
-                this._selectedItems.push({
-                  use: item.use,
-                  display: item.display, 
-                });
-              });
-            }
-          });
-        }
-        console.log("Selected Items",this._selectedItems)
+          const initialValues = oControlHost.getParameter(this._parameterName);
+          if (initialValues) {
+             
+              const params = Array.isArray(initialValues) ? initialValues : [initialValues];
+  
+               params.forEach((param) => {
+                   if (param && param.values && Array.isArray(param.values) && param.values.length > 0) {
+                          param.values.forEach(item => {
+                                  this._selectedItems.push({
+                                      use: item.use,
+                                      display: item.display,
+                                  });
+                              });
+                   }
+               });
+              }
       } else {
-        console.warn("MyDataLoggingControl - Parameter Name not configured.");
+              console.warn("MyDataLoggingControl - Parameter Name not configured.");
       }
+  
       fnDoneInitializing();
-    }
+  }
 
     draw(oControlHost) {
       console.log("MyDataLoggingControl - Drawing");
