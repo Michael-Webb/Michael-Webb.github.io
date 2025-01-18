@@ -18,9 +18,12 @@ define(function () {
 
       const config = oControlHost.configuration;
       this._parameterName = config["Parameter Name"]; // Capture parameter name
+      this._promptName = config["Prompt Name"]; // Capture parameter name
+      this._initialValues = oControlHost.getParameters()
+      console.log(this._initialValues)
 
-      if (this._parameterName) {
-        const promptControl = oControlHost.page.getControlByName(this._parameterName);
+      if (this._promptName) {
+        const promptControl = oControlHost.page.getControlByName(this._promptName);
         if (promptControl) {
           const currentValues = promptControl.getValues();
           console.log("Current Values",currentValues)
