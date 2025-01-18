@@ -680,13 +680,16 @@ define(function () {
         console.warn("MyDataLoggingControl - Parameter Name not configured.");
         return null;
       }
+      console.log("getParams",oControlHost)
 
       if (this._selectedItems.length === 0) {
         return null;
       }
 
       const parameterValues = this._selectedItems.map((item) => ({ use: item.use, display: item.display }));
+      console.log("getparams2",parameterValues)
       return [{ parameter: this._parameterName, values: parameterValues }];
+      
     }
 
     destroy(oControlHost) {
