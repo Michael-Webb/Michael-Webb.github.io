@@ -478,6 +478,26 @@ define(function () {
     toggleDropdown() {
       this._isOpen = !this._isOpen;
       this.draw(this._oControlHost);
+
+      // Attach or remove the outside click listener based on dropdown state
+      if (this._isOpen) {
+        // Bind the event handler and store the reference
+        this._handleOutsideClickBound = this.handleOutsideClick.bind(this);
+        document.addEventListener("click", this._handleOutsideClickBound);
+      } else if (this._handleOutsideClickBound) {
+        document.removeEventListener("click", this._handleOutsideClickBound);
+      }
+    }
+
+    handleOutsideClick(event) {
+      // Check if the click occurred outside the dropdown container
+      if (!this._container.contains(event.target)) {
+        this._isOpen = false;
+        this.draw(this._oControlHost);
+
+        // Remove the outside click listener after closing
+        document.removeEventListener("click", this._handleOutsideClickBound);
+      }
     }
 
     parseSearchTerms(rawInput) {
@@ -493,21 +513,21 @@ define(function () {
 
     applyFilter() {
       if (!this._isOpen) return;
-    
+
       const dropdownListContainer = this._container.querySelector(".dropdown-list-container");
       if (!dropdownListContainer) return;
-    
+
       const searchTerms = this._currentFilter.terms;
       const searchType = this._currentFilter.type || "containsAny";
       const isCaseInsensitive = this._currentFilter.caseInsensitive !== false;
-    
+
       const checkboxItems = dropdownListContainer.querySelectorAll(".checkbox-item");
       checkboxItems.forEach((item) => {
         const label = item.querySelector("label");
         const displayValue = label ? label.textContent : "";
         const compareValue = isCaseInsensitive ? displayValue.toLowerCase() : displayValue;
         const compareTerms = isCaseInsensitive ? searchTerms : searchTerms.map((term) => term.toLowerCase());
-    
+
         let isVisible = true;
         if (searchTerms.length > 0) {
           switch (searchType) {
@@ -530,14 +550,14 @@ define(function () {
               break;
           }
         }
-    
+
         if (isVisible) {
           item.classList.remove("hidden");
         } else {
           item.classList.add("hidden");
         }
       });
-    
+
       // Hide entire groups if they have no visible items
       const groups = dropdownListContainer.querySelectorAll(".group");
       groups.forEach((group) => {
@@ -549,10 +569,9 @@ define(function () {
           group.style.display = "";
         }
       });
-    
+
       this.updateGroupCheckboxStates();
     }
-    
 
     updateGroupCheckboxStates() {
       const dropdownListContainer = this._container.querySelector(".dropdown-list-container");
@@ -683,7 +702,7 @@ define(function () {
         return null;
       }
       let paramTest = oControlHost.getParameter(this._parameterName);
-        console.log("paramTest", paramTest);
+      console.log("paramTest", paramTest);
       // Map current selections to parameter values.
       const parameterValues = this._selectedItems.map((item) => ({
         use: item.use,
