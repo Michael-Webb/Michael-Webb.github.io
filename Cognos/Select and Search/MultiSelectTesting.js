@@ -378,6 +378,7 @@ define(function () {
               checkboxDiv.addEventListener("click", (event) => {
                 if (event.target.tagName.toLowerCase() !== 'input') {
                   checkbox.click();
+                  event.stopPropagation();
                 }
               });
 
@@ -444,6 +445,7 @@ define(function () {
               checkboxDiv.addEventListener("click", (event) => {
                 if (event.target.tagName.toLowerCase() !== 'input') {
                   checkbox.click();
+                  event.stopPropagation();
                 }
               });
 
