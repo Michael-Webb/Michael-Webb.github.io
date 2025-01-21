@@ -337,7 +337,8 @@ define(function () {
               const checkboxDiv = document.createElement("div");
               checkboxDiv.classList.add("checkbox-item");
               checkboxDiv.dataset.itemValue = item.value;
-              checkboxDiv.setAttribute("role", "option"); // Role option for listbox items
+              checkboxDiv.setAttribute("role", "option");
+              checkboxDiv.setAttribute("tabindex", "-1"); // Make the row focusable
 
               const checkboxId = oControlHost.generateUniqueID();
               const checkbox = document.createElement("input");
@@ -355,29 +356,30 @@ define(function () {
               checkboxDiv.appendChild(checkbox);
               checkboxDiv.appendChild(label);
               groupDiv.appendChild(checkboxDiv);
-                // Add click listener to the entire checkboxDiv
+              // Add click listener to the entire checkboxDiv
               checkboxDiv.addEventListener("click", (event) => {
-                if (event.target !== checkbox) { // Prevent triggering when clicking directly on the checkbox
-                checkbox.checked = !checkbox.checked;
+                if (event.target !== checkbox) {
+                  checkbox.checked = !checkbox.checked;
                   this.handleCheckboxChange(item.value, item.displayValue, groupInfo.name, {
-                  target: checkbox,
-                });
+                    target: checkbox,
+                  });
                 }
               });
-                 checkbox.addEventListener(
-                  "change",
-                  this.handleCheckboxChange.bind(this, item.value, item.displayValue, groupInfo.name)
+              checkbox.addEventListener(
+                "change",
+                this.handleCheckboxChange.bind(this, item.value, item.displayValue, groupInfo.name)
               );
             });
 
             multiSelectDropdown.appendChild(groupDiv);
           } else {
             groupInfo.items.forEach((item) => {
-                const checkboxDiv = document.createElement("div");
-                checkboxDiv.classList.add("checkbox-item", "no-group");
-                checkboxDiv.dataset.itemValue = item.value;
-                checkboxDiv.setAttribute("role", "option"); // Role option for listbox items
-  
+              const checkboxDiv = document.createElement("div");
+              checkboxDiv.classList.add("checkbox-item", "no-group");
+              checkboxDiv.dataset.itemValue = item.value;
+              checkboxDiv.setAttribute("role", "option");
+              checkboxDiv.setAttribute("tabindex", "-1"); // Make the row focusable
+
               const checkboxId = oControlHost.generateUniqueID();
               const checkbox = document.createElement("input");
               checkbox.type = "checkbox";
@@ -385,7 +387,6 @@ define(function () {
               checkbox.id = checkboxId;
               checkbox.dataset.group = groupInfo.name;
               checkbox.dataset.displayValue = item.displayValue;
-              
 
               const label = document.createElement("label");
               label.setAttribute("for", checkboxId);
@@ -395,18 +396,17 @@ define(function () {
               checkboxDiv.appendChild(checkbox);
               checkboxDiv.appendChild(label);
               multiSelectDropdown.appendChild(checkboxDiv);
-                  // Add click listener to the entire checkboxDiv
-               checkboxDiv.addEventListener("click", (event) => {
-               if(event.target !== checkbox){
+              checkboxDiv.addEventListener("click", (event) => {
+                if (event.target !== checkbox) {
                   checkbox.checked = !checkbox.checked;
                   this.handleCheckboxChange(item.value, item.displayValue, groupInfo.name, {
                     target: checkbox,
                   });
                 }
               });
-               checkbox.addEventListener(
-                  "change",
-                  this.handleCheckboxChange.bind(this, item.value, item.displayValue, groupInfo.name)
+              checkbox.addEventListener(
+                "change",
+                this.handleCheckboxChange.bind(this, item.value, item.displayValue, groupInfo.name)
               );
             });
           }
