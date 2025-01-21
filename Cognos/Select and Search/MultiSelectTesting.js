@@ -42,7 +42,7 @@ define(function () {
           console.warn("MyDataLoggingControl - Parameter Name not configured.");
         }
       }
-      this.getParameters();
+      // this.getParameters();
       fnDoneInitializing();
     }
 
@@ -406,7 +406,7 @@ define(function () {
       if (!oDataStore) {
         console.warn("MyDataLoggingControl - No data store provided.");
         this._groupedData = null;
-        // this.draw(oControlHost);
+        this.draw(oControlHost);
         return;
       }
 
@@ -414,7 +414,7 @@ define(function () {
       if (!config) {
         console.warn("MyDataLoggingControl - No configuration provided.");
         this._groupedData = null;
-        // this.draw(oControlHost);
+        this.draw(oControlHost);
         return;
       }
 
@@ -426,7 +426,7 @@ define(function () {
       if (isNaN(valueColumnIndex) || isNaN(displayColumnIndex)) {
         console.warn("MyDataLoggingControl - Invalid column configuration.");
         this._groupedData = null;
-        // this.draw(oControlHost);
+        this.draw(oControlHost);
         return;
       }
 
@@ -439,7 +439,7 @@ define(function () {
       ) {
         console.warn("MyDataLoggingControl - Configured column index out of bounds.");
         this._groupedData = null;
-        // this.draw(oControlHost);
+        this.draw(oControlHost);
         return;
       }
 
@@ -472,12 +472,12 @@ define(function () {
       }
 
       console.log("MyDataLoggingControl - Grouped Data:", this._groupedData);
-      // this.draw(oControlHost);
+      this.draw(oControlHost);
     }
 
     toggleDropdown() {
       this._isOpen = !this._isOpen;
-      // this.draw(this._oControlHost);
+      this.draw(this._oControlHost);
     }
 
     parseSearchTerms(rawInput) {
