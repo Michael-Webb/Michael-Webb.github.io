@@ -439,6 +439,7 @@ define(function () {
               const label = document.createElement("label");
               label.setAttribute("for", checkboxId);
               label.textContent = item.displayValue;
+              label.title = item.displayValue;
     
               checkboxDiv.appendChild(checkbox);
               checkboxDiv.appendChild(label);
