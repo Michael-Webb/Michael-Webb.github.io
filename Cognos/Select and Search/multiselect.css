@@ -1,241 +1,252 @@
 /* Dropdown Header */
 .custom-dropdown-container .dropdown-header {
-    border: 1px solid #ccc;
-    padding: 8px;
-    cursor: pointer;
-    position: relative;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: white;
+  border: 1px solid #ccc;
+  padding: 8px;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: white;
 }
 
 .custom-dropdown-container .dropdown-header .chevron {
-    margin-left: 10px;
-    font-size: 12px;
+  margin-left: 10px;
+  font-size: 12px;
 }
 
 /* Dropdown Outer Container and List Container */
 .custom-dropdown-container {
-    position: relative;  /* Add this to contain absolute positioning */
+  position: relative; /* Add this to contain absolute positioning */
 }
 
 .custom-dropdown-container .dropdown-outer-container {
-    border-top: none;
-    position: absolute;
-    left: 0;
-    right: 0;
-    width: 100%;  /* Change from inherit to 100% */
-    background-color: white;
-    z-index: 10;
-    box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
-    display: flex;
-    flex-direction: column;
+  border-top: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  width: 100%; /* Change from inherit to 100% */
+  background-color: white;
+  z-index: 10;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
 }
 
 .custom-dropdown-container .dropdown-list-container {
-    max-height: 300px;
-    overflow-y: auto;
-    padding: 5px;
-    box-sizing: border-box;
-    white-space: nowrap;
+  max-height: 500px;
+  overflow-y: auto;
+  overflow-x: hidden; /* Hide horizontal overflow if not needed */
+  padding: 5px;
+  box-sizing: border-box;
+  white-space: nowrap;
 }
 
 /* Search Container and Controls */
 .custom-dropdown-container .search-container {
-    display: flex;
-    flex-direction: column;
-    padding: 5px;
-    width: auto;
-    border-bottom: 1px solid #ccc;
-    background-color: white;
+  display: flex;
+  flex-direction: column;
+  padding: 5px;
+  width: auto;
+  border-bottom: 1px solid #ccc;
+  background-color: white;
 }
 
 .custom-dropdown-container .search-input-container {
-    position: relative;
-    width: auto;
+  position: relative;
+  width: auto;
 }
 
 .custom-dropdown-container .search-input {
-    width: 100%;
-    padding: 5px;
-    margin-bottom: 5px;
-    border: 1px solid #ccc;
-    border-radius: 3px;
-    box-sizing: border-box;
-    padding-right: 40px;
+  width: 100%;
+  padding: 5px;
+  margin-bottom: 5px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  box-sizing: border-box;
+  padding-right: 40px;
 }
 
 .custom-dropdown-container .search-controls {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    margin-top: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 5px;
 }
 
 .custom-dropdown-container .options-toggle {
-    background: none;
-    border: none;
-    color: blue;
-    cursor: pointer;
-    text-decoration: underline;
-    font-size: 0.9em;
-    padding: 2px 4px;
+  background: none;
+  border: none;
+  color: blue;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 0.9em;
+  padding: 2px 4px;
 }
 
 .custom-dropdown-container .options-toggle.active {
-    text-decoration: none;
-    opacity: 0.8;
+  text-decoration: none;
+  opacity: 0.8;
 }
 
 .custom-dropdown-container .primary-buttons-container {
-    display: flex;
-    gap: 8px;
-    align-items: center;
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
 .custom-dropdown-container .options-container {
-    display: none;
-    flex-wrap: wrap;
-    gap: 5px;
-    width: 100%;
-    margin-top: 5px;
+  display: none;
+  flex-wrap: wrap;
+  gap: 5px;
+  width: 100%;
+  margin-top: 5px;
 }
 
 .custom-dropdown-container .search-type {
-    padding: 5px;
-    border: 1px solid #ccc;
-    border-radius: 3px;
-    width: 225px;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  width: 225px;
 }
 
 .custom-dropdown-container .case-sensitivity-container {
-    display: flex;
-    align-items: center;
-    gap: 5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .custom-dropdown-container .filter-button {
-    background: none;
-    border: none;
-    color: blue;
-    cursor: pointer;
-    text-decoration: underline;
-    font-size: 0.9em;
-    padding: 2px 4px;
+  background: none;
+  border: none;
+  color: blue;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 0.9em;
+  padding: 2px 4px;
 }
 
 .custom-dropdown-container .filter-button:hover {
-    /* Optional: could add a hover state if desired */
-    opacity: 0.8;
+  /* Optional: could add a hover state if desired */
+  opacity: 0.8;
 }
 
 /* Search Icons */
 .custom-dropdown-container .clear-button,
 .custom-dropdown-container .magnifier {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .custom-dropdown-container .clear-button {
-    right: 5px;
-    cursor: pointer;
-    display: none;
+  right: 5px;
+  cursor: pointer;
+  display: none;
 }
 
 .custom-dropdown-container .magnifier {
-    right: 5px;
-    pointer-events: none;
+  right: 5px;
+  pointer-events: none;
 }
 
 /* Group Header and Buttons */
 .custom-dropdown-container .group-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-weight: bold;
-    margin-bottom: 5px;
-    padding: 5px;
-    border-radius: 3px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+  margin-bottom: 5px;
+  padding: 5px;
+  border-radius: 3px;
 }
 
 .custom-dropdown-container .group-buttons {
-    display: flex;
-    gap: 8px;
+  display: flex;
+  gap: 8px;
 }
 
 .custom-dropdown-container .group-select-button,
 .custom-dropdown-container .group-deselect-button {
-    background: none;
-    border: none;
-    color: blue;
-    cursor: pointer;
-    text-decoration: underline;
-    font-size: 0.9em;
-    padding: 2px 4px;
+  background: none;
+  border: none;
+  color: blue;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 0.9em;
+  padding: 2px 4px;
 }
 
 .custom-dropdown-container .group-deselect-button:disabled {
-    color: #666666;
-    cursor: not-allowed;
-    text-decoration: none;
-    opacity: 0.8;
-    font-weight: 500;
+  color: #666666;
+  cursor: not-allowed;
+  text-decoration: none;
+  opacity: 0.8;
+  font-weight: 500;
 }
 
-/* Checkbox Items */
-.custom-dropdown-container .checkbox-item label {
-    margin-left: 5px;
-    display: inline-block;      /* Ensure block layout to apply width constraints */
-    max-width: 100%;            /* Limit width to container's width */
-    white-space: nowrap;        /* Prevent wrapping to a new line */
-    overflow: hidden;           /* Hide text that overflows the container */
-    text-overflow: ellipsis;    /* Display ellipsis (...) for overflowing text */
+/* Ensure the checkbox-item uses flex layout to manage space */
+.custom-dropdown-container .checkbox-item {
+  display: flex;
+  align-items: left;
+  padding-left: 15px;
+  max-width: 250px; /* Set a max width as needed */
+  text-align: start;
 }
 
 .custom-dropdown-container .checkbox-item.no-group {
-    padding-left: 0px;
+  padding-left: 0px;
 }
 
 .custom-dropdown-container .checkbox-item label {
-    margin-left: 5px;
+  margin-left: 5px;
+  flex: 1; /* Allow the label to take up remaining space */
+  display: block; /* Necessary for text-overflow to work */
+  white-space: nowrap; /* Prevent text from wrapping */
+  overflow: hidden; /* Hide overflow text */
+  text-overflow: ellipsis; /* Show ellipsis (...) for overflow */
+  max-width: 200px; /* Adjust based on design needs */
+  cursor: default; /* Avoid pointer cursor to prevent confusion */
+}
+/* Optional: Ensure the checkbox itself doesn't shrink */
+.custom-dropdown-container .checkbox-item input[type="checkbox"] {
+  flex-shrink: 0;
 }
 
 .custom-dropdown-container .checkbox-item.hidden {
-    display: none;
+  display: none;
 }
 
 /* Scrollbar Styling */
 .custom-dropdown-container .dropdown-list-container::-webkit-scrollbar {
-    width: 5px;
+  width: 5px;
 }
 
 .custom-dropdown-container .dropdown-list-container::-webkit-scrollbar-track {
-    background: #f0f1f3;
+  background: #f0f1f3;
 }
 
 .custom-dropdown-container .dropdown-list-container::-webkit-scrollbar-thumb {
-    background: #cdcfd1;
+  background: #cdcfd1;
 }
 
 .custom-dropdown-container .dropdown-list-container::-webkit-scrollbar-thumb:hover {
-    background: #b2b6b9;
+  background: #b2b6b9;
 }
 
 .custom-dropdown-container .case-checkbox {
-    margin: 0;
+  margin: 0;
 }
 
 .custom-dropdown-container .case-label {
-    font-size: 0.9em;
-    user-select: none;
+  font-size: 0.9em;
+  user-select: none;
 }
 
 /* Make buttons and checkbox container shrink if needed */
 .custom-dropdown-container .filter-button,
 .custom-dropdown-container .case-sensitivity-container {
-    flex-shrink: 1;
+  flex-shrink: 1;
 }
 
 .group-label {
@@ -247,10 +258,10 @@
 }
 
 .checkbox-item {
-    cursor: pointer;
+  cursor: pointer;
 }
 .checkbox-item:hover {
-    background-color: #e9e9e9;
+  background-color: #e9e9e9;
 }
 
 .custom-dropdown-container input:focus,
@@ -258,28 +269,29 @@
 .custom-dropdown-container select:focus,
 .custom-dropdown-container [role="option"]:focus,
 .custom-dropdown-container [role="button"]:focus {
-  outline: 2px solid #005fcc;    /* High-contrast outline */
-  outline-offset: 2px;            /* Space between outline and element */
-  background-color: #e0f0ff;       /* Light background on focus for visibility */
+  outline: 2px solid #005fcc; /* High-contrast outline */
+  outline-offset: 2px; /* Space between outline and element */
+  background-color: white; /* Light background on focus for visibility */
 }
 .custom-dropdown-container [role="option"]:focus {
-  border: 1px solid #005fcc;  /* Add a border when focused */
-  background-color: #e0f0ff;    /* Reinforce with a background color */
-  z-index: 1;                   /* Bring focused option above others if overlapping occurs */
+  border: 1px solid #005fcc; /* Add a border when focused */
+  background-color: white; /* Reinforce with a background color */
+  z-index: 1; /* Bring focused option above others if overlapping occurs */
 }
+
 /* Horizontal Scrollbar Styling */
 .custom-dropdown-container .dropdown-list-container::-webkit-scrollbar:horizontal {
-    height: 5px;
+  height: 5px;
 }
 
 .custom-dropdown-container .dropdown-list-container::-webkit-scrollbar-track:horizontal {
-    background: #f0f1f3;
+  background: #f0f1f3;
 }
 
 .custom-dropdown-container .dropdown-list-container::-webkit-scrollbar-thumb:horizontal {
-    background: #cdcfd1;
+  background: #cdcfd1;
 }
 
 .custom-dropdown-container .dropdown-list-container::-webkit-scrollbar-thumb:horizontal:hover {
-    background: #b2b6b9;
+  background: #b2b6b9;
 }
