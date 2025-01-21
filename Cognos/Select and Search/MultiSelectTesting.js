@@ -674,36 +674,19 @@ define(function () {
       this._oControlHost.valueChanged();
     }
 
-    // Add getParameters method
-    // getParameters(oControlHost) {
-    //   if (!this._parameterName) {
-    //     console.warn("MyDataLoggingControl - Parameter Name not configured.");
-    //     return null;
-    //   }
-    //   let paramTest = oControlHost.getParameter(this._parameterName);
-    //   console.log("getParams", paramTest);
-
-    //   if (this._selectedItems.length === 0) {
-    //     return null;
-    //   }
-
-    //   const parameterValues = this._selectedItems.map((item) => ({ use: item.use, display: item.display }));
-    //   console.log("getparams2", parameterValues);
-    //   return [{ parameter: this._parameterName, values: parameterValues }];
-    // }
-
     getParameters(oControlHost) {
       if (!this._parameterName) {
         console.warn("MyDataLoggingControl - Parameter Name not configured.");
         return null;
       }
-
+      let paramTest = oControlHost.getParameter(this._parameterName);
+        console.log("paramTest", paramTest);
       // Map current selections to parameter values.
       const parameterValues = this._selectedItems.map((item) => ({
         use: item.use,
         display: item.display,
       }));
-
+      console.log("parameterValues: ", parameterValues);
       // Always return a parameter object, even if no items are selected.
       return [
         {
