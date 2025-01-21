@@ -41,7 +41,6 @@ define(function () {
           console.warn("MyDataLoggingControl - Parameter Name not configured.");
         }
       }
-      // this.getParameters();
       fnDoneInitializing();
     }
 
@@ -118,7 +117,7 @@ define(function () {
       dropdownOuterContainer.style.display = this._isOpen ? "block" : "none";
 
       if (this._isOpen) {
-        // Create search container
+        // Create search container and controls
         const searchContainer = document.createElement("div");
         searchContainer.classList.add("search-container");
 
@@ -377,20 +376,16 @@ define(function () {
 
               // Updated click listener for checkboxDiv
               checkboxDiv.addEventListener("click", (event) => {
-                if (event.target.tagName.toLowerCase() !== "input") {
-                  checkbox.checked = !checkbox.checked;
-                  const changeEvent = new Event("change", { bubbles: true });
-                  checkbox.dispatchEvent(changeEvent);
+                if (event.target.tagName.toLowerCase() !== 'input') {
+                  checkbox.click();
                 }
               });
 
               checkbox.addEventListener("change", (event) => {
-                // Update ARIA selected
                 checkboxDiv.setAttribute("aria-selected", checkbox.checked);
                 this.handleCheckboxChange(item.value, item.displayValue, groupInfo.name, event);
               });
 
-              // Keyboard navigation for each option
               checkboxDiv.addEventListener("keydown", (e) => {
                 const allOptions = Array.from(this._container.querySelectorAll('[role="option"]:not(.hidden)'));
                 let currentIndex = allOptions.indexOf(checkboxDiv);
@@ -447,10 +442,8 @@ define(function () {
 
               // Updated click listener for non-grouped checkboxDiv
               checkboxDiv.addEventListener("click", (event) => {
-                if (event.target.tagName.toLowerCase() !== "input") {
-                  checkbox.checked = !checkbox.checked;
-                  const changeEvent = new Event("change", { bubbles: true });
-                  checkbox.dispatchEvent(changeEvent);
+                if (event.target.tagName.toLowerCase() !== 'input') {
+                  checkbox.click();
                 }
               });
 
@@ -459,7 +452,6 @@ define(function () {
                 this.handleCheckboxChange(item.value, item.displayValue, groupInfo.name, event);
               });
 
-              // Keyboard navigation for each option
               checkboxDiv.addEventListener("keydown", (e) => {
                 const allOptions = Array.from(this._container.querySelectorAll('[role="option"]:not(.hidden)'));
                 let currentIndex = allOptions.indexOf(checkboxDiv);
@@ -494,7 +486,6 @@ define(function () {
         checkboxes.forEach((checkbox) => {
           if (this._selectedItems.some((item) => item.use === checkbox.value)) {
             checkbox.checked = true;
-            // Update aria-selected for parent div if needed
             const parentOption = checkbox.closest("[role='option']");
             if (parentOption) {
               parentOption.setAttribute("aria-selected", true);
@@ -594,9 +585,7 @@ define(function () {
       }
       this.draw(this._oControlHost);
 
-      // Attach or remove the outside click listener based on dropdown state
       if (this._isOpen) {
-        // Bind the event handler and store the reference
         this._handleOutsideClickBound = this.handleOutsideClick.bind(this);
         document.addEventListener("click", this._handleOutsideClickBound);
       } else if (this._handleOutsideClickBound) {
@@ -609,9 +598,7 @@ define(function () {
 
       const focusableElements = this._container.querySelectorAll('input[type="text"], button, select, .checkbox-item');
       if (focusableElements.length === 0) return;
-      // Get the current focused element index
       let focusIndex = Array.from(focusableElements).findIndex((el) => el === document.activeElement);
-      // Set the focus to the first element if we are not currently in the list
       if (focusIndex === -1) {
         focusIndex = 0;
         focusableElements[focusIndex].focus();
@@ -619,10 +606,8 @@ define(function () {
       switch (event.key) {
         case "Tab":
           if (event.shiftKey) {
-            // Shift + Tab
             focusIndex = (focusIndex - 1 + focusableElements.length) % focusableElements.length;
           } else {
-            // Tab
             focusIndex = (focusIndex + 1) % focusableElements.length;
           }
           focusableElements[focusIndex].focus();
@@ -658,7 +643,6 @@ define(function () {
     }
 
     handleOutsideClick(event) {
-      // Check if the click occurred outside the dropdown container
       if (!this._container.contains(event.target)) {
         this._isOpen = false;
         const dropdownHeader = this._container.querySelector(".dropdown-header");
@@ -666,8 +650,6 @@ define(function () {
           dropdownHeader.setAttribute("aria-expanded", this._isOpen.toString());
         }
         this.draw(this._oControlHost);
-
-        // Remove the outside click listener after closing
         document.removeEventListener("click", this._handleOutsideClickBound);
       }
     }
@@ -676,14 +658,11 @@ define(function () {
       if (!rawInput) return [];
 
       const normalizedInput = rawInput.replace(/, /g, ",");
-
-      // Split and trim input without lowercasing by default
       let terms = normalizedInput
         .split(",")
         .map((term) => term.trim())
         .filter((term) => term.length > 0);
 
-      // If the search should be case-insensitive, lowercase the terms
       if (this._currentFilter.caseInsensitive !== false) {
         terms = terms.map((term) => term.toLowerCase());
       }
@@ -708,11 +687,9 @@ define(function () {
         let compareValue;
         let compareTerms;
         if (this._currentFilter.caseInsensitive !== false) {
-          // Case insensitive: lower both value and terms
           compareValue = displayValue.toLowerCase();
           compareTerms = searchTerms.map((term) => term.toLowerCase());
         } else {
-          // Case sensitive: use original values
           compareValue = displayValue;
           compareTerms = searchTerms;
         }
@@ -747,15 +724,10 @@ define(function () {
         }
       });
 
-      // Hide entire groups if they have no visible items
       const groups = dropdownListContainer.querySelectorAll(".group");
       groups.forEach((group) => {
         const visibleSubItems = group.querySelectorAll(".checkbox-item:not(.hidden)");
-        if (visibleSubItems.length === 0) {
-          group.style.display = "none";
-        } else {
-          group.style.display = "";
-        }
+        group.style.display = visibleSubItems.length === 0 ? "none" : "";
       });
 
       this.updateGroupCheckboxStates();
@@ -773,11 +745,7 @@ define(function () {
         const groupSelectButton = group.querySelector(".group-select-button");
         if (!groupSelectButton) return;
 
-        if (visibleCheckboxes.length === 0) {
-          groupSelectButton.disabled = true;
-        } else {
-          groupSelectButton.disabled = false;
-        }
+        groupSelectButton.disabled = visibleCheckboxes.length === 0;
       });
     }
 
@@ -829,8 +797,7 @@ define(function () {
     }
 
     selectAllInGroup(groupName, groupDiv) {
-      if (!this._multipleSelect) return; // Disable in single-select mode
-
+      if (!this._multipleSelect) return;
       const visibleCheckboxes = groupDiv.querySelectorAll('.checkbox-item:not(.hidden) input[type="checkbox"]');
       visibleCheckboxes.forEach((checkbox) => {
         if (!checkbox.checked) {
@@ -860,37 +827,30 @@ define(function () {
 
       if (isChecked) {
         if (!this._multipleSelect) {
-          // Single-select mode: Uncheck all other checkboxes.
           const dropdownListContainer = this._container.querySelector(".dropdown-list-container");
           if (dropdownListContainer) {
             const checkboxes = dropdownListContainer.querySelectorAll('input[type="checkbox"]');
             checkboxes.forEach((cb) => {
               if (cb !== event.target && cb.checked) {
                 cb.checked = false;
-                // Remove the unchecked item from _selectedItems
                 this._selectedItems = this._selectedItems.filter((item) => item.use !== cb.value);
               }
             });
           }
-          // Clear any previous selection and add the new one.
           this._selectedItems = [itemData];
         } else {
-          // Multiple-select mode: Add the item if not already selected.
           if (!this._selectedItems.some((item) => item.use === value)) {
             this._selectedItems.push(itemData);
           }
         }
       } else {
         if (!this._multipleSelect) {
-          // In single-select mode, clearing a checkbox removes the selection.
           this._selectedItems = [];
         } else {
-          // Multiple-select mode: Remove the item from selection.
           this._selectedItems = this._selectedItems.filter((item) => item.use !== value);
         }
       }
 
-      // Update header display based on selection
       const dropdownHeader = this._container.querySelector(".dropdown-header");
       if (dropdownHeader) {
         const labelSpan = dropdownHeader.querySelector("span");
@@ -918,13 +878,11 @@ define(function () {
       }
       let paramTest = oControlHost.getParameter(this._parameterName);
       console.log("paramTest", paramTest);
-      // Map current selections to parameter values.
       const parameterValues = this._selectedItems.map((item) => ({
         use: item.use,
         display: item.display,
       }));
       console.log("parameterValues: ", parameterValues);
-      // Always return a parameter object, even if no items are selected.
       return [
         {
           parameter: this._parameterName,
