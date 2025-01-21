@@ -519,14 +519,23 @@ define(function () {
 
       const searchTerms = this._currentFilter.terms;
       const searchType = this._currentFilter.type || "containsAny";
-      const isCaseInsensitive = this._currentFilter.caseInsensitive !== false;
 
       const checkboxItems = dropdownListContainer.querySelectorAll(".checkbox-item");
       checkboxItems.forEach((item) => {
         const label = item.querySelector("label");
         const displayValue = label ? label.textContent : "";
-        const compareValue = isCaseInsensitive ? displayValue.toLowerCase() : displayValue;
-        const compareTerms = isCaseInsensitive ? searchTerms : searchTerms.map((term) => term.toLowerCase());
+
+        let compareValue;
+        let compareTerms;
+        if (this._currentFilter.caseInsensitive !== false) {
+          // Case insensitive: lower both value and terms
+          compareValue = displayValue.toLowerCase();
+          compareTerms = searchTerms.map((term) => term.toLowerCase());
+        } else {
+          // Case sensitive: use original values
+          compareValue = displayValue;
+          compareTerms = searchTerms;
+        }
 
         let isVisible = true;
         if (searchTerms.length > 0) {
@@ -563,7 +572,6 @@ define(function () {
       groups.forEach((group) => {
         const visibleSubItems = group.querySelectorAll(".checkbox-item:not(.hidden)");
         if (visibleSubItems.length === 0) {
-          // Using inline style for hiding group entirely
           group.style.display = "none";
         } else {
           group.style.display = "";
