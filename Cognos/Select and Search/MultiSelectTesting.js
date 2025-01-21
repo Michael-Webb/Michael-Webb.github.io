@@ -505,10 +505,18 @@ define(function () {
 
       const normalizedInput = rawInput.replace(/, /g, ",");
 
-      return normalizedInput
+      // Split and trim input without lowercasing by default
+      let terms = normalizedInput
         .split(",")
-        .map((term) => term.trim().toLowerCase())
+        .map((term) => term.trim())
         .filter((term) => term.length > 0);
+
+      // If the search should be case-insensitive, lowercase the terms
+      if (this._currentFilter.caseInsensitive !== false) {
+        terms = terms.map((term) => term.toLowerCase());
+      }
+
+      return terms;
     }
 
     applyFilter() {
