@@ -406,7 +406,7 @@ define(function () {
       if (!oDataStore) {
         console.warn("MyDataLoggingControl - No data store provided.");
         this._groupedData = null;
-        this.draw(oControlHost);
+        // this.draw(oControlHost);
         return;
       }
 
@@ -414,7 +414,7 @@ define(function () {
       if (!config) {
         console.warn("MyDataLoggingControl - No configuration provided.");
         this._groupedData = null;
-        this.draw(oControlHost);
+        // this.draw(oControlHost);
         return;
       }
 
@@ -426,7 +426,7 @@ define(function () {
       if (isNaN(valueColumnIndex) || isNaN(displayColumnIndex)) {
         console.warn("MyDataLoggingControl - Invalid column configuration.");
         this._groupedData = null;
-        this.draw(oControlHost);
+        // this.draw(oControlHost);
         return;
       }
 
@@ -439,7 +439,7 @@ define(function () {
       ) {
         console.warn("MyDataLoggingControl - Configured column index out of bounds.");
         this._groupedData = null;
-        this.draw(oControlHost);
+        // this.draw(oControlHost);
         return;
       }
 
@@ -472,12 +472,12 @@ define(function () {
       }
 
       console.log("MyDataLoggingControl - Grouped Data:", this._groupedData);
-      this.draw(oControlHost);
+      // this.draw(oControlHost);
     }
 
     toggleDropdown() {
       this._isOpen = !this._isOpen;
-      this.draw(this._oControlHost);
+      // this.draw(this._oControlHost);
     }
 
     parseSearchTerms(rawInput) {
@@ -675,22 +675,42 @@ define(function () {
     }
 
     // Add getParameters method
+    // getParameters(oControlHost) {
+    //   if (!this._parameterName) {
+    //     console.warn("MyDataLoggingControl - Parameter Name not configured.");
+    //     return null;
+    //   }
+    //   let paramTest = oControlHost.getParameter(this._parameterName);
+    //   console.log("getParams", paramTest);
+
+    //   if (this._selectedItems.length === 0) {
+    //     return null;
+    //   }
+
+    //   const parameterValues = this._selectedItems.map((item) => ({ use: item.use, display: item.display }));
+    //   console.log("getparams2", parameterValues);
+    //   return [{ parameter: this._parameterName, values: parameterValues }];
+    // }
+
     getParameters(oControlHost) {
       if (!this._parameterName) {
         console.warn("MyDataLoggingControl - Parameter Name not configured.");
         return null;
       }
-      let paramTest = oControlHost.getParameter(this._parameterName)
-      console.log("getParams",paramTest)
 
-      if (this._selectedItems.length === 0) {
-        return null;
-      }
+      // Map current selections to parameter values.
+      const parameterValues = this._selectedItems.map((item) => ({
+        use: item.use,
+        display: item.display,
+      }));
 
-      const parameterValues = this._selectedItems.map((item) => ({ use: item.use, display: item.display }));
-      console.log("getparams2",parameterValues)
-      return [{ parameter: this._parameterName, values: parameterValues }];
-      
+      // Always return a parameter object, even if no items are selected.
+      return [
+        {
+          parameter: this._parameterName,
+          values: parameterValues,
+        },
+      ];
     }
 
     destroy(oControlHost) {
