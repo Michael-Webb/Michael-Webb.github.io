@@ -1,6 +1,5 @@
 define(function () {
   "use strict";
-
   class MyDataLoggingControl {
     initialize(oControlHost, fnDoneInitializing) {
       console.log("MyDataLoggingControl - Initializing");
@@ -65,6 +64,9 @@ define(function () {
       // Create dropdown header
       const dropdownHeader = document.createElement("div");
       dropdownHeader.classList.add("dropdown-header");
+      dropdownHeader.setAttribute("role", "button");
+      dropdownHeader.setAttribute("aria-haspopup", "listbox");
+      dropdownHeader.setAttribute("aria-expanded", this._isOpen.toString());
 
       const labelSpan = document.createElement("span");
       if (this._selectedItems.length > 0) {
@@ -98,7 +100,7 @@ define(function () {
       const dropdownOuterContainer = document.createElement("div");
       dropdownOuterContainer.classList.add("dropdown-outer-container");
       dropdownOuterContainer.style.display = this._isOpen ? "block" : "none";
-
+      dropdownOuterContainer.setAttribute("role", "listbox");
       if (this._isOpen) {
         // Create search container
         const searchContainer = document.createElement("div");
@@ -112,22 +114,25 @@ define(function () {
         searchInput.classList.add("search-input");
         searchInput.placeholder = "Search...";
         searchInput.value = this._currentFilter.rawInput || "";
+        searchInput.setAttribute("aria-label", "Search options"); // Aria label for search input
         searchInputContainer.appendChild(searchInput);
 
         const clearButton = document.createElement("span");
         clearButton.classList.add("clear-button");
         clearButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" 
-            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" 
-            stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x">
-            <path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`;
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" 
+              stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x">
+              <path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`;
+        clearButton.setAttribute("aria-label", "Clear search"); // Aria label for clear button
         searchInputContainer.appendChild(clearButton);
 
         const magnifier = document.createElement("span");
         magnifier.classList.add("magnifier");
         magnifier.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" 
-            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" 
-            stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search">
-            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`;
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" 
+              stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`;
+        magnifier.setAttribute("aria-hidden", "true"); // Magnifier is decorative, hide from screen readers
         searchInputContainer.appendChild(magnifier);
 
         searchContainer.appendChild(searchInputContainer);
@@ -145,15 +150,16 @@ define(function () {
           optionsToggle.type = "button";
           optionsToggle.classList.add("options-toggle");
           optionsToggle.textContent = "Options";
+          optionsToggle.setAttribute("aria-label", "Toggle filter options");
 
           const filterButton = document.createElement("button");
           filterButton.type = "button";
           filterButton.classList.add("filter-button");
           filterButton.textContent = "Select/Deselect All";
+          filterButton.setAttribute("aria-label", "Select or deselect all visible options");
 
           primaryButtonsContainer.appendChild(optionsToggle);
           primaryButtonsContainer.appendChild(filterButton);
-
           // Add primary buttons to their container
           controlsContainer.appendChild(primaryButtonsContainer);
 
@@ -161,8 +167,10 @@ define(function () {
           const optionsContainer = document.createElement("div");
           optionsContainer.classList.add("options-container");
           optionsContainer.style.display = "none";
+
           const searchType = document.createElement("select");
           searchType.classList.add("search-type");
+          searchType.setAttribute("aria-label", "Filter type"); // Aria label for filter select
 
           const options = [
             { value: "containsAny", text: "Contains any of these keywords", default: true },
@@ -190,6 +198,7 @@ define(function () {
           caseCheckbox.id = oControlHost.generateUniqueID();
           caseCheckbox.checked = this._currentFilter.caseInsensitive !== false;
           caseCheckbox.classList.add("case-checkbox");
+          caseCheckbox.setAttribute("aria-label", "Case insensitive search"); // Aria label for case sensitivity checkbox
 
           const caseLabel = document.createElement("label");
           caseLabel.setAttribute("for", caseCheckbox.id);
@@ -199,14 +208,12 @@ define(function () {
           caseSensitivityContainer.appendChild(caseCheckbox);
           caseSensitivityContainer.appendChild(caseLabel);
           optionsContainer.appendChild(caseSensitivityContainer);
-
           // Add toggle functionality
           optionsToggle.addEventListener("click", () => {
             const isHidden = optionsContainer.style.display === "none";
             optionsContainer.style.display = isHidden ? "flex" : "none";
             optionsToggle.classList.toggle("active");
           });
-
           controlsContainer.appendChild(optionsContainer);
 
           // Attach event listeners for search type and case sensitivity
@@ -219,7 +226,6 @@ define(function () {
             this._currentFilter.caseInsensitive = e.target.checked;
             this.applyFilter();
           });
-
           filterButton.addEventListener("click", () => {
             this.toggleSelectDeselectFiltered();
           });
@@ -308,6 +314,7 @@ define(function () {
               selectButton.addEventListener("click", () => {
                 this.selectAllInGroup(groupInfo.name, groupDiv);
               });
+              selectButton.setAttribute("aria-label", `Select all items in ${groupInfo.name} group`);
 
               const deselectButton = document.createElement("button");
               deselectButton.type = "button";
@@ -317,6 +324,7 @@ define(function () {
               deselectButton.addEventListener("click", () => {
                 this.deselectAllInGroup(groupInfo.name, groupDiv);
               });
+              deselectButton.setAttribute("aria-label", `Deselect all items in ${groupInfo.name} group`);
 
               buttonContainer.appendChild(selectButton);
               buttonContainer.appendChild(deselectButton);
@@ -329,6 +337,7 @@ define(function () {
               const checkboxDiv = document.createElement("div");
               checkboxDiv.classList.add("checkbox-item");
               checkboxDiv.dataset.itemValue = item.value;
+              checkboxDiv.setAttribute("role", "option"); // Role option for listbox items
 
               const checkboxId = oControlHost.generateUniqueID();
               const checkbox = document.createElement("input");
@@ -346,8 +355,7 @@ define(function () {
               checkboxDiv.appendChild(checkbox);
               checkboxDiv.appendChild(label);
               groupDiv.appendChild(checkboxDiv);
-
-              // Add click listener to the entire checkboxDiv
+                // Add click listener to the entire checkboxDiv
               checkboxDiv.addEventListener("click", (event) => {
                 if (event.target !== checkbox) { // Prevent triggering when clicking directly on the checkbox
                 checkbox.checked = !checkbox.checked;
@@ -356,19 +364,20 @@ define(function () {
                 });
                 }
               });
-             checkbox.addEventListener(
-                "change",
-                this.handleCheckboxChange.bind(this, item.value, item.displayValue, groupInfo.name)
+                 checkbox.addEventListener(
+                  "change",
+                  this.handleCheckboxChange.bind(this, item.value, item.displayValue, groupInfo.name)
               );
             });
 
             multiSelectDropdown.appendChild(groupDiv);
           } else {
             groupInfo.items.forEach((item) => {
-              const checkboxDiv = document.createElement("div");
-              checkboxDiv.classList.add("checkbox-item", "no-group");
-              checkboxDiv.dataset.itemValue = item.value;
-
+                const checkboxDiv = document.createElement("div");
+                checkboxDiv.classList.add("checkbox-item", "no-group");
+                checkboxDiv.dataset.itemValue = item.value;
+                checkboxDiv.setAttribute("role", "option"); // Role option for listbox items
+  
               const checkboxId = oControlHost.generateUniqueID();
               const checkbox = document.createElement("input");
               checkbox.type = "checkbox";
@@ -376,27 +385,28 @@ define(function () {
               checkbox.id = checkboxId;
               checkbox.dataset.group = groupInfo.name;
               checkbox.dataset.displayValue = item.displayValue;
+              
 
               const label = document.createElement("label");
               label.setAttribute("for", checkboxId);
               label.textContent = item.displayValue;
+              label.title = item.displayValue;
 
               checkboxDiv.appendChild(checkbox);
               checkboxDiv.appendChild(label);
               multiSelectDropdown.appendChild(checkboxDiv);
-                    // Add click listener to the entire checkboxDiv
-              checkboxDiv.addEventListener("click", (event) => {
-                if(event.target !== checkbox){
-                 checkbox.checked = !checkbox.checked;
-                this.handleCheckboxChange(item.value, item.displayValue, groupInfo.name, {
-                  target: checkbox,
-                });
-              }
-                
+                  // Add click listener to the entire checkboxDiv
+               checkboxDiv.addEventListener("click", (event) => {
+               if(event.target !== checkbox){
+                  checkbox.checked = !checkbox.checked;
+                  this.handleCheckboxChange(item.value, item.displayValue, groupInfo.name, {
+                    target: checkbox,
+                  });
+                }
               });
-                 checkbox.addEventListener(
-                "change",
-                this.handleCheckboxChange.bind(this, item.value, item.displayValue, groupInfo.name)
+               checkbox.addEventListener(
+                  "change",
+                  this.handleCheckboxChange.bind(this, item.value, item.displayValue, groupInfo.name)
               );
             });
           }
@@ -419,6 +429,8 @@ define(function () {
         this.applyFilter();
         this.updateDeselectButtonStates();
       }
+      // Add focus event listener to the container to manage focus within the dropdown
+      this._container.addEventListener("keydown", this.handleKeyboardNavigation.bind(this));
     }
 
     setData(oControlHost, oDataStore) {
@@ -497,6 +509,10 @@ define(function () {
 
     toggleDropdown() {
       this._isOpen = !this._isOpen;
+      const dropdownHeader = this._container.querySelector(".dropdown-header");
+      if (dropdownHeader) {
+        dropdownHeader.setAttribute("aria-expanded", this._isOpen.toString());
+      }
       this.draw(this._oControlHost);
 
       // Attach or remove the outside click listener based on dropdown state
@@ -509,10 +525,73 @@ define(function () {
       }
     }
 
+    handleKeyboardNavigation(event) {
+      if (!this._isOpen) return;
+
+      const focusableElements = this._container.querySelectorAll(
+        'input[type="text"], button, select, input[type="checkbox"], .checkbox-item'
+      );
+
+      if (focusableElements.length === 0) return;
+      let currentIndex = Array.from(focusableElements).findIndex((el) => el === document.activeElement);
+
+      switch (event.key) {
+        case "Tab":
+          if (event.shiftKey) {
+            // Shift + Tab
+            currentIndex = (currentIndex - 1 + focusableElements.length) % focusableElements.length;
+          } else {
+            // Tab
+            currentIndex = (currentIndex + 1) % focusableElements.length;
+          }
+          focusableElements[currentIndex].focus();
+          event.preventDefault(); // Prevent default tab behavior
+          break;
+        case "ArrowUp":
+          if (currentIndex > 0) {
+            currentIndex--;
+          } else {
+            currentIndex = focusableElements.length - 1;
+          }
+          focusableElements[currentIndex].focus();
+          event.preventDefault();
+          break;
+        case "ArrowDown":
+          if (currentIndex < focusableElements.length - 1) {
+            currentIndex++;
+          } else {
+            currentIndex = 0;
+          }
+          focusableElements[currentIndex].focus();
+          event.preventDefault();
+          break;
+        case "Enter":
+          if (document.activeElement.classList.contains("checkbox-item")) {
+            document.activeElement.querySelector('input[type="checkbox"]').click();
+          }
+          event.preventDefault();
+          break;
+        case "Space":
+          if (document.activeElement.classList.contains("checkbox-item")) {
+            document.activeElement.querySelector('input[type="checkbox"]').click();
+          }
+          event.preventDefault();
+          break;
+        case "Escape":
+          this.toggleDropdown();
+          event.preventDefault();
+          break;
+      }
+    }
+
     handleOutsideClick(event) {
       // Check if the click occurred outside the dropdown container
       if (!this._container.contains(event.target)) {
         this._isOpen = false;
+        const dropdownHeader = this._container.querySelector(".dropdown-header");
+        if (dropdownHeader) {
+          dropdownHeader.setAttribute("aria-expanded", this._isOpen.toString());
+        }
         this.draw(this._oControlHost);
 
         // Remove the outside click listener after closing
@@ -756,6 +835,7 @@ define(function () {
 
     destroy(oControlHost) {
       console.log("MyDataLoggingControl - Destroying");
+      this._container.removeEventListener("keydown", this.handleKeyboardNavigation.bind(this));
     }
   }
 

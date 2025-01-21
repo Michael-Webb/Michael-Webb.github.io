@@ -106,7 +106,7 @@
     padding: 5px;
     border: 1px solid #ccc;
     border-radius: 3px;
-    width: 220px;
+    width: 225px;
 }
 
 .custom-dropdown-container .case-sensitivity-container {
@@ -233,4 +233,19 @@
 .custom-dropdown-container .filter-button,
 .custom-dropdown-container .case-sensitivity-container {
     flex-shrink: 1;
+}
+
+.group-label {
+  display: inline-block;
+  max-width: 200px; /* Adjust width as needed */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.checkbox-item {
+    cursor: pointer;
+}
+.checkbox-item:hover {
+    background-color: #e9e9e9;
 }

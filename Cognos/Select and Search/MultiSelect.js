@@ -6,7 +6,9 @@ define(function () {
       console.log("MyDataLoggingControl - Initializing");
       this._oControlHost = oControlHost;
       this._container = oControlHost.container;
-      this._selectedItems = [];
+      if (!this._selectedItems) {
+        this._selectedItems = [];
+      }
       this._isOpen = false;
       this._currentFilter = {
         terms: [],
@@ -15,6 +17,32 @@ define(function () {
         caseInsensitive: true,
       };
       this._multipleSelect = true; // Default to true until read from config
+
+      if (!this._initialLoadComplete) {
+        this._initialLoadComplete = true;
+        const config = oControlHost.configuration;
+        this._parameterName = config["Parameter Name"]; // Capture parameter name
+        if (this._parameterName) {
+          const initialValues = oControlHost.getParameter(this._parameterName);
+
+          if (initialValues) {
+            const params = Array.isArray(initialValues) ? initialValues : [initialValues];
+            params.forEach((param) => {
+              if (param && param.values && Array.isArray(param.values)) {
+                param.values.forEach((item) => {
+                  this._selectedItems.push({
+                    use: item.use,
+                    display: item.display,
+                  });
+                });
+              }
+            });
+          }
+        } else {
+          console.warn("MyDataLoggingControl - Parameter Name not configured.");
+        }
+      }
+      // this.getParameters();
       fnDoneInitializing();
     }
 
@@ -60,7 +88,7 @@ define(function () {
 
       const chevron = document.createElement("span");
       chevron.classList.add("chevron");
-      chevron.innerHTML = this._isOpen ? "&#x25B2;" : "&#x25BC;";
+      chevron.innerHTML = this._isOpen ? "▲" : "▼";
       dropdownHeader.appendChild(chevron);
 
       dropdownHeader.addEventListener("click", this.toggleDropdown.bind(this));
@@ -89,17 +117,17 @@ define(function () {
         const clearButton = document.createElement("span");
         clearButton.classList.add("clear-button");
         clearButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" 
-              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" 
-              stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x">
-              <path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`;
+            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" 
+            stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x">
+            <path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`;
         searchInputContainer.appendChild(clearButton);
 
         const magnifier = document.createElement("span");
         magnifier.classList.add("magnifier");
         magnifier.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" 
-              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" 
-              stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search">
-              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`;
+            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" 
+            stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`;
         searchInputContainer.appendChild(magnifier);
 
         searchContainer.appendChild(searchInputContainer);
@@ -309,10 +337,6 @@ define(function () {
               checkbox.id = checkboxId;
               checkbox.dataset.group = groupInfo.name;
               checkbox.dataset.displayValue = item.displayValue;
-              checkbox.addEventListener(
-                "change",
-                this.handleCheckboxChange.bind(this, item.value, item.displayValue, groupInfo.name)
-              );
 
               const label = document.createElement("label");
               label.setAttribute("for", checkboxId);
@@ -322,6 +346,20 @@ define(function () {
               checkboxDiv.appendChild(checkbox);
               checkboxDiv.appendChild(label);
               groupDiv.appendChild(checkboxDiv);
+
+              // Add click listener to the entire checkboxDiv
+              checkboxDiv.addEventListener("click", (event) => {
+                if (event.target !== checkbox) { // Prevent triggering when clicking directly on the checkbox
+                checkbox.checked = !checkbox.checked;
+                  this.handleCheckboxChange(item.value, item.displayValue, groupInfo.name, {
+                  target: checkbox,
+                });
+                }
+              });
+             checkbox.addEventListener(
+                "change",
+                this.handleCheckboxChange.bind(this, item.value, item.displayValue, groupInfo.name)
+              );
             });
 
             multiSelectDropdown.appendChild(groupDiv);
@@ -338,10 +376,6 @@ define(function () {
               checkbox.id = checkboxId;
               checkbox.dataset.group = groupInfo.name;
               checkbox.dataset.displayValue = item.displayValue;
-              checkbox.addEventListener(
-                "change",
-                this.handleCheckboxChange.bind(this, item.value, item.displayValue, groupInfo.name)
-              );
 
               const label = document.createElement("label");
               label.setAttribute("for", checkboxId);
@@ -350,10 +384,32 @@ define(function () {
               checkboxDiv.appendChild(checkbox);
               checkboxDiv.appendChild(label);
               multiSelectDropdown.appendChild(checkboxDiv);
+                    // Add click listener to the entire checkboxDiv
+              checkboxDiv.addEventListener("click", (event) => {
+                if(event.target !== checkbox){
+                 checkbox.checked = !checkbox.checked;
+                this.handleCheckboxChange(item.value, item.displayValue, groupInfo.name, {
+                  target: checkbox,
+                });
+              }
+                
+              });
+                 checkbox.addEventListener(
+                "change",
+                this.handleCheckboxChange.bind(this, item.value, item.displayValue, groupInfo.name)
+              );
             });
           }
         });
         dropdownListContainer.appendChild(multiSelectDropdown);
+
+        // Apply initial selected values
+        const checkboxes = dropdownListContainer.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach((checkbox) => {
+          if (this._selectedItems.some((item) => item.use === checkbox.value)) {
+            checkbox.checked = true;
+          }
+        });
       }
 
       dropdownOuterContainer.appendChild(dropdownListContainer);
@@ -385,10 +441,7 @@ define(function () {
       const valueColumnIndex = config["Use Value"] - 1;
       const displayColumnIndex = config["Display Value"] - 1;
       const groupColumnIndexConfig = config["Group"];
-      const groupColumnIndex = !isNaN(groupColumnIndexConfig)
-        ? parseInt(groupColumnIndexConfig) - 1
-        : undefined;
-      this._parameterName = config["Parameter Name"];
+      const groupColumnIndex = !isNaN(groupColumnIndexConfig) ? parseInt(groupColumnIndexConfig) - 1 : undefined;
 
       if (isNaN(valueColumnIndex) || isNaN(displayColumnIndex)) {
         console.warn("MyDataLoggingControl - Invalid column configuration.");
@@ -445,6 +498,26 @@ define(function () {
     toggleDropdown() {
       this._isOpen = !this._isOpen;
       this.draw(this._oControlHost);
+
+      // Attach or remove the outside click listener based on dropdown state
+      if (this._isOpen) {
+        // Bind the event handler and store the reference
+        this._handleOutsideClickBound = this.handleOutsideClick.bind(this);
+        document.addEventListener("click", this._handleOutsideClickBound);
+      } else if (this._handleOutsideClickBound) {
+        document.removeEventListener("click", this._handleOutsideClickBound);
+      }
+    }
+
+    handleOutsideClick(event) {
+      // Check if the click occurred outside the dropdown container
+      if (!this._container.contains(event.target)) {
+        this._isOpen = false;
+        this.draw(this._oControlHost);
+
+        // Remove the outside click listener after closing
+        document.removeEventListener("click", this._handleOutsideClickBound);
+      }
     }
 
     parseSearchTerms(rawInput) {
@@ -452,10 +525,18 @@ define(function () {
 
       const normalizedInput = rawInput.replace(/, /g, ",");
 
-      return normalizedInput
+      // Split and trim input without lowercasing by default
+      let terms = normalizedInput
         .split(",")
-        .map((term) => term.trim().toLowerCase())
+        .map((term) => term.trim())
         .filter((term) => term.length > 0);
+
+      // If the search should be case-insensitive, lowercase the terms
+      if (this._currentFilter.caseInsensitive !== false) {
+        terms = terms.map((term) => term.toLowerCase());
+      }
+
+      return terms;
     }
 
     applyFilter() {
@@ -466,14 +547,23 @@ define(function () {
 
       const searchTerms = this._currentFilter.terms;
       const searchType = this._currentFilter.type || "containsAny";
-      const isCaseInsensitive = this._currentFilter.caseInsensitive !== false;
 
       const checkboxItems = dropdownListContainer.querySelectorAll(".checkbox-item");
       checkboxItems.forEach((item) => {
         const label = item.querySelector("label");
         const displayValue = label ? label.textContent : "";
-        const compareValue = isCaseInsensitive ? displayValue.toLowerCase() : displayValue;
-        const compareTerms = isCaseInsensitive ? searchTerms : searchTerms.map((term) => term.toLowerCase());
+
+        let compareValue;
+        let compareTerms;
+        if (this._currentFilter.caseInsensitive !== false) {
+          // Case insensitive: lower both value and terms
+          compareValue = displayValue.toLowerCase();
+          compareTerms = searchTerms.map((term) => term.toLowerCase());
+        } else {
+          // Case sensitive: use original values
+          compareValue = displayValue;
+          compareTerms = searchTerms;
+        }
 
         let isVisible = true;
         if (searchTerms.length > 0) {
@@ -505,13 +595,14 @@ define(function () {
         }
       });
 
+      // Hide entire groups if they have no visible items
       const groups = dropdownListContainer.querySelectorAll(".group");
       groups.forEach((group) => {
         const visibleSubItems = group.querySelectorAll(".checkbox-item:not(.hidden)");
         if (visibleSubItems.length === 0) {
-          group.classList.add("hidden");
+          group.style.display = "none";
         } else {
-          group.classList.remove("hidden");
+          group.style.display = "";
         }
       });
 
@@ -552,8 +643,7 @@ define(function () {
     }
 
     toggleSelectDeselectFiltered() {
-      if (!this._multipleSelect) return; // Disable in single-select mode
-
+      if (!this._multipleSelect) return;
       const dropdownListContainer = this._container.querySelector(".dropdown-list-container");
       if (!dropdownListContainer) return;
 
@@ -563,22 +653,27 @@ define(function () {
       if (visibleCheckboxes.length === 0) return;
 
       const anyUnchecked = Array.from(visibleCheckboxes).some((cb) => !cb.checked);
-
       if (anyUnchecked) {
         visibleCheckboxes.forEach((cb) => {
           if (!cb.checked) {
             cb.checked = true;
-            this.handleCheckboxChange(cb.value, cb.dataset.displayValue, cb.dataset.group, { target: cb });
+            const itemData = { use: cb.value, display: cb.dataset.displayValue, group: cb.dataset.group };
+            if (!this._selectedItems.some((item) => item.use === itemData.use)) {
+              this._selectedItems.push(itemData);
+            }
           }
         });
       } else {
         visibleCheckboxes.forEach((cb) => {
           if (cb.checked) {
             cb.checked = false;
-            this.handleCheckboxChange(cb.value, cb.dataset.displayValue, cb.dataset.group, { target: cb });
+            const itemData = { use: cb.value, display: cb.dataset.displayValue, group: cb.dataset.group };
+            this._selectedItems = this._selectedItems.filter((item) => item.use !== itemData.use);
           }
         });
       }
+      this.updateDeselectButtonStates();
+      this._oControlHost.valueChanged();
     }
 
     selectAllInGroup(groupName, groupDiv) {
@@ -594,38 +689,22 @@ define(function () {
     }
 
     deselectAllInGroup(groupName, groupDiv) {
-      if (!this._multipleSelect) return; // Disable in single-select mode
-
+      if (!this._multipleSelect) return;
       const checkboxes = groupDiv.querySelectorAll('input[type="checkbox"]');
       checkboxes.forEach((checkbox) => {
         if (checkbox.checked) {
           checkbox.checked = false;
-          this.handleCheckboxChange(checkbox.value, checkbox.dataset.displayValue, groupName, { target: checkbox });
+          const itemData = { use: checkbox.value, display: checkbox.dataset.displayValue, group: groupName };
+          this._selectedItems = this._selectedItems.filter((item) => item.use !== itemData.use);
         }
       });
+      this.updateDeselectButtonStates();
+      this._oControlHost.valueChanged();
     }
 
     handleCheckboxChange(value, displayValue, groupName, event) {
       const isChecked = event.target.checked;
-
-      // If single select and a new checkbox is being checked, uncheck others
-      if (!this._multipleSelect && isChecked) {
-        this._selectedItems.forEach((item) => {
-          if (item.use !== value) {
-            const otherCheckbox = this._container.querySelector(
-              `input[type="checkbox"][value="${item.use}"]`
-            );
-            if (otherCheckbox) {
-              otherCheckbox.checked = false;
-            }
-          }
-        });
-        // Clear previous selections except current one
-        this._selectedItems = this._selectedItems.filter(item => item.use === value);
-      }
-
       const itemData = { use: value, display: displayValue, group: groupName };
-
       if (isChecked) {
         if (!this._selectedItems.some((item) => item.use === value)) {
           this._selectedItems.push(itemData);
@@ -633,7 +712,6 @@ define(function () {
       } else {
         this._selectedItems = this._selectedItems.filter((item) => item.use !== value);
       }
-
       const dropdownHeader = this._container.querySelector(".dropdown-header");
       if (dropdownHeader) {
         const labelSpan = dropdownHeader.querySelector("span");
@@ -641,18 +719,39 @@ define(function () {
           labelSpan.textContent = this._selectedItems[0].display;
         } else {
           labelSpan.textContent =
-            this._selectedItems.length > 0
-              ? `${this._selectedItems.length} options selected`
-              : this._labelText;
+            this._selectedItems.length > 0 ? `${this._selectedItems.length} options selected` : this._labelText;
         }
 
         const chevron = dropdownHeader.querySelector(".chevron");
         if (chevron) {
-          chevron.innerHTML = this._isOpen ? "&#x25B2;" : "&#x25BC;";
+          chevron.innerHTML = this._isOpen ? "▲" : "▼";
         }
       }
 
       this.updateDeselectButtonStates();
+      this._oControlHost.valueChanged();
+    }
+
+    getParameters(oControlHost) {
+      if (!this._parameterName) {
+        console.warn("MyDataLoggingControl - Parameter Name not configured.");
+        return null;
+      }
+      let paramTest = oControlHost.getParameter(this._parameterName);
+      console.log("paramTest", paramTest);
+      // Map current selections to parameter values.
+      const parameterValues = this._selectedItems.map((item) => ({
+        use: item.use,
+        display: item.display,
+      }));
+      console.log("parameterValues: ", parameterValues);
+      // Always return a parameter object, even if no items are selected.
+      return [
+        {
+          parameter: this._parameterName,
+          values: parameterValues,
+        },
+      ];
     }
 
     destroy(oControlHost) {
