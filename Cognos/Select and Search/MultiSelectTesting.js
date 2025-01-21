@@ -529,43 +529,35 @@ define(function () {
       if (!this._isOpen) return;
 
       const focusableElements = this._container.querySelectorAll('input[type="text"], button, select, .checkbox-item');
-
       if (focusableElements.length === 0) return;
-      let currentIndex = Array.from(focusableElements).findIndex((el) => el === document.activeElement);
-      // check if we have a valid index before proceeding. If not, move the focus to the first element
-      if (currentIndex === -1) {
-        focusableElements[0].focus();
-        currentIndex = 0;
+      // Get the current focused element index
+      let focusIndex = Array.from(focusableElements).findIndex((el) => el === document.activeElement);
+      // Set the focus to the first element if we are not currently in the list
+      if (focusIndex === -1) {
+        focusIndex = 0;
+        focusableElements[focusIndex].focus();
       }
 
       switch (event.key) {
         case "Tab":
           if (event.shiftKey) {
             // Shift + Tab
-            currentIndex = (currentIndex - 1 + focusableElements.length) % focusableElements.length;
+            focusIndex = (focusIndex - 1 + focusableElements.length) % focusableElements.length;
           } else {
             // Tab
-            currentIndex = (currentIndex + 1) % focusableElements.length;
+            focusIndex = (focusIndex + 1) % focusableElements.length;
           }
-          focusableElements[currentIndex].focus();
-          event.preventDefault(); // Prevent default tab behavior
+          focusableElements[focusIndex].focus();
+          event.preventDefault();
           break;
         case "ArrowUp":
-          if (currentIndex > 0) {
-            currentIndex--;
-          } else {
-            currentIndex = focusableElements.length - 1;
-          }
-          focusableElements[currentIndex].focus();
+          focusIndex = (focusIndex - 1 + focusableElements.length) % focusableElements.length;
+          focusableElements[focusIndex].focus();
           event.preventDefault();
           break;
         case "ArrowDown":
-          if (currentIndex < focusableElements.length - 1) {
-            currentIndex++;
-          } else {
-            currentIndex = 0;
-          }
-          focusableElements[currentIndex].focus();
+          focusIndex = (focusIndex + 1) % focusableElements.length;
+          focusableElements[focusIndex].focus();
           event.preventDefault();
           break;
         case "Enter":
