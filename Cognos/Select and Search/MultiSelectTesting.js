@@ -680,7 +680,8 @@ define(function () {
         console.warn("MyDataLoggingControl - Parameter Name not configured.");
         return null;
       }
-      console.log("getParams",oControlHost)
+      let paramTest = oControlHost.getParameter(this._parameterName)
+      console.log("getParams",paramTest)
 
       if (this._selectedItems.length === 0) {
         return null;
