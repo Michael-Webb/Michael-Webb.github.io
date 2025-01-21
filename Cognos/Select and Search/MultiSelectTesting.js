@@ -337,8 +337,7 @@ define(function () {
               const checkboxDiv = document.createElement("div");
               checkboxDiv.classList.add("checkbox-item");
               checkboxDiv.dataset.itemValue = item.value;
-              checkboxDiv.setAttribute("role", "option");
-              checkboxDiv.setAttribute("tabindex", "-1"); // Make the row focusable
+              checkboxDiv.setAttribute("role", "option"); // Role option for listbox items
 
               const checkboxId = oControlHost.generateUniqueID();
               const checkbox = document.createElement("input");
@@ -356,30 +355,29 @@ define(function () {
               checkboxDiv.appendChild(checkbox);
               checkboxDiv.appendChild(label);
               groupDiv.appendChild(checkboxDiv);
-              // Add click listener to the entire checkboxDiv
+                // Add click listener to the entire checkboxDiv
               checkboxDiv.addEventListener("click", (event) => {
-                if (event.target !== checkbox) {
-                  checkbox.checked = !checkbox.checked;
+                if (event.target !== checkbox) { // Prevent triggering when clicking directly on the checkbox
+                checkbox.checked = !checkbox.checked;
                   this.handleCheckboxChange(item.value, item.displayValue, groupInfo.name, {
-                    target: checkbox,
-                  });
+                  target: checkbox,
+                });
                 }
               });
-              checkbox.addEventListener(
-                "change",
-                this.handleCheckboxChange.bind(this, item.value, item.displayValue, groupInfo.name)
+                 checkbox.addEventListener(
+                  "change",
+                  this.handleCheckboxChange.bind(this, item.value, item.displayValue, groupInfo.name)
               );
             });
 
             multiSelectDropdown.appendChild(groupDiv);
           } else {
             groupInfo.items.forEach((item) => {
-              const checkboxDiv = document.createElement("div");
-              checkboxDiv.classList.add("checkbox-item", "no-group");
-              checkboxDiv.dataset.itemValue = item.value;
-              checkboxDiv.setAttribute("role", "option");
-              checkboxDiv.setAttribute("tabindex", "-1"); // Make the row focusable
-
+                const checkboxDiv = document.createElement("div");
+                checkboxDiv.classList.add("checkbox-item", "no-group");
+                checkboxDiv.dataset.itemValue = item.value;
+                checkboxDiv.setAttribute("role", "option"); // Role option for listbox items
+  
               const checkboxId = oControlHost.generateUniqueID();
               const checkbox = document.createElement("input");
               checkbox.type = "checkbox";
@@ -387,6 +385,7 @@ define(function () {
               checkbox.id = checkboxId;
               checkbox.dataset.group = groupInfo.name;
               checkbox.dataset.displayValue = item.displayValue;
+              
 
               const label = document.createElement("label");
               label.setAttribute("for", checkboxId);
@@ -396,17 +395,18 @@ define(function () {
               checkboxDiv.appendChild(checkbox);
               checkboxDiv.appendChild(label);
               multiSelectDropdown.appendChild(checkboxDiv);
-              checkboxDiv.addEventListener("click", (event) => {
-                if (event.target !== checkbox) {
+                  // Add click listener to the entire checkboxDiv
+               checkboxDiv.addEventListener("click", (event) => {
+               if(event.target !== checkbox){
                   checkbox.checked = !checkbox.checked;
                   this.handleCheckboxChange(item.value, item.displayValue, groupInfo.name, {
                     target: checkbox,
                   });
                 }
               });
-              checkbox.addEventListener(
-                "change",
-                this.handleCheckboxChange.bind(this, item.value, item.displayValue, groupInfo.name)
+               checkbox.addEventListener(
+                  "change",
+                  this.handleCheckboxChange.bind(this, item.value, item.displayValue, groupInfo.name)
               );
             });
           }
@@ -525,63 +525,96 @@ define(function () {
       }
     }
 
-    handleKeyboardNavigation(event) {
+    updateDeselectButtonStates() {
+      const groups = this._container.querySelectorAll(".group");
+      groups.forEach((group) => {
+        const checkboxes = group.querySelectorAll('input[type="checkbox"]');
+        const hasSelectedItems = Array.from(checkboxes).some((cb) => cb.checked);
+
+        const deselectButton = group.querySelector(".group-deselect-button");
+        if (deselectButton) {
+          deselectButton.disabled = !hasSelectedItems;
+        }
+      });
+        // After updating the buttons, we need to make sure we set focus to something if not we get stuck
+        // Get all the focusable elements
+        const focusableElements = this._container.querySelectorAll(
+          'input[type="text"], button, select, .checkbox-item'
+        );
+        
+        // If there are any focusable elements, focus the first one
+        if (focusableElements.length > 0){
+              // Check if we are still in the focus list, if not, get the first focusable element and set focus
+            let currentIndex = Array.from(focusableElements).findIndex(el => el === document.activeElement);
+             if (currentIndex === -1){
+                 focusableElements[0].focus();
+             }
+
+        }
+    }
+
+  handleKeyboardNavigation(event) {
       if (!this._isOpen) return;
 
-      const focusableElements = this._container.querySelectorAll(
-        'input[type="text"], button, select, input[type="checkbox"], .checkbox-item'
-      );
+        const focusableElements = this._container.querySelectorAll(
+          'input[type="text"], button, select, .checkbox-item'
+        );
 
-      if (focusableElements.length === 0) return;
-      let currentIndex = Array.from(focusableElements).findIndex((el) => el === document.activeElement);
+        if (focusableElements.length === 0) return;
+        let currentIndex = Array.from(focusableElements).findIndex(el => el === document.activeElement);
+        // check if we have a valid index before proceeding. If not, move the focus to the first element
+        if(currentIndex === -1) {
+             focusableElements[0].focus();
+             currentIndex = 0;
+        }
 
-      switch (event.key) {
+        switch (event.key) {
         case "Tab":
-          if (event.shiftKey) {
-            // Shift + Tab
-            currentIndex = (currentIndex - 1 + focusableElements.length) % focusableElements.length;
-          } else {
-            // Tab
-            currentIndex = (currentIndex + 1) % focusableElements.length;
-          }
-          focusableElements[currentIndex].focus();
-          event.preventDefault(); // Prevent default tab behavior
-          break;
+            if (event.shiftKey) {
+                // Shift + Tab
+                currentIndex = (currentIndex - 1 + focusableElements.length) % focusableElements.length;
+            } else {
+               // Tab
+                currentIndex = (currentIndex + 1) % focusableElements.length;
+            }
+            focusableElements[currentIndex].focus();
+            event.preventDefault(); // Prevent default tab behavior
+           break;
         case "ArrowUp":
-          if (currentIndex > 0) {
-            currentIndex--;
-          } else {
-            currentIndex = focusableElements.length - 1;
-          }
-          focusableElements[currentIndex].focus();
+            if (currentIndex > 0){
+                currentIndex--;
+            } else {
+                currentIndex = focusableElements.length - 1
+            }
+           focusableElements[currentIndex].focus();
           event.preventDefault();
-          break;
+           break;
         case "ArrowDown":
-          if (currentIndex < focusableElements.length - 1) {
-            currentIndex++;
-          } else {
-            currentIndex = 0;
-          }
-          focusableElements[currentIndex].focus();
-          event.preventDefault();
-          break;
+             if (currentIndex < focusableElements.length - 1){
+                currentIndex++;
+             } else {
+                  currentIndex = 0;
+                }
+            focusableElements[currentIndex].focus();
+            event.preventDefault();
+            break;
         case "Enter":
-          if (document.activeElement.classList.contains("checkbox-item")) {
-            document.activeElement.querySelector('input[type="checkbox"]').click();
-          }
-          event.preventDefault();
-          break;
-        case "Space":
-          if (document.activeElement.classList.contains("checkbox-item")) {
-            document.activeElement.querySelector('input[type="checkbox"]').click();
-          }
-          event.preventDefault();
-          break;
+            if (document.activeElement.classList.contains("checkbox-item")){
+                document.activeElement.querySelector('input[type="checkbox"]').click();
+            }
+              event.preventDefault();
+            break;
+         case "Space":
+            if (document.activeElement.classList.contains("checkbox-item")){
+                document.activeElement.querySelector('input[type="checkbox"]').click();
+            }
+               event.preventDefault();
+            break;
         case "Escape":
-          this.toggleDropdown();
-          event.preventDefault();
-          break;
-      }
+            this.toggleDropdown();
+            event.preventDefault();
+            break;
+        }
     }
 
     handleOutsideClick(event) {
@@ -708,18 +741,18 @@ define(function () {
       });
     }
 
-    updateDeselectButtonStates() {
-      const groups = this._container.querySelectorAll(".group");
-      groups.forEach((group) => {
-        const checkboxes = group.querySelectorAll('input[type="checkbox"]');
-        const hasSelectedItems = Array.from(checkboxes).some((cb) => cb.checked);
+    // updateDeselectButtonStates() {
+    //   const groups = this._container.querySelectorAll(".group");
+    //   groups.forEach((group) => {
+    //     const checkboxes = group.querySelectorAll('input[type="checkbox"]');
+    //     const hasSelectedItems = Array.from(checkboxes).some((cb) => cb.checked);
 
-        const deselectButton = group.querySelector(".group-deselect-button");
-        if (deselectButton) {
-          deselectButton.disabled = !hasSelectedItems;
-        }
-      });
-    }
+    //     const deselectButton = group.querySelector(".group-deselect-button");
+    //     if (deselectButton) {
+    //       deselectButton.disabled = !hasSelectedItems;
+    //     }
+    //   });
+    // }
 
     toggleSelectDeselectFiltered() {
       if (!this._multipleSelect) return;
