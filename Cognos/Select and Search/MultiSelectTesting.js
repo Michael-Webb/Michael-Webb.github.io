@@ -337,10 +337,6 @@ define(function () {
               checkbox.id = checkboxId;
               checkbox.dataset.group = groupInfo.name;
               checkbox.dataset.displayValue = item.displayValue;
-              checkbox.addEventListener(
-                "change",
-                this.handleCheckboxChange.bind(this, item.value, item.displayValue, groupInfo.name)
-              );
 
               const label = document.createElement("label");
               label.setAttribute("for", checkboxId);
@@ -350,6 +346,20 @@ define(function () {
               checkboxDiv.appendChild(checkbox);
               checkboxDiv.appendChild(label);
               groupDiv.appendChild(checkboxDiv);
+
+              // Add click listener to the entire checkboxDiv
+              checkboxDiv.addEventListener("click", (event) => {
+                if (event.target !== checkbox) { // Prevent triggering when clicking directly on the checkbox
+                checkbox.checked = !checkbox.checked;
+                  this.handleCheckboxChange(item.value, item.displayValue, groupInfo.name, {
+                  target: checkbox,
+                });
+                }
+              });
+             checkbox.addEventListener(
+                "change",
+                this.handleCheckboxChange.bind(this, item.value, item.displayValue, groupInfo.name)
+              );
             });
 
             multiSelectDropdown.appendChild(groupDiv);
@@ -366,10 +376,6 @@ define(function () {
               checkbox.id = checkboxId;
               checkbox.dataset.group = groupInfo.name;
               checkbox.dataset.displayValue = item.displayValue;
-              checkbox.addEventListener(
-                "change",
-                this.handleCheckboxChange.bind(this, item.value, item.displayValue, groupInfo.name)
-              );
 
               const label = document.createElement("label");
               label.setAttribute("for", checkboxId);
@@ -378,6 +384,20 @@ define(function () {
               checkboxDiv.appendChild(checkbox);
               checkboxDiv.appendChild(label);
               multiSelectDropdown.appendChild(checkboxDiv);
+                    // Add click listener to the entire checkboxDiv
+              checkboxDiv.addEventListener("click", (event) => {
+                if(event.target !== checkbox){
+                 checkbox.checked = !checkbox.checked;
+                this.handleCheckboxChange(item.value, item.displayValue, groupInfo.name, {
+                  target: checkbox,
+                });
+              }
+                
+              });
+                 checkbox.addEventListener(
+                "change",
+                this.handleCheckboxChange.bind(this, item.value, item.displayValue, groupInfo.name)
+              );
             });
           }
         });
