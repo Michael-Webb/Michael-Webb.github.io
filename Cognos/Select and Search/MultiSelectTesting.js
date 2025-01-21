@@ -375,12 +375,10 @@ define(function () {
               // Set initial aria-selected state
               checkboxDiv.setAttribute("aria-selected", checkbox.checked);
 
-              // Add click listener to the entire checkboxDiv
+              // Updated click listener for checkboxDiv
               checkboxDiv.addEventListener("click", (event) => {
-                // Prevent double toggle when clicking on the checkbox directly
-                if (event.target !== checkbox) {
+                if (event.target.tagName.toLowerCase() !== "input") {
                   checkbox.checked = !checkbox.checked;
-                  // Dispatch a change event to trigger aria updates and handling
                   const changeEvent = new Event("change", { bubbles: true });
                   checkbox.dispatchEvent(changeEvent);
                 }
@@ -447,9 +445,9 @@ define(function () {
 
               checkboxDiv.setAttribute("aria-selected", checkbox.checked);
 
-              // Add click listener to the entire checkboxDiv
+              // Updated click listener for non-grouped checkboxDiv
               checkboxDiv.addEventListener("click", (event) => {
-                if (event.target !== checkbox) {
+                if (event.target.tagName.toLowerCase() !== "input") {
                   checkbox.checked = !checkbox.checked;
                   const changeEvent = new Event("change", { bubbles: true });
                   checkbox.dispatchEvent(changeEvent);
