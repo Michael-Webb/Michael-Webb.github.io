@@ -537,7 +537,6 @@ define(function () {
         focusIndex = 0;
         focusableElements[focusIndex].focus();
       }
-
       switch (event.key) {
         case "Tab":
           if (event.shiftKey) {
@@ -714,18 +713,6 @@ define(function () {
           deselectButton.disabled = !hasSelectedItems;
         }
       });
-      // After updating the buttons, we need to make sure we set focus to something if not we get stuck
-      // Get all the focusable elements
-      const focusableElements = this._container.querySelectorAll('input[type="text"], button, select, .checkbox-item');
-
-      // If there are any focusable elements, focus the first one
-      if (focusableElements.length > 0) {
-        // Check if we are still in the focus list, if not, get the first focusable element and set focus
-        let currentIndex = Array.from(focusableElements).findIndex((el) => el === document.activeElement);
-        if (currentIndex === -1) {
-          focusableElements[0].focus();
-        }
-      }
     }
 
     toggleSelectDeselectFiltered() {
