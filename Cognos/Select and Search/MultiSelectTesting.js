@@ -1,4 +1,4 @@
-define(function () {
+define(["css!v1/ext/MultiSelect/css/multiselect.css"], function () {
   "use strict";
 
   class MyDataLoggingControl {

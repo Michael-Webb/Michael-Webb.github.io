@@ -2,12 +2,12 @@
 .custom-dropdown-container .dropdown-header {
   border: 1px solid #ccc;
   padding: 8px;
+  background-color: white;
   cursor: pointer;
   position: relative;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: white;
 }
 
 .custom-dropdown-container .dropdown-header .chevron {
@@ -34,12 +34,10 @@
 }
 
 .custom-dropdown-container .dropdown-list-container {
-  max-height: 500px;
+  max-height: 300px;
   overflow-y: auto;
-  overflow-x: hidden; /* Hide horizontal overflow if not needed */
   padding: 5px;
   box-sizing: border-box;
-  white-space: nowrap;
 }
 
 /* Search Container and Controls */
@@ -185,13 +183,11 @@
   font-weight: 500;
 }
 
-/* Ensure the checkbox-item uses flex layout to manage space */
+/* Checkbox Items */
 .custom-dropdown-container .checkbox-item {
   display: flex;
-  align-items: left;
+  align-items: center;
   padding-left: 15px;
-  max-width: 250px; /* Set a max width as needed */
-  text-align: start;
 }
 
 .custom-dropdown-container .checkbox-item.no-group {
@@ -200,17 +196,6 @@
 
 .custom-dropdown-container .checkbox-item label {
   margin-left: 5px;
-  flex: 1; /* Allow the label to take up remaining space */
-  display: block; /* Necessary for text-overflow to work */
-  white-space: nowrap; /* Prevent text from wrapping */
-  overflow: hidden; /* Hide overflow text */
-  text-overflow: ellipsis; /* Show ellipsis (...) for overflow */
-  max-width: 200px; /* Adjust based on design needs */
-  cursor: default; /* Avoid pointer cursor to prevent confusion */
-}
-/* Optional: Ensure the checkbox itself doesn't shrink */
-.custom-dropdown-container .checkbox-item input[type="checkbox"] {
-  flex-shrink: 0;
 }
 
 .custom-dropdown-container .checkbox-item.hidden {
@@ -248,50 +233,27 @@
 .custom-dropdown-container .case-sensitivity-container {
   flex-shrink: 1;
 }
-
-.group-label {
-  display: inline-block;
-  max-width: 200px; /* Adjust width as needed */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.checkbox-item {
-  cursor: pointer;
-}
-.checkbox-item:hover {
-  background-color: #e9e9e9;
-}
-
-.custom-dropdown-container input:focus,
+/* General focus styles for interactive elements */
+.custom-dropdown-container [tabindex]:focus,
 .custom-dropdown-container button:focus,
+.custom-dropdown-container input:focus,
 .custom-dropdown-container select:focus,
-.custom-dropdown-container [role="option"]:focus,
-.custom-dropdown-container [role="button"]:focus {
-  outline: 2px solid #005fcc; /* High-contrast outline */
-  outline-offset: 2px; /* Space between outline and element */
-  background-color: white; /* Light background on focus for visibility */
-}
-.custom-dropdown-container [role="option"]:focus {
-  border: 1px solid #005fcc; /* Add a border when focused */
-  background-color: white; /* Reinforce with a background color */
-  z-index: 1; /* Bring focused option above others if overlapping occurs */
+.custom-dropdown-container .checkbox-item:focus {
+  outline: 2px solid #007bff; /* Adjust color as needed */
+  outline-offset: 2px;
 }
 
-/* Horizontal Scrollbar Styling */
-.custom-dropdown-container .dropdown-list-container::-webkit-scrollbar:horizontal {
-  height: 5px;
+/* Optional: Enhance focus style on the dropdown header specifically */
+.custom-dropdown-container .dropdown-header:focus {
+  background-color: #e9f2fb; /* A subtle background change */
 }
 
-.custom-dropdown-container .dropdown-list-container::-webkit-scrollbar-track:horizontal {
-  background: #f0f1f3;
+/* Optional: Enhance focus style on checkbox items */
+.custom-dropdown-container .checkbox-item:focus {
+  background-color: #f0f8ff;
 }
 
-.custom-dropdown-container .dropdown-list-container::-webkit-scrollbar-thumb:horizontal {
-  background: #cdcfd1;
-}
-
-.custom-dropdown-container .dropdown-list-container::-webkit-scrollbar-thumb:horizontal:hover {
-  background: #b2b6b9;
+/* Additional focus styling for buttons if desired */
+.custom-dropdown-container button:focus {
+  background-color: #e9f2fb;
 }
