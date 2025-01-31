@@ -1,37 +1,41 @@
 define(function () {
   "use strict";
+
   class MyDataLoggingControl {
-    initialize(oControlHost, fnDoneInitializing) {
-      console.log("MyDataLoggingControl - Initializing");
-      this._oControlHost = oControlHost;
-      this._container = oControlHost.container;
+    constructor() {
+      // Counter used to generate unique IDs.
+      this._uniqueRowCounter = 0;
 
-      // Store selected items
-      if (!this._selectedItems) {
-        this._selectedItems = [];
-      }
+      // Bound methods for global event listeners.
+      this._handleOutsideClickBound = this.handleOutsideClick.bind(this);
+      // If you ever add a keyboard handler on a persistent element, store its bound reference.
+      this._handleKeyboardNavigationBound = this.handleKeyboardNavigation.bind(this);
+      
+      // Initialize state properties.
+      this._selectedItems = [];
       this._isOpen = false;
-
-      // Default filter settings
+      this._initialLoadComplete = false;
       this._currentFilter = {
         terms: [],
         type: "containsAny",
         rawInput: "",
         caseInsensitive: true,
       };
-
-      // Default multi-select to true, changed via config later
+      // Default to multi-select (may be changed by configuration)
       this._multipleSelect = true;
+    }
 
-      // Custom counter for generating unique IDs (rather than using generateUniqueID)
-      this._uniqueRowCounter = 0;
+    initialize(oControlHost, fnDoneInitializing) {
+      console.log("MyDataLoggingControl - Initializing");
+      this._oControlHost = oControlHost;
+      this._container = oControlHost.container;
 
-      // Ensure we only do initial load once
+      // Load initial selected items only once
       if (!this._initialLoadComplete) {
         this._initialLoadComplete = true;
         const config = oControlHost.configuration;
 
-        // Capture parameter name
+        // Capture parameter name and load any preset selections
         this._parameterName = config["Parameter Name"];
         if (this._parameterName) {
           const initialValues = oControlHost.getParameter(this._parameterName);
@@ -40,9 +44,11 @@ define(function () {
             params.forEach((param) => {
               if (param && param.values && Array.isArray(param.values)) {
                 param.values.forEach((item) => {
+                  // Standardize selected item objects to always use keys: use, display, group (group is optional)
                   this._selectedItems.push({
                     use: item.use,
                     display: item.display,
+                    group: item.group || null,
                   });
                 });
               }
@@ -58,22 +64,24 @@ define(function () {
 
     draw(oControlHost) {
       console.log("MyDataLoggingControl - Drawing");
+      // Clear container (removing old event listeners on inner elements)
       this._container.innerHTML = "";
       this._container.classList.add("custom-dropdown-container");
 
       const config = oControlHost.configuration;
       this._labelText = config["Label Text"] || "Select Options";
 
-      // Determine if multiple selection is enabled (default true)
-      const multipleSelect = config["Multiple Select"] !== false;
-      this._multipleSelect = multipleSelect;
+      // Determine multi-select setting from config
+      this._multipleSelect = config["Multiple Select"] !== false;
 
-      // Set container width if given
+      // Set container width if configured
       if (config["Container Width"]) {
         this._container.style.width = config["Container Width"];
       }
 
-      // Create dropdown header
+      // ******************
+      // Create Dropdown Header
+      // ******************
       const dropdownHeader = document.createElement("div");
       dropdownHeader.classList.add("dropdown-header");
       dropdownHeader.setAttribute("role", "button");
@@ -83,8 +91,8 @@ define(function () {
 
       const labelSpan = document.createElement("span");
       if (this._selectedItems.length > 0) {
-        if (!multipleSelect) {
-          // Show the single selected item's display value
+        if (!this._multipleSelect) {
+          // Single select: show the selected item's display value
           labelSpan.textContent = this._selectedItems[0].display;
         } else {
           labelSpan.textContent = `${this._selectedItems.length} options selected`;
@@ -101,14 +109,10 @@ define(function () {
         dropdownHeader.style.height = config["Dropdown Height"];
       }
 
-      const chevron = document.createElement("span");
-      chevron.classList.add("chevron");
-      chevron.innerHTML = this._isOpen ? "▲" : "▼";
-      dropdownHeader.appendChild(chevron);
-
+      // Instead of inline binding, create a bound function for toggling.
       dropdownHeader.addEventListener("click", this.toggleDropdown.bind(this));
 
-      // Keyboard support for header
+      // Keyboard support for header – using an inline arrow function here is acceptable
       dropdownHeader.addEventListener("keydown", (e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
@@ -120,16 +124,18 @@ define(function () {
           if (firstOption) firstOption.focus();
         }
       });
-
       this._container.appendChild(dropdownHeader);
 
-      // Outer container for dropdown
+      // ******************
+      // Create Outer Dropdown Container
+      // ******************
       const dropdownOuterContainer = document.createElement("div");
       dropdownOuterContainer.classList.add("dropdown-outer-container");
       dropdownOuterContainer.style.display = this._isOpen ? "block" : "none";
 
+      // Only build the search container and controls if the dropdown is open.
       if (this._isOpen) {
-        // Build search container, etc.
+        // Build Search Container
         const searchContainer = document.createElement("div");
         searchContainer.classList.add("search-container");
 
@@ -143,12 +149,15 @@ define(function () {
         searchInput.value = this._currentFilter.rawInput || "";
         searchInputContainer.appendChild(searchInput);
 
+        // Create clear button and magnifier icons
         const clearButton = document.createElement("span");
         clearButton.classList.add("clear-button");
         clearButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" 
                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" 
                 stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x">
                 <path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`;
+        // Initially hide clear button if there is no input.
+        clearButton.style.display = searchInput.value.length > 0 ? "block" : "none";
         searchInputContainer.appendChild(clearButton);
 
         const magnifier = document.createElement("span");
@@ -157,19 +166,20 @@ define(function () {
                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" 
                 stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search">
                 <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`;
+        magnifier.style.display = searchInput.value.length > 0 ? "none" : "block";
         searchInputContainer.appendChild(magnifier);
 
         searchContainer.appendChild(searchInputContainer);
 
-        // Controls container
+        // Controls container – different for multi-select vs. single-select.
         const controlsContainer = document.createElement("div");
         controlsContainer.classList.add("search-controls");
 
-        // Primary buttons container
+        // Primary buttons container for multi-select
         const primaryButtonsContainer = document.createElement("div");
         primaryButtonsContainer.classList.add("primary-buttons-container");
 
-        if (multipleSelect) {
+        if (this._multipleSelect) {
           const optionsToggle = document.createElement("button");
           optionsToggle.type = "button";
           optionsToggle.classList.add("options-toggle");
@@ -184,10 +194,12 @@ define(function () {
           primaryButtonsContainer.appendChild(filterButton);
           controlsContainer.appendChild(primaryButtonsContainer);
 
+          // Options container that holds additional filtering controls.
           const optionsContainer = document.createElement("div");
           optionsContainer.classList.add("options-container");
           optionsContainer.style.display = "none";
 
+          // Search type selector
           const searchType = document.createElement("select");
           searchType.classList.add("search-type");
 
@@ -197,7 +209,6 @@ define(function () {
             { value: "startsWithAny", text: "Starts with any of these keywords" },
             { value: "startsWithFirstContainsRest", text: "Starts with first, contains rest" },
           ];
-
           options.forEach((option) => {
             const optionElement = document.createElement("option");
             optionElement.value = option.value;
@@ -205,14 +216,14 @@ define(function () {
             if (option.default) optionElement.selected = true;
             searchType.appendChild(optionElement);
           });
-
+          // Set current filter type if available.
           searchType.value = this._currentFilter.type || "containsAny";
           optionsContainer.appendChild(searchType);
 
+          // Case sensitivity container with checkbox
           const caseSensitivityContainer = document.createElement("div");
           caseSensitivityContainer.classList.add("case-sensitivity-container");
 
-          // Example ID for case checkbox
           const caseCheckboxId = `caseCheckbox_${Date.now()}`;
           const caseCheckbox = document.createElement("input");
           caseCheckbox.type = "checkbox";
@@ -229,15 +240,15 @@ define(function () {
           caseSensitivityContainer.appendChild(caseLabel);
           optionsContainer.appendChild(caseSensitivityContainer);
 
+          // Toggle the options container on button click.
           optionsToggle.addEventListener("click", () => {
             const isHidden = optionsContainer.style.display === "none";
             optionsContainer.style.display = isHidden ? "flex" : "none";
             optionsToggle.classList.toggle("active");
           });
-
           controlsContainer.appendChild(optionsContainer);
 
-          // Search type & case checkbox
+          // Listen for changes on search type and case sensitivity.
           searchType.addEventListener("change", (e) => {
             this._currentFilter.type = e.target.value;
             this.applyFilter();
@@ -248,18 +259,20 @@ define(function () {
             this.applyFilter();
           });
 
+          // Toggle all filtered checkboxes when filterButton is clicked.
           filterButton.addEventListener("click", () => {
             this.toggleSelectDeselectFiltered();
           });
         } else {
-          // If not multiple select, we still append the container, but no extra buttons
+          // For single-select, you might include additional controls if needed.
           controlsContainer.appendChild(primaryButtonsContainer);
         }
-
         searchContainer.appendChild(controlsContainer);
         dropdownOuterContainer.appendChild(searchContainer);
 
+        // ******************
         // Search input events
+        // ******************
         searchInput.addEventListener("input", (e) => {
           const rawInput = e.target.value;
           this._currentFilter.rawInput = rawInput;
@@ -277,16 +290,17 @@ define(function () {
 
         clearButton.addEventListener("click", () => {
           searchInput.value = "";
-          const rawInput = "";
-          this._currentFilter.rawInput = rawInput;
+          this._currentFilter.rawInput = "";
           this._currentFilter.terms = [];
           this.applyFilter();
           clearButton.style.display = "none";
           magnifier.style.display = "block";
         });
-      }
+      } // end if _isOpen
 
-      // Create scrollable list container
+      // ******************
+      // Create Dropdown List Container
+      // ******************
       const dropdownListContainer = document.createElement("div");
       dropdownListContainer.classList.add("dropdown-list-container");
       dropdownListContainer.setAttribute("id", "dropdown-list");
@@ -304,6 +318,7 @@ define(function () {
         dropdownListContainer.style.height = config["List Container Height"];
       }
 
+      // If no data has been loaded, show a message.
       if (!this._groupedData) {
         const messageDiv = document.createElement("div");
         messageDiv.textContent = "No data available to display.";
@@ -313,17 +328,16 @@ define(function () {
         const multiSelectDropdown = document.createElement("div");
         multiSelectDropdown.classList.add("multi-select-dropdown");
 
-        // Build group or non-group
+        // Build groups or flat list based on the configuration.
         this._groupedData.forEach((groupInfo) => {
           if (showGroups) {
+            // Create group container
             const groupDiv = document.createElement("div");
             groupDiv.classList.add("group");
 
             const groupHeaderDiv = document.createElement("div");
             groupHeaderDiv.classList.add("group-header");
-
-            const groupColor = config["Group Color"] || "#f0f0f0";
-            groupHeaderDiv.style.backgroundColor = groupColor;
+            groupHeaderDiv.style.backgroundColor = config["Group Color"] || "#f0f0f0";
 
             const groupLabel = document.createElement("span");
             groupLabel.classList.add("group-label");
@@ -331,7 +345,8 @@ define(function () {
             groupLabel.title = groupInfo.name;
             groupHeaderDiv.appendChild(groupLabel);
 
-            if (multipleSelect) {
+            if (this._multipleSelect) {
+              // Create select/deselect buttons for the group.
               const buttonContainer = document.createElement("div");
               buttonContainer.classList.add("group-buttons");
 
@@ -356,65 +371,65 @@ define(function () {
               buttonContainer.appendChild(deselectButton);
               groupHeaderDiv.appendChild(buttonContainer);
             }
-
             groupDiv.appendChild(groupHeaderDiv);
 
+            // Create checkbox items for each item in the group.
             groupInfo.items.forEach((item) => {
-              // Generate unique checkbox ID
-              this._uniqueRowCounter++;
-              const checkboxId = `myCheckbox_${this._uniqueRowCounter}_${Date.now()}`;
-
+              const checkboxId = `myCheckbox_${++this._uniqueRowCounter}`;
               const checkboxDiv = document.createElement("div");
               checkboxDiv.classList.add("checkbox-item");
               checkboxDiv.dataset.itemValue = item.value;
               checkboxDiv.setAttribute("role", "option");
               checkboxDiv.setAttribute("tabindex", "-1");
 
+              // Create the checkbox input element.
               const checkbox = document.createElement("input");
               checkbox.type = "checkbox";
               checkbox.value = item.value;
               checkbox.id = checkboxId;
               checkbox.dataset.group = groupInfo.name;
-              checkbox.dataset.displayValue = item.displayValue;
+              // Use consistent data attribute: "display" for the display text.
+              checkbox.dataset.display = item.display;
 
               const label = document.createElement("label");
               label.setAttribute("for", checkboxId);
-              label.textContent = item.displayValue;
-              label.title = item.displayValue;
+              label.textContent = item.display;
+              label.title = item.display;
 
               checkboxDiv.appendChild(checkbox);
               checkboxDiv.appendChild(label);
               groupDiv.appendChild(checkboxDiv);
 
+              // Set ARIA state based on checkbox checked status.
               checkboxDiv.setAttribute("aria-selected", checkbox.checked);
 
-              // ROW CLICK:
-              // Only toggle if the user did NOT click input or label
+              // When clicking on the row (but not directly on the input/label) toggle the checkbox.
               checkboxDiv.addEventListener("click", (event) => {
                 const tag = event.target.tagName.toLowerCase();
-                if (tag === "input" || tag === "label") {
-                  // Let the browser handle that
-                  return;
-                }
-                // Otherwise, manually toggle once
+                if (tag === "input" || tag === "label") return;
                 checkbox.checked = !checkbox.checked;
                 const changeEvent = new Event("change", { bubbles: true });
                 checkbox.dispatchEvent(changeEvent);
               });
 
-              // On checkbox state change
+              // Listen for changes on the checkbox.
               checkbox.addEventListener("change", (event) => {
                 checkboxDiv.setAttribute("aria-selected", checkbox.checked);
-                this.handleCheckboxChange(item.value, item.displayValue, groupInfo.name, event);
+                // Pass the consistent property names to the handler.
+                this.handleCheckboxChange(
+                  item.value,
+                  item.display,
+                  groupInfo.name,
+                  event
+                );
               });
 
-              // Keyboard navigation
+              // Keyboard navigation for the checkbox item.
               checkboxDiv.addEventListener("keydown", (e) => {
                 const allOptions = Array.from(
                   this._container.querySelectorAll('[role="option"]:not(.hidden)')
                 );
                 let currentIndex = allOptions.indexOf(checkboxDiv);
-
                 if (e.key === "ArrowDown") {
                   e.preventDefault();
                   const next = allOptions[currentIndex + 1] || allOptions[0];
@@ -436,14 +451,11 @@ define(function () {
                 }
               });
             });
-
             multiSelectDropdown.appendChild(groupDiv);
           } else {
-            // No grouping
+            // If not using groups, add items flat.
             groupInfo.items.forEach((item) => {
-              this._uniqueRowCounter++;
-              const checkboxId = `myCheckbox_${this._uniqueRowCounter}_${Date.now()}`;
-
+              const checkboxId = `myCheckbox_${++this._uniqueRowCounter}`;
               const checkboxDiv = document.createElement("div");
               checkboxDiv.classList.add("checkbox-item", "no-group");
               checkboxDiv.dataset.itemValue = item.value;
@@ -455,12 +467,12 @@ define(function () {
               checkbox.value = item.value;
               checkbox.id = checkboxId;
               checkbox.dataset.group = groupInfo.name;
-              checkbox.dataset.displayValue = item.displayValue;
+              checkbox.dataset.display = item.display;
 
               const label = document.createElement("label");
               label.setAttribute("for", checkboxId);
-              label.textContent = item.displayValue;
-              label.title = item.displayValue;
+              label.textContent = item.display;
+              label.title = item.display;
 
               checkboxDiv.appendChild(checkbox);
               checkboxDiv.appendChild(label);
@@ -470,10 +482,7 @@ define(function () {
 
               checkboxDiv.addEventListener("click", (event) => {
                 const tag = event.target.tagName.toLowerCase();
-                if (tag === "input" || tag === "label") {
-                  // Let native browser toggles handle input/label clicks
-                  return;
-                }
+                if (tag === "input" || tag === "label") return;
                 checkbox.checked = !checkbox.checked;
                 const changeEvent = new Event("change", { bubbles: true });
                 checkbox.dispatchEvent(changeEvent);
@@ -481,7 +490,12 @@ define(function () {
 
               checkbox.addEventListener("change", (event) => {
                 checkboxDiv.setAttribute("aria-selected", checkbox.checked);
-                this.handleCheckboxChange(item.value, item.displayValue, groupInfo.name, event);
+                this.handleCheckboxChange(
+                  item.value,
+                  item.display,
+                  groupInfo.name,
+                  event
+                );
               });
 
               checkboxDiv.addEventListener("keydown", (e) => {
@@ -489,7 +503,6 @@ define(function () {
                   this._container.querySelectorAll('[role="option"]:not(.hidden)')
                 );
                 let currentIndex = allOptions.indexOf(checkboxDiv);
-
                 if (e.key === "ArrowDown") {
                   e.preventDefault();
                   const next = allOptions[currentIndex + 1] || allOptions[0];
@@ -513,10 +526,9 @@ define(function () {
             });
           }
         });
-
         dropdownListContainer.appendChild(multiSelectDropdown);
 
-        // Apply initial selected values
+        // After building the list, update the initial checked state based on _selectedItems.
         const checkboxes = dropdownListContainer.querySelectorAll('input[type="checkbox"]');
         checkboxes.forEach((cb) => {
           if (this._selectedItems.some((item) => item.use === cb.value)) {
@@ -527,11 +539,12 @@ define(function () {
             }
           }
         });
-      }
+      } // end else (if there is grouped data)
 
       dropdownOuterContainer.appendChild(dropdownListContainer);
       this._container.appendChild(dropdownOuterContainer);
 
+      // When open, reapply filtering and update group button states.
       if (this._isOpen) {
         this.applyFilter();
         this.updateDeselectButtonStates();
@@ -590,7 +603,7 @@ define(function () {
         const value = oDataStore.getCellValue(i, valueColumnIndex);
         const displayValue = oDataStore.getCellValue(i, displayColumnIndex);
         const groupingValue = groupColumnIndex !== undefined ? oDataStore.getCellValue(i, groupColumnIndex) : null;
-        const groupName = groupingValue || "Ungrouped";
+        const groupName = groupingValue || (groupColumnIndex !== undefined ? "Ungrouped" : "All Items");
 
         if (groupColumnIndex !== undefined && groupColumnIndex >= 0 && groupColumnIndex < columnCount) {
           if (!seenGroups.has(groupName)) {
@@ -598,14 +611,14 @@ define(function () {
             seenGroups.add(groupName);
           }
           const currentGroup = this._groupedData.find((group) => group.name === groupName);
-          currentGroup.items.push({ value: value, displayValue: displayValue });
+          currentGroup.items.push({ value: value, display: displayValue });
         } else {
           if (!seenGroups.has("All Items")) {
             this._groupedData.push({ name: "All Items", items: [] });
             seenGroups.add("All Items");
           }
-          const allItemsgroup = this._groupedData.find((group) => group.name === "All Items");
-          allItemsgroup.items.push({ value: value, displayValue: displayValue });
+          const allItemsGroup = this._groupedData.find((group) => group.name === "All Items");
+          allItemsGroup.items.push({ value: value, display: displayValue });
         }
       }
 
@@ -621,10 +634,10 @@ define(function () {
       }
       this.draw(this._oControlHost);
 
+      // Manage the document-level click listener for closing the dropdown.
       if (this._isOpen) {
-        this._handleOutsideClickBound = this.handleOutsideClick.bind(this);
         document.addEventListener("click", this._handleOutsideClickBound);
-      } else if (this._handleOutsideClickBound) {
+      } else {
         document.removeEventListener("click", this._handleOutsideClickBound);
       }
     }
@@ -632,7 +645,9 @@ define(function () {
     handleKeyboardNavigation(event) {
       if (!this._isOpen) return;
 
-      const focusableElements = this._container.querySelectorAll('input[type="text"], button, select, .checkbox-item');
+      const focusableElements = this._container.querySelectorAll(
+        'input[type="text"], button, select, .checkbox-item'
+      );
       if (focusableElements.length === 0) return;
 
       let focusIndex = Array.from(focusableElements).findIndex((el) => el === document.activeElement);
@@ -662,14 +677,7 @@ define(function () {
           event.preventDefault();
           break;
         case "Enter":
-          // If focus is on the row container, simulate a click on the checkbox
-          if (document.activeElement.classList.contains("checkbox-item")) {
-            document.activeElement.querySelector('input[type="checkbox"]').click();
-          }
-          event.preventDefault();
-          break;
-        case "Space":
-          // Same logic as Enter
+        case " ":
           if (document.activeElement.classList.contains("checkbox-item")) {
             document.activeElement.querySelector('input[type="checkbox"]').click();
           }
@@ -696,12 +704,12 @@ define(function () {
 
     parseSearchTerms(rawInput) {
       if (!rawInput) return [];
+      // Normalize commas with or without spaces.
       const normalizedInput = rawInput.replace(/, /g, ",");
       let terms = normalizedInput
         .split(",")
         .map((term) => term.trim())
         .filter((term) => term.length > 0);
-
       if (this._currentFilter.caseInsensitive !== false) {
         terms = terms.map((term) => term.toLowerCase());
       }
@@ -717,19 +725,17 @@ define(function () {
       const searchTerms = this._currentFilter.terms;
       const searchType = this._currentFilter.type || "containsAny";
 
+      // Loop through each checkbox item and determine its visibility.
       const checkboxItems = dropdownListContainer.querySelectorAll(".checkbox-item");
       checkboxItems.forEach((item) => {
         const label = item.querySelector("label");
         const displayValue = label ? label.textContent : "";
+        let compareValue = displayValue;
+        let compareTerms = searchTerms;
 
-        let compareValue;
-        let compareTerms;
         if (this._currentFilter.caseInsensitive !== false) {
           compareValue = displayValue.toLowerCase();
           compareTerms = searchTerms.map((term) => term.toLowerCase());
-        } else {
-          compareValue = displayValue;
-          compareTerms = searchTerms;
         }
 
         let isVisible = true;
@@ -762,7 +768,7 @@ define(function () {
         }
       });
 
-      // Hide entire groups with no visible items
+      // Hide entire groups that have no visible items.
       const groups = dropdownListContainer.querySelectorAll(".group");
       groups.forEach((group) => {
         const visibleSubItems = group.querySelectorAll(".checkbox-item:not(.hidden)");
@@ -792,7 +798,6 @@ define(function () {
       groups.forEach((group) => {
         const checkboxes = group.querySelectorAll('input[type="checkbox"]');
         const hasSelectedItems = Array.from(checkboxes).some((cb) => cb.checked);
-
         const deselectButton = group.querySelector(".group-deselect-button");
         if (deselectButton) {
           deselectButton.disabled = !hasSelectedItems;
@@ -810,26 +815,20 @@ define(function () {
       );
       if (visibleCheckboxes.length === 0) return;
 
+      // Determine if at least one is unchecked.
       const anyUnchecked = Array.from(visibleCheckboxes).some((cb) => !cb.checked);
-      if (anyUnchecked) {
-        visibleCheckboxes.forEach((cb) => {
-          if (!cb.checked) {
-            cb.checked = true;
-            const itemData = { use: cb.value, display: cb.dataset.displayValue, group: cb.dataset.group };
-            if (!this._selectedItems.some((item) => item.use === itemData.use)) {
-              this._selectedItems.push(itemData);
-            }
-          }
-        });
-      } else {
-        visibleCheckboxes.forEach((cb) => {
-          if (cb.checked) {
-            cb.checked = false;
-            const itemData = { use: cb.value, display: cb.dataset.displayValue, group: cb.dataset.group };
-            this._selectedItems = this._selectedItems.filter((item) => item.use !== itemData.use);
-          }
-        });
-      }
+      visibleCheckboxes.forEach((cb) => {
+        // Only update if necessary, and dispatch a change event so that state stays in sync.
+        if (anyUnchecked && !cb.checked) {
+          cb.checked = true;
+          const changeEvent = new Event("change", { bubbles: true });
+          cb.dispatchEvent(changeEvent);
+        } else if (!anyUnchecked && cb.checked) {
+          cb.checked = false;
+          const changeEvent = new Event("change", { bubbles: true });
+          cb.dispatchEvent(changeEvent);
+        }
+      });
       this.updateDeselectButtonStates();
       this._oControlHost.valueChanged();
     }
@@ -840,7 +839,8 @@ define(function () {
       visibleCheckboxes.forEach((checkbox) => {
         if (!checkbox.checked) {
           checkbox.checked = true;
-          this.handleCheckboxChange(checkbox.value, checkbox.dataset.displayValue, groupName, { target: checkbox });
+          const changeEvent = new Event("change", { bubbles: true });
+          checkbox.dispatchEvent(changeEvent);
         }
       });
     }
@@ -851,21 +851,21 @@ define(function () {
       checkboxes.forEach((checkbox) => {
         if (checkbox.checked) {
           checkbox.checked = false;
-          const itemData = { use: checkbox.value, display: checkbox.dataset.displayValue, group: groupName };
-          this._selectedItems = this._selectedItems.filter((itm) => itm.use !== itemData.use);
+          const changeEvent = new Event("change", { bubbles: true });
+          checkbox.dispatchEvent(changeEvent);
         }
       });
       this.updateDeselectButtonStates();
       this._oControlHost.valueChanged();
     }
 
-    handleCheckboxChange(value, displayValue, groupName, event) {
+    handleCheckboxChange(value, display, groupName, event) {
       const isChecked = event.target.checked;
-      const itemData = { use: value, display: displayValue, group: groupName };
+      const itemData = { use: value, display: display, group: groupName };
 
       if (isChecked) {
         if (!this._multipleSelect) {
-          // Single-select: uncheck everything else
+          // Single-select: uncheck any other checked boxes.
           const dropdownListContainer = this._container.querySelector(".dropdown-list-container");
           if (dropdownListContainer) {
             const checkboxes = dropdownListContainer.querySelectorAll('input[type="checkbox"]');
@@ -876,25 +876,23 @@ define(function () {
               }
             });
           }
-          // Now select this new one
+          // Now set this as the only selection.
           this._selectedItems = [itemData];
         } else {
-          // Multi-select: add if not already in
+          // Multi-select: add the item if not already present.
           if (!this._selectedItems.some((itm) => itm.use === value)) {
             this._selectedItems.push(itemData);
           }
         }
       } else {
         if (!this._multipleSelect) {
-          // Removing single selection means no items
           this._selectedItems = [];
         } else {
-          // Multi-select: remove from selection
           this._selectedItems = this._selectedItems.filter((itm) => itm.use !== value);
         }
       }
 
-      // Update dropdown header text
+      // Update the header text.
       const dropdownHeader = this._container.querySelector(".dropdown-header");
       if (dropdownHeader) {
         const labelSpan = dropdownHeader.querySelector("span");
@@ -902,7 +900,9 @@ define(function () {
           labelSpan.textContent = this._selectedItems[0].display;
         } else {
           labelSpan.textContent =
-            this._selectedItems.length > 0 ? `${this._selectedItems.length} options selected` : this._labelText;
+            this._selectedItems.length > 0
+              ? `${this._selectedItems.length} options selected`
+              : this._labelText;
         }
 
         const chevron = dropdownHeader.querySelector(".chevron");
@@ -920,15 +920,10 @@ define(function () {
         console.warn("MyDataLoggingControl - Parameter Name not configured.");
         return null;
       }
-      let paramTest = oControlHost.getParameter(this._parameterName);
-      console.log("paramTest", paramTest);
-
       const parameterValues = this._selectedItems.map((item) => ({
         use: item.use,
         display: item.display,
       }));
-      console.log("parameterValues: ", parameterValues);
-
       return [
         {
           parameter: this._parameterName,
@@ -939,7 +934,12 @@ define(function () {
 
     destroy(oControlHost) {
       console.log("MyDataLoggingControl - Destroying");
-      this._container.removeEventListener("keydown", this.handleKeyboardNavigation.bind(this));
+      // Remove any document-level event listeners using the stored bound functions.
+      document.removeEventListener("click", this._handleOutsideClickBound);
+      // If you ever attached a persistent keyboard handler, remove it using its stored bound reference.
+      if (this._container) {
+        this._container.removeEventListener("keydown", this._handleKeyboardNavigationBound);
+      }
     }
   }
 
