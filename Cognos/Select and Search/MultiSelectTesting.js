@@ -10,7 +10,7 @@ define(function () {
       this._handleOutsideClickBound = this.handleOutsideClick.bind(this);
       // If you ever add a keyboard handler on a persistent element, store its bound reference.
       this._handleKeyboardNavigationBound = this.handleKeyboardNavigation.bind(this);
-      
+
       // Initialize state properties.
       this._selectedItems = [];
       this._isOpen = false;
@@ -63,7 +63,17 @@ define(function () {
     }
 
     draw(oControlHost) {
+      // Inject the external CSS file if it hasn't been loaded yet.
+      const cssUrl = "https://michael-webb.github.io/Cognos/Select%20and%20Search/multiselect.css";
+      if (!document.querySelector(`link[href="${cssUrl}"]`)) {
+        const link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href = cssUrl;
+        document.head.appendChild(link);
+      }
+
       console.log("MyDataLoggingControl - Drawing");
+
       // Clear container (removing old event listeners on inner elements)
       this._container.innerHTML = "";
       this._container.classList.add("custom-dropdown-container");
@@ -416,19 +426,12 @@ define(function () {
               checkbox.addEventListener("change", (event) => {
                 checkboxDiv.setAttribute("aria-selected", checkbox.checked);
                 // Pass the consistent property names to the handler.
-                this.handleCheckboxChange(
-                  item.value,
-                  item.display,
-                  groupInfo.name,
-                  event
-                );
+                this.handleCheckboxChange(item.value, item.display, groupInfo.name, event);
               });
 
               // Keyboard navigation for the checkbox item.
               checkboxDiv.addEventListener("keydown", (e) => {
-                const allOptions = Array.from(
-                  this._container.querySelectorAll('[role="option"]:not(.hidden)')
-                );
+                const allOptions = Array.from(this._container.querySelectorAll('[role="option"]:not(.hidden)'));
                 let currentIndex = allOptions.indexOf(checkboxDiv);
                 if (e.key === "ArrowDown") {
                   e.preventDefault();
@@ -490,18 +493,11 @@ define(function () {
 
               checkbox.addEventListener("change", (event) => {
                 checkboxDiv.setAttribute("aria-selected", checkbox.checked);
-                this.handleCheckboxChange(
-                  item.value,
-                  item.display,
-                  groupInfo.name,
-                  event
-                );
+                this.handleCheckboxChange(item.value, item.display, groupInfo.name, event);
               });
 
               checkboxDiv.addEventListener("keydown", (e) => {
-                const allOptions = Array.from(
-                  this._container.querySelectorAll('[role="option"]:not(.hidden)')
-                );
+                const allOptions = Array.from(this._container.querySelectorAll('[role="option"]:not(.hidden)'));
                 let currentIndex = allOptions.indexOf(checkboxDiv);
                 if (e.key === "ArrowDown") {
                   e.preventDefault();
@@ -645,9 +641,7 @@ define(function () {
     handleKeyboardNavigation(event) {
       if (!this._isOpen) return;
 
-      const focusableElements = this._container.querySelectorAll(
-        'input[type="text"], button, select, .checkbox-item'
-      );
+      const focusableElements = this._container.querySelectorAll('input[type="text"], button, select, .checkbox-item');
       if (focusableElements.length === 0) return;
 
       let focusIndex = Array.from(focusableElements).findIndex((el) => el === document.activeElement);
@@ -900,9 +894,7 @@ define(function () {
           labelSpan.textContent = this._selectedItems[0].display;
         } else {
           labelSpan.textContent =
-            this._selectedItems.length > 0
-              ? `${this._selectedItems.length} options selected`
-              : this._labelText;
+            this._selectedItems.length > 0 ? `${this._selectedItems.length} options selected` : this._labelText;
         }
 
         const chevron = dropdownHeader.querySelector(".chevron");
