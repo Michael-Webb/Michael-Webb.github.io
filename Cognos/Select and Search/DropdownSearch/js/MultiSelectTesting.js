@@ -26,7 +26,7 @@ define([], function () {
     }
 
     // Helper method to load CSS if not already loaded.
-    loadCss(url) {
+    loadCss() {
       if (!document.getElementById("myDataLoggingControl-css")) {
         var cssUrl = Application.GlassContext.gateway + "/v1/ext/Select_and_Search/css/multiselect.css";
         var link = document.createElement("link");
@@ -47,7 +47,7 @@ define([], function () {
     initialize(oControlHost, fnDoneInitializing) {
       console.log("MyDataLoggingControl - Initializing");
       // Load the CSS file (only once) during initialization.
-      this.loadCss(cssUrl);
+      this.loadCss();
 
       this._oControlHost = oControlHost;
       this._container = oControlHost.container;
