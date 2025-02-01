@@ -28,7 +28,7 @@ define([], function () {
     // Helper method to load CSS if not already loaded.
     loadCss() {
       if (!document.getElementById("myDataLoggingControl-css")) {
-        var cssUrl = Application.glassContext.gateway + "/v1/ext/Select_and_Search/css/multiselect.css";
+        var cssUrl = Application.GlassContext.gateway + "/v1/ext/Select_and_Search/css/multiselect.css";
         var link = document.createElement("link");
         link.id = "myDataLoggingControl-css"; // Unique ID to prevent duplicates.
         link.rel = "stylesheet";
