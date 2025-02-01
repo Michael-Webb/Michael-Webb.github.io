@@ -1,4 +1,4 @@
-define([__glassAppController.glassContext.gateway+'/v1/ext/Select_and_Search/css/multiselect.css'], function () {
+define(['css!'+__glassAppController.glassContext.gateway+'/v1/ext/Select_and_Search/css/multiselect.css'], function () {
   "use strict";
 
   class MyDataLoggingControl {
