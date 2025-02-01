@@ -33,7 +33,7 @@ define([], function () {
         link.id = "myDataLoggingControl-css"; // Unique ID to prevent duplicates.
         link.rel = "stylesheet";
         link.type = "text/css";
-        link.href = url;
+        link.href = cssUrl;
         link.onload = function () {
           console.log("CSS loaded successfully.");
         };
