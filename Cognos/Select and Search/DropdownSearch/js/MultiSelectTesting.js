@@ -1,5 +1,15 @@
-define(['css!'+__glassAppController.glassContext.gateway+'/v1/ext/Select_and_Search/css/multiselect.css'], function () {
+define([], function () {
   "use strict";
+
+  // Dynamically inject the CSS file.
+  (function loadCSS() {
+    var cssUrl = __glassAppController.glassContext.gateway + "/v1/ext/Select_and_Search/css/multiselect.css";
+    var link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.type = "text/css";
+    link.href = cssUrl;
+    document.getElementsByTagName("head")[0].appendChild(link);
+  })();
 
   class MyDataLoggingControl {
     constructor() {
