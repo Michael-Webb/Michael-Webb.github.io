@@ -1,4 +1,4 @@
-define(["css!v1/ext/MultiSelect/css/multiselect.css"], function () {
+define(["https://michael-webb.github.io/Cognos/Select%20and%20Search/multiselect.css"], function () {
   "use strict";
 
   class MyDataLoggingControl {
