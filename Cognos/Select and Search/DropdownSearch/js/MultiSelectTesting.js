@@ -1,4 +1,4 @@
-define(["https://michael-webb.github.io/Cognos/Select%20and%20Search/multiselect.css"], function () {
+define(['/v1/ext/Select_and_Search/css/MultiSelect.css'], function () {
   "use strict";
 
   class MyDataLoggingControl {
@@ -63,15 +63,6 @@ define(["https://michael-webb.github.io/Cognos/Select%20and%20Search/multiselect
     }
 
     draw(oControlHost) {
-      // Inject the external CSS file if it hasn't been loaded yet.
-      const cssUrl = "https://michael-webb.github.io/Cognos/Select%20and%20Search/multiselect.css";
-      if (!document.querySelector(`link[href="${cssUrl}"]`)) {
-        const link = document.createElement("link");
-        link.rel = "stylesheet";
-        link.href = cssUrl;
-        document.head.appendChild(link);
-      }
-
       console.log("MyDataLoggingControl - Drawing");
 
       // Clear container (removing old event listeners on inner elements)
