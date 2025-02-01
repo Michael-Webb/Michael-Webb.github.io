@@ -1,16 +1,6 @@
 define([], function () {
   "use strict";
 
-  // Dynamically inject the CSS file.
-  (function loadCSS() {
-    var cssUrl = AppController.glassContext.gateway + "/v1/ext/Select_and_Search/css/multiselect.css";
-    var link = document.createElement("link");
-    link.rel = "stylesheet";
-    link.type = "text/css";
-    link.href = cssUrl;
-    document.getElementsByTagName("head")[0].appendChild(link);
-  })();
-
   class MyDataLoggingControl {
     constructor() {
       // Counter used to generate unique IDs.
@@ -35,8 +25,30 @@ define([], function () {
       this._multipleSelect = true;
     }
 
+    // Helper method to load CSS if not already loaded.
+    loadCss() {
+      if (!document.getElementById("myDataLoggingControl-css")) {
+        var cssUrl = Application.glassContext.gateway + "/v1/ext/Select_and_Search/css/multiselect.css";
+        var link = document.createElement("link");
+        link.id = "myDataLoggingControl-css"; // Unique ID to prevent duplicates.
+        link.rel = "stylesheet";
+        link.type = "text/css";
+        link.href = cssUrl;
+        link.onload = function () {
+          console.log("CSS loaded successfully.");
+        };
+        link.onerror = function () {
+          console.error("Error loading CSS:", cssUrl);
+        };
+        document.getElementsByTagName("head")[0].appendChild(link);
+      }
+    }
+
     initialize(oControlHost, fnDoneInitializing) {
       console.log("MyDataLoggingControl - Initializing");
+      // Load the CSS file (only once) during initialization.
+      this.loadCss();
+
       this._oControlHost = oControlHost;
       this._container = oControlHost.container;
 
@@ -74,7 +86,8 @@ define([], function () {
 
     draw(oControlHost) {
       console.log("MyDataLoggingControl - Drawing");
-
+       // Load the CSS file (only once) during initialization.
+       this.loadCss();
       // Clear container (removing old event listeners on inner elements)
       this._container.innerHTML = "";
       this._container.classList.add("custom-dropdown-container");
