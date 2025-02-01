@@ -3,7 +3,7 @@ define([], function () {
 
   // Dynamically inject the CSS file.
   (function loadCSS() {
-    var cssUrl = __glassAppController.glassContext.gateway + "/v1/ext/Select_and_Search/css/multiselect.css";
+    var cssUrl = AppController.glassContext.gateway + "/v1/ext/Select_and_Search/css/multiselect.css";
     var link = document.createElement("link");
     link.rel = "stylesheet";
     link.type = "text/css";
