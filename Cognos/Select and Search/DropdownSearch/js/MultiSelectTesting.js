@@ -28,7 +28,7 @@ define([], function () {
     // Helper method to load CSS if not already loaded.
     loadCss(url) {
       if (!document.getElementById("myDataLoggingControl-css")) {
-        //var cssUrl = Application.GlassContext.gateway + "/v1/ext/Select_and_Search/css/multiselect.css";
+        var cssUrl = Application.GlassContext.gateway + "/v1/ext/Select_and_Search/css/multiselect.css";
         var link = document.createElement("link");
         link.id = "myDataLoggingControl-css"; // Unique ID to prevent duplicates.
         link.rel = "stylesheet";
@@ -47,14 +47,6 @@ define([], function () {
     initialize(oControlHost, fnDoneInitializing) {
       console.log("MyDataLoggingControl - Initializing");
       // Load the CSS file (only once) during initialization.
-      this.glassApp =
-        typeof Application != "undefined" ? Application : __glassAppController;
-      this.glassContext =
-      this.glassApp.glassContext ??
-        (typeof this.glassApp.GlassContext != "undefined"
-          ? this.glassApp.GlassContext
-          : this.glassApp.glassContext);
-      let cssUrl = this.glassApp.glassContext.gateway
       this.loadCss(cssUrl);
 
       this._oControlHost = oControlHost;
