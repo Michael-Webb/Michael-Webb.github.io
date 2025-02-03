@@ -23,6 +23,7 @@ define([], function () {
       };
       // Default to multi-select (may be changed by configuration)
       this._multipleSelect = true;
+      this.loadCss();
     }
 
     // Helper method to load CSS if not already loaded.
@@ -47,7 +48,7 @@ define([], function () {
     initialize(oControlHost, fnDoneInitializing) {
       console.log("MyDataLoggingControl - Initializing");
       // Load the CSS file (only once) during initialization.
-      this.loadCss();
+      
 
       this._oControlHost = oControlHost;
       this._container = oControlHost.container;
@@ -86,8 +87,8 @@ define([], function () {
 
     draw(oControlHost) {
       console.log("MyDataLoggingControl - Drawing");
-       // Load the CSS file (only once) during initialization.
-       this.loadCss();
+      // Load the CSS file (only once) during initialization.
+      this.loadCss();
       // Clear container (removing old event listeners on inner elements)
       this._container.innerHTML = "";
       this._container.classList.add("custom-dropdown-container");
