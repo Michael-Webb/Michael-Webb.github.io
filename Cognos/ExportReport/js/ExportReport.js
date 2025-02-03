@@ -1,4 +1,4 @@
-define(["https://unpkg.com/lucide@latest"], function ({createIcons, Sheet, FileText, FileSpreadsheet, Table, FileCode}) {
+define(["https://unpkg.com/lucide@latest"], (lucide) => {
     "use strict";
 
   class ExportReport {
