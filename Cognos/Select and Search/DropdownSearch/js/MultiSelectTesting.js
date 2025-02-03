@@ -1,5 +1,23 @@
-define([css], function () {
+requirejs.config({
+  paths: {
+    text: Application.GlassContext.gateway + "/v1/ext/Select_and_Search/css/multiselect.css",
+  },
+});
+
+define(["text!multiselectCss"], function (multiselectCss) {
   "use strict";
+
+  // Immediately inject the CSS into the document head.
+  (function injectCSS(cssText) {
+    var style = document.createElement("style");
+    style.setAttribute("type", "text/css"); // For IE8 and below.
+    if (style.styleSheet) {
+      style.styleSheet.cssText = cssText;
+    } else {
+      style.appendChild(document.createTextNode(cssText));
+    }
+    document.head.appendChild(style);
+  })(multiselectCss);
 
   class MyDataLoggingControl {
     constructor() {
@@ -25,42 +43,12 @@ define([css], function () {
       this._multipleSelect = true;
     }
 
-    // Helper method to load CSS if not already loaded.
-    // Modified loadCss that accepts a container parameter.
-    loadCss(targetContainer) {
-      if (!targetContainer) {
-        return;
-      }
-      // Check if the CSS link is already attached to the container.
-      if (!targetContainer.querySelector("#myDataLoggingControl-css")) {
-        var cssUrl = Application.GlassContext.gateway + "/v1/ext/Select_and_Search/css/multiselect.css";
-        var link = document.createElement("link");
-        link.id = "myDataLoggingControl-css"; // Unique ID to prevent duplicates.
-        link.rel = "stylesheet";
-        link.type = "text/css";
-        link.href = cssUrl;
-        // Optionally, add onload/onerror handlers if you need them.
-        link.onload = function () {
-          console.log("CSS loaded successfully.");
-        };
-        link.onerror = function () {
-          console.error("Error loading CSS:", cssUrl);
-        };
-        // Insert the link as the first child of the container
-        targetContainer.insertBefore(link, targetContainer.firstChild);
-      }
-    }
-
     initialize(oControlHost, fnDoneInitializing) {
       console.log("MyDataLoggingControl - Initializing");
       // Load the CSS file (only once) during initialization.
-      
 
       this._oControlHost = oControlHost;
       this._container = oControlHost.container;
-
-      // Attach the CSS to the container as early as possible.
-      this.loadCss(this._container);
 
       // Load initial selected items only once
       if (!this._initialLoadComplete) {
@@ -96,7 +84,6 @@ define([css], function () {
 
     draw(oControlHost) {
       console.log("MyDataLoggingControl - Drawing");
-      this.loadCss(this._container);
 
       // Clear container (removing old event listeners on inner elements)
       this._container.innerHTML = "";
