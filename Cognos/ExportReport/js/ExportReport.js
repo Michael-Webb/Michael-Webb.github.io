@@ -48,7 +48,7 @@ define(function () {
       let config = o.configuration;
       let exportType = config["Export Type"] ?? "excel";
       let exportObject = this.supportedFormats[exportType].format;
-      let exportLabel = this..supportedFormats[exportType].label;
+      let exportLabel = this.supportedFormats[exportType].label;
       console.log("OutputFormatExportObject", exportObject);
 
       // In the draw method
