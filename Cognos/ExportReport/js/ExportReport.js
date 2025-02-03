@@ -53,6 +53,7 @@ define(function () {
       el.querySelector(".btnExport").onclick = this.f_ExportButtonClick.bind(this, o);
       el.querySelector(".btnGetPromptControls").onclick = this.f_getPromptControls.bind(this, o);
       el.querySelector(".btnGetAllParameters").onclick = this.f_getAllParameters.bind(this, o);
+      el.querySelector(".btnGetoControlHost").onclick = this.f_Get_oControlHost.bind(this, o);
     }
 
     f_ExportButtonClick(oControlHost) {
