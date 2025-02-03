@@ -102,6 +102,8 @@ define(function () {
           runConfig.OutputFormat = "xlsxData";
           break;
       }
+      oControlHost.page.application.SharedState.Set(null, "runInNewWindow", true, false, runConfig);
+
     }
 
     f_getPromptControls(oControlHost) {
