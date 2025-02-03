@@ -1,0 +1,16 @@
+{
+    "name": "ExportReports",
+    "schemaVersion": "1.0",
+    "extensions": [
+      {
+        "perspective": "common",
+        "comment": "This zip simply contains JavaScript file to be used in Documents Online reports. It should not affect any perspective, other than to make the js file available.",
+        "features": [
+          {
+            "id": "exportReport"
+          }
+        ]
+      }
+    ]
+  }
+  
