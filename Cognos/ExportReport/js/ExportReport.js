@@ -46,8 +46,8 @@ define(function () {
                       }
                   </style>
                   <button class="myButton btnExport" type="button">Export ${exportType}</button>
-                  <button class="myButton btnGetPromptControls" type="button">GetPromptControls</button>
-                  <button class="myButton btnGetAllParameters" type="button">GetPromptControls</button>`;
+                  <button class="myButton btnGetPromptControls" type="button">Prompt Controls</button>
+                  <button class="myButton btnGetAllParameters" type="button">Get Params</button>`;
   
         el.querySelector(".btnExport").onclick = this.f_ExportButtonClick.bind(
           this,
@@ -74,10 +74,18 @@ define(function () {
       }
   
       f_getAllParameters(oControlHost) {
-        let aControls = this.getParameters(oControlHost);
-  
-        console.log('All Parameters',aControls);
-      }
+        // Get all parameters from the page
+        let parameters = oControlHost.page.getParameters();
+        
+        // Get parameter values
+        let parameterValues = parameters.map(param => ({
+            parameter: param.name,
+            values: param.values
+        }));
+    
+        console.log('All Parameters', parameterValues);
+
+    }
   
       getParameters(oControlHost) {
         if (this.m_sel.selectedIndex < 1) {
