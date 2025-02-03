@@ -25,6 +25,29 @@ define(function () {
       let el = o.container;
       let config = o.configuration;
       let exportType = config["Export Type"] ?? "excel";
+      let exportObject = this.supportedFormats[exportType].format;
+      console.log("OutputFormatExportObject",exportObject)
+      let outputFormat = "";
+
+      switch (exportType) {
+        case "excel":
+          outputFormat = "spreadsheetML";
+          break;
+        case "exceldata":
+        case "excel data":
+        case "data":
+          outputFormat = "xlsxData";
+          break;
+        case "pdf":
+          outputFormat = "PDF";
+          break;
+        case "csv":
+          outputFormat = "CSV";
+          break;
+        case "xml":
+          outputFormat = "XML";
+          break;
+      }
 
       el.innerHTML = `
                   <style>
@@ -57,7 +80,28 @@ define(function () {
     }
 
     f_ExportButtonClick(oControlHost) {
-      console.log("ExportReport", "exportType");
+      console.log("ExportReport", exportType);
+
+      let runConfig = {
+        Prompt: false,
+        isApplication: false,
+        Download: true,
+      };
+
+      switch (outputFormat.toLowerCase()) {
+        case "pdf":
+          runConfig.OutputFormat = "PDF";
+          break;
+        case "spreadsheetml":
+        case "excel":
+          runConfig.OutputFormat = "spreadsheetML";
+          break;
+        case "xlsxdata":
+        case "exceldata":
+        case "excel data":
+          runConfig.OutputFormat = "xlsxData";
+          break;
+      }
     }
 
     f_getPromptControls(oControlHost) {
@@ -74,11 +118,9 @@ define(function () {
 
     f_getAllParameters(oControlHost) {
       // Get all parameters from the page
-      let parameters = oControlHost.page.application.GlassView.getParameters()
-
-      console.log(parameters)
-
-      
+      let parameters = oControlHost.page.application.GlassView.getParameters();
+      let xmlParams = Application.getParameterValues();
+      console.log(parameters, `\r\n`, xmlParams);
     }
 
     getParameters(oControlHost) {
