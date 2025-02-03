@@ -119,7 +119,7 @@ define(function () {
     f_getAllParameters(oControlHost) {
       // Get all parameters from the page
       let parameters = oControlHost.page.application.GlassView.getParameters();
-      let xmlParams = Application.getParameterValues();
+      let xmlParams = oControlHost.page.application.GlassView.getParameterValues();
       console.log(parameters, `\r\n`, xmlParams);
     }
 
