@@ -1,5 +1,5 @@
-define([], function () {
-  "use strict";
+define(["https://unpkg.com/lucide@latest"], function ({createIcons, Sheet, FileText, FileSpreadsheet, Table, FileCode}) {
+    "use strict";
 
   class ExportReport {
     constructor() {
@@ -10,6 +10,7 @@ define([], function () {
           format: "spreadsheetML",
           label: "Excel",
           icon: Application.GlassContext.gateway + `/v1/ext/ExportReports/images/lucide-icons/sheet.svg`,
+          lucideIcon:"Sheet",
           primaryColor: "#10793F",
           secondaryColor: "#FFFFFF",
         },
@@ -19,6 +20,7 @@ define([], function () {
           format: "xlsxData",
           label: "Excel Data",
           icon: Application.GlassContext.gateway + `/v1/ext/ExportReports/images/lucide-icons/file-spreadsheet.svg`,
+          lucideIcon:"FileSpreadsheet",
           primaryColor: "#10793F",
           secondaryColor: "#FFFFFF",
         },
@@ -28,6 +30,7 @@ define([], function () {
           format: "PDF",
           label: "PDF",
           icon: Application.GlassContext.gateway + `/v1/ext/ExportReports/images/lucide-icons/file-text.svg`,
+          lucideIcon:"FileText",
           primaryColor: "#FF0000",
           secondaryColor: "#FFFFFF",
         },
@@ -37,6 +40,7 @@ define([], function () {
           format: "CSV",
           label: "CSV",
           icon: Application.GlassContext.gateway + `/v1/ext/ExportReports/images/lucide-icons/table.svg`,
+          lucideIcon:"Table",
           primaryColor: "#4178BE",
           secondaryColor: "white",
         },
@@ -46,6 +50,7 @@ define([], function () {
           format: "XML",
           label: "XML",
           icon: Application.GlassContext.gateway + `/v1/ext/ExportReports/images/lucide-icons/file-code.svg`,
+          lucideIcon:"FileCode ",
           primaryColor: "#4178BE",
           secondaryColor: "white",
         },
@@ -70,58 +75,51 @@ define([], function () {
             borderVal = 'none'
       }
         
-        
-
       // Use colors from supportedFormats if config colors are null/undefined/empty
       let primaryColor = config["Primary Color"] || this.supportedFormats[exportType].primaryColor;
       let secondaryColor = config["Secondary Color"] || this.supportedFormats[exportType].secondaryColor;
 
       el.innerHTML = `
-          <style>
-            .myButton { 
-              height: ${config["Height"] ?? "32px"}; 
-              width: ${config["Width"] ?? "120px"}; 
-              cursor: pointer; 
-              color: ${primaryColor};  
-              font-size: ${config["Font"] ?? "14px"}; 
-              padding: ${config["Padding"] ?? "6px 12px"}; 
-              background-color: ${secondaryColor};
-              border: ${borderVal}
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            }
-            .myButton:hover { 
-              background-color: ${primaryColor}; 
-              color: ${secondaryColor}; 
-              border: ${borderVal};
-            }
-            .myButton img {
-              height: ${config["Height"] ?? "32px"}; 
-              width: ${config["Width"] ?? "32px"};
-              filter: ${
-                showIcon ? `invert(0) sepia(100%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(100%)` : ""
-              };
-            }
-            .myButton:hover img {
-              height: ${config["Height"] ?? "32px"}; 
-              width: ${config["Width"] ?? "32px"};
-              filter: invert(1);
-            }
-            .lucide {
-              color: ${primaryColor};
-              width: ${config["IconHeight"] ?? "24px"};
-              height: ${config["IconWidth"] ?? "24px"};
-              stroke-width: ${config["Icon Stroke Width"] ?? "1px"};
-            }
-          </style>
-          <button class="myButton btnExport" type="button">
-            ${
-              showIcon ? `<img src="${iconPath}" alt="${exportLabel}" title="${exportLabel}">` : `Export ${exportLabel}`
-            }
-          </button>`;
+      <style>
+        .myButton { 
+          height: ${config["Height"] ?? "32px"}; 
+          width: ${config["Width"] ?? "120px"}; 
+          cursor: pointer; 
+          margin-left: ${config["Margin Left"] ?? "10px"}; 
+          color: ${primaryColor};  
+          font-size: ${config["Font"] ?? "14px"}; 
+          padding: ${config["Padding"] ?? "6px 12px"}; 
+          background-color: ${secondaryColor};
+          border: 1px solid ${primaryColor};
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .myButton:hover { 
+          background-color: ${primaryColor}; 
+          color: ${secondaryColor}; 
+          border: 1px solid ${primaryColor};
+        }
+        .lucide {
+          width: ${config["IconHeight"] ?? "24px"};
+          height: ${config["IconWidth"] ?? "24px"};
+          stroke: ${primaryColor};
+          stroke-width: ${config["Icon Stroke Width"] ?? "1px"};
+        }
+        .myButton:hover .lucide {
+          stroke: ${secondaryColor};
+        }
+      </style>
+      <button class="myButton btnExport" type="button">
+        ${showIcon 
+          ? `<i data-lucide="${this.supportedFormats[exportType].lucideIcon}"></i>` 
+          : `Export ${exportLabel}`}
+      </button>`;
+    
+    // Initialize the icons after adding to DOM
+    lucide.createIcons();
 
-      el.querySelector(".btnExport").onclick = this.f_ExportButtonClick.bind(this, o, exportType);
+    el.querySelector(".btnExport").onclick = this.f_ExportButtonClick.bind(this, o, exportType);
     }
     f_ExportButtonClick(oControlHost, exportType) {
       console.log("ExportReport", exportType);
