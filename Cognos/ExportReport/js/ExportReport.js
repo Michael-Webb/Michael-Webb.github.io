@@ -73,38 +73,30 @@ define(function () {
                   <button class="myButton btnGetAllParameters" type="button">Get Params</button>
                   <button class="myButton btnGetoControlHost" type="button">Get Host</button>`;
 
-      el.querySelector(".btnExport").onclick = this.f_ExportButtonClick.bind(this, o);
+      el.querySelector(".btnExport").onclick = this.f_ExportButtonClick.bind(this, o,exportType);
       el.querySelector(".btnGetPromptControls").onclick = this.f_getPromptControls.bind(this, o);
       el.querySelector(".btnGetAllParameters").onclick = this.f_getAllParameters.bind(this, o);
       el.querySelector(".btnGetoControlHost").onclick = this.f_Get_oControlHost.bind(this, o);
     }
 
-    f_ExportButtonClick(oControlHost) {
-      console.log("ExportReport", exportType);
-
-      let runConfig = {
-        Prompt: false,
-        isApplication: false,
-        Download: true,
-      };
-
-      switch (outputFormat.toLowerCase()) {
-        case "pdf":
-          runConfig.OutputFormat = "PDF";
-          break;
-        case "spreadsheetml":
-        case "excel":
-          runConfig.OutputFormat = "spreadsheetML";
-          break;
-        case "xlsxdata":
-        case "exceldata":
-        case "excel data":
-          runConfig.OutputFormat = "xlsxData";
-          break;
-      }
-      oControlHost.page.application.SharedState.Set(null, "runInNewWindow", true, false, runConfig);
-
+    f_ExportButtonClick(oControlHost, exportType) {
+        console.log("ExportReport", exportType);
+    
+        let runConfig = {
+            Prompt: false,
+            isApplication: false,
+            Download: true,
+        };
+    
+        let outputFormat = this.supportedFormats[exportType]?.format ?? "spreadsheetML";
+    
+        runConfig.OutputFormat = outputFormat;
+        
+        console.log("Running report with config:", runConfig);
+    
+        oControlHost.page.application.SharedState.Set(null, "runInNewWindow", true, false, runConfig);
     }
+    
 
     f_getPromptControls(oControlHost) {
       let aControls = oControlHost.page.getAllPromptControls();
