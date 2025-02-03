@@ -76,13 +76,9 @@ define(function () {
       // Get all parameters from the page
       let parameters = oControlHost.page.application.GlassView.getParameters()
 
-      // Get parameter values
-      let parameterValues = parameters.map((param) => ({
-        parameter: param.name,
-        values: param.values,
-      }));
+      console.log(parameters)
 
-      console.log("All Parameters", parameterValues);
+      
     }
 
     getParameters(oControlHost) {
