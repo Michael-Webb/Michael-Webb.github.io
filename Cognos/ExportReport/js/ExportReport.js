@@ -48,6 +48,7 @@ define(function () {
       let config = o.configuration;
       let exportType = config["Export Type"] ?? "excel";
       let exportObject = this.supportedFormats[exportType].format;
+      let exportLabel = this..supportedFormats[exportType].label;
       console.log("OutputFormatExportObject", exportObject);
 
       // In the draw method
@@ -94,7 +95,7 @@ define(function () {
                           border: 1px solid ${primaryColor};
                       }
                   </style>
-                  <button class="myButton btnExport" type="button">Export ${exportType}</button>
+                  <button class="myButton btnExport" type="button">Export ${exportLabel}</button>
                   <button class="myButton btnGetPromptControls" type="button">Prompt Controls</button>
                   <button class="myButton btnGetAllParameters" type="button">Get Params</button>
                   <button class="myButton btnGetoControlHost" type="button">Get Host</button>`;
