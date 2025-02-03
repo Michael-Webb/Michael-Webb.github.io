@@ -1,6 +1,6 @@
 requirejs.config({
   paths: {
-    text: Application.GlassContext.gateway + "/v1/ext/Select_and_Search/css/multiselect.css",
+    multiselectCss: Application.GlassContext.gateway + "/v1/ext/Select_and_Search/css/multiselect.css",
   },
 });
 
