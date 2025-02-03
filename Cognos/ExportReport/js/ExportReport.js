@@ -60,6 +60,17 @@ define([], function () {
       let exportLabel = this.supportedFormats[exportType].label;
       let showIcon = config["Show Icon"] ?? false;
       let iconPath = this.supportedFormats[exportType].icon;
+      let showBorder = config["Show Icon Border"] ?? true;
+      let borderVal = ''
+
+      switch(showBorder){
+        case true:
+            borderVal = `1px solid  ${primaryColor}`;
+        case false:
+            borderVal = 'none'
+      }
+        
+        
 
       // Use colors from supportedFormats if config colors are null/undefined/empty
       let primaryColor = config["Primary Color"] || this.supportedFormats[exportType].primaryColor;
@@ -75,7 +86,7 @@ define([], function () {
               font-size: ${config["Font"] ?? "14px"}; 
               padding: ${config["Padding"] ?? "6px 12px"}; 
               background-color: ${secondaryColor};
-              border: 1px solid ${primaryColor};
+              border: ${borderVal}
               display: flex;
               align-items: center;
               justify-content: center;
@@ -83,11 +94,11 @@ define([], function () {
             .myButton:hover { 
               background-color: ${primaryColor}; 
               color: ${secondaryColor}; 
-              border: 1px solid ${primaryColor};
+              border: ${borderVal};
             }
             .myButton img {
               height: ${config["Height"] ?? "32px"}; 
-              width: ${config["Width"] ?? "120px"};
+              width: ${config["Width"] ?? "32px"};
               filter: ${
                 showIcon ? `invert(0) sepia(100%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(100%)` : ""
               };
