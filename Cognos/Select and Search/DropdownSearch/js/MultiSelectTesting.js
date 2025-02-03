@@ -1,4 +1,4 @@
-define([], function () {
+define([css], function () {
   "use strict";
 
   class MyDataLoggingControl {
@@ -23,25 +23,31 @@ define([], function () {
       };
       // Default to multi-select (may be changed by configuration)
       this._multipleSelect = true;
-      this.loadCss();
     }
 
     // Helper method to load CSS if not already loaded.
-    loadCss() {
-      if (!document.getElementById("myDataLoggingControl-css")) {
+    // Modified loadCss that accepts a container parameter.
+    loadCss(targetContainer) {
+      if (!targetContainer) {
+        return;
+      }
+      // Check if the CSS link is already attached to the container.
+      if (!targetContainer.querySelector("#myDataLoggingControl-css")) {
         var cssUrl = Application.GlassContext.gateway + "/v1/ext/Select_and_Search/css/multiselect.css";
         var link = document.createElement("link");
         link.id = "myDataLoggingControl-css"; // Unique ID to prevent duplicates.
         link.rel = "stylesheet";
         link.type = "text/css";
         link.href = cssUrl;
+        // Optionally, add onload/onerror handlers if you need them.
         link.onload = function () {
           console.log("CSS loaded successfully.");
         };
         link.onerror = function () {
           console.error("Error loading CSS:", cssUrl);
         };
-        document.getElementsByTagName("head")[0].appendChild(link);
+        // Insert the link as the first child of the container
+        targetContainer.insertBefore(link, targetContainer.firstChild);
       }
     }
 
@@ -52,6 +58,9 @@ define([], function () {
 
       this._oControlHost = oControlHost;
       this._container = oControlHost.container;
+
+      // Attach the CSS to the container as early as possible.
+      this.loadCss(this._container);
 
       // Load initial selected items only once
       if (!this._initialLoadComplete) {
@@ -87,8 +96,8 @@ define([], function () {
 
     draw(oControlHost) {
       console.log("MyDataLoggingControl - Drawing");
-      // Load the CSS file (only once) during initialization.
-      this.loadCss();
+      this.loadCss(this._container);
+
       // Clear container (removing old event listeners on inner elements)
       this._container.innerHTML = "";
       this._container.classList.add("custom-dropdown-container");
