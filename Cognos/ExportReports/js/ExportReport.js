@@ -1,4 +1,4 @@
-define([Application.GlassContext.gateway + "/v1/ext/ExportReports/lib/lucide-icons/lucide.min.js"], (lucide) => {
+define([Application.GlassContext.gateway + "/v1/ext/ExportReports/lib/lucideIcons/lucide.min.js"], (lucide) => {
     "use strict";
 
   class ExportReport {
@@ -9,7 +9,6 @@ define([Application.GlassContext.gateway + "/v1/ext/ExportReports/lib/lucide-ico
           ext: "xlsx",
           format: "spreadsheetML",
           label: "Excel",
-          icon: Application.GlassContext.gateway + `/v1/ext/ExportReports/images/lucide-icons/sheet.svg`,
           lucideIcon:"sheet",
           primaryColor: "#10793F",
           secondaryColor: "#FFFFFF",
@@ -19,7 +18,6 @@ define([Application.GlassContext.gateway + "/v1/ext/ExportReports/lib/lucide-ico
           ext: "xlsx",
           format: "xlsxData",
           label: "Excel Data",
-          icon: Application.GlassContext.gateway + `/v1/ext/ExportReports/images/lucide-icons/file-spreadsheet.svg`,
           lucideIcon:"file-spreadsheet",
           primaryColor: "#10793F",
           secondaryColor: "#FFFFFF",
@@ -29,7 +27,6 @@ define([Application.GlassContext.gateway + "/v1/ext/ExportReports/lib/lucide-ico
           ext: "pdf",
           format: "PDF",
           label: "PDF",
-          icon: Application.GlassContext.gateway + `/v1/ext/ExportReports/images/lucide-icons/file-text.svg`,
           lucideIcon:"file-text",
           primaryColor: "#FF0000",
           secondaryColor: "#FFFFFF",
@@ -39,7 +36,6 @@ define([Application.GlassContext.gateway + "/v1/ext/ExportReports/lib/lucide-ico
           ext: "csv",
           format: "CSV",
           label: "CSV",
-          icon: Application.GlassContext.gateway + `/v1/ext/ExportReports/images/lucide-icons/table.svg`,
           lucideIcon:"table",
           primaryColor: "#4178BE",
           secondaryColor: "white",
@@ -49,7 +45,6 @@ define([Application.GlassContext.gateway + "/v1/ext/ExportReports/lib/lucide-ico
           ext: "xml",
           format: "XML",
           label: "XML",
-          icon: Application.GlassContext.gateway + `/v1/ext/ExportReports/images/lucide-icons/file-code.svg`,
           lucideIcon:"file-code",
           primaryColor: "#4178BE",
           secondaryColor: "white",
