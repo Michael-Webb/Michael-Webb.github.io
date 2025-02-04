@@ -1,4 +1,4 @@
-define(["https://unpkg.com/lucide@latest"], (lucide) => {
+define([Application.GlassContext.gateway + "/v1/ext/ExportReports/lib/lucide-icons/lucide.min.js"], (lucide) => {
     "use strict";
 
   class ExportReport {
@@ -101,8 +101,8 @@ define(["https://unpkg.com/lucide@latest"], (lucide) => {
           border: ${borderVal};
         }
         .lucide {
-          width: ${config["IconHeight"] ?? "24px"};
-          height: ${config["IconWidth"] ?? "24px"};
+          width: ${config["Icon Height"] ?? "24px"};
+          height: ${config["Icon Width"] ?? "24px"};
           stroke: ${primaryColor};
           stroke-width: ${config["Icon Stroke Width"] ?? "1px"};
         }
