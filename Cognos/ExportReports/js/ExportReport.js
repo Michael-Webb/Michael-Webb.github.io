@@ -83,7 +83,6 @@ define([Application.GlassContext.gateway + "/v1/ext/ExportReports/lib/lucideIcon
             justify-content: center;
             }
             .myButton:hover { 
-            background-color: ${primaryColor}; 
             color: ${secondaryColor}; 
             border: ${borderVal};
             }
@@ -96,7 +95,9 @@ define([Application.GlassContext.gateway + "/v1/ext/ExportReports/lib/lucideIcon
             }
             .myButton:hover .lucide {
             stroke: ${secondaryColor};
+            fill:${primaryColor}
             }
+
         </style>
         <button class="myButton btnExport" type="button">
             ${showIcon 
