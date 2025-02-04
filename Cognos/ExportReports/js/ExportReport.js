@@ -80,54 +80,59 @@ define([Application.GlassContext.gateway + "/v1/ext/ExportReports/lib/lucideIcon
       let secondaryColor = config["Secondary Color"] || this.supportedFormats[exportType].secondaryColor;
 
       el.innerHTML = `
-    <style>
-        .${uniqueId} { 
-        height: ${config["Height"] ?? "32px"}; 
-        width: ${config["Width"] ?? "120px"}; 
-        cursor: pointer; 
-        color: ${primaryColor};  
-        font-size: ${config["Font"] ?? "14px"}; 
-        padding: 0;
-        background-color: ${secondaryColor};
-        border: ${borderVal};
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        }
-        .${uniqueId}:hover { 
-        color: ${secondaryColor}; 
-        border: ${borderVal};
-        }
-        .${uniqueId} div {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 100%;
-        }
-        .${uniqueId} .lucide {
-        width: ${showIcon ? "24px" : config["Icon Width"] ?? "24px"};
-        height: ${showIcon ? "24px" : config["Icon Height"] ?? "24px"};
-        stroke: ${primaryColor};
-        stroke-width: ${config["Icon Stroke Width"] ?? "1px"};
-        }
-        .${uniqueId}:hover .lucide {
-        stroke: ${secondaryColor};
-        fill: ${primaryColor}
-        }
-        .${uniqueId} span {
-        white-space: nowrap;
-        font-size: 12px;
-        }
-    </style>
-    <button class="${uniqueId} btnExport" type="button" title="${this.supportedFormats[exportType].title}">
-        ${showIcon
-            ? `<div>
-                <i data-lucide="${this.supportedFormats[exportType].lucideIcon}"></i>
-                <span>${this.supportedFormats[exportType].label}</span>
-               </div>`
-            : `Export ${exportLabel}`
-        }
-    </button>`;
+      <style>
+          .${uniqueId} { 
+              height: ${config["Height"] ?? "32px"}; 
+              width: ${config["Width"] ?? "120px"}; 
+              cursor: pointer; 
+              color: ${primaryColor};  
+              font-size: ${config["Font"] ?? "14px"}; 
+              padding: 0;
+              background-color: ${secondaryColor};
+              border: ${borderVal};
+              display: flex;
+              align-items: center;
+              justify-content: center;
+          }
+          .${uniqueId}:hover { 
+              background-color: ${primaryColor}; 
+              border: ${borderVal};
+          }
+          .${uniqueId} div {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              width: 100%;
+          }
+          .${uniqueId} .lucide {
+              width: ${showIcon ? "24px" : config["Icon Width"] ?? "24px"};
+              height: ${showIcon ? "24px" : config["Icon Height"] ?? "24px"};
+              stroke: ${primaryColor};
+              stroke-width: ${config["Icon Stroke Width"] ?? "1px"};
+          }
+          .${uniqueId} span {
+              white-space: nowrap;
+              font-size: 12px;
+              color: ${primaryColor};
+          }
+          .${uniqueId}:hover span {
+              color: ${secondaryColor};
+          }
+          .${uniqueId}:hover .lucide {
+              stroke: ${secondaryColor};
+              fill: ${primaryColor};
+          }
+      </style>
+      <button class="${uniqueId} btnExport" type="button" title="${this.supportedFormats[exportType].title}">
+          ${
+            showIcon
+              ? `<div>
+                  <i data-lucide="${this.supportedFormats[exportType].lucideIcon}"></i>
+                  <span>${this.supportedFormats[exportType].label}</span>
+                </div>`
+              : `Export ${exportLabel}`
+          }
+      </button>`;
 
       // Initialize the icons after adding to DOM
       lucide.createIcons();
