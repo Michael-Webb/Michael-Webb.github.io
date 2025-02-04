@@ -5,7 +5,7 @@ define([Application.GlassContext.gateway + "/v1/ext/ExportReports/lib/lucideIcon
     constructor() {
       this.supportedFormats = {
         excel: {
-          name:"Excel",
+          name: "Excel",
           mime: "application/vnd.ms-excel",
           ext: "xlsx",
           format: "spreadsheetML",
@@ -16,7 +16,7 @@ define([Application.GlassContext.gateway + "/v1/ext/ExportReports/lib/lucideIcon
           secondaryColor: "#FFFFFF",
         },
         data: {
-          name:"Excel Data",
+          name: "Excel Data",
           mime: "application/vnd.ms-excel",
           ext: "xlsx",
           format: "xlsxData",
@@ -27,7 +27,7 @@ define([Application.GlassContext.gateway + "/v1/ext/ExportReports/lib/lucideIcon
           secondaryColor: "#FFFFFF",
         },
         pdf: {
-          name:"PDF",
+          name: "PDF",
           mime: "application/pdf",
           ext: "pdf",
           format: "PDF",
@@ -38,7 +38,7 @@ define([Application.GlassContext.gateway + "/v1/ext/ExportReports/lib/lucideIcon
           secondaryColor: "#FFFFFF",
         },
         csv: {
-          name:"CSV",
+          name: "CSV",
           mime: "text/csv",
           ext: "csv",
           format: "CSV",
@@ -49,7 +49,7 @@ define([Application.GlassContext.gateway + "/v1/ext/ExportReports/lib/lucideIcon
           secondaryColor: "white",
         },
         xml: {
-          name:"XML",
+          name: "XML",
           mime: "application/xml",
           ext: "xml",
           format: "XML",
@@ -109,12 +109,23 @@ define([Application.GlassContext.gateway + "/v1/ext/ExportReports/lib/lucideIcon
             stroke: ${secondaryColor};
             fill:${primaryColor}
             }
+
+            .${uniqueId} div {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              gap: 4px;  // This adds space between icon and label
+            }
         </style>
         <button class="${uniqueId} btnExport" type="button" title=${this.supportedFormats[exportType].title}>
-            ${showIcon
-                ? `<div><i data-lucide="${this.supportedFormats[exportType].lucideIcon}"></i>${this.supportedFormats[exportType].label}</div>`
-                : `Export ${exportLabel}`
-            }
+          ${
+            showIcon
+              ? `<div>
+                  <i data-lucide="${this.supportedFormats[exportType].lucideIcon}"></i>
+                  <span>${this.supportedFormats[exportType].label}</span>
+                </div>`
+              : `Export ${exportLabel}`
+          }
         </button>`;
 
       // Initialize the icons after adding to DOM
