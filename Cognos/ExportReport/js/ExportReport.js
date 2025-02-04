@@ -90,7 +90,7 @@ define(["https://unpkg.com/lucide@latest"], (lucide) => {
           font-size: ${config["Font"] ?? "14px"}; 
           padding: ${config["Padding"] ?? "6px 12px"}; 
           background-color: ${secondaryColor};
-          border: 1px solid ${primaryColor};
+          border: ${borderVal};
           display: flex;
           align-items: center;
           justify-content: center;
@@ -98,7 +98,7 @@ define(["https://unpkg.com/lucide@latest"], (lucide) => {
         .myButton:hover { 
           background-color: ${primaryColor}; 
           color: ${secondaryColor}; 
-          border: 1px solid ${primaryColor};
+          border: ${borderVal};
         }
         .lucide {
           width: ${config["IconHeight"] ?? "24px"};
