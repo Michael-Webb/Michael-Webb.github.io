@@ -110,9 +110,9 @@ define([Application.GlassContext.gateway + "/v1/ext/ExportReports/lib/lucideIcon
             fill:${primaryColor}
             }
         </style>
-        <button class="${uniqueId} btnExport" type="button" title=${this.supportedFormats[exportType].label}>
+        <button class="${uniqueId} btnExport" type="button" title=${this.supportedFormats[exportType].title}>
             ${showIcon
-                ? `<i data-lucide="${this.supportedFormats[exportType].lucideIcon}"></i>`
+                ? `<div><i data-lucide="${this.supportedFormats[exportType].lucideIcon}"></i>${this.supportedFormats[exportType].label}</div>`
                 : `Export ${exportLabel}`
             }
         </button>`;
