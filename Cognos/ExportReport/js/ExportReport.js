@@ -66,55 +66,48 @@ define([Application.GlassContext.gateway + "/v1/ext/ExportReports/lib/lucide-ico
       let showIcon = config["Show Icon"] ?? false;
       let iconPath = this.supportedFormats[exportType].icon;
       let showBorder = config["Show Icon Border"] ?? true;
-      let borderVal = ''
-
-      switch(showBorder){
-        case true:
-            borderVal = `1px solid  ${primaryColor}`;
-        case false:
-            borderVal = 'none'
-      }
+      let borderVal = showBorder ? `1px solid ${primaryColor}` : 'none';
         
       // Use colors from supportedFormats if config colors are null/undefined/empty
       let primaryColor = config["Primary Color"] || this.supportedFormats[exportType].primaryColor;
       let secondaryColor = config["Secondary Color"] || this.supportedFormats[exportType].secondaryColor;
 
       el.innerHTML = `
-      <style>
-        .myButton { 
-          height: ${config["Height"] ?? "32px"}; 
-          width: ${config["Width"] ?? "120px"}; 
-          cursor: pointer; 
-          margin-left: ${config["Margin Left"] ?? "10px"}; 
-          color: ${primaryColor};  
-          font-size: ${config["Font"] ?? "14px"}; 
-          padding: ${config["Padding"] ?? "6px 12px"}; 
-          background-color: ${secondaryColor};
-          border: ${borderVal};
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .myButton:hover { 
-          background-color: ${primaryColor}; 
-          color: ${secondaryColor}; 
-          border: ${borderVal};
-        }
-        .lucide {
-          width: ${config["Icon Height"] ?? "24px"};
-          height: ${config["Icon Width"] ?? "24px"};
-          stroke: ${primaryColor};
-          stroke-width: ${config["Icon Stroke Width"] ?? "1px"};
-        }
-        .myButton:hover .lucide {
-          stroke: ${secondaryColor};
-        }
-      </style>
-      <button class="myButton btnExport" type="button">
-        ${showIcon 
-          ? `<i data-lucide="${this.supportedFormats[exportType].lucideIcon}"></i>` 
-          : `Export ${exportLabel}`}
-      </button>`;
+        <style>
+            .myButton { 
+            height: ${config["Height"] ?? "32px"}; 
+            width: ${config["Width"] ?? "120px"}; 
+            cursor: pointer; 
+            color: ${primaryColor};  
+            font-size: ${config["Font"] ?? "14px"}; 
+            padding: 0; /* Remove padding when showing icon */
+            background-color: ${secondaryColor};
+            border: ${borderVal};
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            }
+            .myButton:hover { 
+            background-color: ${primaryColor}; 
+            color: ${secondaryColor}; 
+            border: ${borderVal};
+            }
+            .lucide {
+            width: ${showIcon ? '100%' : config["Icon Width"] ?? "24px"};
+            height: ${showIcon ? '100%' : config["Icon Height"] ?? "24px"};
+            stroke: ${primaryColor};
+            stroke-width: ${config["Icon Stroke Width"] ?? "1px"};
+            padding: ${showIcon ? '4px' : '0'}; /* Add small padding inside icon to prevent clipping */
+            }
+            .myButton:hover .lucide {
+            stroke: ${secondaryColor};
+            }
+        </style>
+        <button class="myButton btnExport" type="button">
+            ${showIcon 
+            ? `<i data-lucide="${this.supportedFormats[exportType].lucideIcon}"></i>` 
+            : `Export ${exportLabel}`}
+        </button>`;
     
     // Initialize the icons after adding to DOM
     lucide.createIcons();
