@@ -99,7 +99,7 @@ define([Application.GlassContext.gateway + "/v1/ext/ExportReports/lib/lucideIcon
             }
 
         </style>
-        <button class="myButton btnExport" type="button">
+        <button class="myButton btnExport" type="button" title=${this.supportedFormats[exportType].label}>
             ${showIcon 
             ? `<i data-lucide="${this.supportedFormats[exportType].lucideIcon}"></i>` 
             : `Export ${exportLabel}`}
