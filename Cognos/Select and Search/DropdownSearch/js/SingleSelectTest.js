@@ -27,6 +27,9 @@ define(() => {
           });
         }
   
+        console.log("Initial mainParamValues:", this.mainParamValues);
+        console.log("Initial groupParamValues:", this.groupParamValues);
+  
         fnDoneInitializing(); // Or return a Promise if initialization is asynchronous
       }
   
@@ -50,8 +53,8 @@ define(() => {
         // Grouping configuration.
         const groupingParamName = oControlHost.configuration["Grouping Parent Name"] ?? "";
         const groupVals = oControlHost.configuration["Group Values"] ?? false;
-        const groupingValUseCol = oControlHost.configuration["Parent Value Use Column"] ?? 1;
-        const groupingValDispCol = oControlHost.configuration["Parent Value Display Column"] ?? 1;
+        const groupingValUseCol = oControlHost.configuration["Parent Value Use Column"] ?? 2; // Corrected to 2 based on config
+        const groupingValDispCol = oControlHost.configuration["Parent Value Display Column"] ?? 2; // Corrected to 2 based on config
   
         this.isMultiple = isMultiple;
         this.autoSubmit = autoSubmit;
@@ -175,24 +178,28 @@ define(() => {
             if (this.hasGrouping) {
               // Build groups mapping.
               let groups = {};
+  
               for (let i = 0; i < this.m_oDataStore.rowCount; i++) {
                 const mainUse = this.m_oDataStore.getCellValue(i, valueUseCol);
                 const mainDisp = this.m_oDataStore.getCellValue(i, valueDispCol);
                 const groupUse = this.m_oDataStore.getCellValue(i, groupingValUseCol);
                 const groupDisp = this.m_oDataStore.getCellValue(i, groupingValDispCol);
+  
                 if (!groups[groupUse]) {
                   groups[groupUse] = { display: groupDisp, items: [] };
                 }
+  
                 groups[groupUse].items.push({ use: mainUse, display: mainDisp });
               }
+  
               // Render each group with a header checkbox and its items.
               for (const groupKey in groups) {
                 const group = groups[groupKey];
                 sHtml += `<div class="group-container">`;
                 // Group header checkbox.
                 sHtml += `<label class="checkbox-label group-label">
-                            <input type="checkbox" class="group-checkbox" data-group="${groupKey}" /> ${group.display}
-                          </label>`;
+                              <input type="checkbox" class="group-checkbox" data-group="${groupKey}" /> ${group.display}
+                            </label>`;
                 sHtml += `<div class="group-items">`;
                 group.items.forEach(item => {
                   sHtml += `<label class="checkbox-label">
@@ -215,6 +222,7 @@ define(() => {
           sHtml += `</div>`;
           sHtml += `<button class="MyApplyButton btnApply">Apply</button>`;
           oControlHost.container.innerHTML = sHtml;
+          console.log("Generated HTML:", oControlHost.container.innerHTML); // Inspect HTML here
   
           // Save references to checkboxes.
           if (this.hasGrouping) {
@@ -225,6 +233,7 @@ define(() => {
           }
   
           if (this.hasGrouping) {
+  
             // Prepopulate group header checkboxes.
             this.m_groupCheckboxes.forEach(groupCb => {
               const groupKey = groupCb.getAttribute('data-group');
@@ -240,7 +249,11 @@ define(() => {
             });
             // Prepopulate individual item checkboxes.
             this.m_itemCheckboxes.forEach(itemCb => {
+              console.log("Checking item:", itemCb.value, " against:", this.mainParamValues); // Added line
+  
               if (this.mainParamValues.includes(itemCb.value)) {
+                console.log("Setting item checked:", itemCb.value); // Added line
+  
                 itemCb.checked = true;
               }
             });
