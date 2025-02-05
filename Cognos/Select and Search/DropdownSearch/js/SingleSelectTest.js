@@ -382,6 +382,7 @@ define(() => {
         }
       }
       console.log("Parameters about to be sent:", JSON.stringify(params));
+      console.log("Current Parameters:","\nParam1",oControlHost.getParameter(oControlHost.configuration["Parameter Name"]),"\nParam2",oControlHost.getParameter(oControlHost.configuration["Grouping Parent Name"]))
       return params.length > 0 ? params : null;
     }
 
