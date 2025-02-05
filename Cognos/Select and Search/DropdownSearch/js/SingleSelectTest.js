@@ -178,32 +178,6 @@ define(() => {
                   }
                   .group-header input.group-checkbox {
                     margin-right: 8px;
-                    width: 16px;
-                    height: 16px;
-                    border: 1px solid #aaa;
-                    appearance: none;
-                    -webkit-appearance: none;
-                    position: relative;
-                  }
-                  /* Fully checked: show a check mark */
-                  .group-header input.group-checkbox:checked:not(.partial)::after {
-                    content: "✓";
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    font-size: 14px;
-                    color: #333;
-                  }
-                  /* Partial: show a minus sign */
-                  .group-header input.group-checkbox.partial::after {
-                    content: "−";
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    font-size: 14px;
-                    color: #333;
                   }
                   .expand-collapse-indicator {
                     margin-right: 8px;
@@ -236,7 +210,7 @@ define(() => {
               groups[groupUse].items.push({ use: mainUse, display: mainDisp });
             }
 
-            // Render each group with a header row (checkbox, expand/collapse, label) and its items.
+            // Render each group with a header row (checkbox, expand/collapse indicator, label) and its items.
             for (const groupKey in groups) {
               const group = groups[groupKey];
               const isInitiallyExpanded = !groupInitiallyCollapsed;
@@ -246,13 +220,10 @@ define(() => {
               const selectedInGroup = this.groupChildren[groupKey]
                 ? this.groupChildren[groupKey].filter((item) => this.mainParamValues.includes(item)).length
                 : 0;
-              const isPartial = selectedInGroup > 0 && selectedInGroup < group.items.length;
 
               sHtml += `<div class="group-container" data-group="${groupKey}">`;
               sHtml += `<div class="group-header" data-group="${groupKey}">
-                            <input type="checkbox" class="group-checkbox ${
-                              isPartial ? "partial" : ""
-                            }" data-group="${groupKey}" />
+                            <input type="checkbox" class="group-checkbox" data-group="${groupKey}" />
                             <span class="expand-collapse-indicator">${expandCollapseIndicator}</span>
                             <span class="group-label-text">${group.display}</span>
                           </div>`;
@@ -301,15 +272,16 @@ define(() => {
             const selectedInGroup = this.groupChildren[groupKey]
               ? this.groupChildren[groupKey].filter((item) => this.mainParamValues.includes(item)).length
               : 0;
-            if (this.groupChildren[groupKey] && selectedInGroup === this.groupChildren[groupKey].length) {
+            const totalCount = this.groupChildren[groupKey] ? this.groupChildren[groupKey].length : 0;
+            if (totalCount && selectedInGroup === totalCount) {
               groupCb.checked = true;
-              groupCb.classList.remove("partial");
+              groupCb.indeterminate = false;
             } else if (selectedInGroup > 0) {
-              groupCb.checked = true;
-              groupCb.classList.add("partial");
+              groupCb.checked = false;
+              groupCb.indeterminate = true;
             } else {
               groupCb.checked = false;
-              groupCb.classList.remove("partial");
+              groupCb.indeterminate = false;
             }
           });
 
@@ -347,15 +319,15 @@ define(() => {
               const totalCount = itemCheckboxes.length;
               if (checkedCount === totalCount) {
                 groupCb.checked = true;
-                groupCb.classList.remove("partial");
+                groupCb.indeterminate = false;
               } else if (checkedCount > 0) {
-                groupCb.checked = true;
-                groupCb.classList.add("partial");
+                groupCb.checked = false;
+                groupCb.indeterminate = true;
               } else {
                 groupCb.checked = false;
-                groupCb.classList.remove("partial");
+                groupCb.indeterminate = false;
               }
-              console.log(`Group checkbox [${groupKey}] changed to ${groupCb.checked}`);
+              console.log(`Group checkbox [${groupKey}] changed`);
               oControlHost.valueChanged();
             });
           });
@@ -371,15 +343,15 @@ define(() => {
               const totalCount = itemCheckboxes.length;
               if (checkedCount === totalCount) {
                 groupCheckbox.checked = true;
-                groupCheckbox.classList.remove("partial");
+                groupCheckbox.indeterminate = false;
               } else if (checkedCount > 0) {
-                groupCheckbox.checked = true;
-                groupCheckbox.classList.add("partial");
+                groupCheckbox.checked = false;
+                groupCheckbox.indeterminate = true;
               } else {
                 groupCheckbox.checked = false;
-                groupCheckbox.classList.remove("partial");
+                groupCheckbox.indeterminate = false;
               }
-              console.log(`Item checkbox [${itemCb.value}] changed to ${itemCb.checked}`);
+              console.log(`Item checkbox [${itemCb.value}] changed`);
               oControlHost.valueChanged();
             });
           });
@@ -408,7 +380,8 @@ define(() => {
         return this.m_sel && this.m_sel.value !== "";
       } else {
         if (this.hasGrouping) {
-          const groupChecked = this.m_groupCheckboxes && this.m_groupCheckboxes.some((cb) => cb.checked);
+          const groupChecked =
+            this.m_groupCheckboxes && this.m_groupCheckboxes.some((cb) => cb.checked || cb.indeterminate);
           const itemChecked = this.m_itemCheckboxes && this.m_itemCheckboxes.some((cb) => cb.checked);
           return groupChecked || itemChecked;
         } else {
@@ -456,7 +429,9 @@ define(() => {
             }
           });
           this.m_groupCheckboxes.forEach((cb) => {
-            if (cb.checked) {
+            // You might want to include a group value if it is fully selected.
+            // (Here, we include it if the checkbox is checked and not indeterminate.)
+            if (cb.checked && !cb.indeterminate) {
               groupValues.push(cb.getAttribute("data-group"));
             }
           });
