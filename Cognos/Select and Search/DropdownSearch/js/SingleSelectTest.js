@@ -206,11 +206,11 @@ define(() => {
               display: none;
             }
   
-            .group-checkbox:checked::before {
+            .group-checkbox:checked + .checkbox-label::before {
                 display: block;
             }
   
-            .group-checkbox.partial::before {
+            .group-checkbox.partial  + .checkbox-label::before {
               display: block;
             }
               </style>
@@ -246,14 +246,13 @@ define(() => {
                   ? this.groupChildren[groupKey].filter((item) => this.mainParamValues.includes(item)).length
                   : 0;
               const isPartial = selectedInGroup > 0 && selectedInGroup < group.items.length;
-              console.log(`Items ${selectedInGroup} length ${group.items.length} PartialState${isPartial} `);
 
               sHtml += `<div class="group-container" data-group="${groupKey}">`;
               // Group header checkbox and label.
-              sHtml += `<label class="checkbox-label group-label">
-                                <input type="checkbox" class="group-checkbox ${
-                                  isPartial ? "partial" : ""
-                                }" data-group="${groupKey}" />
+              sHtml += `<input type="checkbox" class="group-checkbox ${
+                isPartial ? "partial" : ""
+              }" data-group="${groupKey}" />
+                         <label class="checkbox-label group-label">
                                 <span class="expand-collapse-indicator">${expandCollapseIndicator}</span>
                                 ${group.display}
                               </label>`;
@@ -301,7 +300,6 @@ define(() => {
             const groupKey = groupCb.getAttribute("data-group");
 
             //Check Initial State of Partial or Checked
-
             const selectedInGroup = this.groupChildren[groupKey]
               ? this.groupChildren[groupKey].filter((item) => this.mainParamValues.includes(item)).length
               : 0;
@@ -396,6 +394,7 @@ define(() => {
         };
       }
     }
+
     /**
      * Checks if the control is in a valid state.
      * - Single-select: valid if a non-empty option is chosen.
