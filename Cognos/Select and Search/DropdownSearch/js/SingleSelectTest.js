@@ -10,22 +10,15 @@ define(() => {
         this.groupParamValues = [];
   
         const mainParams = oControlHost.getParameter(oControlHost.configuration["Parameter Name"]);
-        if (Array.isArray(mainParams)) {
-          mainParams.forEach(param => {
-            if (param.values && Array.isArray(param.values)) {
-              param.values.forEach(val => this.mainParamValues.push(val.use));
-            }
-          });
+        if (mainParams && mainParams.values && Array.isArray(mainParams.values)) { // Added check for mainParams.values
+          mainParams.values.forEach(val => this.mainParamValues.push(val.use));
         }
   
         const groupParams = oControlHost.getParameter(oControlHost.configuration["Grouping Parent Name"]);
-        if (Array.isArray(groupParams)) {
-          groupParams.forEach(param => {
-            if (param.values && Array.isArray(param.values)) {
-              param.values.forEach(val => this.groupParamValues.push(val.use));
-            }
-          });
+        if (groupParams && groupParams.values && Array.isArray(groupParams.values)) { // Added check for groupParams.values
+          groupParams.values.forEach(val => this.groupParamValues.push(val.use));
         }
+  
         console.log("groupParams",groupParams)
         console.log("mainParams",mainParams)
         console.log("Initial mainParamValues:", this.mainParamValues);
@@ -34,7 +27,6 @@ define(() => {
   
         fnDoneInitializing(); // Or return a Promise if initialization is asynchronous
       }
-  
       /**
        * Receives authored data from the data store.
        */
