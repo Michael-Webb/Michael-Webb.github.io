@@ -406,9 +406,9 @@ define(() => {
       /**
        * Optional destroy method.
        */
-      destroy(oControlHost) {
-        // Cleanup if necessary.
-      }
+    //   destroy(oControlHost) {
+    //     // Cleanup if necessary.
+    //   }
     }
   
     return CustomControl;
