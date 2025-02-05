@@ -99,7 +99,7 @@ define(() => {
           this.m_sel = document.getElementById(selectId);
   
           // Prepopulate the dropdown using the current main parameter value.
-          const currentMainParams = oControlHost.getparameters(oControlHost.configuration["Parameter Name"]);
+          const currentMainParams = oControlHost.getParameters(oControlHost.configuration["Parameter Name"]);
           if (
             currentMainParams &&
             currentMainParams.length > 0 &&
@@ -212,11 +212,11 @@ define(() => {
             this.m_checkboxes = Array.from(oControlHost.container.querySelectorAll(`#${containerId} input[type="checkbox"]`));
           }
   
-          // --- Prepopulate selections using oControlHost.getparameters() ---
+          // --- Prepopulate selections using oControlHost.getParameters() ---
           let mainParamValues = [];
           let groupParamValues = [];
   
-          const mainParams = oControlHost.getparameters(oControlHost.configuration["Parameter Name"]);
+          const mainParams = oControlHost.getParameters(oControlHost.configuration["Parameter Name"]);
           if (mainParams) {
             mainParams.forEach(param => {
               if (param.values && Array.isArray(param.values)) {
@@ -224,7 +224,7 @@ define(() => {
               }
             });
           }
-          const groupParams = oControlHost.getparameters(oControlHost.configuration["Grouping Parent Name"]);
+          const groupParams = oControlHost.getParameters(oControlHost.configuration["Grouping Parent Name"]);
           if (groupParams) {
             groupParams.forEach(param => {
               if (param.values && Array.isArray(param.values)) {
