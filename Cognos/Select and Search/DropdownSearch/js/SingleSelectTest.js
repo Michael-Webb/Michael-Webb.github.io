@@ -216,11 +216,6 @@ define(() => {
               const isInitiallyExpanded = !groupInitiallyCollapsed;
               const expandCollapseIndicator = isInitiallyExpanded ? "▼" : "►";
 
-              // Determine initial state using stored values.
-              const selectedInGroup = this.groupChildren[groupKey]
-                ? this.groupChildren[groupKey].filter((item) => this.mainParamValues.includes(item)).length
-                : 0;
-
               sHtml += `<div class="group-container" data-group="${groupKey}">`;
               sHtml += `<div class="group-header" data-group="${groupKey}">
                             <input type="checkbox" class="group-checkbox" data-group="${groupKey}" />
@@ -272,11 +267,8 @@ define(() => {
             const selectedInGroup = this.groupChildren[groupKey]
               ? this.groupChildren[groupKey].filter((item) => this.mainParamValues.includes(item)).length
               : 0;
-            const totalCount = this.groupChildren[groupKey] ? this.groupChildren[groupKey].length : 0;
-            if (totalCount && selectedInGroup === totalCount) {
-              groupCb.checked = true;
-              groupCb.indeterminate = false;
-            } else if (selectedInGroup > 0) {
+            // On initialization, if any child checkbox is checked, mark the group checkbox as indeterminate.
+            if (selectedInGroup > 0) {
               groupCb.checked = false;
               groupCb.indeterminate = true;
             } else {
@@ -429,8 +421,7 @@ define(() => {
             }
           });
           this.m_groupCheckboxes.forEach((cb) => {
-            // You might want to include a group value if it is fully selected.
-            // (Here, we include it if the checkbox is checked and not indeterminate.)
+            // Include group value if the header is fully selected (not indeterminate)
             if (cb.checked && !cb.indeterminate) {
               groupValues.push(cb.getAttribute("data-group"));
             }
