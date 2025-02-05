@@ -128,7 +128,7 @@ define(() => {
           this.m_sel.addEventListener("change", () => {
             oControlHost.valueChanged();
             if (autoSubmit) {
-              oControlHost.finish();
+              oControlHost.next();
             }
           });
         } else {
@@ -296,7 +296,7 @@ define(() => {
           // Bind the Apply button.
           oControlHost.container.querySelector(".btnApply").onclick = () => {
             oControlHost.valueChanged();
-            oControlHost.finish();
+            oControlHost.next();
           };
         }
       }
