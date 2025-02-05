@@ -105,7 +105,6 @@ define([Application.GlassContext.gateway + "/v1/ext/ExportReports/lib/lucideIcon
             height: ${showIcon ? "24px" : config["Icon Height"] ?? "24px"};
             stroke: ${primaryColor};
             stroke-width: ${config["Icon Stroke Width"] ?? "1px"};
-            transition: fill 0.2s;
         }
         .${uniqueId} span {
             white-space: nowrap;
