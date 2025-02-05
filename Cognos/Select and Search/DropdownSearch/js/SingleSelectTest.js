@@ -246,6 +246,7 @@ define(() => {
                   ? this.groupChildren[groupKey].filter((item) => this.mainParamValues.includes(item)).length
                   : 0;
               const isPartial = selectedInGroup > 0 && selectedInGroup < group.items.length;
+              console.log(`Items ${selectedInGroup} length ${group.items.length} PartialState${isPartial} `);
 
               sHtml += `<div class="group-container" data-group="${groupKey}">`;
               // Group header checkbox and label.
@@ -300,13 +301,13 @@ define(() => {
             const groupKey = groupCb.getAttribute("data-group");
 
             //Check Initial State of Partial or Checked
-            const selectedInGroup =
-              this.groupChildren[groupKey] && this.groupChildren[groupKey].length
-                ? this.groupChildren[groupKey].filter((item) => this.mainParamValues.includes(item)).length
-                : 0;
+
+            const selectedInGroup = this.groupChildren[groupKey]
+              ? this.groupChildren[groupKey].filter((item) => this.mainParamValues.includes(item)).length
+              : 0;
 
             // Check partial state
-            if (selectedInGroup === this.groupChildren[groupKey].length) {
+            if (this.groupChildren[groupKey] && selectedInGroup === this.groupChildren[groupKey].length) {
               groupCb.checked = true;
               groupCb.classList.remove("partial");
             } else if (selectedInGroup > 0) {
@@ -341,22 +342,19 @@ define(() => {
           this.m_groupCheckboxes.forEach((groupCb) => {
             groupCb.addEventListener("change", () => {
               const groupKey = groupCb.getAttribute("data-group");
-              const isChecked = groupCb.checked;
-              const selectedInGroup =
-                this.groupChildren[groupKey] && this.groupChildren[groupKey].length
-                  ? this.groupChildren[groupKey].filter((item) => this.mainParamValues.includes(item)).length
-                  : 0;
+              const selectedInGroup = this.groupChildren[groupKey]
+                ? this.groupChildren[groupKey].filter((item) => this.mainParamValues.includes(item)).length
+                : 0;
 
               //Update items to be selected or deselected
               this.m_itemCheckboxes.forEach((itemCb) => {
                 if (itemCb.getAttribute("data-group") === groupKey) {
-                  itemCb.checked = isChecked;
+                  itemCb.checked = groupCb.checked;
                 }
               });
 
               //Check if it is partial
-
-              if (selectedInGroup === this.groupChildren[groupKey].length) {
+              if (this.groupChildren[groupKey] && selectedInGroup === this.groupChildren[groupKey].length) {
                 groupCb.checked = true;
                 groupCb.classList.remove("partial");
               } else if (selectedInGroup > 0) {
