@@ -18,8 +18,12 @@ define(() => {
   
       /**
        * Draw the control.
-       * In single-select mode, renders a dropdown (with optional grouping).
-       * In multiple-select mode, renders a list of checkboxes and an Apply button.
+       *
+       * Single-select mode renders a dropdown (with grouping support).
+       * Multiple-select mode now supports grouping:
+       * - Each group is rendered with a group header checkbox.
+       * - Under each group header, its items are indented with their own checkboxes.
+       * - Toggling a group header checkbox will toggle all the checkboxes in that group.
        */
       draw(oControlHost) {
         // Read configuration values.
@@ -27,16 +31,16 @@ define(() => {
         const autoSubmit = (oControlHost.configuration['AutoSubmit'] !== false);
         const valueUseCol = oControlHost.configuration["Value Use Column"] ?? 0;
         const valueDispCol = oControlHost.configuration["Value Display Column"] ?? 0;
-        
-        // Grouping configuration
+  
+        // Grouping configuration.
+        const groupingParamName = oControlHost.configuration["Grouping Parent Name"] ?? "";
         const groupVals = oControlHost.configuration["Group Values"] ?? false;
         const groupingValUseCol = oControlHost.configuration["Parent Value Use Column"] ?? 1;
         const groupingValDispCol = oControlHost.configuration["Parent Value Display Column"] ?? 1;
-        const groupingParamName = oControlHost.configuration["Grouping Parent Name"] ?? "";
-        
+  
         this.isMultiple = isMultiple;
         this.autoSubmit = autoSubmit;
-        // Flag that grouping is enabled if "Group Values" is truthy and a grouping parameter name is provided.
+        // Grouping is enabled only when "Group Values" is true and a grouping parameter name is provided.
         this.hasGrouping = groupVals && groupingParamName !== "";
         
         let sHtml = "";
@@ -56,20 +60,17 @@ define(() => {
             <select id="${selectId}" class="custom-dropdown">
               <option value="">-- Select an option --</option>
           `;
-  
           if (this.m_oDataStore && this.m_oDataStore.rowCount) {
             if (this.hasGrouping) {
-              // Build a mapping from group key to group information and an array of main options.
-              const groups = {};
-              for (let iRow = 0, nRows = this.m_oDataStore.rowCount; iRow < nRows; iRow++) {
-                // Main parameter values
-                const mainUse = this.m_oDataStore.getCellValue(iRow, valueUseCol);
-                const mainDisp = this.m_oDataStore.getCellValue(iRow, valueDispCol);
-                // Grouping parameter values
-                const groupUse = this.m_oDataStore.getCellValue(iRow, groupingValUseCol);
-                const groupDisp = this.m_oDataStore.getCellValue(iRow, groupingValDispCol);
-  
-                // Create a new group if needed.
+              // Build groups mapping.
+              let groups = {};
+              for (let i = 0; i < this.m_oDataStore.rowCount; i++) {
+                // Retrieve main item values.
+                const mainUse = this.m_oDataStore.getCellValue(i, valueUseCol);
+                const mainDisp = this.m_oDataStore.getCellValue(i, valueDispCol);
+                // Retrieve grouping values.
+                const groupUse = this.m_oDataStore.getCellValue(i, groupingValUseCol);
+                const groupDisp = this.m_oDataStore.getCellValue(i, groupingValDispCol);
                 if (!groups[groupUse]) {
                   groups[groupUse] = {
                     display: groupDisp,
@@ -81,22 +82,21 @@ define(() => {
                   display: mainDisp
                 });
               }
-  
-              // Generate the grouped dropdown list using <optgroup>
+              // Build the dropdown using <optgroup>.
               for (const groupKey in groups) {
                 const group = groups[groupKey];
                 sHtml += `<optgroup label="${group.display}">`;
                 group.options.forEach(option => {
-                  // Add a data attribute so we can later submit the group value.
+                  // Add a data attribute so we can submit the group value later.
                   sHtml += `<option value="${option.use}" data-group="${groupKey}">${option.display}</option>`;
                 });
                 sHtml += `</optgroup>`;
               }
             } else {
-              // No grouping – just output a simple option for each row.
-              for (let iRow = 0, nRows = this.m_oDataStore.rowCount; iRow < nRows; iRow++) {
-                const useValue = this.m_oDataStore.getCellValue(iRow, valueUseCol);
-                const dispValue = this.m_oDataStore.getCellValue(iRow, valueDispCol);
+              // No grouping: list each row as an option.
+              for (let i = 0; i < this.m_oDataStore.rowCount; i++) {
+                const useValue = this.m_oDataStore.getCellValue(i, valueUseCol);
+                const dispValue = this.m_oDataStore.getCellValue(i, valueDispCol);
                 sHtml += `<option value="${useValue}">${dispValue}</option>`;
               }
             }
@@ -113,16 +113,14 @@ define(() => {
           });
         } else {
           // ----- MULTIPLE-SELECT MODE -----
-          // (Grouping is not applied in multiple-select mode in this example.)
           const containerId = oControlHost.generateUniqueID();
-  
           sHtml += `
             <style>
               .checkbox-container {
                 border: 1px solid #ccc;
                 padding: 10px;
                 border-radius: 3px;
-                max-height: 200px;
+                max-height: 300px;
                 overflow-y: auto;
                 margin-bottom: 10px;
               }
@@ -144,31 +142,105 @@ define(() => {
                 background-color: #ddd;
                 color: #000;
               }
+              /* Additional styling for grouped checkboxes */
+              .group-container {
+                margin-bottom: 10px;
+              }
+              .group-label {
+                font-weight: bold;
+              }
+              .group-items {
+                padding-left: 20px;
+              }
             </style>
             <div id="${containerId}" class="checkbox-container">
           `;
-  
           if (this.m_oDataStore && this.m_oDataStore.rowCount) {
-            for (let iRow = 0, nRows = this.m_oDataStore.rowCount; iRow < nRows; iRow++) {
-              const useValue = this.m_oDataStore.getCellValue(iRow, valueUseCol);
-              const dispValue = this.m_oDataStore.getCellValue(iRow, valueDispCol);
-              sHtml += `
-                <label class="checkbox-label">
-                  <input type="checkbox" value="${useValue}" /> ${dispValue}
-                </label>
-              `;
+            if (this.hasGrouping) {
+              // Build groups mapping.
+              let groups = {};
+              for (let i = 0; i < this.m_oDataStore.rowCount; i++) {
+                const mainUse = this.m_oDataStore.getCellValue(i, valueUseCol);
+                const mainDisp = this.m_oDataStore.getCellValue(i, valueDispCol);
+                const groupUse = this.m_oDataStore.getCellValue(i, groupingValUseCol);
+                const groupDisp = this.m_oDataStore.getCellValue(i, groupingValDispCol);
+                if (!groups[groupUse]) {
+                  groups[groupUse] = {
+                    display: groupDisp,
+                    items: []
+                  };
+                }
+                groups[groupUse].items.push({ use: mainUse, display: mainDisp });
+              }
+              // Render each group with a header checkbox and its item checkboxes.
+              for (const groupKey in groups) {
+                const group = groups[groupKey];
+                sHtml += `<div class="group-container">`;
+                // Group header checkbox: selecting this will filter by the group parameter.
+                sHtml += `<label class="checkbox-label group-label">
+                            <input type="checkbox" class="group-checkbox" data-group="${groupKey}" /> ${group.display}
+                          </label>`;
+                // Render the individual items in this group.
+                sHtml += `<div class="group-items">`;
+                group.items.forEach(item => {
+                  sHtml += `<label class="checkbox-label">
+                              <input type="checkbox" value="${item.use}" data-group="${groupKey}" /> ${item.display}
+                            </label>`;
+                });
+                sHtml += `</div></div>`;
+              }
+            } else {
+              // No grouping: simply list all rows as checkboxes.
+              for (let i = 0; i < this.m_oDataStore.rowCount; i++) {
+                const useValue = this.m_oDataStore.getCellValue(i, valueUseCol);
+                const dispValue = this.m_oDataStore.getCellValue(i, valueDispCol);
+                sHtml += `<label class="checkbox-label">
+                            <input type="checkbox" value="${useValue}" /> ${dispValue}
+                          </label>`;
+              }
             }
           }
           sHtml += `</div>`;
           sHtml += `<button class="MyApplyButton btnApply">Apply</button>`;
           oControlHost.container.innerHTML = sHtml;
   
-          this.m_checkboxes = Array.from(document.querySelectorAll(`#${containerId} input[type="checkbox"]`));
-          this.m_checkboxes.forEach(cb => {
-            cb.addEventListener("change", () => {
-              oControlHost.valueChanged();
+          // Save references to checkboxes.
+          if (this.hasGrouping) {
+            // Capture group header checkboxes and individual item checkboxes separately.
+            this.m_groupCheckboxes = Array.from(oControlHost.container.querySelectorAll('.group-checkbox'));
+            this.m_itemCheckboxes = Array.from(oControlHost.container.querySelectorAll('input[type="checkbox"]:not(.group-checkbox)'));
+          } else {
+            this.m_checkboxes = Array.from(oControlHost.container.querySelectorAll(`#${containerId} input[type="checkbox"]`));
+          }
+  
+          // Bind event listeners.
+          if (this.hasGrouping) {
+            // When a group header is toggled, toggle all its child checkboxes.
+            this.m_groupCheckboxes.forEach(cb => {
+              cb.addEventListener("change", () => {
+                const group = cb.getAttribute('data-group');
+                this.m_itemCheckboxes.forEach(itemCb => {
+                  if (itemCb.getAttribute('data-group') === group) {
+                    itemCb.checked = cb.checked;
+                  }
+                });
+                oControlHost.valueChanged();
+              });
             });
-          });
+            // Individual item checkboxes.
+            this.m_itemCheckboxes.forEach(cb => {
+              cb.addEventListener("change", () => {
+                oControlHost.valueChanged();
+              });
+            });
+          } else {
+            this.m_checkboxes.forEach(cb => {
+              cb.addEventListener("change", () => {
+                oControlHost.valueChanged();
+              });
+            });
+          }
+          // Bind the Apply button.
           oControlHost.container.querySelector(".btnApply").onclick = () => {
             oControlHost.valueChanged();
             oControlHost.finish();
@@ -179,31 +251,46 @@ define(() => {
       /**
        * Checks if the control is in a valid state.
        * - Single-select: valid if a non-empty option is chosen.
-       * - Multiple-select: valid if at least one checkbox is checked.
+       * - Multiple-select:
+       *   - With grouping: valid if at least one group or item checkbox is selected.
+       *   - Without grouping: valid if at least one checkbox is selected.
        */
       isInValidState(oControlHost) {
         if (!this.isMultiple) {
           return this.m_sel && this.m_sel.value !== "";
         } else {
-          return this.m_checkboxes && this.m_checkboxes.some(cb => cb.checked);
+          if (this.hasGrouping) {
+            const groupChecked = this.m_groupCheckboxes && this.m_groupCheckboxes.some(cb => cb.checked);
+            const itemChecked = this.m_itemCheckboxes && this.m_itemCheckboxes.some(cb => cb.checked);
+            return groupChecked || itemChecked;
+          } else {
+            return this.m_checkboxes && this.m_checkboxes.some(cb => cb.checked);
+          }
         }
       }
   
       /**
        * Returns the parameter(s) for submission.
-       * - In single-select mode, returns one value (or two if grouping is enabled).
-       * - In multiple-select mode, returns all selected values.
+       *
+       * Single-select mode:
+       * - With grouping: returns an array with two objects (one for the main parameter and one for the group parameter).
+       * - Without grouping: returns one parameter.
+       *
+       * Multiple-select mode:
+       * - With grouping: the logic looks for checked group header checkboxes and, for groups not entirely selected, individual item checkboxes.
+       * - Without grouping: it returns one parameter containing all selected values.
        */
       getParameters(oControlHost) {
         const sParamName = oControlHost.configuration['Parameter Name'];
         if (!sParamName) {
           return null;
         }
+  
         if (!this.isMultiple) {
+          // Single-select.
           if (!this.m_sel || this.m_sel.value === "") {
             return null;
           }
-          // If grouping is enabled, return both the main parameter and the group parameter.
           if (this.hasGrouping) {
             const selectedOption = this.m_sel.options[this.m_sel.selectedIndex];
             const groupValue = selectedOption.getAttribute("data-group") || "";
@@ -221,19 +308,60 @@ define(() => {
             }];
           }
         } else {
-          if (!this.m_checkboxes) {
-            return null;
+          // Multiple-select.
+          if (this.hasGrouping) {
+            let groupValues = [];
+            let itemValues = [];
+            // Process group header checkboxes.
+            if (this.m_groupCheckboxes) {
+              this.m_groupCheckboxes.forEach(cb => {
+                if (cb.checked) {
+                  groupValues.push({ use: cb.getAttribute("data-group") });
+                }
+              });
+            }
+            // Process individual item checkboxes.
+            if (this.m_itemCheckboxes) {
+              this.m_itemCheckboxes.forEach(cb => {
+                // If the group header for this item is checked, skip its individual value.
+                const group = cb.getAttribute("data-group");
+                const groupCb = oControlHost.container.querySelector(`.group-checkbox[data-group="${group}"]`);
+                if (groupCb && groupCb.checked) {
+                  // Skip individual items when the group filter is active.
+                } else if (cb.checked) {
+                  itemValues.push({ use: cb.value });
+                }
+              });
+            }
+            const params = [];
+            if (itemValues.length > 0) {
+              params.push({
+                parameter: sParamName,
+                values: itemValues
+              });
+            }
+            if (groupValues.length > 0) {
+              params.push({
+                parameter: oControlHost.configuration["Grouping Parent Name"],
+                values: groupValues
+              });
+            }
+            return params.length ? params : null;
+          } else {
+            if (!this.m_checkboxes) {
+              return null;
+            }
+            const selectedValues = this.m_checkboxes
+              .filter(cb => cb.checked)
+              .map(cb => ({ use: cb.value }));
+            if (selectedValues.length === 0) {
+              return null;
+            }
+            return [{
+              parameter: sParamName,
+              values: selectedValues
+            }];
           }
-          const selectedValues = this.m_checkboxes
-            .filter(cb => cb.checked)
-            .map(cb => ({ use: cb.value }));
-          if (selectedValues.length === 0) {
-            return null;
-          }
-          return [{
-            parameter: sParamName,
-            values: selectedValues
-          }];
         }
       }
   
@@ -244,6 +372,7 @@ define(() => {
         // Cleanup if necessary.
       }
     }
+  
     return CustomControl;
   });
   
