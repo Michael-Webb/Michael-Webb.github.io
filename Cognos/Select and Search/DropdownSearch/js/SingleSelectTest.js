@@ -3,7 +3,7 @@ define(() => {
   
     class CustomControl {
       /**
-       * Initialization. Simply calls fnDoneInitializing.
+       * Initialize the control. Simply calls fnDoneInitializing.
        */
       initialize(oControlHost, fnDoneInitializing) {
         fnDoneInitializing();
@@ -17,23 +17,29 @@ define(() => {
       }
   
       /**
-       * Draw the control.
-       * Renders either a single-select dropdown or a multiple-select list of checkboxes,
-       * depending on oControlHost.configuration['Multiple Select'].
-       * Also reads the AutoSubmit configuration to determine if the control should
-       * call next() automatically after selection.
+       * Draws the control.
+       *
+       * Depending on configuration, this renders either:
+       *  - A single-select dropdown (with auto submission if AutoSubmit is true), or
+       *  - A multiple-select list of checkboxes with an Apply button.
+       *
+       * In multiple-select mode, each checkbox calls valueChanged() on change,
+       * and the Apply button calls valueChanged() and (if AutoSubmit is true) next().
        */
       draw(oControlHost) {
         // Read configuration values.
+        // "Multiple Select" is true when we want checkboxes with an Apply button.
+        // "AutoSubmit" is true unless explicitly set to false.
         const isMultiple = !!oControlHost.configuration['Multiple Select'];
         const autoSubmit = (oControlHost.configuration['AutoSubmit'] !== false);
         this.isMultiple = isMultiple;
         this.autoSubmit = autoSubmit;
-        
+  
         let sHtml = "";
-        
+  
         if (!isMultiple) {
-          // Single-select mode: use a dropdown <select>.
+          // ----- SINGLE-SELECT MODE -----
+          // Use a dropdown <select> element.
           const selectId = oControlHost.generateUniqueID();
           sHtml += `
             <style>
@@ -47,9 +53,9 @@ define(() => {
             <select id="${selectId}" class="custom-dropdown">
               <option value="">-- Select an option --</option>
           `;
-          
-          // Loop through the data store rows. Column 0 holds the "use" value;
-          // column 1 holds the "display" value.
+  
+          // Populate the dropdown options using the data store.
+          // Column 0: use value, Column 1: display value.
           if (this.m_oDataStore && this.m_oDataStore.rowCount) {
             for (let iRow = 0, nRows = this.m_oDataStore.rowCount; iRow < nRows; iRow++) {
               const useValue = this.m_oDataStore.getCellValue(iRow, 0);
@@ -57,13 +63,14 @@ define(() => {
               sHtml += `<option value="${useValue}">${dispValue}</option>`;
             }
           }
-          
           sHtml += `</select>`;
           oControlHost.container.innerHTML = sHtml;
-          
-          // Save reference to the select element.
+  
+          // Save a reference to the dropdown element.
           this.m_sel = document.getElementById(selectId);
-          // On change, notify Cognos and (if autoSubmit) advance the report.
+  
+          // When the selection changes, always notify that the value changed.
+          // If AutoSubmit is true, also call next().
           this.m_sel.addEventListener("change", () => {
             oControlHost.valueChanged();
             if (autoSubmit) {
@@ -71,10 +78,11 @@ define(() => {
             }
           });
         } else {
-          // Multiple-select mode: use checkboxes plus an "Apply" button.
+          // ----- MULTIPLE-SELECT MODE -----
+          // Render checkboxes inside a scrollable container plus an "Apply" button.
           const containerId = oControlHost.generateUniqueID();
           const applyId = oControlHost.generateUniqueID();
-          
+  
           sHtml += `
             <style>
               .checkbox-container {
@@ -101,8 +109,8 @@ define(() => {
             </style>
             <div id="${containerId}" class="checkbox-container">
           `;
-          
-          // Loop through the data store and create a checkbox for each row.
+  
+          // Loop through the data store rows and create a checkbox for each.
           if (this.m_oDataStore && this.m_oDataStore.rowCount) {
             for (let iRow = 0, nRows = this.m_oDataStore.rowCount; iRow < nRows; iRow++) {
               const useValue = this.m_oDataStore.getCellValue(iRow, 0);
@@ -114,16 +122,24 @@ define(() => {
               `;
             }
           }
-          
           sHtml += `</div>`;
           sHtml += `<button id="${applyId}" class="apply-button">Apply</button>`;
           oControlHost.container.innerHTML = sHtml;
-          
-          // Store references to the checkboxes.
+  
+          // Save references to the checkboxes and the Apply button.
           this.m_checkboxes = Array.from(document.querySelectorAll(`#${containerId} input[type="checkbox"]`));
-          // Save reference to the Apply button.
           this.m_applyButton = document.getElementById(applyId);
-          // When Apply is clicked, notify Cognos and if autoSubmit is enabled, advance the report.
+  
+          // In multiple-select mode, attach an event listener to each checkbox.
+          // Each time a checkbox is checked or unchecked, call valueChanged().
+          this.m_checkboxes.forEach(cb => {
+            cb.addEventListener("change", () => {
+              oControlHost.valueChanged();
+            });
+          });
+  
+          // The Apply button always calls valueChanged().
+          // If AutoSubmit is true, clicking Apply will also trigger next().
           this.m_applyButton.addEventListener("click", () => {
             oControlHost.valueChanged();
             if (autoSubmit) {
@@ -134,9 +150,9 @@ define(() => {
       }
   
       /**
-       * Determines if the control is in a valid state.
-       * For single-select, valid if a non-empty option is chosen.
-       * For multiple-select, valid if at least one checkbox is checked.
+       * Determines whether the control is in a valid state.
+       * - For single-select: valid if a non-empty option is chosen.
+       * - For multiple-select: valid if at least one checkbox is checked.
        */
       isInValidState(oControlHost) {
         if (!this.isMultiple) {
@@ -149,14 +165,15 @@ define(() => {
       /**
        * Returns the parameter(s) for submission.
        * Uses the parameter name defined in oControlHost.configuration['Parameter Name'].
-       * For single-select, returns one value; for multiple-select, returns all selected values.
+       * - For single-select: returns one value.
+       * - For multiple-select: returns all selected values.
        */
       getParameters(oControlHost) {
         const sParamName = oControlHost.configuration['Parameter Name'];
         if (!sParamName) {
           return null;
         }
-        
+  
         if (!this.isMultiple) {
           if (!this.m_sel || this.m_sel.value === "") {
             return null;
@@ -183,10 +200,10 @@ define(() => {
       }
   
       /**
-       * Clean up any event listeners or resources if needed.
+       * Optional cleanup if needed.
        */
       destroy(oControlHost) {
-        // Optional cleanup code.
+        // Cleanup code if necessary.
       }
     }
   
