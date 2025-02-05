@@ -196,26 +196,21 @@ define(() => {
           if (this.hasGrouping) {
             // Build groups mapping.
             let groups = {};
-
             for (let i = 0; i < this.m_oDataStore.rowCount; i++) {
               const mainUse = this.m_oDataStore.getCellValue(i, valueUseCol);
               const mainDisp = this.m_oDataStore.getCellValue(i, valueDispCol);
               const groupUse = this.m_oDataStore.getCellValue(i, groupingValUseCol);
               const groupDisp = this.m_oDataStore.getCellValue(i, groupingValDispCol);
-
               if (!groups[groupUse]) {
                 groups[groupUse] = { display: groupDisp, items: [] };
               }
-
               groups[groupUse].items.push({ use: mainUse, display: mainDisp });
             }
-
             // Render each group with a header row (checkbox, expand/collapse indicator, label) and its items.
             for (const groupKey in groups) {
               const group = groups[groupKey];
               const isInitiallyExpanded = !groupInitiallyCollapsed;
               const expandCollapseIndicator = isInitiallyExpanded ? "▼" : "►";
-
               sHtml += `<div class="group-container" data-group="${groupKey}">`;
               sHtml += `<div class="group-header" data-group="${groupKey}">
                             <input type="checkbox" class="group-checkbox" data-group="${groupKey}" />
@@ -259,30 +254,44 @@ define(() => {
           );
         }
 
-        // Prepopulate checkboxes.
+        // Prepopulate Item Checkboxes first.
         if (this.hasGrouping) {
-          // Prepopulate Group Checkboxes.
-          this.m_groupCheckboxes.forEach((groupCb) => {
-            const groupKey = groupCb.getAttribute("data-group");
-            const selectedInGroup = this.groupChildren[groupKey]
-              ? this.groupChildren[groupKey].filter((item) => this.mainParamValues.includes(item)).length
-              : 0;
-            // On initialization, if any child checkbox is checked, mark the group checkbox as indeterminate.
-            if (selectedInGroup > 0) {
-              groupCb.checked = false;
-              groupCb.indeterminate = true;
-            } else {
-              groupCb.checked = false;
-              groupCb.indeterminate = false;
-            }
-          });
-
-          // Prepopulate Item Checkboxes.
           this.m_itemCheckboxes.forEach((itemCb) => {
             itemCb.checked = this.mainParamValues.includes(itemCb.value);
           });
 
-          // Attach event listener to the group header for toggling expand/collapse.
+          // Now recalc group header state by querying the DOM.
+          this.m_groupContainers.forEach((container) => {
+            const groupCheckbox = container.querySelector(".group-checkbox");
+            const itemCheckboxes = container.querySelectorAll('.group-items input[type="checkbox"]');
+            const checkedCount = Array.from(itemCheckboxes).filter((cb) => cb.checked).length;
+            const totalCount = itemCheckboxes.length;
+            // If any item is checked, mark group as indeterminate;
+            // if all are checked, you can choose to set it fully checked instead.
+            if (checkedCount === totalCount && totalCount > 0) {
+              groupCheckbox.checked = true;
+              groupCheckbox.indeterminate = false;
+            } else if (checkedCount > 0) {
+              groupCheckbox.checked = false;
+              groupCheckbox.indeterminate = true;
+            } else {
+              groupCheckbox.checked = false;
+              groupCheckbox.indeterminate = false;
+            }
+          });
+        } else {
+          // No grouping.
+          this.m_checkboxes.forEach((cb) => {
+            cb.checked = this.mainParamValues.includes(cb.value);
+            cb.addEventListener("change", () => {
+              console.log(`Checkbox with value ${cb.value} changed. Checked: ${cb.checked}`);
+              oControlHost.valueChanged();
+            });
+          });
+        }
+
+        // Attach event listener to the group header for toggling expand/collapse.
+        if (this.hasGrouping) {
           this.m_groupContainers.forEach((container) => {
             const header = container.querySelector(".group-header");
             header.addEventListener("click", (event) => {
@@ -309,7 +318,7 @@ define(() => {
               // Recalculate header state from current items.
               const checkedCount = Array.from(itemCheckboxes).filter((cb) => cb.checked).length;
               const totalCount = itemCheckboxes.length;
-              if (checkedCount === totalCount) {
+              if (checkedCount === totalCount && totalCount > 0) {
                 groupCb.checked = true;
                 groupCb.indeterminate = false;
               } else if (checkedCount > 0) {
@@ -333,7 +342,7 @@ define(() => {
               const itemCheckboxes = groupContainer.querySelectorAll('.group-items input[type="checkbox"]');
               const checkedCount = Array.from(itemCheckboxes).filter((cb) => cb.checked).length;
               const totalCount = itemCheckboxes.length;
-              if (checkedCount === totalCount) {
+              if (checkedCount === totalCount && totalCount > 0) {
                 groupCheckbox.checked = true;
                 groupCheckbox.indeterminate = false;
               } else if (checkedCount > 0) {
@@ -344,14 +353,6 @@ define(() => {
                 groupCheckbox.indeterminate = false;
               }
               console.log(`Item checkbox [${itemCb.value}] changed`);
-              oControlHost.valueChanged();
-            });
-          });
-        } else {
-          this.m_checkboxes.forEach((cb) => {
-            cb.checked = this.mainParamValues.includes(cb.value);
-            cb.addEventListener("change", () => {
-              console.log(`Checkbox with value ${cb.value} changed. Checked: ${cb.checked}`);
               oControlHost.valueChanged();
             });
           });
