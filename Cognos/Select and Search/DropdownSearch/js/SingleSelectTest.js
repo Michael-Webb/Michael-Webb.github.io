@@ -8,7 +8,7 @@ define(() => {
     initialize(oControlHost, fnDoneInitializing) {
       this.mainParamValues = [];
       this.groupParamValues = [];
-      this.groupChildren = {}; // new line
+      this.groupChildren = {};
 
       const mainParams = oControlHost.getParameter(oControlHost.configuration["Parameter Name"]);
       if (mainParams && mainParams.values && Array.isArray(mainParams.values)) {
@@ -19,11 +19,16 @@ define(() => {
       if (groupParams && groupParams.values && Array.isArray(groupParams.values)) {
         groupParams.values.forEach((val) => this.groupParamValues.push(val.use));
       }
-      //New Code - Find all the values in the Group
+
+      // Use configuration values for columns.
+      const valueUseCol = oControlHost.configuration["Value Use Column"] ?? 0;
+      const groupingValUseCol = oControlHost.configuration["Parent Value Use Column"] ?? 2;
+
+      // Build mapping of groups to their child “main” values.
       if (this.m_oDataStore && this.m_oDataStore.rowCount) {
         for (let i = 0; i < this.m_oDataStore.rowCount; i++) {
-          const mainUse = this.m_oDataStore.getCellValue(i, 0);
-          const groupUse = this.m_oDataStore.getCellValue(i, 2);
+          const mainUse = this.m_oDataStore.getCellValue(i, valueUseCol);
+          const groupUse = this.m_oDataStore.getCellValue(i, groupingValUseCol);
           if (!this.groupChildren[groupUse]) {
             this.groupChildren[groupUse] = [];
           }
@@ -33,7 +38,7 @@ define(() => {
       console.log("Initial mainParamValues:", this.mainParamValues);
       console.log("Initial groupParamValues:", this.groupParamValues);
 
-      fnDoneInitializing(); // Or return a Promise if initialization is asynchronous
+      fnDoneInitializing();
     }
 
     /**
@@ -56,8 +61,8 @@ define(() => {
       // Grouping configuration.
       const groupingParamName = oControlHost.configuration["Grouping Parent Name"] ?? "";
       const groupVals = oControlHost.configuration["Group Values"] ?? false;
-      const groupingValUseCol = oControlHost.configuration["Parent Value Use Column"] ?? 2; // Corrected to 2 based on config
-      const groupingValDispCol = oControlHost.configuration["Parent Value Display Column"] ?? 2; // Corrected to 2 based on config
+      const groupingValUseCol = oControlHost.configuration["Parent Value Use Column"] ?? 2;
+      const groupingValDispCol = oControlHost.configuration["Parent Value Display Column"] ?? 2;
 
       // New Configuration Option: Group Initially Collapsed
       const groupInitiallyCollapsed = oControlHost.configuration["Group Initially Collapsed"] === true;
@@ -73,17 +78,17 @@ define(() => {
         // ----- SINGLE-SELECT MODE -----
         const selectId = oControlHost.generateUniqueID();
         sHtml += `
-              <style>
-                .custom-dropdown {
-                  padding: 5px;
-                  font-size: 14px;
-                  border: 1px solid #ccc;
-                  border-radius: 3px;
-                }
-              </style>
-              <select id="${selectId}" class="custom-dropdown">
-                <option value="">-- Select an option --</option>
-            `;
+                <style>
+                  .custom-dropdown {
+                    padding: 5px;
+                    font-size: 14px;
+                    border: 1px solid #ccc;
+                    border-radius: 3px;
+                  }
+                </style>
+                <select id="${selectId}" class="custom-dropdown">
+                  <option value="">-- Select an option --</option>
+              `;
         if (this.m_oDataStore && this.m_oDataStore.rowCount) {
           if (this.hasGrouping) {
             // Build groups mapping.
@@ -137,85 +142,81 @@ define(() => {
         // ----- MULTIPLE-SELECT MODE -----
         const containerId = oControlHost.generateUniqueID();
         sHtml += `
-              <style>
-                .checkbox-container {
-                  border: 1px solid #ccc;
-                  padding: 10px;
-                  border-radius: 3px;
-                  max-height: 300px;
-                  overflow-y: auto;
-                  margin-bottom: 10px;
-                }
-                .checkbox-label {
-                  display: block;
-                  margin: 3px 0;
-                  font-size: 14px;
-                }
-                .MyApplyButton {
-                  background-color: #f0f0f0;
-                  border: 1px solid #aaa;
-                  color: #333;
-                  font-size: 14px;
-                  padding: 6px 12px;
-                  cursor: pointer;
-                  margin-top: 10px;
-                }
-                .MyApplyButton:hover {
-                  background-color: #ddd;
-                  color: #000;
-                }
-                /* Styles for grouped checkboxes */
-                .group-container {
-                  margin-bottom: 10px;
-                }
-                .group-label {
-                  font-weight: bold;
-                  cursor: pointer; /* Make the group label look clickable */
-                }
-                .group-items {
-                  padding-left: 20px;
-                }
-                .collapsed {
-                  display: none;
-                }
-              /* Custom checkbox styles */
-            .group-checkbox {
-              position: relative;
-              appearance: none;
-              -webkit-appearance: none;
-              width: 16px;
-              height: 16px;
-              border: 1px solid #aaa;
-              background-color: #fff;
-              cursor: pointer;
-            }
-  
-            .group-checkbox:checked {
-                background-color: #ddd;
-            }
-  
-            .group-checkbox::before {
-              content: "";
-              position: absolute;
-              top: 50%;
-              left: 50%;
-              width: 10px;
-              height: 2px;
-              background-color: #333;
-              transform: translate(-50%, -50%);
-              display: none;
-            }
-  
-            .group-checkbox:checked + .checkbox-label::before {
-                display: block;
-            }
-  
-            .group-checkbox.partial  + .checkbox-label::before {
-              display: block;
-            }
-              </style>
-              <div id="${containerId}" class="checkbox-container">
-            `;
+                <style>
+                  .checkbox-container {
+                    border: 1px solid #ccc;
+                    padding: 10px;
+                    border-radius: 3px;
+                    max-height: 300px;
+                    overflow-y: auto;
+                    margin-bottom: 10px;
+                  }
+                  .checkbox-label {
+                    display: block;
+                    margin: 3px 0;
+                    font-size: 14px;
+                  }
+                  .MyApplyButton {
+                    background-color: #f0f0f0;
+                    border: 1px solid #aaa;
+                    color: #333;
+                    font-size: 14px;
+                    padding: 6px 12px;
+                    cursor: pointer;
+                    margin-top: 10px;
+                  }
+                  .MyApplyButton:hover {
+                    background-color: #ddd;
+                    color: #000;
+                  }
+                  /* Styles for grouped checkboxes */
+                  .group-container {
+                    margin-bottom: 10px;
+                  }
+                  .group-label {
+                    font-weight: bold;
+                    cursor: pointer; /* Make the group label look clickable */
+                  }
+                  .group-items {
+                    padding-left: 20px;
+                  }
+                  .collapsed {
+                    display: none;
+                  }
+                  /* Custom checkbox styles */
+                  .group-checkbox {
+                    position: relative;
+                    appearance: none;
+                    -webkit-appearance: none;
+                    width: 16px;
+                    height: 16px;
+                    border: 1px solid #aaa;
+                    background-color: #fff;
+                    cursor: pointer;
+                  }
+                  .group-checkbox:checked {
+                      background-color: #ddd;
+                  }
+                  .group-checkbox::before {
+                    content: "";
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    width: 10px;
+                    height: 2px;
+                    background-color: #333;
+                    transform: translate(-50%, -50%);
+                    display: none;
+                  }
+                  .group-checkbox:checked + .checkbox-label::before {
+                      display: block;
+                  }
+                  .group-checkbox.partial + .checkbox-label::before {
+                    display: block;
+                  }
+                </style>
+                <div id="${containerId}" class="checkbox-container">
+              `;
         if (this.m_oDataStore && this.m_oDataStore.rowCount) {
           if (this.hasGrouping) {
             // Build groups mapping.
@@ -237,31 +238,28 @@ define(() => {
             // Render each group with a header checkbox and its items.
             for (const groupKey in groups) {
               const group = groups[groupKey];
-              const isInitiallyExpanded = !groupInitiallyCollapsed; // Determine initial state
-              const expandCollapseIndicator = isInitiallyExpanded ? "▼" : "►"; // Down/Right triangle
+              const isInitiallyExpanded = !groupInitiallyCollapsed;
+              const expandCollapseIndicator = isInitiallyExpanded ? "▼" : "►";
 
-              // Determine Partial State
-              const selectedInGroup =
-                this.groupChildren[groupKey] && this.groupChildren[groupKey].length
-                  ? this.groupChildren[groupKey].filter((item) => this.mainParamValues.includes(item)).length
-                  : 0;
+              // Determine initial state using stored values.
+              const selectedInGroup = this.groupChildren[groupKey]
+                ? this.groupChildren[groupKey].filter((item) => this.mainParamValues.includes(item)).length
+                : 0;
               const isPartial = selectedInGroup > 0 && selectedInGroup < group.items.length;
 
               sHtml += `<div class="group-container" data-group="${groupKey}">`;
-              // Group header checkbox and label.
               sHtml += `<input type="checkbox" class="group-checkbox ${
                 isPartial ? "partial" : ""
-              }" data-group="${groupKey}" />
-                         <label class="checkbox-label group-label">
-                                <span class="expand-collapse-indicator">${expandCollapseIndicator}</span>
-                                ${group.display}
-                              </label>`;
-              // Main value items (initially collapsed/expanded).
+              }" data-group="${groupKey}" />`;
+              sHtml += `<label class="checkbox-label group-label">
+                            <span class="expand-collapse-indicator">${expandCollapseIndicator}</span>
+                            ${group.display}
+                          </label>`;
               sHtml += `<div class="group-items ${isInitiallyExpanded ? "" : "collapsed"}">`;
               group.items.forEach((item) => {
                 sHtml += `<label class="checkbox-label">
-                                    <input type="checkbox" value="${item.use}" data-group="${groupKey}" /> ${item.display}
-                                  </label>`;
+                              <input type="checkbox" value="${item.use}" data-group="${groupKey}" /> ${item.display}
+                            </label>`;
               });
               sHtml += `</div></div>`;
             }
@@ -271,8 +269,8 @@ define(() => {
               const useValue = this.m_oDataStore.getCellValue(i, valueUseCol);
               const dispValue = this.m_oDataStore.getCellValue(i, valueDispCol);
               sHtml += `<label class="checkbox-label">
-                              <input type="checkbox" value="${useValue}" /> ${dispValue}
-                            </label>`;
+                            <input type="checkbox" value="${useValue}" /> ${dispValue}
+                          </label>`;
             }
           }
         }
@@ -294,39 +292,35 @@ define(() => {
           );
         }
 
-        // Prepopulate Group Checkboxes
+        // Prepopulate checkboxes.
         if (this.hasGrouping) {
+          // Prepopulate Group Checkboxes.
           this.m_groupCheckboxes.forEach((groupCb) => {
             const groupKey = groupCb.getAttribute("data-group");
-
-            //Check Initial State of Partial or Checked
             const selectedInGroup = this.groupChildren[groupKey]
               ? this.groupChildren[groupKey].filter((item) => this.mainParamValues.includes(item)).length
               : 0;
-
-            // Check partial state
             if (this.groupChildren[groupKey] && selectedInGroup === this.groupChildren[groupKey].length) {
               groupCb.checked = true;
               groupCb.classList.remove("partial");
             } else if (selectedInGroup > 0) {
-              groupCb.classList.add("partial");
               groupCb.checked = true;
+              groupCb.classList.add("partial");
             } else {
               groupCb.checked = false;
               groupCb.classList.remove("partial");
             }
           });
 
-          // Prepopulate Item Checkboxes
+          // Prepopulate Item Checkboxes.
           this.m_itemCheckboxes.forEach((itemCb) => {
             itemCb.checked = this.mainParamValues.includes(itemCb.value);
           });
 
-          // Add click listener to toggle items.
+          // Toggle group items visibility on label click.
           this.m_groupLabels.forEach((label) => {
             label.addEventListener("click", (event) => {
               if (event.target !== label.querySelector('input[type="checkbox"]')) {
-                // Check if click is on checkbox
                 const groupContainer = label.closest(".group-container");
                 const groupItems = groupContainer.querySelector(".group-items");
                 const indicator = label.querySelector(".expand-collapse-indicator");
@@ -336,53 +330,62 @@ define(() => {
             });
           });
 
-          // Add Change Listener to Group Checkboxes
+          // When a group header checkbox changes, update its child items and recalc header state.
           this.m_groupCheckboxes.forEach((groupCb) => {
             groupCb.addEventListener("change", () => {
               const groupKey = groupCb.getAttribute("data-group");
-              const selectedInGroup = this.groupChildren[groupKey]
-                ? this.groupChildren[groupKey].filter((item) => this.mainParamValues.includes(item)).length
-                : 0;
-
-              //Update items to be selected or deselected
-              this.m_itemCheckboxes.forEach((itemCb) => {
-                if (itemCb.getAttribute("data-group") === groupKey) {
-                  itemCb.checked = groupCb.checked;
-                }
+              const groupContainer = oControlHost.container.querySelector(`.group-container[data-group="${groupKey}"]`);
+              const itemCheckboxes = groupContainer.querySelectorAll('.group-items input[type="checkbox"]');
+              // Propagate header state to all child items.
+              itemCheckboxes.forEach((itemCb) => {
+                itemCb.checked = groupCb.checked;
               });
-
-              //Check if it is partial
-              if (this.groupChildren[groupKey] && selectedInGroup === this.groupChildren[groupKey].length) {
+              // Recalculate header state from current items.
+              const checkedCount = Array.from(itemCheckboxes).filter((cb) => cb.checked).length;
+              const totalCount = itemCheckboxes.length;
+              if (checkedCount === totalCount) {
                 groupCb.checked = true;
                 groupCb.classList.remove("partial");
-              } else if (selectedInGroup > 0) {
-                groupCb.classList.add("partial");
+              } else if (checkedCount > 0) {
                 groupCb.checked = true;
+                groupCb.classList.add("partial");
               } else {
                 groupCb.checked = false;
                 groupCb.classList.remove("partial");
               }
+              console.log(`Group checkbox [${groupKey}] changed to ${groupCb.checked}`);
+              oControlHost.valueChanged();
+            });
+          });
+
+          // When an individual item checkbox changes, recalc its parent group header state.
+          this.m_itemCheckboxes.forEach((itemCb) => {
+            itemCb.addEventListener("change", () => {
+              const groupKey = itemCb.getAttribute("data-group");
+              const groupContainer = oControlHost.container.querySelector(`.group-container[data-group="${groupKey}"]`);
+              const groupCheckbox = groupContainer.querySelector(".group-checkbox");
+              const itemCheckboxes = groupContainer.querySelectorAll('.group-items input[type="checkbox"]');
+              const checkedCount = Array.from(itemCheckboxes).filter((cb) => cb.checked).length;
+              const totalCount = itemCheckboxes.length;
+              if (checkedCount === totalCount) {
+                groupCheckbox.checked = true;
+                groupCheckbox.classList.remove("partial");
+              } else if (checkedCount > 0) {
+                groupCheckbox.checked = true;
+                groupCheckbox.classList.add("partial");
+              } else {
+                groupCheckbox.checked = false;
+                groupCheckbox.classList.remove("partial");
+              }
+              console.log(`Item checkbox [${itemCb.value}] changed to ${itemCb.checked}`);
               oControlHost.valueChanged();
             });
           });
         } else {
           this.m_checkboxes.forEach((cb) => {
             cb.checked = this.mainParamValues.includes(cb.value);
-          });
-        }
-        // Bind event listeners.
-        if (this.hasGrouping) {
-          // Individual item checkboxes.
-          this.m_itemCheckboxes.forEach((cb) => {
             cb.addEventListener("change", () => {
-              console.log(`Checkbox with value ${cb.value} changed. Checked: ${cb.checked}`); // Added log
-              oControlHost.valueChanged();
-            });
-          });
-        } else {
-          this.m_checkboxes.forEach((cb) => {
-            cb.addEventListener("change", () => {
-              console.log(`Checkbox with value ${cb.value} changed. Checked: ${cb.checked}`); // Added log
+              console.log(`Checkbox with value ${cb.value} changed. Checked: ${cb.checked}`);
               oControlHost.valueChanged();
             });
           });
@@ -397,10 +400,6 @@ define(() => {
 
     /**
      * Checks if the control is in a valid state.
-     * - Single-select: valid if a non-empty option is chosen.
-     * - Multiple-select:
-     *   - With grouping: valid if at least one group or item checkbox is selected.
-     *   - Without grouping: valid if at least one checkbox is selected.
      */
     isInValidState(oControlHost) {
       if (!this.isMultiple) {
@@ -418,14 +417,6 @@ define(() => {
 
     /**
      * Returns the parameter(s) for submission.
-     *
-     * Single-select mode:
-     * - With grouping: returns two parameter objects (one for the main parameter and one for the group parameter).
-     * - Without grouping: returns one parameter object.
-     *
-     * Multiple-select mode:
-     * - With grouping: returns both group and/or individual values depending on what is selected.
-     * - Without grouping: returns one parameter object containing all selected values.
      */
     getParameters(oControlHost) {
       const sParamName = oControlHost.configuration["Parameter Name"];
@@ -478,10 +469,9 @@ define(() => {
         if (itemValues.length > 0) {
           params.push({
             parameter: sParamName,
-            values: itemValues.map((val) => ({ use: String(val) })), // Map the use values
+            values: itemValues.map((val) => ({ use: String(val) })),
           });
         } else {
-          // Send an *empty* parameter object to clear the selection.
           params.push({
             parameter: sParamName,
             values: [],
@@ -490,7 +480,7 @@ define(() => {
         if (this.hasGrouping && groupValues.length > 0 && groupParamName) {
           params.push({
             parameter: groupParamName,
-            values: groupValues.map((val) => ({ use: String(val) })), // Map the use values
+            values: groupValues.map((val) => ({ use: String(val) })),
           });
         }
       }
