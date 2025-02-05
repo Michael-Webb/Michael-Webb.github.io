@@ -26,7 +26,8 @@ define(() => {
             }
           });
         }
-  
+        console.log("groupParams",groupParams)
+        console.log("mainParams",mainParams)
         console.log("Initial mainParamValues:", this.mainParamValues);
         console.log("Initial groupParamValues:", this.groupParamValues);
         console.log("oControlHost",oControlHost)
