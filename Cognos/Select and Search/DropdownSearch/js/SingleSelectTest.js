@@ -18,21 +18,27 @@ define(() => {
   
       /**
        * Draw the control.
-       * In single-select mode, renders a dropdown.
+       * In single-select mode, renders a dropdown (with optional grouping).
        * In multiple-select mode, renders a list of checkboxes and an Apply button.
-       *
-       * In multiple-select mode:
-       * - Each checkbox calls valueChanged() on change.
-       * - The Apply button is created similar to the sample you provided and, when clicked,
-       *   calls valueChanged() and (if AutoSubmit is true) next().
        */
       draw(oControlHost) {
         // Read configuration values.
         const isMultiple = !!oControlHost.configuration['Multiple Select'];
         const autoSubmit = (oControlHost.configuration['AutoSubmit'] !== false);
+        const valueUseCol = oControlHost.configuration["Value Use Column"] ?? 0;
+        const valueDispCol = oControlHost.configuration["Value Display Column"] ?? 0;
+        
+        // Grouping configuration
+        const groupVals = oControlHost.configuration["Group Values"] ?? false;
+        const groupingValUseCol = oControlHost.configuration["Parent Value Use Column"] ?? 1;
+        const groupingValDispCol = oControlHost.configuration["Parent Value Display Column"] ?? 1;
+        const groupingParamName = oControlHost.configuration["Grouping Parent Name"] ?? "";
+        
         this.isMultiple = isMultiple;
         this.autoSubmit = autoSubmit;
-  
+        // Flag that grouping is enabled if "Group Values" is truthy and a grouping parameter name is provided.
+        this.hasGrouping = groupVals && groupingParamName !== "";
+        
         let sHtml = "";
   
         if (!isMultiple) {
@@ -50,11 +56,49 @@ define(() => {
             <select id="${selectId}" class="custom-dropdown">
               <option value="">-- Select an option --</option>
           `;
+  
           if (this.m_oDataStore && this.m_oDataStore.rowCount) {
-            for (let iRow = 0, nRows = this.m_oDataStore.rowCount; iRow < nRows; iRow++) {
-              const useValue = this.m_oDataStore.getCellValue(iRow, 0);
-              const dispValue = this.m_oDataStore.getCellValue(iRow, 1);
-              sHtml += `<option value="${useValue}">${dispValue}</option>`;
+            if (this.hasGrouping) {
+              // Build a mapping from group key to group information and an array of main options.
+              const groups = {};
+              for (let iRow = 0, nRows = this.m_oDataStore.rowCount; iRow < nRows; iRow++) {
+                // Main parameter values
+                const mainUse = this.m_oDataStore.getCellValue(iRow, valueUseCol);
+                const mainDisp = this.m_oDataStore.getCellValue(iRow, valueDispCol);
+                // Grouping parameter values
+                const groupUse = this.m_oDataStore.getCellValue(iRow, groupingValUseCol);
+                const groupDisp = this.m_oDataStore.getCellValue(iRow, groupingValDispCol);
+  
+                // Create a new group if needed.
+                if (!groups[groupUse]) {
+                  groups[groupUse] = {
+                    display: groupDisp,
+                    options: []
+                  };
+                }
+                groups[groupUse].options.push({
+                  use: mainUse,
+                  display: mainDisp
+                });
+              }
+  
+              // Generate the grouped dropdown list using <optgroup>
+              for (const groupKey in groups) {
+                const group = groups[groupKey];
+                sHtml += `<optgroup label="${group.display}">`;
+                group.options.forEach(option => {
+                  // Add a data attribute so we can later submit the group value.
+                  sHtml += `<option value="${option.use}" data-group="${groupKey}">${option.display}</option>`;
+                });
+                sHtml += `</optgroup>`;
+              }
+            } else {
+              // No grouping – just output a simple option for each row.
+              for (let iRow = 0, nRows = this.m_oDataStore.rowCount; iRow < nRows; iRow++) {
+                const useValue = this.m_oDataStore.getCellValue(iRow, valueUseCol);
+                const dispValue = this.m_oDataStore.getCellValue(iRow, valueDispCol);
+                sHtml += `<option value="${useValue}">${dispValue}</option>`;
+              }
             }
           }
           sHtml += `</select>`;
@@ -69,7 +113,7 @@ define(() => {
           });
         } else {
           // ----- MULTIPLE-SELECT MODE -----
-          // Generate a unique container ID for the checkboxes.
+          // (Grouping is not applied in multiple-select mode in this example.)
           const containerId = oControlHost.generateUniqueID();
   
           sHtml += `
@@ -87,7 +131,6 @@ define(() => {
                 margin: 3px 0;
                 font-size: 14px;
               }
-              /* Create the Apply button similarly to the sample, but with our own CSS */
               .MyApplyButton {
                 background-color: #f0f0f0;
                 border: 1px solid #aaa;
@@ -107,8 +150,8 @@ define(() => {
   
           if (this.m_oDataStore && this.m_oDataStore.rowCount) {
             for (let iRow = 0, nRows = this.m_oDataStore.rowCount; iRow < nRows; iRow++) {
-              const useValue = this.m_oDataStore.getCellValue(iRow, 0);
-              const dispValue = this.m_oDataStore.getCellValue(iRow, 1);
+              const useValue = this.m_oDataStore.getCellValue(iRow, valueUseCol);
+              const dispValue = this.m_oDataStore.getCellValue(iRow, valueDispCol);
               sHtml += `
                 <label class="checkbox-label">
                   <input type="checkbox" value="${useValue}" /> ${dispValue}
@@ -117,33 +160,26 @@ define(() => {
             }
           }
           sHtml += `</div>`;
-          // Create the Apply button using the same pattern as in the sample.
           sHtml += `<button class="MyApplyButton btnApply">Apply</button>`;
           oControlHost.container.innerHTML = sHtml;
   
-          // Retrieve all checkbox elements.
           this.m_checkboxes = Array.from(document.querySelectorAll(`#${containerId} input[type="checkbox"]`));
-          // Bind each checkbox to call valueChanged() when toggled.
           this.m_checkboxes.forEach(cb => {
             cb.addEventListener("change", () => {
               oControlHost.valueChanged();
             });
           });
-  
-          // Bind the Apply button's onclick similar to the provided example.
           oControlHost.container.querySelector(".btnApply").onclick = () => {
             oControlHost.valueChanged();
-            if (autoSubmit) {
-              oControlHost.finish();
-            }
+            oControlHost.finish();
           };
         }
       }
   
       /**
        * Checks if the control is in a valid state.
-       * - In single-select mode, valid if a non-empty option is chosen.
-       * - In multiple-select mode, valid if at least one checkbox is checked.
+       * - Single-select: valid if a non-empty option is chosen.
+       * - Multiple-select: valid if at least one checkbox is checked.
        */
       isInValidState(oControlHost) {
         if (!this.isMultiple) {
@@ -155,9 +191,8 @@ define(() => {
   
       /**
        * Returns the parameter(s) for submission.
-       * Uses the parameter name defined in oControlHost.configuration['Parameter Name'].
-       * - For single-select, returns one value.
-       * - For multiple-select, returns all selected values.
+       * - In single-select mode, returns one value (or two if grouping is enabled).
+       * - In multiple-select mode, returns all selected values.
        */
       getParameters(oControlHost) {
         const sParamName = oControlHost.configuration['Parameter Name'];
@@ -168,10 +203,23 @@ define(() => {
           if (!this.m_sel || this.m_sel.value === "") {
             return null;
           }
-          return [{
-            parameter: sParamName,
-            values: [{ use: this.m_sel.value }]
-          }];
+          // If grouping is enabled, return both the main parameter and the group parameter.
+          if (this.hasGrouping) {
+            const selectedOption = this.m_sel.options[this.m_sel.selectedIndex];
+            const groupValue = selectedOption.getAttribute("data-group") || "";
+            return [{
+              parameter: sParamName,
+              values: [{ use: this.m_sel.value }]
+            }, {
+              parameter: oControlHost.configuration["Grouping Parent Name"],
+              values: [{ use: groupValue }]
+            }];
+          } else {
+            return [{
+              parameter: sParamName,
+              values: [{ use: this.m_sel.value }]
+            }];
+          }
         } else {
           if (!this.m_checkboxes) {
             return null;
@@ -197,4 +245,5 @@ define(() => {
       }
     }
     return CustomControl;
-});
+  });
+  
