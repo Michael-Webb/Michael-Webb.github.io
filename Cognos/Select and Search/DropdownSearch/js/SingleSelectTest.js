@@ -169,50 +169,51 @@ define(() => {
                     background-color: #ddd;
                     color: #000;
                   }
-                  /* Styles for grouped checkboxes */
-                  .group-container {
-                    margin-bottom: 10px;
+                  /* Group header row styles */
+                  .group-header {
+                    display: flex;
+                    align-items: center;
+                    cursor: pointer;
+                    margin-bottom: 5px;
                   }
-                  .group-label {
-                    font-weight: bold;
-                    cursor: pointer; /* Make the group label look clickable */
-                  }
-                  .group-items {
-                    padding-left: 20px;
-                  }
-                  .collapsed {
-                    display: none;
-                  }
-                  /* Custom checkbox styles */
-                  .group-checkbox {
-                    position: relative;
-                    appearance: none;
-                    -webkit-appearance: none;
+                  .group-header input.group-checkbox {
+                    margin-right: 8px;
                     width: 16px;
                     height: 16px;
                     border: 1px solid #aaa;
-                    background-color: #fff;
-                    cursor: pointer;
+                    appearance: none;
+                    -webkit-appearance: none;
+                    position: relative;
                   }
-                  .group-checkbox:checked {
-                      background-color: #ddd;
-                  }
-                  .group-checkbox::before {
-                    content: "";
+                  /* Fully checked: show a check mark */
+                  .group-header input.group-checkbox:checked:not(.partial)::after {
+                    content: "✓";
                     position: absolute;
                     top: 50%;
                     left: 50%;
-                    width: 10px;
-                    height: 2px;
-                    background-color: #333;
                     transform: translate(-50%, -50%);
+                    font-size: 14px;
+                    color: #333;
+                  }
+                  /* Partial: show a minus sign */
+                  .group-header input.group-checkbox.partial::after {
+                    content: "−";
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    font-size: 14px;
+                    color: #333;
+                  }
+                  .expand-collapse-indicator {
+                    margin-right: 8px;
+                    font-size: 14px;
+                  }
+                  .group-items {
+                    padding-left: 24px;
+                  }
+                  .collapsed {
                     display: none;
-                  }
-                  .group-checkbox:checked + .checkbox-label::before {
-                      display: block;
-                  }
-                  .group-checkbox.partial + .checkbox-label::before {
-                    display: block;
                   }
                 </style>
                 <div id="${containerId}" class="checkbox-container">
@@ -235,7 +236,7 @@ define(() => {
               groups[groupUse].items.push({ use: mainUse, display: mainDisp });
             }
 
-            // Render each group with a header checkbox and its items.
+            // Render each group with a header row (checkbox, expand/collapse, label) and its items.
             for (const groupKey in groups) {
               const group = groups[groupKey];
               const isInitiallyExpanded = !groupInitiallyCollapsed;
@@ -248,13 +249,13 @@ define(() => {
               const isPartial = selectedInGroup > 0 && selectedInGroup < group.items.length;
 
               sHtml += `<div class="group-container" data-group="${groupKey}">`;
-              sHtml += `<input type="checkbox" class="group-checkbox ${
-                isPartial ? "partial" : ""
-              }" data-group="${groupKey}" />`;
-              sHtml += `<label class="checkbox-label group-label">
+              sHtml += `<div class="group-header" data-group="${groupKey}">
+                            <input type="checkbox" class="group-checkbox ${
+                              isPartial ? "partial" : ""
+                            }" data-group="${groupKey}" />
                             <span class="expand-collapse-indicator">${expandCollapseIndicator}</span>
-                            ${group.display}
-                          </label>`;
+                            <span class="group-label-text">${group.display}</span>
+                          </div>`;
               sHtml += `<div class="group-items ${isInitiallyExpanded ? "" : "collapsed"}">`;
               group.items.forEach((item) => {
                 sHtml += `<label class="checkbox-label">
@@ -282,7 +283,7 @@ define(() => {
         if (this.hasGrouping) {
           this.m_groupContainers = Array.from(oControlHost.container.querySelectorAll(".group-container"));
           this.m_groupCheckboxes = Array.from(oControlHost.container.querySelectorAll(".group-checkbox"));
-          this.m_groupLabels = Array.from(oControlHost.container.querySelectorAll(".group-label"));
+          // Get all individual item checkboxes (exclude the group-level ones)
           this.m_itemCheckboxes = Array.from(
             oControlHost.container.querySelectorAll('input[type="checkbox"]:not(.group-checkbox)')
           );
@@ -317,13 +318,14 @@ define(() => {
             itemCb.checked = this.mainParamValues.includes(itemCb.value);
           });
 
-          // Toggle group items visibility on label click.
-          this.m_groupLabels.forEach((label) => {
-            label.addEventListener("click", (event) => {
-              if (event.target !== label.querySelector('input[type="checkbox"]')) {
-                const groupContainer = label.closest(".group-container");
-                const groupItems = groupContainer.querySelector(".group-items");
-                const indicator = label.querySelector(".expand-collapse-indicator");
+          // Attach event listener to the group header for toggling expand/collapse.
+          this.m_groupContainers.forEach((container) => {
+            const header = container.querySelector(".group-header");
+            header.addEventListener("click", (event) => {
+              // Only toggle expand/collapse if the click is not on the checkbox.
+              if (event.target.tagName.toLowerCase() !== "input") {
+                const groupItems = container.querySelector(".group-items");
+                const indicator = header.querySelector(".expand-collapse-indicator");
                 groupItems.classList.toggle("collapsed");
                 indicator.innerHTML = groupItems.classList.contains("collapsed") ? "►" : "▼";
               }
