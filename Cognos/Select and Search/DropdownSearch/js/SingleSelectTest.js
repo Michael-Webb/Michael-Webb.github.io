@@ -217,7 +217,7 @@ define(() => {
           let groupParamValues = [];
   
           const mainParams = oControlHost.getParameter(oControlHost.configuration["Parameter Name"]);
-          if (mainParams) {
+          if (Array.isArray(mainParams)) {
             mainParams.forEach(param => {
               if (param.values && Array.isArray(param.values)) {
                 param.values.forEach(val => mainParamValues.push(val.use));
@@ -225,7 +225,7 @@ define(() => {
             });
           }
           const groupParams = oControlHost.getParameter(oControlHost.configuration["Grouping Parent Name"]);
-          if (groupParams) {
+          if (Array.isArray(groupParams)) {
             groupParams.forEach(param => {
               if (param.values && Array.isArray(param.values)) {
                 param.values.forEach(val => groupParamValues.push(val.use));
@@ -419,4 +419,3 @@ define(() => {
   
     return CustomControl;
   });
-  
