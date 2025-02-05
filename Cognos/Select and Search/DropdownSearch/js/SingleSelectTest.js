@@ -241,7 +241,10 @@ define(() => {
               const expandCollapseIndicator = isInitiallyExpanded ? "▼" : "►"; // Down/Right triangle
 
               // Determine Partial State
-              const selectedInGroup = group.items.filter((item) => this.mainParamValues.includes(item.use)).length;
+              const selectedInGroup =
+                this.groupChildren[groupKey] && this.groupChildren[groupKey].length
+                  ? this.groupChildren[groupKey].filter((item) => this.mainParamValues.includes(item)).length
+                  : 0;
               const isPartial = selectedInGroup > 0 && selectedInGroup < group.items.length;
 
               sHtml += `<div class="group-container" data-group="${groupKey}">`;
@@ -297,9 +300,10 @@ define(() => {
             const groupKey = groupCb.getAttribute("data-group");
 
             //Check Initial State of Partial or Checked
-            const selectedInGroup = this.groupChildren[groupKey].filter((item) =>
-              this.mainParamValues.includes(item)
-            ).length;
+            const selectedInGroup =
+              this.groupChildren[groupKey] && this.groupChildren[groupKey].length
+                ? this.groupChildren[groupKey].filter((item) => this.mainParamValues.includes(item)).length
+                : 0;
 
             // Check partial state
             if (selectedInGroup === this.groupChildren[groupKey].length) {
@@ -338,9 +342,10 @@ define(() => {
             groupCb.addEventListener("change", () => {
               const groupKey = groupCb.getAttribute("data-group");
               const isChecked = groupCb.checked;
-              const selectedInGroup = this.groupChildren[groupKey].filter((item) =>
-                this.mainParamValues.includes(item)
-              ).length;
+              const selectedInGroup =
+                this.groupChildren[groupKey] && this.groupChildren[groupKey].length
+                  ? this.groupChildren[groupKey].filter((item) => this.mainParamValues.includes(item)).length
+                  : 0;
 
               //Update items to be selected or deselected
               this.m_itemCheckboxes.forEach((itemCb) => {
@@ -350,6 +355,7 @@ define(() => {
               });
 
               //Check if it is partial
+
               if (selectedInGroup === this.groupChildren[groupKey].length) {
                 groupCb.checked = true;
                 groupCb.classList.remove("partial");
