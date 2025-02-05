@@ -352,18 +352,18 @@ define(() => {
         if (this.hasGrouping) {
           this.m_itemCheckboxes.forEach((cb) => {
             if (cb.checked) {
-              itemValues.push({ use: cb.value });
+              itemValues.push(cb.value);
             }
           });
           this.m_groupCheckboxes.forEach((cb) => {
             if (cb.checked) {
-              groupValues.push({ use: cb.getAttribute("data-group") });
+              groupValues.push(cb.getAttribute("data-group"));
             }
           });
         } else {
           this.m_checkboxes.forEach((cb) => {
             if (cb.checked) {
-              itemValues.push({ use: cb.value });
+              itemValues.push(cb.value);
             }
           });
         }
@@ -371,17 +371,17 @@ define(() => {
         if (itemValues.length > 0) {
           params.push({
             parameter: sParamName,
-            values: itemValues.map((val) => ({ use: val })), // Map the use values
+            values: itemValues.map((val) => ({ use: String(val) })), // Map the use values
           });
         }
         if (this.hasGrouping && groupValues.length > 0 && groupParamName) {
           params.push({
             parameter: groupParamName,
-            values: groupValues.map((val) => ({ use: val })), // Map the use values
+            values: groupValues.map((val) => ({ use: String(val) })), // Map the use values
           });
         }
       }
-
+      console.log("Parameters about to be sent:", JSON.stringify(params));
       return params.length > 0 ? params : null;
     }
 
