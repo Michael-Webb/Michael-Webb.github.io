@@ -10,23 +10,21 @@ define(() => {
         this.groupParamValues = [];
   
         const mainParams = oControlHost.getParameter(oControlHost.configuration["Parameter Name"]);
-        if (mainParams && mainParams.values && Array.isArray(mainParams.values)) { // Added check for mainParams.values
+        if (mainParams && mainParams.values && Array.isArray(mainParams.values)) {
           mainParams.values.forEach(val => this.mainParamValues.push(val.use));
         }
   
         const groupParams = oControlHost.getParameter(oControlHost.configuration["Grouping Parent Name"]);
-        if (groupParams && groupParams.values && Array.isArray(groupParams.values)) { // Added check for groupParams.values
+        if (groupParams && groupParams.values && Array.isArray(groupParams.values)) {
           groupParams.values.forEach(val => this.groupParamValues.push(val.use));
         }
   
-        console.log("groupParams",groupParams)
-        console.log("mainParams",mainParams)
         console.log("Initial mainParamValues:", this.mainParamValues);
         console.log("Initial groupParamValues:", this.groupParamValues);
-        console.log("oControlHost",oControlHost)
   
         fnDoneInitializing(); // Or return a Promise if initialization is asynchronous
       }
+  
       /**
        * Receives authored data from the data store.
        */
@@ -121,7 +119,7 @@ define(() => {
           this.m_sel.addEventListener("change", () => {
             oControlHost.valueChanged();
             if (autoSubmit) {
-              oControlHost.next();
+              oControlHost.finish();
             }
           });
         } else {
@@ -216,7 +214,7 @@ define(() => {
           sHtml += `</div>`;
           sHtml += `<button class="MyApplyButton btnApply">Apply</button>`;
           oControlHost.container.innerHTML = sHtml;
-          //console.log("Generated HTML:", oControlHost.container.innerHTML); // Inspect HTML here
+          console.log("Generated HTML:", oControlHost.container.innerHTML); // Inspect HTML here
   
           // Save references to checkboxes.
           if (this.hasGrouping) {
@@ -243,10 +241,10 @@ define(() => {
             });
             // Prepopulate individual item checkboxes.
             this.m_itemCheckboxes.forEach(itemCb => {
-              //console.log("Checking item:", itemCb.value, " against:", this.mainParamValues); // Added line
+              console.log("Checking item:", itemCb.value, " against:", this.mainParamValues); // Added line
   
               if (this.mainParamValues.includes(itemCb.value)) {
-                //console.log("Setting item checked:", itemCb.value); // Added line
+                console.log("Setting item checked:", itemCb.value); // Added line
   
                 itemCb.checked = true;
               }
@@ -289,7 +287,7 @@ define(() => {
           // Bind the Apply button.
           oControlHost.container.querySelector(".btnApply").onclick = () => {
             oControlHost.valueChanged();
-            oControlHost.next();
+            oControlHost.finish();
           };
         }
       }
@@ -408,9 +406,9 @@ define(() => {
       /**
        * Optional destroy method.
        */
-    //   destroy(oControlHost) {
-    //     // Cleanup if necessary.
-    //   }
+      destroy(oControlHost) {
+        // Cleanup if necessary.
+      }
     }
   
     return CustomControl;
