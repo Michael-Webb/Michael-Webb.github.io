@@ -112,13 +112,23 @@ define(() => {
         }
         sHtml += `</select>`;
         oControlHost.container.innerHTML = sHtml;
-        this.m_sel = oControlHost.container.querySelector(`#${selectId}`);
+        this.m_sel = oControlHost.container.querySelectorAll(`#${selectId}`);
 
         if (this.mainParamValues && this.mainParamValues.length > 0) {
           this.m_sel.value = this.mainParamValues[0];
         }
 
         this.m_sel.addEventListener("change", () => {
+          console.log("singleSelect Changed")
+          oControlHost.valueChanged();
+          oControlHost.validStateChanged();
+          if (autoSubmit) {
+            oControlHost.finish();
+          }
+        });
+
+        this.m_sel.addEventListener("input", () => {
+          console.log("singleSelect Input")
           oControlHost.valueChanged();
           oControlHost.validStateChanged();
           if (autoSubmit) {
