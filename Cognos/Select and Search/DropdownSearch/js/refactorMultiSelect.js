@@ -59,7 +59,8 @@ define(() => {
       }
       console.log("Initial mainParamValues:", this.mainParamValues);
 
-      this.caseInsensitiveDefault = oControlHost.configuration["Case Insensitive Search Default"] ?? true;
+      this.caseInsensitiveDefault = Boolean(oControlHost.configuration["Case Insensitive Search Default"] ?? true);
+      console.log("Initialized case insensitive default:", this.caseInsensitiveDefault);
 
       fnDoneInitializing();
     }
@@ -110,7 +111,6 @@ define(() => {
       const dropdownWidth = oControlHost.configuration["Dropdown Width"] ?? "250px";
       const contentWidth = oControlHost.configuration["Content Width"] ?? "250px";
 
-
       let dropdownClass = "dropdown-container";
       /* if (isCompact) {
                  dropdownClass += " compact";
@@ -133,6 +133,7 @@ define(() => {
                 .dropdown-container {
                     --padding-lg: 0.75rem 1rem;
                     --padding-md: 0.5rem 0.75rem;
+                    --margin-md: 0.25rem;
                     position: relative; 
                     width: ${dropdownWidth};
                     font-family: system-ui, sans-serif;
@@ -288,6 +289,7 @@ define(() => {
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
+                    text-align: left;
                     gap: .5rem;
                 }
                 .group-header span {
@@ -664,12 +666,15 @@ define(() => {
 
       const caseCheckbox = this.dropdown.querySelector(".case-checkbox");
       if (caseCheckbox) {
-        // Set the initial state of the checkbox
-        caseCheckbox.checked = this.caseInsensitiveDefault;
+        caseCheckbox.checked = this.caseInsensitive;
 
-        // Update the case-insensitive value when the checkbox changes
         caseCheckbox.addEventListener("change", () => {
-          this.caseInsensitiveDefault = caseCheckbox.checked;
+          this.caseInsensitive = caseCheckbox.checked;
+          // Trigger search update if needed
+          const searchValue = this.search.value.trim();
+          const searchTerms = searchValue.split(",").map((term) => term.trim());
+          const searchType = this.searchTypeSelect.value;
+          this.filterItems(this.oControlHost, searchTerms, searchType);
         });
       }
 
@@ -789,7 +794,7 @@ define(() => {
      * The new expected behaviour is pull the values needed by the filterItems()
      */
 
-    filterItems(oControlHost, searchTerms, searchType, caseInsensitive) {
+    filterItems(oControlHost, searchTerms, searchType) {
       const dropdown = document.getElementById(this.dropdownId);
       if (!dropdown) {
         console.warn("Dropdown element not found. Exiting filterItems.");
@@ -802,11 +807,8 @@ define(() => {
         return;
       }
 
-      // Default search type to "containsAny" if not provided
       searchType = searchType || "containsAny";
-      caseInsensitive = caseInsensitive !== undefined ? caseInsensitive : this.caseInsensitiveDefault;
 
-      // If searchTerms is not an array or is empty, show all items and exit
       if (!Array.isArray(searchTerms) || searchTerms.length === 0 || searchTerms[0] === "") {
         this.showAllItems(list);
         this.updateSelectedCount(oControlHost);
@@ -814,37 +816,31 @@ define(() => {
         return;
       }
 
-      // Loop through each checkbox item and determine its visibility
       const checkboxItems = list.querySelectorAll(".checkbox-item");
       checkboxItems.forEach((item) => {
-        const label = item.querySelector("span"); // Select span instead of label
+        const label = item.querySelector("span");
         const displayValue = label ? label.textContent : "";
         let compareValue = displayValue;
         let compareTerms = searchTerms;
 
-        // Convert to lowercase if case-insensitive search is enabled
-        if (caseInsensitive) {
+        // Use class property for case insensitive check
+        if (this.caseInsensitive) {
           compareValue = displayValue.toLowerCase();
           compareTerms = searchTerms.map((term) => term.toLowerCase());
         }
 
-        // Determine visibility based on search type
         let isVisible = this.determineVisibility(compareValue, compareTerms, searchType);
 
-        // Toggle visibility of the item
         if (isVisible) {
           item.classList.remove("hidden");
-          item.style.display = "flex"; // Ensure item is visible
+          item.style.display = "flex";
         } else {
           item.classList.add("hidden");
-          item.style.display = "none"; // Hide item
+          item.style.display = "none";
         }
       });
 
-      // Hide entire groups that have no visible items
       this.hideEmptyGroups(list);
-
-      // Update the selected count and announce search results
       this.updateSelectedCount(oControlHost);
       this.announceSearchResults(oControlHost);
     }
