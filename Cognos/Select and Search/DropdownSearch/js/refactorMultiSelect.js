@@ -613,18 +613,18 @@ define(() => {
 
     applyEventListeners(oControlHost) {
       // Use querySelector to select elements
-      this.dropdown = document.querySelector(`#${this.dropdownId}`);
-      this.header = document.querySelector(`#${this.headerId}`);
-      this.content = document.querySelector(`#${this.contentId}`);
-      this.search = document.querySelector(`#${this.searchId}`);
-      this.advancedBtn = document.querySelector(`#${this.advancedBtnId}`);
-      this.searchControls = document.querySelector(`#${this.searchControlsId}`);
-      this.applyBtn = document.querySelector(`#${this.applyBtnId}`);
-      this.selectAll = document.querySelector(`#${this.selectAllId}`);
-      this.deselectAll = document.querySelector(`#${this.deselectAllId}`);
-      this.compactCheckbox = document.querySelector(`#${this.compactCheckboxId}`);
-      this.searchTypeSelect = document.querySelector(`#${this.searchTypeSelectId}`);
-      this.searchResultsLive = document.querySelector(`#${this.searchResultsLiveId}`);
+      this.dropdown = this.oControlHost.container.querySelector(`#${this.dropdownId}`);
+      this.header = this.oControlHost.container.querySelector(`#${this.headerId}`);
+      this.content = this.oControlHost.container.querySelector(`#${this.contentId}`);
+      this.search = this.oControlHost.container.querySelector(`#${this.searchId}`);
+      this.advancedBtn = this.oControlHost.container.querySelector(`#${this.advancedBtnId}`);
+      this.searchControls = this.oControlHost.container.querySelector(`#${this.searchControlsId}`);
+      this.applyBtn = this.oControlHost.container.querySelector(`#${this.applyBtnId}`);
+      this.selectAll = this.oControlHost.container.querySelector(`#${this.selectAllId}`);
+      this.deselectAll = this.oControlHost.container.querySelector(`#${this.deselectAllId}`);
+      this.compactCheckbox = this.oControlHost.container.querySelector(`#${this.compactCheckboxId}`);
+      this.searchTypeSelect = this.oControlHost.container.querySelector(`#${this.searchTypeSelectId}`);
+      this.searchResultsLive = this.oControlHost.container.querySelector(`#${this.searchResultsLiveId}`);
 
       // Ensure all elements exist
       if (
@@ -648,8 +648,12 @@ define(() => {
       if (this.isCompact) {
         this.dropdown.classList.add("compact");
       }
+      // Initialize dropdown content display
+      this.content.style.display = "none"; // Ensure the dropdown is closed by default
+
       // Add event listeners
-      this.header.addEventListener("click", () => {
+      this.header.addEventListener("click", (e) => {
+        e.stopPropagation(); // Prevent the click from propagating to the document
         const isExpanded = this.content.style.display === "block";
         this.content.style.display = isExpanded ? "none" : "block";
         this.header.setAttribute("aria-expanded", !isExpanded);
@@ -658,8 +662,7 @@ define(() => {
         }
       });
 
-      // Other event listeners...
-
+      // Close dropdown when clicking outside
       document.addEventListener("click", (e) => {
         if (!this.dropdown.contains(e.target)) {
           this.content.style.display = "none";
@@ -1011,4 +1014,4 @@ define(() => {
 
   return CustomControl;
 });
-//247
+//253
