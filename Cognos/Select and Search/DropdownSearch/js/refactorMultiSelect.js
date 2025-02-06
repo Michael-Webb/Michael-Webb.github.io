@@ -8,6 +8,7 @@ define(() => {
             this.isMultiple = false;
             this.autoSubmit = true;
             this.hasGrouping = false;
+            this.isCompact = false;
             this.containerId = null;
             this.dropdownId = null;
             this.headerId = null;
@@ -35,7 +36,6 @@ define(() => {
             this.searchResultsLive = null;
             this.groups = [];
             this.checkboxes = [];
-            this._container = null
 
         }
 
@@ -50,7 +50,7 @@ define(() => {
                 mainParams.values.forEach((val) => this.mainParamValues.push(val.use));
             }
             console.log("Initial mainParamValues:", this.mainParamValues);
-            this._container = oControlHost.container
+
             fnDoneInitializing();
         }
 
@@ -98,6 +98,12 @@ define(() => {
             const groupVals = oControlHost.configuration["Group Values"] ?? false;
             const groupingValUseCol = oControlHost.configuration["Parent Value Use Column"] ?? 2;
             const groupingValDispCol = oControlHost.configuration["Parent Value Display Column"] ?? 3;
+           // const isCompact = oControlHost.configuration["Compact"] === true;
+
+            let dropdownClass = "dropdown-container";
+           /* if (isCompact) {
+                dropdownClass += " compact";
+            }*/
 
             let sHtml = `
             <style>
@@ -431,11 +437,8 @@ define(() => {
                     border: 0;
                 }
             </style>
-            <label>
-                <input type="checkbox" class="compact-checkbox"  id="${this.compactCheckboxId}"/>
-                <span>Compact mode</span>
-            </label>
-            <div class="dropdown-container"  id="${this.dropdownId}">
+            
+            <div class="${dropdownClass}" id="${this.dropdownId}">
                 <button
                     class="dropdown-header"
                     aria-expanded="false"
@@ -603,35 +606,33 @@ define(() => {
         }
 
         applyEventListeners(oControlHost) {
-            this.dropdown = this._container.querySelector(`#${this.dropdownId}`);
-            this.header =  this._container.querySelector(`#${this.headerId}`);
-            this.content =  this._container.querySelector(`#${this.contentId}`);
-            this.search =  this._container.querySelector(`#${this.searchId}`);
-            this.advancedBtn =  this._container.querySelector(`#${this.advancedBtnId}`);
-            this.searchControls =  this._container.querySelector(`#${this.searchControlsId}`);
-            this.applyBtn =  this._container.querySelector(`#${this.applyBtnId}`);
-            this.selectAll =  this._container.querySelector(`#${this.selectAllId}`);
-            this.deselectAll =  this._container.querySelector(`#${this.deselectAllId}`);
-            this.compactCheckbox =  this._container.querySelector(`#${this.compactCheckboxId}`);
-            this.searchTypeSelect =  this._container.querySelector(`#${this.searchTypeSelectId}`);
+            this.dropdown = document.getElementById(this.dropdownId);
+            this.header = document.getElementById(this.headerId);
+            this.content = document.getElementById(this.contentId);
+            this.search = document.getElementById(this.searchId);
+            this.advancedBtn = document.getElementById(this.advancedBtnId);
+            this.searchControls = document.getElementById(this.searchControlsId);
+            this.applyBtn = document.getElementById(this.applyBtnId);
+            this.selectAll = document.getElementById(this.selectAllId);
+            this.deselectAll = document.getElementById(this.deselectAllId);
+            this.compactCheckbox = document.getElementById(this.compactCheckboxId);
+            this.searchTypeSelect = document.getElementById(this.searchTypeSelectId);
+            this.searchResultsLive = document.getElementById(this.searchResultsLiveId);
             this.groups = [];
             this.checkboxes = [];
-        
-            console.log("Header element:", this.header); // Debugging: Check if the element is found
-            if (this.header) {
-                this.header.addEventListener("click", () => {
-                    console.log("Header clicked!"); // Debugging: Check if the event is triggered
-                    const isExpanded = this.content.style.display === "block";
-                    this.content.style.display = isExpanded ? "none" : "block";
-                    this.header.setAttribute("aria-expanded", !isExpanded);
-                    if (!isExpanded) {
-                        this.search.focus();
-                    }
-                });
-            } else {
-                console.error("Header element not found!"); // Debugging: Error if the element isn't found
+            
+            if (this.isCompact){
+                this.dropdown.classList.add("compact")
             }
-        
+            // Event listeners
+            this.header.addEventListener("click", () => {
+                const isExpanded = this.content.style.display === "block";
+                this.content.style.display = isExpanded ? "none" : "block";
+                this.header.setAttribute("aria-expanded", !isExpanded);
+                if (!isExpanded) {
+                    this.search.focus();
+                }
+            });
 
             document.addEventListener("click", (e) => {
                 if (!this.dropdown.contains(e.target)) {
@@ -677,9 +678,7 @@ define(() => {
             this.applyBtn.addEventListener("click", this.applySelection.bind(this, oControlHost));
             this.dropdown.addEventListener("change", this.updateSelectedCount.bind(this, oControlHost));
 
-            this.compactCheckbox.addEventListener("change", (e) => {
-                this.dropdown.classList.toggle("compact", e.target.checked);
-            });
+          
 
             // Group controls
             const groups = Array.from(this.dropdown.querySelectorAll(".group"));
@@ -732,6 +731,9 @@ define(() => {
             const groupingValDispCol = oControlHost.configuration["Parent Value Display Column"] ?? 3;
 
             this.hasGrouping = groupVals && groupingParamName !== "";
+            const isCompact = oControlHost.configuration["Compact"] === true; // Read the "Compact" configuration
+            this.isCompact = isCompact;
+            console.log("isCompact", isCompact);
 
             oControlHost.container.innerHTML = this.generateTemplateHTML(oControlHost);
 
