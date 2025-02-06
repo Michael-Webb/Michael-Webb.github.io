@@ -134,7 +134,7 @@ define(() => {
                     --padding-lg: 0.75rem 1rem;
                     --padding-md: 0.5rem 0.75rem;
                     position: relative; 
-                    width: ${dropdownWidth}
+                    width: ${dropdownWidth};
                     font-family: system-ui, sans-serif;
                 }
 
@@ -170,7 +170,7 @@ define(() => {
                     position: absolute;
                     top: 100%
                     left: 0;
-                    width: ${contentWidth}
+                    width: ${contentWidth};
                     background: white;
                     border-radius: var(--radius);
                     border: 1px solid var(--border);
