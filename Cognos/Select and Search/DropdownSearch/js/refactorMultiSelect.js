@@ -126,6 +126,7 @@ define(() => {
                 .dropdown-container {
                     --padding-lg: 0.75rem 1rem;
                     --padding-md: 0.5rem 0.75rem;
+                    position: relative; 
                     width: 250px;
                     font-family: system-ui, sans-serif;
                 }
@@ -160,15 +161,16 @@ define(() => {
 
                 .dropdown-content {
                     position: absolute;
-                    top: calc(100% + 0.5rem);
+                    top: 100%
                     left: 0;
-                    width: 300px;
+                    width: 100%;
                     background: white;
                     border-radius: var(--radius);
                     border: 1px solid var(--border);
                     box-shadow: var(--shadow);
                     z-index: 1000;
                     display: none;
+                    margin-top: 0.5rem;
                 }
 
                 .header {
@@ -673,13 +675,23 @@ define(() => {
         });
       });
 
+      // Ensure the search input exists
+      this.search = document.getElementById(this.searchId);
+      if (!this.search) {
+        console.error("Search input not found.");
+        return;
+      }
+
+      // Add input event listener for search
       this.search.addEventListener("input", () => {
         clearTimeout(this.timeoutId); // Clear any previous timeout
         this.timeoutId = setTimeout(() => {
           const searchType = this.searchTypeSelect.value;
           const caseInsensitive = this.dropdown.querySelector(".case-checkbox").checked;
-          let searchValue = this.search.value;
-          const searchTerms = searchValue.split(",").map((term) => term.trim());
+          const searchValue = this.search.value.trim(); // Trim whitespace
+          const searchTerms = searchValue.split(",").map((term) => term.trim()); // Split by comma and trim each term
+
+          console.log("Search Terms:", searchTerms); // Debugging: Log search terms
           this.filterItems(oControlHost, searchTerms, searchType, caseInsensitive);
         }, this.debounceDelay);
       });
@@ -760,117 +772,116 @@ define(() => {
      */
 
     filterItems(oControlHost, searchTerms, searchType, caseInsensitive) {
-        // Ensure the dropdown and list elements exist
-        const dropdown = document.getElementById(this.dropdownId);
-        if (!dropdown) {
-          console.warn("Dropdown element not found. Exiting filterItems.");
-          return;
-        }
-      
-        const list = dropdown.querySelector(".list");
-        if (!list) {
-          console.warn("List element not found. Exiting filterItems.");
-          return;
-        }
-      
-        // Default search type to "containsAny" if not provided
-        searchType = searchType || "containsAny";
-        caseInsensitive = caseInsensitive !== false;
-      
-        // If searchTerms is not an array or is empty, show all items and exit
-        if (!Array.isArray(searchTerms) || searchTerms.length === 0) {
-          this.showAllItems(list);
-          this.updateSelectedCount(oControlHost);
-          this.announceSearchResults(oControlHost);
-          return;
-        }
-      
-        // Loop through each checkbox item and determine its visibility
-        const checkboxItems = list.querySelectorAll(".checkbox-item");
-        checkboxItems.forEach((item) => {
-          const label = item.querySelector("span"); // Select span instead of label
-          const displayValue = label ? label.textContent : "";
-          let compareValue = displayValue;
-          let compareTerms = searchTerms;
-      
-          // Convert to lowercase if case-insensitive search is enabled
-          if (caseInsensitive) {
-            compareValue = displayValue.toLowerCase();
-            compareTerms = searchTerms.map((term) => term.toLowerCase());
-          }
-      
-          // Determine visibility based on search type
-          let isVisible = this.determineVisibility(compareValue, compareTerms, searchType);
-      
-          // Toggle visibility of the item
-          if (isVisible) {
-            item.classList.remove("hidden");
-            item.style.display = "flex"; // Ensure item is visible
-          } else {
-            item.classList.add("hidden");
-            item.style.display = "none"; // Hide item
-          }
-        });
-      
-        // Hide entire groups that have no visible items
-        this.hideEmptyGroups(list);
-      
-        // Update the selected count and announce search results
+      const dropdown = document.getElementById(this.dropdownId);
+      if (!dropdown) {
+        console.warn("Dropdown element not found. Exiting filterItems.");
+        return;
+      }
+
+      const list = dropdown.querySelector(".list");
+      if (!list) {
+        console.warn("List element not found. Exiting filterItems.");
+        return;
+      }
+
+      // Default search type to "containsAny" if not provided
+      searchType = searchType || "containsAny";
+      caseInsensitive = caseInsensitive !== false;
+
+      // If searchTerms is not an array or is empty, show all items and exit
+      if (!Array.isArray(searchTerms) || searchTerms.length === 0 || searchTerms[0] === "") {
+        this.showAllItems(list);
         this.updateSelectedCount(oControlHost);
         this.announceSearchResults(oControlHost);
+        return;
       }
-      
-      /**
-       * Show all items in the list.
-       */
-      showAllItems(list) {
-        const checkboxItems = list.querySelectorAll(".checkbox-item");
-        checkboxItems.forEach((item) => {
-          item.classList.remove("hidden");
-          item.style.display = "flex";
-        });
-      
-        const groups = list.querySelectorAll(".group");
-        groups.forEach((group) => {
-          group.style.display = "block";
-        });
-      }
-      
-      /**
-       * Determine if an item should be visible based on the search type.
-       */
-      determineVisibility(compareValue, compareTerms, searchType) {
-        switch (searchType) {
-          case "containsAny":
-            return compareTerms.some((term) => compareValue.includes(term));
-          case "containsAll":
-            return compareTerms.every((term) => compareValue.includes(term));
-          case "startsWithAny":
-            return compareTerms.some((term) => compareValue.startsWith(term));
-          case "startsWithFirstContainsRest":
-            if (compareTerms.length > 0) {
-              const startsWithFirst = compareValue.startsWith(compareTerms[0]);
-              if (startsWithFirst && compareTerms.length > 1) {
-                return compareTerms.slice(1).every((t) => compareValue.includes(t));
-              }
-              return startsWithFirst;
-            }
-            return false;
-          default:
-            return true; // Default to visible if search type is unrecognized
+
+      // Loop through each checkbox item and determine its visibility
+      const checkboxItems = list.querySelectorAll(".checkbox-item");
+      checkboxItems.forEach((item) => {
+        const label = item.querySelector("span"); // Select span instead of label
+        const displayValue = label ? label.textContent : "";
+        let compareValue = displayValue;
+        let compareTerms = searchTerms;
+
+        // Convert to lowercase if case-insensitive search is enabled
+        if (caseInsensitive) {
+          compareValue = displayValue.toLowerCase();
+          compareTerms = searchTerms.map((term) => term.toLowerCase());
         }
+
+        // Determine visibility based on search type
+        let isVisible = this.determineVisibility(compareValue, compareTerms, searchType);
+
+        // Toggle visibility of the item
+        if (isVisible) {
+          item.classList.remove("hidden");
+          item.style.display = "flex"; // Ensure item is visible
+        } else {
+          item.classList.add("hidden");
+          item.style.display = "none"; // Hide item
+        }
+      });
+
+      // Hide entire groups that have no visible items
+      this.hideEmptyGroups(list);
+
+      // Update the selected count and announce search results
+      this.updateSelectedCount(oControlHost);
+      this.announceSearchResults(oControlHost);
+    }
+
+    /**
+     * Show all items in the list.
+     */
+    showAllItems(list) {
+      const checkboxItems = list.querySelectorAll(".checkbox-item");
+      checkboxItems.forEach((item) => {
+        item.classList.remove("hidden");
+        item.style.display = "flex";
+      });
+
+      const groups = list.querySelectorAll(".group");
+      groups.forEach((group) => {
+        group.style.display = "block";
+      });
+    }
+
+    /**
+     * Determine if an item should be visible based on the search type.
+     */
+    determineVisibility(compareValue, compareTerms, searchType) {
+      switch (searchType) {
+        case "containsAny":
+          return compareTerms.some((term) => compareValue.includes(term));
+        case "containsAll":
+          return compareTerms.every((term) => compareValue.includes(term));
+        case "startsWithAny":
+          return compareTerms.some((term) => compareValue.startsWith(term));
+        case "startsWithFirstContainsRest":
+          if (compareTerms.length > 0) {
+            const startsWithFirst = compareValue.startsWith(compareTerms[0]);
+            if (startsWithFirst && compareTerms.length > 1) {
+              return compareTerms.slice(1).every((t) => compareValue.includes(t));
+            }
+            return startsWithFirst;
+          }
+          return false;
+        default:
+          return true; // Default to visible if search type is unrecognized
       }
-      
-      /**
-       * Hide groups that have no visible items.
-       */
-      hideEmptyGroups(list) {
-        const groups = list.querySelectorAll(".group");
-        groups.forEach((group) => {
-          const visibleSubItems = group.querySelectorAll(".checkbox-item:not(.hidden)");
-          group.style.display = visibleSubItems.length === 0 ? "none" : "block";
-        });
-      }
+    }
+
+    /**
+     * Hide groups that have no visible items.
+     */
+    hideEmptyGroups(list) {
+      const groups = list.querySelectorAll(".group");
+      groups.forEach((group) => {
+        const visibleSubItems = group.querySelectorAll(".checkbox-item:not(.hidden)");
+        group.style.display = visibleSubItems.length === 0 ? "none" : "block";
+      });
+    }
     /**
      * Checks if the control is in a valid state.
      */
@@ -973,4 +984,4 @@ define(() => {
 
   return CustomControl;
 });
-//204
+//225
