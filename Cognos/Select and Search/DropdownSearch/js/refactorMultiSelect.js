@@ -937,7 +937,16 @@ define(() => {
      * Toggles group selection.
      */
     toggleGroupItems() {}
+
+    /**
+     * Announces the search results
+     */
+    announceSearchResults(oControlHost) {
+      const visibleCount = this.dropdown.querySelectorAll('.checkbox-item:not([style*="display: none"])').length;
+      this.searchResultsLive.textContent = `${visibleCount} options found`;
+    }
   }
 
   return CustomControl;
 });
+//204
