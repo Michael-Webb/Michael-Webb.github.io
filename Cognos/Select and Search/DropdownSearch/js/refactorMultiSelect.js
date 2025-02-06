@@ -496,8 +496,10 @@ define(() => {
                                         ><span>Search type:</span>
                                     </label>
                                     <select class="search-type" aria-label="Search type"  id="${this.searchTypeSelectId}">
-                                        <option value="any">Contains Any</option>
-                                        <option value="all">Contains All</option>
+                                        <option value="containsAny">Contains Any</option>
+                                        <option value="containsAll">Contains All</option>
+                                        <option value="startsWithAny">Starts With Any</option>
+                                        <option value="startsWithFirstContainsRest">Starts With First Contains Rest</option>
                                     </select>
                                 
                                 </div>
@@ -710,8 +712,12 @@ define(() => {
       this.search.addEventListener("input", () => {
         clearTimeout(timeoutId); // Clear any previous timeout
         timeoutId = setTimeout(() => {
+          const searchType = this.searchTypeSelect.value;
+          const caseInsensitive = document.querySelector(".case-checkbox").checked; // Use document.querySelector to find the element
+          let searchValue = this.search.value;
+          const searchTerms = searchValue.split(",").map((term) => term.trim());
           // Set a new timeout
-          this.filterItems(oControlHost); // Call filterItems after the delay
+          this.filterItems(oControlHost, searchTerms, searchType, caseInsensitive); // Call filterItems after the delay
         }, debounceDelay);
       });
     }
@@ -747,31 +753,71 @@ define(() => {
       });
     }
 
-    filterItems(oControlHost) {
-      const searchType = this.dropdown.querySelector(".search-type").value;
-      const caseInsensitive = this.dropdown.querySelector(".case-checkbox").checked;
-      let searchValue = this.search.value;
+    filterItems(oControlHost, searchTerms, searchType, caseInsensitive) {
+      const dropdown = document.getElementById(this.dropdownId);
+      if (!dropdown) return;
 
-      if (caseInsensitive) {
-        searchValue = searchValue.toLowerCase();
-      }
+      const list = dropdown.querySelector(".list");
+      if (!list) return;
 
-      const searchTerms = searchValue.split(",").map((term) => term.trim());
+      // Default search type to "containsAny" if not provided
+      searchType = searchType || "containsAny";
+      caseInsensitive = caseInsensitive !== false;
 
-      const items = this.dropdown.querySelectorAll(".checkbox-item");
-      items.forEach((item) => {
-        let text = item.textContent;
+      // Loop through each checkbox item and determine its visibility.
+      const checkboxItems = list.querySelectorAll(".checkbox-item");
+      checkboxItems.forEach((item) => {
+        const label = item.querySelector("span"); //select span instead of label
+        const displayValue = label ? label.textContent : "";
+        let compareValue = displayValue;
+        let compareTerms = searchTerms;
+
         if (caseInsensitive) {
-          text = text.toLowerCase();
+          compareValue = displayValue.toLowerCase();
+          compareTerms = searchTerms.map((term) => term.toLowerCase());
         }
 
-        const visible =
-          searchType === "any"
-            ? searchTerms.some((term) => text.includes(term))
-            : searchTerms.every((term) => text.includes(term));
-        item.style.display = visible || !this.search.value ? "flex" : "none";
+        let isVisible = true;
+        if (searchTerms.length > 0) {
+          switch (searchType) {
+            case "containsAny":
+              isVisible = compareTerms.some((term) => compareValue.includes(term));
+              break;
+            case "containsAll":
+              isVisible = compareTerms.every((term) => compareValue.includes(term));
+              break;
+            case "startsWithAny":
+              isVisible = compareTerms.some((term) => compareValue.startsWith(term));
+              break;
+            case "startsWithFirstContainsRest":
+              if (compareTerms.length > 0) {
+                isVisible = compareValue.startsWith(compareTerms[0]);
+                if (isVisible && compareTerms.length > 1) {
+                  isVisible = compareTerms.slice(1).every((t) => compareValue.includes(t));
+                }
+              }
+              break;
+          }
+        }
+
+        if (isVisible) {
+          item.classList.remove("hidden");
+          item.style.display = "flex"; // Ensure item is visible
+        } else {
+          item.classList.add("hidden");
+          item.style.display = "none"; // Hide item
+        }
       });
-      this.updateGroupVisibility(oControlHost);
+
+      // Hide entire groups that have no visible items.
+      const groups = list.querySelectorAll(".group");
+      groups.forEach((group) => {
+        const visibleSubItems = group.querySelectorAll(".checkbox-item:not(.hidden)");
+        group.style.display = visibleSubItems.length === 0 ? "none" : "block";
+      });
+
+      //this.updateGroupCheckboxStates(); // updateGroupCheckboxStates functionality does not exist
+      this.updateSelectedCount(oControlHost);
       this.announceSearchResults(oControlHost);
     }
 
