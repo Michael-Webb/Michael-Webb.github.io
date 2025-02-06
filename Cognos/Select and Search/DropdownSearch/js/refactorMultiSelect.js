@@ -21,7 +21,6 @@ define(() => {
       this.applyBtnId = null;
       this.selectAllId = null;
       this.deselectAllId = null;
-      this.compactCheckboxId = null;
       this.searchTypeSelectId = null;
       this.searchResultsLiveId = null;
       this.dropdown = null;
@@ -84,7 +83,6 @@ define(() => {
       this.applyBtnId = this.generateId("applyBtn");
       this.selectAllId = this.generateId("selectAll");
       this.deselectAllId = this.generateId("deselectAll");
-      this.compactCheckboxId = this.generateId("compactCheckbox");
       this.searchTypeSelectId = this.generateId("searchTypeSelect");
       this.searchResultsLiveId = this.generateId("searchResultsLive");
       this.dropdown = null;
@@ -626,7 +624,6 @@ define(() => {
       this.applyBtn = this.oControlHost.container.querySelector(`#${this.applyBtnId}`);
       this.selectAll = this.oControlHost.container.querySelector(`#${this.selectAllId}`);
       this.deselectAll = this.oControlHost.container.querySelector(`#${this.deselectAllId}`);
-      this.compactCheckbox = this.oControlHost.container.querySelector(`#${this.compactCheckboxId}`);
       this.searchTypeSelect = this.oControlHost.container.querySelector(`#${this.searchTypeSelectId}`);
       this.searchResultsLive = this.oControlHost.container.querySelector(`#${this.searchResultsLiveId}`);
 
@@ -642,7 +639,6 @@ define(() => {
       if (!this.applyBtn) missingElements.push(`Apply Button (ID: ${this.applyBtnId})`);
       if (!this.selectAll) missingElements.push(`Select All (ID: ${this.selectAllId})`);
       if (!this.deselectAll) missingElements.push(`Deselect All (ID: ${this.deselectAllId})`);
-      if (!this.compactCheckbox) missingElements.push(`Compact Checkbox (ID: ${this.compactCheckboxId})`);
       if (!this.searchTypeSelect) missingElements.push(`Search Type Select (ID: ${this.searchTypeSelectId})`);
       if (!this.searchResultsLive) missingElements.push(`Search Results Live (ID: ${this.searchResultsLiveId})`);
 
