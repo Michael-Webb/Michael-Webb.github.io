@@ -81,6 +81,13 @@ define(() => {
                     border: 1px solid #ccc;
                     border-radius: 3px;
                   }
+                  /* Optional: Prevent overly long option text from causing horizontal scroll.
+                     Note: Styling of <option> elements is limited across browsers. */
+                  .custom-dropdown option {
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                  }
                 </style>
                 <select id="${selectId}" class="custom-dropdown">
                   <option value="">-- Select an option --</option>
@@ -104,8 +111,8 @@ define(() => {
               const group = groups[groupKey];
               sHtml += `<optgroup label="${group.display}">`;
               group.options.forEach((option) => {
-                // Each option gets a data-group attribute.
-                sHtml += `<option value="${option.use}" data-group="${groupKey}">${option.display}</option>`;
+                // Each option gets a data-group attribute and title for tooltip.
+                sHtml += `<option value="${option.use}" data-group="${groupKey}" title="${option.display}">${option.display}</option>`;
               });
               sHtml += `</optgroup>`;
             }
@@ -114,7 +121,7 @@ define(() => {
             for (let i = 0; i < this.m_oDataStore.rowCount; i++) {
               const useValue = this.m_oDataStore.getCellValue(i, valueUseCol);
               const dispValue = this.m_oDataStore.getCellValue(i, valueDispCol);
-              sHtml += `<option value="${useValue}">${dispValue}</option>`;
+              sHtml += `<option value="${useValue}" title="${dispValue}">${dispValue}</option>`;
             }
           }
         }
@@ -146,6 +153,8 @@ define(() => {
                     max-height: 300px;
                     overflow-y: auto;
                     margin-bottom: 10px;
+                    /* Prevent horizontal scrolling */
+                    overflow-x: hidden;
                   }
                   .checkbox-label {
                     display: block;
@@ -185,6 +194,15 @@ define(() => {
                   .collapsed {
                     display: none;
                   }
+                  /* New style to handle long text: limit width, hide overflow, add ellipsis */
+                  .display-text {
+                    display: inline-block;
+                    max-width: 150px; /* Adjust as needed */
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    vertical-align: middle;
+                  }
                 </style>
                 <div id="${containerId}" class="checkbox-container">
               `;
@@ -211,12 +229,13 @@ define(() => {
               sHtml += `<div class="group-header" data-group="${groupKey}">
                             <input type="checkbox" class="group-checkbox" data-group="${groupKey}" />
                             <span class="expand-collapse-indicator">${expandCollapseIndicator}</span>
-                            <span class="group-label-text">${group.display}</span>
+                            <span class="group-label-text display-text" title="${group.display}">${group.display}</span>
                           </div>`;
               sHtml += `<div class="group-items ${isInitiallyExpanded ? "" : "collapsed"}">`;
               group.items.forEach((item) => {
                 sHtml += `<label class="checkbox-label">
-                              <input type="checkbox" value="${item.use}" data-group="${groupKey}" /> ${item.display}
+                              <input type="checkbox" value="${item.use}" data-group="${groupKey}" />
+                              <span class="display-text" title="${item.display}">${item.display}</span>
                             </label>`;
               });
               sHtml += `</div></div>`;
@@ -227,7 +246,8 @@ define(() => {
               const useValue = this.m_oDataStore.getCellValue(i, valueUseCol);
               const dispValue = this.m_oDataStore.getCellValue(i, valueDispCol);
               sHtml += `<label class="checkbox-label">
-                            <input type="checkbox" value="${useValue}" /> ${dispValue}
+                            <input type="checkbox" value="${useValue}" />
+                            <span class="display-text" title="${dispValue}">${dispValue}</span>
                           </label>`;
             }
           }
