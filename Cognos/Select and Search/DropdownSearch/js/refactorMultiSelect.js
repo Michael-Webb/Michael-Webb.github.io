@@ -631,21 +631,24 @@ define(() => {
       this.searchResultsLive = this.oControlHost.container.querySelector(`#${this.searchResultsLiveId}`);
 
       // Ensure all elements exist
-      if (
-        !this.dropdown ||
-        !this.header ||
-        !this.content ||
-        !this.search ||
-        !this.advancedBtn ||
-        !this.searchControls ||
-        !this.applyBtn ||
-        !this.selectAll ||
-        !this.deselectAll ||
-        !this.compactCheckbox ||
-        !this.searchTypeSelect ||
-        !this.searchResultsLive
-      ) {
-        console.error("One or more elements not found.");
+      // Check each element individually and log if missing
+      let missingElements = [];
+      if (!this.dropdown) missingElements.push(`Dropdown (ID: ${this.dropdownId})`);
+      if (!this.header) missingElements.push(`Header (ID: ${this.headerId})`);
+      if (!this.content) missingElements.push(`Content (ID: ${this.contentId})`);
+      if (!this.search) missingElements.push(`Search (ID: ${this.searchId})`);
+      if (!this.advancedBtn) missingElements.push(`Advanced Button (ID: ${this.advancedBtnId})`);
+      if (!this.searchControls) missingElements.push(`Search Controls (ID: ${this.searchControlsId})`);
+      if (!this.applyBtn) missingElements.push(`Apply Button (ID: ${this.applyBtnId})`);
+      if (!this.selectAll) missingElements.push(`Select All (ID: ${this.selectAllId})`);
+      if (!this.deselectAll) missingElements.push(`Deselect All (ID: ${this.deselectAllId})`);
+      if (!this.compactCheckbox) missingElements.push(`Compact Checkbox (ID: ${this.compactCheckboxId})`);
+      if (!this.searchTypeSelect) missingElements.push(`Search Type Select (ID: ${this.searchTypeSelectId})`);
+      if (!this.searchResultsLive) missingElements.push(`Search Results Live (ID: ${this.searchResultsLiveId})`);
+
+      // Log missing elements if any
+      if (missingElements.length > 0) {
+        console.error("The following elements are missing:", missingElements.join(", "));
         return;
       }
 
