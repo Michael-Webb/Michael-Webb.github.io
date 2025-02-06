@@ -73,7 +73,7 @@ define(() => {
       if (!isMultiple) {
         // ----- SINGLE-SELECT MODE -----
         const selectId = oControlHost.generateUniqueID();
-        onsole.log("Unique ID: Container ",selectId)
+        console.log("Unique ID: singleSelect ",selectId)
         sHtml += `
                 <style>
                   .custom-dropdown {
