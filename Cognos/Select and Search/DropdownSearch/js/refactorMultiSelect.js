@@ -107,6 +107,10 @@ define(() => {
       const groupingValDispCol = oControlHost.configuration["Parent Value Display Column"] ?? 3;
       // const isCompact = oControlHost.configuration["Compact"] === true;
 
+      const dropdownWidth = oControlHost.configuration["Dropdown Width"] ?? "250px";
+      const contentWidth = oControlHost.configuration["Content Width"] ?? "250px";
+
+
       let dropdownClass = "dropdown-container";
       /* if (isCompact) {
                  dropdownClass += " compact";
@@ -130,7 +134,7 @@ define(() => {
                     --padding-lg: 0.75rem 1rem;
                     --padding-md: 0.5rem 0.75rem;
                     position: relative; 
-                    width: 250px;
+                    width: ${dropdownWidth}
                     font-family: system-ui, sans-serif;
                 }
 
@@ -166,7 +170,7 @@ define(() => {
                     position: absolute;
                     top: 100%
                     left: 0;
-                    width: 100%;
+                    width: ${contentWidth}
                     background: white;
                     border-radius: var(--radius);
                     border: 1px solid var(--border);
@@ -268,9 +272,6 @@ define(() => {
                     border-radius: var(--radius);
 
                 }
-
-
-
                 .case-checkbox {
                     margin: 0;
                 }
@@ -278,8 +279,6 @@ define(() => {
                     outline: 2px solid var(--primary);
                     outline-offset: 2px;
                 }
-
-
                 .group-header {
                     padding: var(--padding-md);
                     background: var(--bg-hover);
@@ -291,7 +290,6 @@ define(() => {
                     align-items: center;
                     gap: .5rem;
                 }
-
                 .group-header span {
                     display: block;
                     line-height: 1;
@@ -302,7 +300,6 @@ define(() => {
                     min-width: 0;
                     max-width: calc(100% - 120px);
                 }
-
                 .group-controls {
                     display: flex;
                     gap: 0.25rem;
@@ -310,14 +307,12 @@ define(() => {
                     flex-shrink: 0;
                     width: 120px;
                 }
-
                 .group-controls .btn {
                     padding: 0.375rem 0.5rem;
                     font-size: 0.75rem;
                     line-height: 1;
                     height: fit-content;
                 }
-
                 .checkbox-item {
                     display: flex;
                     align-items: center;
@@ -325,21 +320,17 @@ define(() => {
                     cursor: pointer;
                     transition: background 0.2s;
                 }
-
                 .checkbox-item:hover {
                     background: var(--bg-hover);
                 }
-
                 .checkbox-item input[type="checkbox"] {
                     margin-right: 0.5rem;
                     flex-shrink: 0;
                 }
-
                 .checkbox-item input[type="checkbox"]:focus-visible {
                     outline: 2px solid var(--primary);
                     outline-offset: 2px;
                 }
-
                 .checkbox-item span {
                     font-size: 0.875rem;
                     color: var(--text);
@@ -351,7 +342,6 @@ define(() => {
                 .hidden {
                    display: none !important;
                 }
-
                 .dropdown-footer {
                     padding: var(--padding-lg);
                     border-top: 1px solid var(--border);
@@ -359,76 +349,61 @@ define(() => {
                     justify-content: space-between;
                     align-items: center;
                 }
-
                 .select-controls {
                     display: flex;
                     gap: 0.5rem;
                 }
-
                 .btn {
                     padding: 0.375rem 0.5rem;
                     border-radius: var(--radius);
                     font-size: 0.875rem;
                     cursor: pointer;
                 }
-
                 .btn:focus-visible {
                     outline: 2px solid var(--primary);
                     outline-offset: 2px;
                 }
-
                 .btn.primary {
                     background: var(--primary);
                     color: white;
                     border: none;
                 }
-
                 .btn.primary:hover {
                     background: var(--primary-hover);
                 }
-
                 .btn.secondary {
                     background: white;
                     border: 1px solid var(--border);
                     color: var(--text);
                 }
-
                 .btn.secondary:hover {
                     background: var(--bg-hover);
                 }
-
                 .chevron {
                     fill: currentColor;
                     transition: transform 0.2s;
                 }
-
                 .expanded .chevron {
                     transform: rotate(180deg);
                 }
-
                 .list {
                     max-height: 250px;
                     overflow-y: auto;
                     overflow-x: hidden;
                 }
-
                 .list::-webkit-scrollbar {
                     width: 8px;
                 }
-
                 .list::-webkit-scrollbar-track {
                     background: transparent;
                 }
-
                 .list::-webkit-scrollbar-thumb {
                     background: #cbd5e1;
                     border-radius: 4px;
                 }
-
                 .list::-webkit-scrollbar-thumb:hover {
                     background: #94a3b8;
                 }
-
                 .sr-only {
                     position: absolute;
                     width: 1px;
