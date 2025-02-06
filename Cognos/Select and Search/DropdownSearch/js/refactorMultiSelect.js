@@ -51,6 +51,8 @@ define(() => {
      */
     initialize(oControlHost, fnDoneInitializing) {
       this.mainParamValues = [];
+      // Store oControlHost as a class property
+      this.oControlHost = oControlHost;
 
       const mainParams = oControlHost.getParameter(oControlHost.configuration["Parameter Name"]);
       if (mainParams && mainParams.values && Array.isArray(mainParams.values)) {
@@ -611,7 +613,7 @@ define(() => {
       return sHtml;
     }
 
-    applyEventListeners(oControlHost) {
+    applyEventListeners() {
       // Use querySelector to select elements
       this.dropdown = this.oControlHost.container.querySelector(`#${this.dropdownId}`);
       this.header = this.oControlHost.container.querySelector(`#${this.headerId}`);
@@ -776,32 +778,38 @@ define(() => {
      * Draw the control. Use the stored parameter values.
      */
     draw(oControlHost) {
-      if (!this.instancePrefix) {
-        this.instancePrefix = oControlHost.generateUniqueID();
+        // Store oControlHost as a class property (if not already done in initialize)
+        this.oControlHost = oControlHost;
+      
+        if (!this.instancePrefix) {
+          this.instancePrefix = oControlHost.generateUniqueID();
+        }
+        this.isMultiple = !!oControlHost.configuration["Multiple Select"];
+        this.autoSubmit = oControlHost.configuration["AutoSubmit"] !== false;
+        const valueUseCol = oControlHost.configuration["Value Use Column"] ?? 0;
+        const valueDispCol = oControlHost.configuration["Value Display Column"] ?? 1;
+      
+        const groupingParamName = oControlHost.configuration["Grouping Parent Name"] ?? "";
+        const groupVals = oControlHost.configuration["Group Values"] ?? false;
+        const groupingValUseCol = oControlHost.configuration["Parent Value Use Column"] ?? 2;
+        const groupingValDispCol = oControlHost.configuration["Parent Value Display Column"] ?? 3;
+      
+        this.hasGrouping = groupVals && groupingParamName !== "";
+        const isCompact = oControlHost.configuration["Compact"] === true; // Read the "Compact" configuration
+        this.isCompact = isCompact;
+        console.log("isCompact", isCompact);
+      
+        // Generate and set the template HTML
+        oControlHost.container.innerHTML = this.generateTemplateHTML(oControlHost);
+      
+        // Apply event listeners
+        this.applyEventListeners();
+      
+        // Initialize selected values
+        this.checkboxes.forEach((checkbox) => {
+          checkbox.checked = this.mainParamValues.includes(checkbox.value);
+        });
       }
-      this.isMultiple = !!oControlHost.configuration["Multiple Select"];
-      this.autoSubmit = oControlHost.configuration["AutoSubmit"] !== false;
-      const valueUseCol = oControlHost.configuration["Value Use Column"] ?? 0;
-      const valueDispCol = oControlHost.configuration["Value Display Column"] ?? 1;
-
-      const groupingParamName = oControlHost.configuration["Grouping Parent Name"] ?? "";
-      const groupVals = oControlHost.configuration["Group Values"] ?? false;
-      const groupingValUseCol = oControlHost.configuration["Parent Value Use Column"] ?? 2;
-      const groupingValDispCol = oControlHost.configuration["Parent Value Display Column"] ?? 3;
-
-      this.hasGrouping = groupVals && groupingParamName !== "";
-      const isCompact = oControlHost.configuration["Compact"] === true; // Read the "Compact" configuration
-      this.isCompact = isCompact;
-      console.log("isCompact", isCompact);
-
-      oControlHost.container.innerHTML = this.generateTemplateHTML(oControlHost);
-
-      this.applyEventListeners(oControlHost);
-      //Initialize selected values
-      this.checkboxes.forEach((checkbox) => {
-        checkbox.checked = this.mainParamValues.includes(checkbox.value);
-      });
-    }
     /**
      * The new expected behaviour is pull the values needed by the filterItems()
      */
