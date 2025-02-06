@@ -950,13 +950,13 @@ define(() => {
       this.searchResultsLive.textContent = `All options ${isSelected ? "selected" : "cleared"}`;
     }
 
-        /**
+    /**
      * Announces the search results
      */
-        announceSearchResults(oControlHost) {
-            const visibleCount = this.dropdown.querySelectorAll('.checkbox-item:not([style*="display: none"])').length;
-            this.searchResultsLive.textContent = `${visibleCount} options found`;
-          }
+    announceSearchResults(oControlHost) {
+      const visibleCount = this.dropdown.querySelectorAll('.checkbox-item:not([style*="display: none"])').length;
+      this.searchResultsLive.textContent = `${visibleCount} options found`;
+    }
 
     /**
      * Updates the selected count.
@@ -973,10 +973,8 @@ define(() => {
       this.header.querySelector("span").textContent = count ? `${count} selected` : "Select Options";
       this.header.title = count ? selectedItems : "Select Options";
     }
-
-
   }
 
   return CustomControl;
 });
-//225
+//234
