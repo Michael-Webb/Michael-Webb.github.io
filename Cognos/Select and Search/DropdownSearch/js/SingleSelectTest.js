@@ -181,6 +181,10 @@ define(() => {
                     cursor: pointer;
                     margin-bottom: 5px;
                   }
+                  /* Make the header focusable and show an outline when focused */
+                  .group-header:focus {
+                    outline: 2px solid #0078d7;
+                  }
                   .group-header input.group-checkbox {
                     margin-right: 8px;
                   }
@@ -226,7 +230,8 @@ define(() => {
               const isInitiallyExpanded = !groupInitiallyCollapsed;
               const expandCollapseIndicator = isInitiallyExpanded ? "▼" : "►";
               sHtml += `<div class="group-container" data-group="${groupKey}">`;
-              sHtml += `<div class="group-header" data-group="${groupKey}">
+              // Note the added tabindex="0" to allow focus via the keyboard.
+              sHtml += `<div class="group-header" data-group="${groupKey}" tabindex="0">
                             <input type="checkbox" class="group-checkbox" data-group="${groupKey}" />
                             <span class="expand-collapse-indicator">${expandCollapseIndicator}</span>
                             <span class="group-label-text display-text" title="${group.display}">${group.display}</span>
@@ -308,8 +313,20 @@ define(() => {
         if (this.hasGrouping) {
           this.m_groupContainers.forEach((container) => {
             const header = container.querySelector(".group-header");
+            // Handle mouse click events.
             header.addEventListener("click", (event) => {
+              // Only toggle expand/collapse if the click is not on the checkbox.
               if (event.target.tagName.toLowerCase() !== "input") {
+                const groupItems = container.querySelector(".group-items");
+                const indicator = header.querySelector(".expand-collapse-indicator");
+                groupItems.classList.toggle("collapsed");
+                indicator.innerHTML = groupItems.classList.contains("collapsed") ? "►" : "▼";
+              }
+            });
+            // Handle keyboard events (spacebar) on the header row.
+            header.addEventListener("keydown", (event) => {
+              if (event.key === " " || event.key === "Spacebar" || event.keyCode === 32) {
+                event.preventDefault(); // Prevent page scroll
                 const groupItems = container.querySelector(".group-items");
                 const indicator = header.querySelector(".expand-collapse-indicator");
                 groupItems.classList.toggle("collapsed");
@@ -447,3 +464,4 @@ define(() => {
 
   return CustomControl;
 });
+/* testing 829 */
