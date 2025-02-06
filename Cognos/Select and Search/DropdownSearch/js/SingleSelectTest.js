@@ -7,7 +7,7 @@ define(() => {
      */
     initialize(oControlHost, fnDoneInitializing) {
       this.mainParamValues = [];
-      this.groupParamValues = [];
+      // Removed groupParamValues since we no longer need group-level filter values.
       this.groupChildren = {};
 
       const mainParams = oControlHost.getParameter(oControlHost.configuration["Parameter Name"]);
@@ -15,10 +15,7 @@ define(() => {
         mainParams.values.forEach((val) => this.mainParamValues.push(val.use));
       }
 
-      const groupParams = oControlHost.getParameter(oControlHost.configuration["Grouping Parent Name"]);
-      if (groupParams && groupParams.values && Array.isArray(groupParams.values)) {
-        groupParams.values.forEach((val) => this.groupParamValues.push(val.use));
-      }
+      // Removed groupParams initialization.
 
       // Use configuration values for columns.
       const valueUseCol = oControlHost.configuration["Value Use Column"] ?? 0;
@@ -36,7 +33,6 @@ define(() => {
         }
       }
       console.log("Initial mainParamValues:", this.mainParamValues);
-      console.log("Initial groupParamValues:", this.groupParamValues);
 
       fnDoneInitializing();
     }
@@ -206,7 +202,7 @@ define(() => {
               }
               groups[groupUse].items.push({ use: mainUse, display: mainDisp });
             }
-            // Render each group with a header row (checkbox, expand/collapse indicator, label) and its items.
+            // Render each group with a header row and its items.
             for (const groupKey in groups) {
               const group = groups[groupKey];
               const isInitiallyExpanded = !groupInitiallyCollapsed;
@@ -254,20 +250,18 @@ define(() => {
           );
         }
 
-        // Prepopulate Item Checkboxes first.
+        // Prepopulate item checkboxes using mainParamValues.
         if (this.hasGrouping) {
           this.m_itemCheckboxes.forEach((itemCb) => {
             itemCb.checked = this.mainParamValues.includes(itemCb.value);
           });
 
-          // Now recalc group header state by querying the DOM.
+          // Recalculate group header state based on its child checkboxes.
           this.m_groupContainers.forEach((container) => {
             const groupCheckbox = container.querySelector(".group-checkbox");
             const itemCheckboxes = container.querySelectorAll('.group-items input[type="checkbox"]');
             const checkedCount = Array.from(itemCheckboxes).filter((cb) => cb.checked).length;
             const totalCount = itemCheckboxes.length;
-            // If any item is checked, mark group as indeterminate;
-            // if all are checked, you can choose to set it fully checked instead.
             if (checkedCount === totalCount && totalCount > 0) {
               groupCheckbox.checked = true;
               groupCheckbox.indeterminate = false;
@@ -295,7 +289,6 @@ define(() => {
           this.m_groupContainers.forEach((container) => {
             const header = container.querySelector(".group-header");
             header.addEventListener("click", (event) => {
-              // Only toggle expand/collapse if the click is not on the checkbox.
               if (event.target.tagName.toLowerCase() !== "input") {
                 const groupItems = container.querySelector(".group-items");
                 const indicator = header.querySelector(".expand-collapse-indicator");
@@ -305,17 +298,16 @@ define(() => {
             });
           });
 
-          // When a group header checkbox changes, update its child items and recalc header state.
+          // When a group header checkbox changes, update its child items.
           this.m_groupCheckboxes.forEach((groupCb) => {
             groupCb.addEventListener("change", () => {
               const groupKey = groupCb.getAttribute("data-group");
               const groupContainer = oControlHost.container.querySelector(`.group-container[data-group="${groupKey}"]`);
               const itemCheckboxes = groupContainer.querySelectorAll('.group-items input[type="checkbox"]');
-              // Propagate header state to all child items.
               itemCheckboxes.forEach((itemCb) => {
                 itemCb.checked = groupCb.checked;
               });
-              // Recalculate header state from current items.
+              // Recalculate header state.
               const checkedCount = Array.from(itemCheckboxes).filter((cb) => cb.checked).length;
               const totalCount = itemCheckboxes.length;
               if (checkedCount === totalCount && totalCount > 0) {
@@ -373,10 +365,8 @@ define(() => {
         return this.m_sel && this.m_sel.value !== "";
       } else {
         if (this.hasGrouping) {
-          const groupChecked =
-            this.m_groupCheckboxes && this.m_groupCheckboxes.some((cb) => cb.checked || cb.indeterminate);
-          const itemChecked = this.m_itemCheckboxes && this.m_itemCheckboxes.some((cb) => cb.checked);
-          return groupChecked || itemChecked;
+          // Only need to check that at least one main (child) item is checked.
+          return this.m_itemCheckboxes && this.m_itemCheckboxes.some((cb) => cb.checked);
         } else {
           return this.m_checkboxes && this.m_checkboxes.some((cb) => cb.checked);
         }
@@ -385,10 +375,10 @@ define(() => {
 
     /**
      * Returns the parameter(s) for submission.
+     * Only main parameter values are submitted.
      */
     getParameters(oControlHost) {
       const sParamName = oControlHost.configuration["Parameter Name"];
-      const groupParamName = oControlHost.configuration["Grouping Parent Name"];
       let params = [];
 
       if (!sParamName) {
@@ -403,28 +393,12 @@ define(() => {
           parameter: sParamName,
           values: [{ use: this.m_sel.value }],
         });
-        if (this.hasGrouping && groupParamName) {
-          const selectedOption = this.m_sel.options[this.m_sel.selectedIndex];
-          const groupValue = selectedOption.getAttribute("data-group") || "";
-          params.push({
-            parameter: groupParamName,
-            values: [{ use: groupValue }],
-          });
-        }
       } else {
         let itemValues = [];
-        let groupValues = [];
-
         if (this.hasGrouping) {
           this.m_itemCheckboxes.forEach((cb) => {
             if (cb.checked) {
               itemValues.push(cb.value);
-            }
-          });
-          this.m_groupCheckboxes.forEach((cb) => {
-            // Include group value if the header is fully selected (not indeterminate)
-            if (cb.checked && !cb.indeterminate) {
-              groupValues.push(cb.getAttribute("data-group"));
             }
           });
         } else {
@@ -434,24 +408,10 @@ define(() => {
             }
           });
         }
-
-        if (itemValues.length > 0) {
-          params.push({
-            parameter: sParamName,
-            values: itemValues.map((val) => ({ use: String(val) })),
-          });
-        } else {
-          params.push({
-            parameter: sParamName,
-            values: [],
-          });
-        }
-        if (this.hasGrouping && groupValues.length > 0 && groupParamName) {
-          params.push({
-            parameter: groupParamName,
-            values: groupValues.map((val) => ({ use: String(val) })),
-          });
-        }
+        params.push({
+          parameter: sParamName,
+          values: itemValues.map((val) => ({ use: String(val) })),
+        });
       }
       console.log("Parameters about to be sent:", JSON.stringify(params));
       return params.length > 0 ? params : null;
