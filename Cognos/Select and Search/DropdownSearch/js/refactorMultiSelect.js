@@ -1,117 +1,115 @@
 define(() => {
-    "use strict";
+  "use strict";
 
-    class CustomControl {
-        constructor() {
-            this.mainParamValues = [];
-            this.groupChildren = {};
-            this.isMultiple = false;
-            this.autoSubmit = true;
-            this.hasGrouping = false;
-            this.isCompact = false;
-            this.uniqueIdCounter = 0;
-            this.instancePrefix = null;
-            this.containerId = null;
-            this.dropdownId = null;
-            this.headerId = null;
-            this.contentId = null;
-            this.searchId = null;
-            this.advancedBtnId = null;
-            this.searchControlsId = null;
-            this.applyBtnId = null;
-            this.selectAllId = null;
-            this.deselectAllId = null;
-            this.compactCheckboxId = null;
-            this.searchTypeSelectId = null;
-            this.searchResultsLiveId = null;
-            this.dropdown = null;
-            this.header = null;
-            this.content = null;
-            this.search = null;
-            this.advancedBtn = null;
-            this.searchControls = null;
-            this.applyBtn = null;
-            this.selectAll = null;
-            this.deselectAll = null;
-            this.compactCheckbox = null;
-            this.searchTypeSelect = null;
-            this.searchResultsLive = null;
-            this.groups = [];
-            this.checkboxes = [];
+  class CustomControl {
+    constructor() {
+      this.mainParamValues = [];
+      this.groupChildren = {};
+      this.isMultiple = false;
+      this.autoSubmit = true;
+      this.hasGrouping = false;
+      this.isCompact = false;
+      this.uniqueIdCounter = 0;
+      this.instancePrefix = null;
+      this.containerId = null;
+      this.dropdownId = null;
+      this.headerId = null;
+      this.contentId = null;
+      this.searchId = null;
+      this.advancedBtnId = null;
+      this.searchControlsId = null;
+      this.applyBtnId = null;
+      this.selectAllId = null;
+      this.deselectAllId = null;
+      this.compactCheckboxId = null;
+      this.searchTypeSelectId = null;
+      this.searchResultsLiveId = null;
+      this.dropdown = null;
+      this.header = null;
+      this.content = null;
+      this.search = null;
+      this.advancedBtn = null;
+      this.searchControls = null;
+      this.applyBtn = null;
+      this.selectAll = null;
+      this.deselectAll = null;
+      this.compactCheckbox = null;
+      this.searchTypeSelect = null;
+      this.searchResultsLive = null;
+      this.groups = [];
+      this.checkboxes = [];
+    }
+    generateId(baseString) {
+      this.uniqueIdCounter++;
+      return `${this.instancePrefix}_${baseString}_${this.uniqueIdCounter}`;
+    }
 
-        }
-        generateId(baseString) {
-            this.uniqueIdCounter++;
-            return `${this.instancePrefix}_${baseString}_${this.uniqueIdCounter}`;
-        }
+    /**
+     * Initialize the control. Get the initial parameter values here.
+     */
+    initialize(oControlHost, fnDoneInitializing) {
+      this.mainParamValues = [];
 
-        /**
-         * Initialize the control. Get the initial parameter values here.
-         */
-        initialize(oControlHost, fnDoneInitializing) {
-            this.mainParamValues = [];
+      const mainParams = oControlHost.getParameter(oControlHost.configuration["Parameter Name"]);
+      if (mainParams && mainParams.values && Array.isArray(mainParams.values)) {
+        mainParams.values.forEach((val) => this.mainParamValues.push(val.use));
+      }
+      console.log("Initial mainParamValues:", this.mainParamValues);
 
-            const mainParams = oControlHost.getParameter(oControlHost.configuration["Parameter Name"]);
-            if (mainParams && mainParams.values && Array.isArray(mainParams.values)) {
-                mainParams.values.forEach((val) => this.mainParamValues.push(val.use));
-            }
-            console.log("Initial mainParamValues:", this.mainParamValues);
+      fnDoneInitializing();
+    }
 
-            fnDoneInitializing();
-        }
+    /**
+     * Receives authored data from the data store.
+     */
+    setData(oControlHost, oDataStore) {
+      this.m_oDataStore = oDataStore;
+    }
 
-        /**
-         * Receives authored data from the data store.
-         */
-        setData(oControlHost, oDataStore) {
-            this.m_oDataStore = oDataStore;
-        }
+    generateTemplateHTML(oControlHost) {
+      this.containerId = this.generateId("container");
+      this.dropdownId = this.generateId("dropdown");
+      this.headerId = this.generateId("header");
+      this.contentId = this.generateId("content");
+      this.searchId = this.generateId("search");
+      this.advancedBtnId = this.generateId("advancedBtn");
+      this.searchControlsId = this.generateId("searchControls");
+      this.applyBtnId = this.generateId("applyBtn");
+      this.selectAllId = this.generateId("selectAll");
+      this.deselectAllId = this.generateId("deselectAll");
+      this.compactCheckboxId = this.generateId("compactCheckbox");
+      this.searchTypeSelectId = this.generateId("searchTypeSelect");
+      this.searchResultsLiveId = this.generateId("searchResultsLive");
+      this.dropdown = null;
+      this.header = null;
+      this.content = null;
+      this.search = null;
+      this.advancedBtn = null;
+      this.searchControls = null;
+      this.applyBtn = null;
+      this.selectAll = null;
+      this.deselectAll = null;
+      this.compactCheckbox = null;
+      this.searchTypeSelect = null;
+      this.searchResultsLive = null;
+      this.groups = [];
+      this.checkboxes = [];
 
-        generateTemplateHTML(oControlHost) {
+      const valueUseCol = oControlHost.configuration["Value Use Column"] ?? 0;
+      const valueDispCol = oControlHost.configuration["Value Display Column"] ?? 1;
 
-            this.containerId = this.generateId("container");
-            this.dropdownId = this.generateId("dropdown");
-            this.headerId = this.generateId("header");
-            this.contentId = this.generateId("content");
-            this.searchId = this.generateId("search");
-            this.advancedBtnId = this.generateId("advancedBtn");
-            this.searchControlsId = this.generateId("searchControls");
-            this.applyBtnId = this.generateId("applyBtn");
-            this.selectAllId = this.generateId("selectAll");
-            this.deselectAllId = this.generateId("deselectAll");
-            this.compactCheckboxId = this.generateId("compactCheckbox");
-            this.searchTypeSelectId = this.generateId("searchTypeSelect");
-            this.searchResultsLiveId = this.generateId("searchResultsLive");
-            this.dropdown = null;
-            this.header = null;
-            this.content = null;
-            this.search = null;
-            this.advancedBtn = null;
-            this.searchControls = null;
-            this.applyBtn = null;
-            this.selectAll = null;
-            this.deselectAll = null;
-            this.compactCheckbox = null;
-            this.searchTypeSelect = null;
-            this.searchResultsLive = null;
-            this.groups = [];
-            this.checkboxes = [];
+      const groupingParamName = oControlHost.configuration["Grouping Parent Name"] ?? "";
+      const groupVals = oControlHost.configuration["Group Values"] ?? false;
+      const groupingValUseCol = oControlHost.configuration["Parent Value Use Column"] ?? 2;
+      const groupingValDispCol = oControlHost.configuration["Parent Value Display Column"] ?? 3;
+      // const isCompact = oControlHost.configuration["Compact"] === true;
 
-            const valueUseCol = oControlHost.configuration["Value Use Column"] ?? 0;
-            const valueDispCol = oControlHost.configuration["Value Display Column"] ?? 1;
-
-            const groupingParamName = oControlHost.configuration["Grouping Parent Name"] ?? "";
-            const groupVals = oControlHost.configuration["Group Values"] ?? false;
-            const groupingValUseCol = oControlHost.configuration["Parent Value Use Column"] ?? 2;
-            const groupingValDispCol = oControlHost.configuration["Parent Value Display Column"] ?? 3;
-            // const isCompact = oControlHost.configuration["Compact"] === true;
-
-            let dropdownClass = "dropdown-container";
-            /* if (isCompact) {
+      let dropdownClass = "dropdown-container";
+      /* if (isCompact) {
                  dropdownClass += " compact";
              }*/
 
-            let sHtml = `
+      let sHtml = `
             <style>
                 :root {
                     --primary: #2563eb;
@@ -496,6 +494,8 @@ define(() => {
                                     <select class="search-type" aria-label="Search type"  id="${this.searchTypeSelectId}">
                                         <option value="any">Contains Any</option>
                                         <option value="all">Contains All</option>
+                                         <option value="startsWithAny">Starts With Any</option>
+                                          <option value="startsWithFirstContainsRest">Starts With First Contains Rest</option>
                                     </select>
                                 
                                 </div>
@@ -508,30 +508,30 @@ define(() => {
                     </div>
                     <div class="list">`;
 
-            if (this.m_oDataStore && this.m_oDataStore.rowCount) {
-                let groups = {};
-                if (groupVals && groupingParamName !== "") {
-                    for (let i = 0; i < this.m_oDataStore.rowCount; i++) {
-                        const mainUse = this.m_oDataStore.getCellValue(i, valueUseCol);
-                        const mainDisp = this.m_oDataStore.getCellValue(i, valueDispCol);
-                        const groupUse = this.m_oDataStore.getCellValue(i, groupingValUseCol);
-                        const groupDisp = this.m_oDataStore.getCellValue(i, groupingValDispCol);
+      if (this.m_oDataStore && this.m_oDataStore.rowCount) {
+        let groups = {};
+        if (groupVals && groupingParamName !== "") {
+          for (let i = 0; i < this.m_oDataStore.rowCount; i++) {
+            const mainUse = this.m_oDataStore.getCellValue(i, valueUseCol);
+            const mainDisp = this.m_oDataStore.getCellValue(i, valueDispCol);
+            const groupUse = this.m_oDataStore.getCellValue(i, groupingValUseCol);
+            const groupDisp = this.m_oDataStore.getCellValue(i, groupingValDispCol);
 
-                        if (!groups[groupUse]) {
-                            groups[groupUse] = { display: groupDisp, items: [] };
-                        }
-                        groups[groupUse].items.push({ use: mainUse, display: mainDisp });
-                    }
+            if (!groups[groupUse]) {
+              groups[groupUse] = { display: groupDisp, items: [] };
+            }
+            groups[groupUse].items.push({ use: mainUse, display: mainDisp });
+          }
 
-                    for (const groupKey in groups) {
-                        const group = groups[groupKey];
-                        const groupId = this.generateId("group");
-                        const groupHeaderId = this.generateId("groupHeader");
-                        const groupSelectId = this.generateId("groupSelect");
-                        const groupDeselectId = this.generateId("groupDeselect");
-                        const groupItemsId = this.generateId("groupItems");
+          for (const groupKey in groups) {
+            const group = groups[groupKey];
+            const groupId = this.generateId("group");
+            const groupHeaderId = this.generateId("groupHeader");
+            const groupSelectId = this.generateId("groupSelect");
+            const groupDeselectId = this.generateId("groupDeselect");
+            const groupItemsId = this.generateId("groupItems");
 
-                        sHtml += `
+            sHtml += `
                         <div class="group" id="${groupId}">
                             <div class="group-header"  id="${groupHeaderId}">
                                 <span title="${group.display}">${group.display}</span>
@@ -552,31 +552,31 @@ define(() => {
                             </div>
                             <div class="group-items" role="group" aria-label="${group.display} options"  id="${groupItemsId}">`;
 
-                group.items.forEach(item => {
-                    const itemId = this.generateId("item");
-                    sHtml += `
+            group.items.forEach((item) => {
+              const itemId = this.generateId("item");
+              sHtml += `
                                 <label class="checkbox-item" title="${item.display}">
                                     <input type="checkbox" value="${item.use}" aria-label="${item.display}"  id="${itemId}"/>
                                     <span>${item.display}</span>
                                 </label>`;
-                });
+            });
 
-                sHtml += `
+            sHtml += `
                             </div>
                         </div>`;
 
-                this.groups.push({
-                    groupId: groupId,
-                    groupHeaderId: groupHeaderId,
-                    groupSelectId: groupSelectId,
-                    groupDeselectId: groupDeselectId,
-                    groupItemsId: groupItemsId,
-                });
-            }
+            this.groups.push({
+              groupId: groupId,
+              groupHeaderId: groupHeaderId,
+              groupSelectId: groupSelectId,
+              groupDeselectId: groupDeselectId,
+              groupItemsId: groupItemsId,
+            });
+          }
         }
-    }
+      }
 
-    sHtml += `
+      sHtml += `
                     </div>
                     <div class="dropdown-footer">
                         <div class="select-controls">
@@ -604,301 +604,296 @@ define(() => {
             </div>
             `;
 
-    return sHtml;
-}
+      return sHtml;
+    }
 
+    applyEventListeners(oControlHost) {
+      this.dropdown = document.getElementById(this.dropdownId);
+      this.header = document.getElementById(this.headerId);
+      this.content = document.getElementById(this.contentId);
+      this.search = document.getElementById(this.searchId);
+      this.advancedBtn = document.getElementById(this.advancedBtnId);
+      this.searchControls = document.getElementById(this.searchControlsId);
+      this.applyBtn = document.getElementById(this.applyBtnId);
+      this.selectAll = document.getElementById(this.selectAllId);
+      this.deselectAll = document.getElementById(this.deselectAllId);
+      this.compactCheckbox = document.getElementById(this.compactCheckboxId);
+      this.searchTypeSelect = document.getElementById(this.searchTypeSelectId);
+      this.searchResultsLive = document.getElementById(this.searchResultsLiveId);
+      this.groups = [];
+      this.checkboxes = [];
 
-        applyEventListeners(oControlHost) {
-            this.dropdown = document.getElementById(this.dropdownId);
-            this.header = document.getElementById(this.headerId);
-            this.content = document.getElementById(this.contentId);
-            this.search = document.getElementById(this.searchId);
-            this.advancedBtn = document.getElementById(this.advancedBtnId);
-            this.searchControls = document.getElementById(this.searchControlsId);
-            this.applyBtn = document.getElementById(this.applyBtnId);
-            this.selectAll = document.getElementById(this.selectAllId);
-            this.deselectAll = document.getElementById(this.deselectAllId);
-            this.compactCheckbox = document.getElementById(this.compactCheckboxId);
-            this.searchTypeSelect = document.getElementById(this.searchTypeSelectId);
-            this.searchResultsLive = document.getElementById(this.searchResultsLiveId);
-            this.groups = [];
-            this.checkboxes = [];
+      if (this.isCompact) {
+        this.dropdown.classList.add("compact");
+      }
+      // Event listeners
+      this.header.addEventListener("click", () => {
+        const isExpanded = this.content.style.display === "block";
+        this.content.style.display = isExpanded ? "none" : "block";
+        this.header.setAttribute("aria-expanded", "false");
+        if (!isExpanded) {
+          this.search.focus();
+        }
+      });
 
-            if (this.isCompact) {
-                this.dropdown.classList.add("compact")
-            }
-            // Event listeners
-            this.header.addEventListener("click", () => {
-                const isExpanded = this.content.style.display === "block";
-                this.content.style.display = isExpanded ? "none" : "block";
-                this.header.setAttribute("aria-expanded", !isExpanded);
-                if (!isExpanded) {
-                    this.search.focus();
-                }
-            });
+      document.addEventListener("click", (e) => {
+        if (!this.dropdown.contains(e.target)) {
+          this.content.style.display = "none";
+          this.header.setAttribute("aria-expanded", "false");
+        }
+      });
 
-            document.addEventListener("click", (e) => {
-                if (!this.dropdown.contains(e.target)) {
-                    this.content.style.display = "none";
-                    this.header.setAttribute("aria-expanded", "false");
-                }
-            });
+      this.advancedBtn.addEventListener("click", () => {
+        const isExpanded = this.advancedBtn.classList.contains("expanded");
+        this.advancedBtn.classList.toggle("expanded");
+        this.searchControls.classList.toggle("expanded");
+        this.advancedBtn.setAttribute("aria-expanded", !isExpanded);
+      });
 
-            this.advancedBtn.addEventListener("click", () => {
-                const isExpanded = this.advancedBtn.classList.contains("expanded");
-                this.advancedBtn.classList.toggle("expanded");
-                this.searchControls.classList.toggle("expanded");
-                this.advancedBtn.setAttribute("aria-expanded", !isExpanded);
-            });
+      // Keyboard navigation
+      this.content.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          this.content.style.display = "none";
+          this.header.setAttribute("aria-expanded", "false");
+          this.header.focus();
+        }
+      });
 
-            // Keyboard navigation
-            this.content.addEventListener("keydown", (e) => {
-                if (e.key === "Escape") {
-                    this.content.style.display = "none";
-                    this.header.setAttribute("aria-expanded", "false");
-                    this.header.focus();
-                }
-            });
+      // Make checkboxes keyboard accessible
+      this.checkboxes = Array.from(this.dropdown.querySelectorAll('input[type="checkbox"]'));
+      this.checkboxes.forEach((checkbox, index) => {
+        checkbox.addEventListener("keydown", (e) => {
+          if (e.key === "ArrowDown" && index < this.checkboxes.length - 1) {
+            e.preventDefault();
+            this.checkboxes[index + 1].focus();
+          }
+          if (e.key === "ArrowUp" && index > 0) {
+            e.preventDefault();
+            this.checkboxes[index - 1].focus();
+          }
+        });
+      });
 
-            // Make checkboxes keyboard accessible
-            this.checkboxes = Array.from(this.dropdown.querySelectorAll('input[type="checkbox"]'));
-            this.checkboxes.forEach((checkbox, index) => {
-                checkbox.addEventListener("keydown", (e) => {
-                    if (e.key === "ArrowDown" && index < this.checkboxes.length - 1) {
-                        e.preventDefault();
-                        this.checkboxes[index + 1].focus();
-                    }
-                    if (e.key === "ArrowUp" && index > 0) {
-                        e.preventDefault();
-                        this.checkboxes[index - 1].focus();
-                    }
-                });
-            });
+      this.search.addEventListener("input", () => {
+        clearTimeout(timeoutId); // Clear any previous timeout
+        timeoutId = setTimeout(() => {
+          const searchType = this.searchTypeSelect.value;
+          const caseInsensitive = document.querySelector(".case-checkbox").checked; // Use document.querySelector to find the element
+          let searchValue = this.search.value;
+          const searchTerms = searchValue.split(",").map((term) => term.trim());
+          // Set a new timeout
+          this.filterItems(oControlHost, searchTerms, searchType, caseInsensitive); // Call filterItems after the delay
+        }, debounceDelay);
+      });
 
-          this.search.addEventListener("input", () => {
-            clearTimeout(timeoutId); // Clear any previous timeout
-            timeoutId = setTimeout(() => {
-                const searchType = this.searchTypeSelect.value;
-                const caseInsensitive = document.querySelector(".case-checkbox").checked; // Use document.querySelector to find the element
-                let searchValue = this.search.value;
-                const searchTerms = searchValue.split(",").map((term) => term.trim());
-                // Set a new timeout
-                this.filterItems(oControlHost, searchTerms, searchType, caseInsensitive); // Call filterItems after the delay
-            }, debounceDelay);
+      this.searchTypeSelect.addEventListener("change", () => {
+        const searchType = this.searchTypeSelect.value;
+        const caseInsensitive = document.querySelector(".case-checkbox").checked; // Use document.querySelector to find the element
+        let searchValue = this.search.value;
+        const searchTerms = searchValue.split(",").map((term) => term.trim());
+        this.filterItems(oControlHost, searchTerms, searchType, caseInsensitive);
+      });
+
+      this.selectAll.addEventListener("click", this.toggleAllItems.bind(this, oControlHost, true));
+      this.deselectAll.addEventListener("click", this.toggleAllItems.bind(this, oControlHost, false));
+      this.applyBtn.addEventListener("click", this.applySelection.bind(this, oControlHost));
+      this.dropdown.addEventListener("change", this.updateSelectedCount.bind(this, oControlHost));
+
+      // Group controls
+      const groups = Array.from(this.dropdown.querySelectorAll(".group"));
+      groups.forEach((group) => {
+        const selectBtn = group.querySelector(".group-select");
+        const deselectBtn = group.querySelector(".group-deselect");
+
+        selectBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const checkboxes = group.querySelectorAll('input[type="checkbox"]');
+          checkboxes.forEach((cb) => (cb.checked = true));
+          this.updateSelectedCount(oControlHost);
+          this.announceGroupSelection(oControlHost, group, true);
         });
 
-    this.searchTypeSelect.addEventListener("change",() => {
-            const searchType = this.searchTypeSelect.value;
-            const caseInsensitive = document.querySelector(".case-checkbox").checked; // Use document.querySelector to find the element
-            let searchValue = this.search.value;
-            const searchTerms = searchValue.split(",").map((term) => term.trim());
-             this.filterItems(oControlHost, searchTerms, searchType, caseInsensitive);
+        deselectBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const checkboxes = group.querySelectorAll('input[type="checkbox"]');
+          checkboxes.forEach((cb) => (cb.checked = false));
+          this.updateSelectedCount(oControlHost);
+          this.announceGroupSelection(oControlHost, group, false);
         });
+      });
 
-            this.selectAll.addEventListener("click", this.toggleAllItems.bind(this, oControlHost, true));
-            this.deselectAll.addEventListener("click", this.toggleAllItems.bind(this, oControlHost, false));
-            this.applyBtn.addEventListener("click", this.applySelection.bind(this, oControlHost));
-            this.dropdown.addEventListener("change", this.updateSelectedCount.bind(this, oControlHost));
+      // Debouncing Implementation
+      let timeoutId;
+      const debounceDelay = 100; // milliseconds
+    }
 
+    /**
+     * Draw the control. Use the stored parameter values.
+     */
+    draw(oControlHost) {
+      if (!this.instancePrefix) {
+        this.instancePrefix = oControlHost.generateUniqueID();
+      }
+      this.isMultiple = !!oControlHost.configuration["Multiple Select"];
+      this.autoSubmit = oControlHost.configuration["AutoSubmit"] !== false;
+      const valueUseCol = oControlHost.configuration["Value Use Column"] ?? 0;
+      const valueDispCol = oControlHost.configuration["Value Display Column"] ?? 1;
 
+      const groupingParamName = oControlHost.configuration["Grouping Parent Name"] ?? "";
+      const groupVals = oControlHost.configuration["Group Values"] ?? false;
+      const groupingValUseCol = oControlHost.configuration["Parent Value Use Column"] ?? 2;
+      const groupingValDispCol = oControlHost.configuration["Parent Value Display Column"] ?? 3;
 
-            // Group controls
-            const groups = Array.from(this.dropdown.querySelectorAll(".group"));
-            groups.forEach((group) => {
-                const selectBtn = group.querySelector(".group-select");
-                const deselectBtn = group.querySelector(".group-deselect");
+      this.hasGrouping = groupVals && groupingParamName !== "";
+      const isCompact = oControlHost.configuration["Compact"] === true; // Read the "Compact" configuration
+      this.isCompact = isCompact;
+      console.log("isCompact", isCompact);
 
-                selectBtn.addEventListener("click", (e) => {
-                    e.stopPropagation();
-                    const checkboxes = group.querySelectorAll('input[type="checkbox"]');
-                    checkboxes.forEach((cb) => (cb.checked = true));
-                    this.updateSelectedCount(oControlHost);
-                    this.announceGroupSelection(oControlHost, group, true);
-                });
+      oControlHost.container.innerHTML = this.generateTemplateHTML(oControlHost);
 
-                deselectBtn.addEventListener("click", (e) => {
-                    e.stopPropagation();
-                    const checkboxes = group.querySelectorAll('input[type="checkbox"]');
-                    checkboxes.forEach((cb) => (cb.checked = false));
-                    this.updateSelectedCount(oControlHost);
-                    this.announceGroupSelection(oControlHost, group, false);
-                });
-            });
-
-            // Debouncing Implementation
-            let timeoutId;
-            const debounceDelay = 100; // milliseconds
-
-           
-        }
-
-        /**
-         * Draw the control. Use the stored parameter values.
-         */
-        draw(oControlHost) {
-            if (!this.instancePrefix) {
-                this.instancePrefix = oControlHost.generateUniqueID();
-            }
-            this.isMultiple = !!oControlHost.configuration["Multiple Select"];
-            this.autoSubmit = oControlHost.configuration["AutoSubmit"] !== false;
-            const valueUseCol = oControlHost.configuration["Value Use Column"] ?? 0;
-            const valueDispCol = oControlHost.configuration["Value Display Column"] ?? 1;
-
-            const groupingParamName = oControlHost.configuration["Grouping Parent Name"] ?? "";
-            const groupVals = oControlHost.configuration["Group Values"] ?? false;
-            const groupingValUseCol = oControlHost.configuration["Parent Value Use Column"] ?? 2;
-            const groupingValDispCol = oControlHost.configuration["Parent Value Display Column"] ?? 3;
-
-            this.hasGrouping = groupVals && groupingParamName !== "";
-            const isCompact = oControlHost.configuration["Compact"] === true; // Read the "Compact" configuration
-            this.isCompact = isCompact;
-            console.log("isCompact", isCompact);
-
-            oControlHost.container.innerHTML = this.generateTemplateHTML(oControlHost);
-
-            this.applyEventListeners(oControlHost);
-            //Initialize selected values
-            this.checkboxes.forEach((checkbox) => {
-                checkbox.checked = this.mainParamValues.includes(checkbox.value);
-            });
-        }
-      /**
-       * The new expected behaviour is pull the values needed by the filterItems()
-       */
+      this.applyEventListeners(oControlHost);
+      //Initialize selected values
+      this.checkboxes.forEach((checkbox) => {
+        checkbox.checked = this.mainParamValues.includes(checkbox.value);
+      });
+    }
+    /**
+     * The new expected behaviour is pull the values needed by the filterItems()
+     */
 
     filterItems(oControlHost, searchTerms, searchType, caseInsensitive) {
-        const dropdown = document.getElementById(this.dropdownId);
-        if (!dropdown) return;
+      const dropdown = document.getElementById(this.dropdownId);
+      if (!dropdown) return;
 
-        const list = dropdown.querySelector(".list");
-        if (!list) return;
+      const list = dropdown.querySelector(".list");
+      if (!list) return;
 
+      // Default search type to "containsAny" if not provided
+      searchType = searchType || "containsAny";
+      caseInsensitive = caseInsensitive !== false;
+      // Check if searchTerms is not an array or is empty
+      if (!Array.isArray(searchTerms)) {
+        console.warn("searchTerms is not an array. Exiting filterItems.");
+        return;
+      }
 
-        // Default search type to "containsAny" if not provided
-        searchType = searchType || "containsAny";
-        caseInsensitive = caseInsensitive !== false;
-         // Check if searchTerms is not an array or is empty
-        if (!Array.isArray(searchTerms)) {
-            console.warn("searchTerms is not an array. Exiting filterItems.");
-            return;
-        }
-
-        // Check if searchTerms is not an array or is empty
-        if (searchTerms.length === 0) {
-            console.warn("searchTerm array is empty. Exiting filterItems.");
-             // Show all items again when search term is empty.
-            const checkboxItems = list.querySelectorAll(".checkbox-item");
-            checkboxItems.forEach((item) => {
-                item.classList.remove("hidden");
-                item.style.display = "flex";
-            });
-
-             // Hide entire groups that have no visible items.
-            const groups = list.querySelectorAll(".group");
-            groups.forEach((group) => {
-                group.style.display = "block";
-            });
-
-            this.updateSelectedCount(oControlHost);
-            this.announceSearchResults(oControlHost);
-            return;
-        }
-        // Loop through each checkbox item and determine its visibility.
+      // Check if searchTerms is not an array or is empty
+      if (searchTerms.length === 0) {
+        console.warn("searchTerm array is empty. Exiting filterItems.");
+        // Show all items again when search term is empty.
         const checkboxItems = list.querySelectorAll(".checkbox-item");
         checkboxItems.forEach((item) => {
-            const label = item.querySelector("span"); //select span instead of label
-            const displayValue = label ? label.textContent : "";
-            let compareValue = displayValue;
-            let compareTerms = searchTerms;
-
-            if (caseInsensitive) {
-                compareValue = displayValue.toLowerCase();
-                compareTerms = searchTerms.map((term) => term.toLowerCase());
-            }
-
-            let isVisible = true;
-            if (searchTerms.length > 0) {
-                switch (searchType) {
-                    case "containsAny":
-                        isVisible = compareTerms.some((term) => compareValue.includes(term));
-                        break;
-                    case "containsAll":
-                        isVisible = compareTerms.every((term) => compareValue.includes(term));
-                        break;
-                    case "startsWithAny":
-                        isVisible = compareTerms.some((term) => compareValue.startsWith(term));
-                        break;
-                    case "startsWithFirstContainsRest":
-                        if (compareTerms.length > 0) {
-                            isVisible = compareValue.startsWith(compareTerms[0]);
-                            if (isVisible && compareTerms.length > 1) {
-                                isVisible = compareTerms.slice(1).every((t) => compareValue.includes(t));
-                            }
-                        }
-                        break;
-                }
-            }
-
-            if (isVisible) {
-                item.classList.remove("hidden");
-                item.style.display = "flex"; // Ensure item is visible
-            } else {
-                item.classList.add("hidden");
-                item.style.display = "none"; // Hide item
-            }
+          item.classList.remove("hidden");
+          item.style.display = "flex";
         });
 
         // Hide entire groups that have no visible items.
         const groups = list.querySelectorAll(".group");
         groups.forEach((group) => {
-            const visibleSubItems = group.querySelectorAll(".checkbox-item:not(.hidden)");
-            group.style.display = visibleSubItems.length === 0 ? "none" : "block";
+          group.style.display = "block";
         });
 
-        //this.updateGroupCheckboxStates(); // updateGroupCheckboxStates functionality does not exist
         this.updateSelectedCount(oControlHost);
         this.announceSearchResults(oControlHost);
+        return;
+      }
+      // Loop through each checkbox item and determine its visibility.
+      const checkboxItems = list.querySelectorAll(".checkbox-item");
+      checkboxItems.forEach((item) => {
+        const label = item.querySelector("span"); //select span instead of label
+        const displayValue = label ? label.textContent : "";
+        let compareValue = displayValue;
+        let compareTerms = searchTerms;
+
+        if (caseInsensitive) {
+          compareValue = displayValue.toLowerCase();
+          compareTerms = searchTerms.map((term) => term.toLowerCase());
+        }
+
+        let isVisible = true;
+        if (searchTerms.length > 0) {
+          switch (searchType) {
+            case "containsAny":
+              isVisible = compareTerms.some((term) => compareValue.includes(term));
+              break;
+            case "containsAll":
+              isVisible = compareTerms.every((term) => compareValue.includes(term));
+              break;
+            case "startsWithAny":
+              isVisible = compareTerms.some((term) => compareValue.startsWith(term));
+              break;
+            case "startsWithFirstContainsRest":
+              if (compareTerms.length > 0) {
+                isVisible = compareValue.startsWith(compareTerms[0]);
+                if (isVisible && compareTerms.length > 1) {
+                  isVisible = compareTerms.slice(1).every((t) => compareValue.includes(t));
+                }
+              }
+              break;
+          }
+        }
+
+        if (isVisible) {
+          item.classList.remove("hidden");
+          item.style.display = "flex"; // Ensure item is visible
+        } else {
+          item.classList.add("hidden");
+          item.style.display = "none"; // Hide item
+        }
+      });
+
+      // Hide entire groups that have no visible items.
+      const groups = list.querySelectorAll(".group");
+      groups.forEach((group) => {
+        const visibleSubItems = group.querySelectorAll(".checkbox-item:not(.hidden)");
+        group.style.display = visibleSubItems.length === 0 ? "none" : "block";
+      });
+
+      //this.updateGroupCheckboxStates(); // updateGroupCheckboxStates functionality does not exist
+      this.updateSelectedCount(oControlHost);
+      this.announceSearchResults(oControlHost);
     }
     /**
      * Checks if the control is in a valid state.
      */
     isInValidState(oControlHost) {
-        return this.dropdown.querySelectorAll('input[type="checkbox"]:checked').length > 0;
+      return this.dropdown.querySelectorAll('input[type="checkbox"]:checked').length > 0;
     }
 
     /**
      * Returns the parameter(s) for submission.
      */
     getParameters(oControlHost) {
-        const sParamName = oControlHost.configuration["Parameter Name"];
-        let params = [];
+      const sParamName = oControlHost.configuration["Parameter Name"];
+      let params = [];
 
-        if (!sParamName) {
-            return null;
-        }
+      if (!sParamName) {
+        return null;
+      }
 
-        const selectedValues = Array.from(
-            this.dropdown.querySelectorAll('input[type="checkbox"]:checked'),
-        ).map((cb) => cb.value);
+      const selectedValues = Array.from(this.dropdown.querySelectorAll('input[type="checkbox"]:checked')).map(
+        (cb) => cb.value
+      );
 
-        params.push({
-            parameter: sParamName,
-            values: selectedValues.map((val) => ({ use: String(val) })),
-        });
+      params.push({
+        parameter: sParamName,
+        values: selectedValues.map((val) => ({ use: String(val) })),
+      });
 
-        console.log("Parameters about to be sent:", JSON.stringify(params));
-        return params.length > 0 ? params : null;
+      console.log("Parameters about to be sent:", JSON.stringify(params));
+      return params.length > 0 ? params : null;
     }
 
     /**
      * Optional destroy method.
      */
     destroy(oControlHost) {
-        // Cleanup if necessary.
+      // Cleanup if necessary.
     }
-}
+  }
 
-return CustomControl;
+  return CustomControl;
 });
 
-/*137 */
+
+/* 142 */
