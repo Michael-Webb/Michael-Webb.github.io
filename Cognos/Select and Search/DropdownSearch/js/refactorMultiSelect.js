@@ -732,7 +732,7 @@ define(() => {
           console.log("Search type:", searchType);
           console.log("Case insensitive:", caseInsensitive);
           console.log("Search Terms:", searchTerms); // Debugging: Log search terms
-          this.filterItems( this.oControlHost, searchTerms, searchType, caseInsensitive);
+          this.filterItems(this.oControlHost, searchTerms, searchType, caseInsensitive);
         }, this.debounceDelay);
       });
 
@@ -741,13 +741,13 @@ define(() => {
         const caseInsensitive = this.dropdown.querySelector(".case-checkbox").checked; // Use document.querySelector to find the element
         let searchValue = this.search.value;
         const searchTerms = searchValue.split(",").map((term) => term.trim());
-        this.filterItems( this.oControlHost, searchTerms, searchType, caseInsensitive);
+        this.filterItems(this.oControlHost, searchTerms, searchType, caseInsensitive);
       });
 
-      this.selectAll.addEventListener("click", () => this.toggleAllItems( this.oControlHost, true));
-      this.deselectAll.addEventListener("click", () => this.toggleAllItems( this.oControlHost, false));
-      this.applyBtn.addEventListener("click", () => this.applySelection( this.oControlHost));
-      this.dropdown.addEventListener("change", () => this.updateSelectedCount( this.oControlHost));
+      this.selectAll.addEventListener("click", () => this.toggleAllItems(this.oControlHost, true));
+      this.deselectAll.addEventListener("click", () => this.toggleAllItems(this.oControlHost, false));
+      this.applyBtn.addEventListener("click", () => this.applySelection(this.oControlHost));
+      this.dropdown.addEventListener("change", () => this.updateSelectedCount(this.oControlHost));
 
       // Group controls
       const groups = Array.from(this.dropdown.querySelectorAll(".group"));
@@ -759,16 +759,16 @@ define(() => {
           e.stopPropagation();
           const checkboxes = group.querySelectorAll('input[type="checkbox"]');
           checkboxes.forEach((cb) => (cb.checked = true));
-          this.updateSelectedCount( this.oControlHost);
-          this.announceGroupSelection( this.oControlHost, group, true);
+          this.updateSelectedCount(this.oControlHost);
+          this.announceGroupSelection(this.oControlHost, group, true);
         });
 
         deselectBtn.addEventListener("click", (e) => {
           e.stopPropagation();
           const checkboxes = group.querySelectorAll('input[type="checkbox"]');
           checkboxes.forEach((cb) => (cb.checked = false));
-          this.updateSelectedCount( this.oControlHost);
-          this.announceGroupSelection( this.oControlHost, group, false);
+          this.updateSelectedCount(this.oControlHost);
+          this.announceGroupSelection(this.oControlHost, group, false);
         });
       });
     }
@@ -981,9 +981,19 @@ define(() => {
     /**
      * Toggles all selection.
      */
+    /**
+     * Toggles all selection.
+     */
     toggleAllItems(oControlHost, checked) {
-      const checkboxes = this.dropdown.querySelectorAll('input[type="checkbox"]');
-      checkboxes.forEach((cb) => (cb.checked = checked));
+      // Select only the visible checkboxes
+      const visibleCheckboxes = Array.from(this.dropdown.querySelectorAll('input[type="checkbox"]')).filter(
+        (checkbox) => {
+          const checkboxItem = checkbox.closest(".checkbox-item");
+          return checkboxItem && !checkboxItem.classList.contains("hidden") && checkboxItem.style.display !== "none";
+        }
+      );
+
+      visibleCheckboxes.forEach((cb) => (cb.checked = checked));
       this.updateSelectedCount(oControlHost);
       this.announceAllSelection(oControlHost, checked);
     }
@@ -1022,4 +1032,4 @@ define(() => {
 
   return CustomControl;
 });
-//311
+//315
