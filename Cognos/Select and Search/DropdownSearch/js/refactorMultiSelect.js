@@ -130,7 +130,6 @@ define(() => {
                     --radius: .5rem;
                     --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
                 }
-
                 .dropdown-container {
                     --padding-lg: 0.75rem 1rem;
                     --padding-md: 0.5rem 0.75rem;
@@ -329,6 +328,11 @@ define(() => {
                 .checkbox-item input[type="checkbox"] {
                     margin-right: 0.5rem;
                     flex-shrink: 0;
+                }
+                
+                input[type="checkbox"] {
+                    margin-bottom: 0rem;
+                    margin-top:0rem;
                 }
                 .checkbox-item input[type="checkbox"]:focus-visible {
                     outline: 2px solid var(--primary);
