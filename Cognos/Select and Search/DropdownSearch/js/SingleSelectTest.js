@@ -127,14 +127,7 @@ define(() => {
           }
         });
 
-        this.m_sel.addEventListener("input", () => {
-          console.log("singleSelect Input")
-          oControlHost.valueChanged();
-          oControlHost.validStateChanged();
-          if (autoSubmit) {
-            oControlHost.finish();
-          }
-        });
+        
       } else {
         const containerId = oControlHost.generateUniqueID();
         console.log("Unique ID: Container ", containerId);
@@ -435,4 +428,4 @@ define(() => {
 
   return CustomControl;
 });
-/* 922 */
+/* 926 */
