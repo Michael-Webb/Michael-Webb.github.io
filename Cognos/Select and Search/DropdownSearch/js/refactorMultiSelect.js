@@ -58,6 +58,8 @@ define(() => {
       }
       console.log("Initial mainParamValues:", this.mainParamValues);
 
+      this.caseInsensitiveDefault = oControlHost.configuration["Case Insensitive Search Default"] ?? true;
+
       fnDoneInitializing();
     }
 
@@ -110,6 +112,8 @@ define(() => {
       /* if (isCompact) {
                  dropdownClass += " compact";
              }*/
+
+      const caseInsensitiveChecked = this.caseInsensitiveDefault ? "checked" : "";
 
       let sHtml = `
             <style>
@@ -492,15 +496,15 @@ define(() => {
                                         ><span>Search type:</span>
                                     </label>
                                     <select class="search-type" aria-label="Search type"  id="${this.searchTypeSelectId}">
-                                        <option value="any">Contains Any</option>
-                                        <option value="all">Contains All</option>
-                                            <option value="startsWithAny">Starts With Any</option>
-                                             <option value="startsWithFirstContainsRest">Starts With First Contains Rest</option>
+                                        <option value="containsAny">Contains Any</option>
+                                        <option value="containsAll">Contains All</option>
+                                        <option value="startsWithAny">Starts With Any</option>
+                                        <option value="startsWithFirstContainsRest">Starts With First Contains Rest</option>
                                     </select>
                                 
                                 </div>
                                 <label class="case-option">
-                                    <input type="checkbox" class="case-checkbox" checked />
+                                    <input type="checkbox" class="case-checkbox" ${caseInsensitiveChecked} />
                                     <span>Case insensitive</span>
                                 </label>
                             </div>
@@ -608,34 +612,53 @@ define(() => {
     }
 
     applyEventListeners(oControlHost) {
-      this.dropdown = document.getElementById(this.dropdownId);
-      this.header = document.getElementById(this.headerId);
-      this.content = document.getElementById(this.contentId);
-      this.search = document.getElementById(this.searchId);
-      this.advancedBtn = document.getElementById(this.advancedBtnId);
-      this.searchControls = document.getElementById(this.searchControlsId);
-      this.applyBtn = document.getElementById(this.applyBtnId);
-      this.selectAll = document.getElementById(this.selectAllId);
-      this.deselectAll = document.getElementById(this.deselectAllId);
-      this.compactCheckbox = document.getElementById(this.compactCheckboxId);
-      this.searchTypeSelect = document.getElementById(this.searchTypeSelectId);
-      this.searchResultsLive = document.getElementById(this.searchResultsLiveId);
-      this.groups = [];
-      this.checkboxes = [];
+      // Use querySelector to select elements
+      this.dropdown = document.querySelector(`#${this.dropdownId}`);
+      this.header = document.querySelector(`#${this.headerId}`);
+      this.content = document.querySelector(`#${this.contentId}`);
+      this.search = document.querySelector(`#${this.searchId}`);
+      this.advancedBtn = document.querySelector(`#${this.advancedBtnId}`);
+      this.searchControls = document.querySelector(`#${this.searchControlsId}`);
+      this.applyBtn = document.querySelector(`#${this.applyBtnId}`);
+      this.selectAll = document.querySelector(`#${this.selectAllId}`);
+      this.deselectAll = document.querySelector(`#${this.deselectAllId}`);
+      this.compactCheckbox = document.querySelector(`#${this.compactCheckboxId}`);
+      this.searchTypeSelect = document.querySelector(`#${this.searchTypeSelectId}`);
+      this.searchResultsLive = document.querySelector(`#${this.searchResultsLiveId}`);
+
+      // Ensure all elements exist
+      if (
+        !this.dropdown ||
+        !this.header ||
+        !this.content ||
+        !this.search ||
+        !this.advancedBtn ||
+        !this.searchControls ||
+        !this.applyBtn ||
+        !this.selectAll ||
+        !this.deselectAll ||
+        !this.compactCheckbox ||
+        !this.searchTypeSelect ||
+        !this.searchResultsLive
+      ) {
+        console.error("One or more elements not found.");
+        return;
+      }
 
       if (this.isCompact) {
         this.dropdown.classList.add("compact");
       }
-      // Event listeners
+      // Add event listeners
       this.header.addEventListener("click", () => {
         const isExpanded = this.content.style.display === "block";
         this.content.style.display = isExpanded ? "none" : "block";
         this.header.setAttribute("aria-expanded", !isExpanded);
-        this.content.setAttribute("aria-hidden", isExpanded);
         if (!isExpanded) {
           this.search.focus();
         }
       });
+
+      // Other event listeners...
 
       document.addEventListener("click", (e) => {
         if (!this.dropdown.contains(e.target)) {
@@ -659,6 +682,17 @@ define(() => {
           this.header.focus();
         }
       });
+
+      const caseCheckbox = this.dropdown.querySelector(".case-checkbox");
+      if (caseCheckbox) {
+        // Set the initial state of the checkbox
+        caseCheckbox.checked = this.caseInsensitiveDefault;
+
+        // Update the case-insensitive value when the checkbox changes
+        caseCheckbox.addEventListener("change", () => {
+          this.caseInsensitiveDefault = caseCheckbox.checked;
+        });
+      }
 
       // Make checkboxes keyboard accessible
       this.checkboxes = Array.from(this.dropdown.querySelectorAll('input[type="checkbox"]'));
@@ -784,7 +818,7 @@ define(() => {
 
       // Default search type to "containsAny" if not provided
       searchType = searchType || "containsAny";
-      caseInsensitive = caseInsensitive !== false;
+      caseInsensitive = caseInsensitive !== undefined ? caseInsensitive : this.caseInsensitiveDefault;
 
       // If searchTerms is not an array or is empty, show all items and exit
       if (!Array.isArray(searchTerms) || searchTerms.length === 0 || searchTerms[0] === "") {
@@ -977,4 +1011,4 @@ define(() => {
 
   return CustomControl;
 });
-//234
+//247
