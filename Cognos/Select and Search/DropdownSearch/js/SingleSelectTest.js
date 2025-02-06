@@ -112,7 +112,8 @@ define(() => {
         }
         sHtml += `</select>`;
         oControlHost.container.innerHTML = sHtml;
-        this.m_sel = oControlHost.container.querySelectorAll(`#${selectId}`);
+        this.m_sel = oControlHost.container.querySelector(`#${selectId}`);
+        console.log(this.m_sel)
 
         if (this.mainParamValues && this.mainParamValues.length > 0) {
           this.m_sel.value = this.mainParamValues[0];
