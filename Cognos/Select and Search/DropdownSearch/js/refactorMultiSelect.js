@@ -787,7 +787,8 @@ define(() => {
       this.applyEventListeners();
 
       // Initialize selected values
-      this.checkboxes.forEach((checkbox) => {
+      const optionCheckboxes = this.dropdown.querySelectorAll(".list input[type='checkbox']");
+      optionCheckboxes.forEach((checkbox) => {
         checkbox.checked = this.mainParamValues.includes(checkbox.value);
       });
     }
@@ -1000,14 +1001,18 @@ define(() => {
      * Updates the selected count.
      */
     updateSelectedCount(oControlHost) {
-      const count = this.dropdown.querySelectorAll('input[type="checkbox"]:checked').length;
-      const selectedItems = Array.from(this.dropdown.querySelectorAll('input[type="checkbox"]:checked'))
+      // Only count checkboxes that are inside the options list (not in search controls)
+      const optionCheckboxes = this.dropdown.querySelectorAll('.list input[type="checkbox"]:checked');
+      const count = optionCheckboxes.length;
+
+      const selectedItems = Array.from(optionCheckboxes)
         .map((cb) => {
           const checkboxItem = cb.closest(".checkbox-item");
-          return checkboxItem ? checkboxItem.title : null; // Check for null
+          return checkboxItem ? checkboxItem.title : null;
         })
-        .filter((title) => title !== null) // Remove null titles
+        .filter((title) => title !== null)
         .join(", ");
+
       this.header.querySelector("span").textContent = count ? `${count} selected` : "Select Options";
       this.header.title = count ? selectedItems : "Select Options";
     }
@@ -1015,4 +1020,4 @@ define(() => {
 
   return CustomControl;
 });
-//343
+//348
