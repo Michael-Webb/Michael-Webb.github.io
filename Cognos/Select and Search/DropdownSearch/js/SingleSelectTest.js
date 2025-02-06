@@ -7,7 +7,6 @@ define(() => {
      */
     initialize(oControlHost, fnDoneInitializing) {
       this.mainParamValues = [];
-      // Removed groupParamValues since we no longer need group-level filter values.
       this.groupChildren = {};
 
       const mainParams = oControlHost.getParameter(oControlHost.configuration["Parameter Name"]);
@@ -15,13 +14,9 @@ define(() => {
         mainParams.values.forEach((val) => this.mainParamValues.push(val.use));
       }
 
-      // Removed groupParams initialization.
-
-      // Use configuration values for columns.
       const valueUseCol = oControlHost.configuration["Value Use Column"] ?? 0;
       const groupingValUseCol = oControlHost.configuration["Parent Value Use Column"] ?? 2;
 
-      // Build mapping of groups to their child “main” values.
       if (this.m_oDataStore && this.m_oDataStore.rowCount) {
         for (let i = 0; i < this.m_oDataStore.rowCount; i++) {
           const mainUse = this.m_oDataStore.getCellValue(i, valueUseCol);
@@ -48,32 +43,27 @@ define(() => {
      * Draw the control. Use the stored parameter values.
      */
     draw(oControlHost) {
-      // Read configuration values.
       const isMultiple = !!oControlHost.configuration["Multiple Select"];
       const autoSubmit = oControlHost.configuration["AutoSubmit"] !== false;
       const valueUseCol = oControlHost.configuration["Value Use Column"] ?? 0;
       const valueDispCol = oControlHost.configuration["Value Display Column"] ?? 0;
 
-      // Grouping configuration.
       const groupingParamName = oControlHost.configuration["Grouping Parent Name"] ?? "";
       const groupVals = oControlHost.configuration["Group Values"] ?? false;
       const groupingValUseCol = oControlHost.configuration["Parent Value Use Column"] ?? 2;
       const groupingValDispCol = oControlHost.configuration["Parent Value Display Column"] ?? 2;
 
-      // New Configuration Option: Group Initially Collapsed
       const groupInitiallyCollapsed = oControlHost.configuration["Group Initially Collapsed"] === true;
 
       this.isMultiple = isMultiple;
       this.autoSubmit = autoSubmit;
-      // Grouping is enabled only when "Group Values" is true and a grouping parameter name is provided.
       this.hasGrouping = groupVals && groupingParamName !== "";
 
       let sHtml = "";
 
       if (!isMultiple) {
-        // ----- SINGLE-SELECT MODE -----
         const selectId = oControlHost.generateUniqueID();
-        console.log("Unique ID: singleSelect ",selectId)
+        console.log("Unique ID: singleSelect ", selectId);
         sHtml += `
                 <style>
                   .custom-dropdown {
@@ -82,8 +72,6 @@ define(() => {
                     border: 1px solid #ccc;
                     border-radius: 3px;
                   }
-                  /* Optional: Prevent overly long option text from causing horizontal scroll.
-                     Note: Styling of <option> elements is limited across browsers. */
                   .custom-dropdown option {
                     white-space: nowrap;
                     overflow: hidden;
@@ -95,7 +83,6 @@ define(() => {
               `;
         if (this.m_oDataStore && this.m_oDataStore.rowCount) {
           if (this.hasGrouping) {
-            // Build groups mapping.
             let groups = {};
             for (let i = 0; i < this.m_oDataStore.rowCount; i++) {
               const mainUse = this.m_oDataStore.getCellValue(i, valueUseCol);
@@ -107,18 +94,15 @@ define(() => {
               }
               groups[groupUse].options.push({ use: mainUse, display: mainDisp });
             }
-            // Build the dropdown using <optgroup>.
             for (const groupKey in groups) {
               const group = groups[groupKey];
               sHtml += `<optgroup label="${group.display}">`;
               group.options.forEach((option) => {
-                // Each option gets a data-group attribute and title for tooltip.
                 sHtml += `<option value="${option.use}" data-group="${groupKey}" title="${option.display}">${option.display}</option>`;
               });
               sHtml += `</optgroup>`;
             }
           } else {
-            // No grouping: list each row as an option.
             for (let i = 0; i < this.m_oDataStore.rowCount; i++) {
               const useValue = this.m_oDataStore.getCellValue(i, valueUseCol);
               const dispValue = this.m_oDataStore.getCellValue(i, valueDispCol);
@@ -130,7 +114,6 @@ define(() => {
         oControlHost.container.innerHTML = sHtml;
         this.m_sel = document.getElementById(selectId);
 
-        // Prepopulate the dropdown using the stored main parameter value.
         if (this.mainParamValues && this.mainParamValues.length > 0) {
           this.m_sel.value = this.mainParamValues[0];
         }
@@ -143,9 +126,8 @@ define(() => {
           }
         });
       } else {
-        // ----- MULTIPLE-SELECT MODE -----
         const containerId = oControlHost.generateUniqueID();
-        console.log("Unique ID: Container ",containerId)
+        console.log("Unique ID: Container ", containerId);
         sHtml += `
                 <style>
                   .checkbox-container {
@@ -155,7 +137,6 @@ define(() => {
                     max-height: 300px;
                     overflow-y: auto;
                     margin-bottom: 10px;
-                    /* Prevent horizontal scrolling */
                     overflow-x: hidden;
                   }
                   .checkbox-label {
@@ -176,14 +157,12 @@ define(() => {
                     background-color: #ddd;
                     color: #000;
                   }
-                  /* Group header row styles */
                   .group-header {
                     display: flex;
                     align-items: center;
                     cursor: pointer;
                     margin-bottom: 5px;
                   }
-                  /* Make the header focusable and show an outline when focused */
                   .group-header:focus {
                     outline: 2px solid #0078d7;
                   }
@@ -200,10 +179,9 @@ define(() => {
                   .collapsed {
                     display: none;
                   }
-                  /* New style to handle long text: limit width, hide overflow, add ellipsis */
                   .display-text {
                     display: inline-block;
-                    max-width: 150px; /* Adjust as needed */
+                    max-width: 150px;
                     white-space: nowrap;
                     overflow: hidden;
                     text-overflow: ellipsis;
@@ -214,7 +192,6 @@ define(() => {
               `;
         if (this.m_oDataStore && this.m_oDataStore.rowCount) {
           if (this.hasGrouping) {
-            // Build groups mapping.
             let groups = {};
             for (let i = 0; i < this.m_oDataStore.rowCount; i++) {
               const mainUse = this.m_oDataStore.getCellValue(i, valueUseCol);
@@ -226,13 +203,11 @@ define(() => {
               }
               groups[groupUse].items.push({ use: mainUse, display: mainDisp });
             }
-            // Render each group with a header row and its items.
             for (const groupKey in groups) {
               const group = groups[groupKey];
               const isInitiallyExpanded = !groupInitiallyCollapsed;
               const expandCollapseIndicator = isInitiallyExpanded ? "▼" : "►";
               sHtml += `<div class="group-container" data-group="${groupKey}">`;
-              // Note the added tabindex="0" to allow focus via the keyboard.
               sHtml += `<div class="group-header" data-group="${groupKey}" tabindex="0">
                             <input type="checkbox" class="group-checkbox" data-group="${groupKey}" />
                             <span class="expand-collapse-indicator">${expandCollapseIndicator}</span>
@@ -248,7 +223,6 @@ define(() => {
               sHtml += `</div></div>`;
             }
           } else {
-            // No grouping: simply list each row as a checkbox.
             for (let i = 0; i < this.m_oDataStore.rowCount; i++) {
               const useValue = this.m_oDataStore.getCellValue(i, valueUseCol);
               const dispValue = this.m_oDataStore.getCellValue(i, valueDispCol);
@@ -263,11 +237,9 @@ define(() => {
         sHtml += `<button class="MyApplyButton btnApply">Apply</button>`;
         oControlHost.container.innerHTML = sHtml;
 
-        // Save references to checkboxes.
         if (this.hasGrouping) {
           this.m_groupContainers = Array.from(oControlHost.container.querySelectorAll(".group-container"));
           this.m_groupCheckboxes = Array.from(oControlHost.container.querySelectorAll(".group-checkbox"));
-          // Get all individual item checkboxes (exclude the group-level ones)
           this.m_itemCheckboxes = Array.from(
             oControlHost.container.querySelectorAll('input[type="checkbox"]:not(.group-checkbox)')
           );
@@ -277,13 +249,11 @@ define(() => {
           );
         }
 
-        // Prepopulate item checkboxes using mainParamValues.
         if (this.hasGrouping) {
           this.m_itemCheckboxes.forEach((itemCb) => {
             itemCb.checked = this.mainParamValues.includes(itemCb.value);
           });
 
-          // Recalculate group header state based on its child checkboxes.
           this.m_groupContainers.forEach((container) => {
             const groupCheckbox = container.querySelector(".group-checkbox");
             const itemCheckboxes = container.querySelectorAll('.group-items input[type="checkbox"]');
@@ -301,7 +271,6 @@ define(() => {
             }
           });
         } else {
-          // No grouping.
           this.m_checkboxes.forEach((cb) => {
             cb.checked = this.mainParamValues.includes(cb.value);
             cb.addEventListener("change", () => {
@@ -311,13 +280,10 @@ define(() => {
           });
         }
 
-        // Attach event listener to the group header for toggling expand/collapse.
         if (this.hasGrouping) {
           this.m_groupContainers.forEach((container) => {
             const header = container.querySelector(".group-header");
-            // Handle mouse click events.
             header.addEventListener("click", (event) => {
-              // Only toggle expand/collapse if the click is not on the checkbox.
               if (event.target.tagName.toLowerCase() !== "input") {
                 const groupItems = container.querySelector(".group-items");
                 const indicator = header.querySelector(".expand-collapse-indicator");
@@ -325,10 +291,9 @@ define(() => {
                 indicator.innerHTML = groupItems.classList.contains("collapsed") ? "►" : "▼";
               }
             });
-            // Handle keyboard events (spacebar) on the header row.
             header.addEventListener("keydown", (event) => {
               if (event.key === " " || event.key === "Spacebar" || event.keyCode === 32) {
-                event.preventDefault(); // Prevent page scroll
+                event.preventDefault();
                 const groupItems = container.querySelector(".group-items");
                 const indicator = header.querySelector(".expand-collapse-indicator");
                 groupItems.classList.toggle("collapsed");
@@ -337,7 +302,6 @@ define(() => {
             });
           });
 
-          // When a group header checkbox changes, update its child items.
           this.m_groupCheckboxes.forEach((groupCb) => {
             groupCb.addEventListener("change", () => {
               const groupKey = groupCb.getAttribute("data-group");
@@ -346,7 +310,6 @@ define(() => {
               itemCheckboxes.forEach((itemCb) => {
                 itemCb.checked = groupCb.checked;
               });
-              // Recalculate header state.
               const checkedCount = Array.from(itemCheckboxes).filter((cb) => cb.checked).length;
               const totalCount = itemCheckboxes.length;
               if (checkedCount === totalCount && totalCount > 0) {
@@ -364,7 +327,6 @@ define(() => {
             });
           });
 
-          // When an individual item checkbox changes, recalc its parent group header state.
           this.m_itemCheckboxes.forEach((itemCb) => {
             itemCb.addEventListener("change", () => {
               const groupKey = itemCb.getAttribute("data-group");
@@ -388,7 +350,6 @@ define(() => {
             });
           });
         }
-        // Bind the Apply button.
         oControlHost.container.querySelector(".btnApply").onclick = () => {
           oControlHost.valueChanged();
           oControlHost.finish();
@@ -401,10 +362,9 @@ define(() => {
      */
     isInValidState(oControlHost) {
       if (!this.isMultiple) {
-        return this.m_sel //&& this.m_sel.value !== "";
+        return this.m_sel; //&& this.m_sel.value !== "";
       } else {
         if (this.hasGrouping) {
-          // Only need to check that at least one main (child) item is checked.
           return this.m_itemCheckboxes && this.m_itemCheckboxes.some((cb) => cb.checked);
         } else {
           return this.m_checkboxes && this.m_checkboxes.some((cb) => cb.checked);
@@ -414,7 +374,6 @@ define(() => {
 
     /**
      * Returns the parameter(s) for submission.
-     * Only main parameter values are submitted.
      */
     getParameters(oControlHost) {
       const sParamName = oControlHost.configuration["Parameter Name"];
@@ -466,4 +425,4 @@ define(() => {
 
   return CustomControl;
 });
-/* testing 845 */
+/* 904 */
