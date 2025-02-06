@@ -137,6 +137,7 @@ define(() => {
 
         this.m_sel.addEventListener("change", () => {
           oControlHost.valueChanged();
+          oControlHost.validStateChanged();
           if (autoSubmit) {
             oControlHost.finish();
           }
