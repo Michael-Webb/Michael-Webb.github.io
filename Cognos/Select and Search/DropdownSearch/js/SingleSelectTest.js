@@ -73,6 +73,7 @@ define(() => {
       if (!isMultiple) {
         // ----- SINGLE-SELECT MODE -----
         const selectId = oControlHost.generateUniqueID();
+        onsole.log("Unique ID: Container ",selectId)
         sHtml += `
                 <style>
                   .custom-dropdown {
@@ -127,7 +128,6 @@ define(() => {
         }
         sHtml += `</select>`;
         oControlHost.container.innerHTML = sHtml;
-
         this.m_sel = document.getElementById(selectId);
 
         // Prepopulate the dropdown using the stored main parameter value.
@@ -145,6 +145,7 @@ define(() => {
       } else {
         // ----- MULTIPLE-SELECT MODE -----
         const containerId = oControlHost.generateUniqueID();
+        console.log("Unique ID: Container ",containerId)
         sHtml += `
                 <style>
                   .checkbox-container {
@@ -400,7 +401,7 @@ define(() => {
      */
     isInValidState(oControlHost) {
       if (!this.isMultiple) {
-        return this.m_sel && this.m_sel.value !== "";
+        return this.m_sel //&& this.m_sel.value !== "";
       } else {
         if (this.hasGrouping) {
           // Only need to check that at least one main (child) item is checked.
@@ -465,4 +466,4 @@ define(() => {
 
   return CustomControl;
 });
-/* testing 829 */
+/* testing 845 */
