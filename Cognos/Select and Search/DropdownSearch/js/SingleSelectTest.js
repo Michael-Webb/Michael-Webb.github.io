@@ -112,7 +112,7 @@ define(() => {
         }
         sHtml += `</select>`;
         oControlHost.container.innerHTML = sHtml;
-        this.m_sel = document.getElementById(selectId);
+        this.m_sel = oControlHost.container.getElementById(selectId);
 
         if (this.mainParamValues && this.mainParamValues.length > 0) {
           this.m_sel.value = this.mainParamValues[0];
@@ -425,4 +425,4 @@ define(() => {
 
   return CustomControl;
 });
-/* 904 */
+/* 908 */
