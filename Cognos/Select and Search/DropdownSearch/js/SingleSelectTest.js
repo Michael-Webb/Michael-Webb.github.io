@@ -71,11 +71,25 @@ define(() => {
                     font-size: 14px;
                     border: 1px solid #ccc;
                     border-radius: 3px;
+                    width: 100%;
                   }
                   .custom-dropdown option {
                     white-space: nowrap;
                     overflow: hidden;
                     text-overflow: ellipsis;
+                  }
+                  * Scrollbar Styling */
+                  .custom-dropdown::-webkit-scrollbar {
+                    width: 5px;
+                  }
+                  .custom-dropdown::-webkit-scrollbar-track {
+                    background: #f0f1f3;
+                  }
+                  .custom-dropdown::-webkit-scrollbar-thumb {
+                    background: #cdcfd1;
+                  }
+                  .custom-dropdown::-webkit-scrollbar-thumb:hover {
+                    background: #b2b6b9;
                   }
                 </style>
                 <select id="${selectId}" class="custom-dropdown">
@@ -126,18 +140,7 @@ define(() => {
           if (autoSubmit) {
             oControlHost.finish();
           }
-        });
-
-        this.m_sel.addEventListener("input", () => {
-          console.log("singleSelect Input")
-          oControlHost.valueChanged();
-          oControlHost.validStateChanged();
-          if (autoSubmit) {
-            oControlHost.finish();
-          }
-        });
-
-        
+        });        
       } else {
         const containerId = oControlHost.generateUniqueID();
         console.log("Unique ID: Container ", containerId);
@@ -151,6 +154,19 @@ define(() => {
                     overflow-y: auto;
                     margin-bottom: 10px;
                     overflow-x: hidden;
+                  }
+                  * Scrollbar Styling */
+                  .checkbox-container::-webkit-scrollbar {
+                    width: 5px;
+                  }
+                  .checkbox-container::-webkit-scrollbar-track {
+                    background: #f0f1f3;
+                  }
+                  .checkbox-container::-webkit-scrollbar-thumb {
+                    background: #cdcfd1;
+                  }
+                  .checkbox-container::-webkit-scrollbar-thumb:hover {
+                    background: #b2b6b9;
                   }
                   .checkbox-label {
                     display: block;
@@ -341,7 +357,7 @@ define(() => {
           });
 
           this.m_itemCheckboxes.forEach((itemCb) => {
-            itemCb.addEventListener("change", () => {
+            itemCb.addEventListener("input", () => {
               const groupKey = itemCb.getAttribute("data-group");
               const groupContainer = oControlHost.container.querySelector(`.group-container[data-group="${groupKey}"]`);
               const groupCheckbox = groupContainer.querySelector(".group-checkbox");
@@ -375,7 +391,7 @@ define(() => {
      */
     isInValidState(oControlHost) {
       if (!this.isMultiple) {
-        return this.m_sel; //&& this.m_sel.value !== "";
+        return this.m_sel && this.m_sel.value !== '';
       } else {
         if (this.hasGrouping) {
           return this.m_itemCheckboxes && this.m_itemCheckboxes.some((cb) => cb.checked);
