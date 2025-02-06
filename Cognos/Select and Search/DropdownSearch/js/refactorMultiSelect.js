@@ -346,7 +346,7 @@ define(() => {
                     min-width: 0;
                 }
                 .hidden {
-                   display: none;
+                   display: none !important;
                 }
 
                 .dropdown-footer {
@@ -690,7 +690,9 @@ define(() => {
           const caseInsensitive = this.dropdown.querySelector(".case-checkbox").checked;
           const searchValue = this.search.value.trim(); // Trim whitespace
           const searchTerms = searchValue.split(",").map((term) => term.trim()); // Split by comma and trim each term
-
+          console.log("Filtering items with search terms:", searchTerms);
+          console.log("Search type:", searchType);
+          console.log("Case insensitive:", caseInsensitive);
           console.log("Search Terms:", searchTerms); // Debugging: Log search terms
           this.filterItems(oControlHost, searchTerms, searchType, caseInsensitive);
         }, this.debounceDelay);
@@ -731,10 +733,6 @@ define(() => {
           this.announceGroupSelection(oControlHost, group, false);
         });
       });
-
-      // Debouncing Implementation
-      let timeoutId;
-      const debounceDelay = 100; // milliseconds
     }
 
     /**
@@ -952,6 +950,14 @@ define(() => {
       this.searchResultsLive.textContent = `All options ${isSelected ? "selected" : "cleared"}`;
     }
 
+        /**
+     * Announces the search results
+     */
+        announceSearchResults(oControlHost) {
+            const visibleCount = this.dropdown.querySelectorAll('.checkbox-item:not([style*="display: none"])').length;
+            this.searchResultsLive.textContent = `${visibleCount} options found`;
+          }
+
     /**
      * Updates the selected count.
      */
@@ -968,18 +974,7 @@ define(() => {
       this.header.title = count ? selectedItems : "Select Options";
     }
 
-    /**
-     * Toggles group selection.
-     */
-    toggleGroupItems() {}
 
-    /**
-     * Announces the search results
-     */
-    announceSearchResults(oControlHost) {
-      const visibleCount = this.dropdown.querySelectorAll('.checkbox-item:not([style*="display: none"])').length;
-      this.searchResultsLive.textContent = `${visibleCount} options found`;
-    }
   }
 
   return CustomControl;
