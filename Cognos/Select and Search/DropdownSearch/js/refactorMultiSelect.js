@@ -475,7 +475,7 @@ define(() => {
                                 <input
                                     type="text"
                                     class="search-input"
-                                    id="searchInput"
+                                    id="${this.searchId}"
                                     placeholder="Search options..."
                                     aria-label="Search options"
                                 />
