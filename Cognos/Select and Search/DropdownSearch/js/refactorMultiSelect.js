@@ -424,6 +424,7 @@ define(() => {
                 .search-wrapper {
                     position: relative;
                     display: inline-block;
+                    width:100%;
                 }
 
                 .search-input {
@@ -740,9 +741,8 @@ define(() => {
       this.iconSvg = this.oControlHost.container.querySelector("#iconSvg");
 
       // Define the SVG paths
-      const magnifyingGlassSVG = `
-          <path d="M11.742 10.344a6.5 6.5 0 1 0-.998.998l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zM12 6.5A5.5 5.5 0 1 1 6.5 1 5.5 5.5 0 0 1 12 6.5z"/>`;
-      const clearSVG = `<path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>`;
+      const magnifyingGlassSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`;
+      const clearSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`;
 
       // Function to update the search icon based on the input value
       const updateSearchIcon = () => {
@@ -774,12 +774,19 @@ define(() => {
       // When the icon is clicked, clear the search if text exists.
       this.searchIcon.addEventListener("click", () => {
         if (this.search.value.trim() !== "") {
+          // Clear the search input and update the icon
           this.search.value = "";
           updateSearchIcon();
           this.search.focus();
-          // Optionally, trigger filtering again now that search is cleared.
+          
+          // Remove the filter from the list:
+          const searchType = this.searchTypeSelect.value;
+          const caseInsensitive = this.dropdown.querySelector(".case-checkbox").checked;
+          // Passing an array with an empty string will cause filterItems() to show all items
+          this.filterItems(this.oControlHost, [""], searchType, caseInsensitive);
         }
       });
+      
 
       // Initialize the icon on page load
       updateSearchIcon();
