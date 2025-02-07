@@ -482,9 +482,7 @@ define(() => {
                                 />
                                 <button type="button" class="search-icon" id="searchIcon" aria-label="Search">
                                     <!-- Placeholder SVG for magnifying glass -->
-                                    <svg id="iconSvg" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="gray" viewBox="0 0 16 16">
-                                    <path d="M11.742 10.344a6.5 6.5 0 1 0-.998.998l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zM12 6.5A5.5 5.5 0 1 1 6.5 1 5.5 5.5 0 0 1 12 6.5z"/>
-                                    </svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"  stroke="#808080" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                                 </button>
                             </div>
                             <button
@@ -741,8 +739,8 @@ define(() => {
       this.iconSvg = this.oControlHost.container.querySelector("#iconSvg");
 
       // Define the SVG paths
-      const magnifyingGlassSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`;
-      const clearSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`;
+      const magnifyingGlassSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#808080" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`;
+      const clearSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#808080" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`;
 
       // Function to update the search icon based on the input value
       const updateSearchIcon = () => {
@@ -1093,4 +1091,4 @@ define(() => {
 
   return CustomControl;
 });
-//422
+//412
