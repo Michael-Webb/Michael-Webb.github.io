@@ -421,6 +421,28 @@ define(() => {
                     clip: rect(0, 0, 0, 0);
                     border: 0;
                 }
+                .search-wrapper {
+                    position: relative;
+                    display: inline-block;
+                }
+
+                .search-input {
+                    /* Add some right padding so text doesn't flow under the icon */
+                    padding-right: 2rem;
+                    box-sizing: border-box;
+                }
+
+                .search-icon {
+                    position: absolute;
+                    right: 0.5rem;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    border: none;
+                    background: transparent;
+                    cursor: pointer;
+                    padding: 0;
+                }
+
             </style>
           
             <div class="${dropdownClass}" id="${this.dropdownId}">
@@ -449,12 +471,21 @@ define(() => {
                 >
                     <div class="header">
                         <div class="search-container">
-                            <input
-                                type="text"
-                                class="search-input"
-                                placeholder="Search options..."
-                                aria-label="Search options" id="${this.searchId}"
-                            />
+                            <div class="search-wrapper">
+                                <input
+                                    type="text"
+                                    class="search-input"
+                                    id="searchInput"
+                                    placeholder="Search options..."
+                                    aria-label="Search options"
+                                />
+                                <button type="button" class="search-icon" id="searchIcon" aria-label="Search">
+                                    <!-- Placeholder SVG for magnifying glass -->
+                                    <svg id="iconSvg" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="gray" viewBox="0 0 16 16">
+                                    <path d="M11.742 10.344a6.5 6.5 0 1 0-.998.998l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zM12 6.5A5.5 5.5 0 1 1 6.5 1 5.5 5.5 0 0 1 12 6.5z"/>
+                                    </svg>
+                                </button>
+                            </div>
                             <button
                                 class="advanced-search"
                                 aria-expanded="false"
@@ -608,7 +639,6 @@ define(() => {
       this.searchResultsLive = this.oControlHost.container.querySelector(`#${this.searchResultsLiveId}`);
 
       // Ensure all elements exist
-      // Check each element individually and log if missing
       let missingElements = [];
       if (!this.dropdown) missingElements.push(`Dropdown (ID: ${this.dropdownId})`);
       if (!this.header) missingElements.push(`Header (ID: ${this.headerId})`);
@@ -622,7 +652,6 @@ define(() => {
       if (!this.searchTypeSelect) missingElements.push(`Search Type Select (ID: ${this.searchTypeSelectId})`);
       if (!this.searchResultsLive) missingElements.push(`Search Results Live (ID: ${this.searchResultsLiveId})`);
 
-      // Log missing elements if any
       if (missingElements.length > 0) {
         console.error("The following elements are missing:", missingElements.join(", "));
         return;
@@ -634,9 +663,9 @@ define(() => {
       // Initialize dropdown content display
       this.content.style.display = "none"; // Ensure the dropdown is closed by default
 
-      // Add event listeners
+      // Add event listeners for dropdown header
       this.header.addEventListener("click", (e) => {
-        e.stopPropagation(); // Prevent the click from propagating to the document
+        e.stopPropagation();
         const isExpanded = this.content.style.display === "block";
         this.content.style.display = isExpanded ? "none" : "block";
         this.header.setAttribute("aria-expanded", !isExpanded);
@@ -653,6 +682,7 @@ define(() => {
         }
       });
 
+      // Advanced search controls toggle
       this.advancedBtn.addEventListener("click", () => {
         const isExpanded = this.advancedBtn.classList.contains("expanded");
         this.advancedBtn.classList.toggle("expanded");
@@ -660,7 +690,7 @@ define(() => {
         this.advancedBtn.setAttribute("aria-expanded", !isExpanded);
       });
 
-      // Keyboard navigation
+      // Keyboard navigation for the dropdown content
       this.content.addEventListener("keydown", (e) => {
         if (e.key === "Escape") {
           this.content.style.display = "none";
@@ -669,13 +699,13 @@ define(() => {
         }
       });
 
+      // Case insensitive checkbox event handling
       const caseCheckbox = this.dropdown.querySelector(".case-checkbox");
       if (caseCheckbox) {
         caseCheckbox.checked = this.caseInsensitiveDefault;
 
         caseCheckbox.addEventListener("change", () => {
           this.caseInsensitive = caseCheckbox.checked;
-          // Trigger search update if needed
           const searchValue = this.search.value.trim();
           const searchTerms = searchValue.split(",").map((term) => term.trim());
           const searchType = this.searchTypeSelect.value;
@@ -698,34 +728,66 @@ define(() => {
         });
       });
 
-      // Ensure the search input exists
-      this.search = document.getElementById(this.searchId);
+      // (Re)Ensure the search input exists using querySelector (not querySelectorAll)
+      this.search = this.dropdown.querySelector(`#${this.searchId}`);
       if (!this.search) {
         console.error("Search input not found.");
         return;
       }
 
+      // New: Get references to the search icon button and the SVG container.
+      this.searchIcon = this.oControlHost.container.querySelector("#searchIcon");
+      this.iconSvg = this.oControlHost.container.querySelector("#iconSvg");
+
+      // Define the SVG paths
+      const magnifyingGlassSVG = `
+          <path d="M11.742 10.344a6.5 6.5 0 1 0-.998.998l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zM12 6.5A5.5 5.5 0 1 1 6.5 1 5.5 5.5 0 0 1 12 6.5z"/>`;
+      const clearSVG = `<path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>`;
+
+      // Function to update the search icon based on the input value
+      const updateSearchIcon = () => {
+        if (this.search.value.trim() === "") {
+          // Show magnifying glass when empty
+          this.iconSvg.innerHTML = magnifyingGlassSVG;
+          this.searchIcon.setAttribute("aria-label", "Search");
+        } else {
+          // Show clear (X) icon when text is present
+          this.iconSvg.innerHTML = clearSVG;
+          this.searchIcon.setAttribute("aria-label", "Clear search");
+        }
+      };
+
       // Add input event listener for search
       this.search.addEventListener("input", () => {
-        clearTimeout(this.timeoutId); // Clear any previous timeout
+        clearTimeout(this.timeoutId);
+        updateSearchIcon();
         this.timeoutId = setTimeout(() => {
           const searchType = this.searchTypeSelect.value;
           const caseInsensitive = this.dropdown.querySelector(".case-checkbox").checked;
-          const searchValue = this.search.value.trim(); // Trim whitespace
-          const searchTerms = searchValue.split(",").map((term) => term.trim()); // Split by comma and trim each term
+          const searchValue = this.search.value.trim();
+          const searchTerms = searchValue.split(",").map((term) => term.trim());
           console.log("Filtering items with search terms:", searchTerms);
-          console.log("Search type:", searchType);
-          console.log("Case insensitive:", caseInsensitive);
-          console.log("Search Terms:", searchTerms); // Debugging: Log search terms
           this.filterItems(this.oControlHost, searchTerms, searchType, caseInsensitive);
         }, this.debounceDelay);
       });
 
+      // When the icon is clicked, clear the search if text exists.
+      this.searchIcon.addEventListener("click", () => {
+        if (this.search.value.trim() !== "") {
+          this.search.value = "";
+          updateSearchIcon();
+          this.search.focus();
+          // Optionally, trigger filtering again now that search is cleared.
+        }
+      });
+
+      // Initialize the icon on page load
+      updateSearchIcon();
+
       this.searchTypeSelect.addEventListener("change", () => {
         const searchType = this.searchTypeSelect.value;
-        const caseInsensitive = this.dropdown.querySelector(".case-checkbox").checked; // Use document.querySelector to find the element
-        let searchValue = this.search.value;
-        const searchTerms = searchValue.split(",").map((term) => term.trim());
+        const caseInsensitive = this.dropdown.querySelector(".case-checkbox").checked;
+        const searchTerms = this.search.value.split(",").map((term) => term.trim());
         this.filterItems(this.oControlHost, searchTerms, searchType, caseInsensitive);
       });
 
