@@ -481,8 +481,10 @@ define(() => {
                                     aria-label="Search options"
                                 />
                                 <button type="button" class="search-icon" id="searchIcon" aria-label="Search">
-                                    <!-- Placeholder SVG for magnifying glass -->
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"  stroke="#808080" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#808080" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search">
+                                        <circle cx="11" cy="11" r="8"/>
+                                        <path d="m21 21-4.3-4.3"/>
+                                    </svg>
                                 </button>
                             </div>
                             <button
@@ -735,8 +737,8 @@ define(() => {
       }
 
       // New: Get references to the search icon button and the SVG container.
-      this.searchIcon = this.oControlHost.container.querySelector("#searchIcon");
-      this.iconSvg = this.oControlHost.container.querySelector("#iconSvg");
+      this.searchIcon = this.dropdown.querySelector("#searchIcon");
+      this.iconSvg = this.dropdown.querySelector("#iconSvg");
 
       // Define the SVG paths
       const magnifyingGlassSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#808080" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`;
@@ -772,19 +774,23 @@ define(() => {
       // When the icon is clicked, clear the search if text exists.
       this.searchIcon.addEventListener("click", () => {
         if (this.search.value.trim() !== "") {
-          // Clear the search input and update the icon
+          // Clear the search input
           this.search.value = "";
+
+          // Update the icon (your updateSearchIcon function handles switching the SVG)
           updateSearchIcon();
+
+          // Set focus back to the search input (optional)
           this.search.focus();
-          
-          // Remove the filter from the list:
+
+          // Remove the filter by calling filterItems with an empty search term.
+          // In your filterItems method, an empty search array (or array with an empty string)
+          // should trigger the code that shows all items.
           const searchType = this.searchTypeSelect.value;
           const caseInsensitive = this.dropdown.querySelector(".case-checkbox").checked;
-          // Passing an array with an empty string will cause filterItems() to show all items
           this.filterItems(this.oControlHost, [""], searchType, caseInsensitive);
         }
       });
-      
 
       // Initialize the icon on page load
       updateSearchIcon();
@@ -1091,4 +1097,4 @@ define(() => {
 
   return CustomControl;
 });
-//412
+//438
