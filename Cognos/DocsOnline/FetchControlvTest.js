@@ -89,6 +89,7 @@ define([], function () {
        * displays the loading icon and fetches the document data asynchronously.
        */
       fetchAttachmentData() {
+        
         const spans = document.querySelectorAll("span[name='attachments']");
         const requests = Array.from(spans).map((span) => {
           const { token, arg, user, env, ref } = span.dataset;
@@ -112,7 +113,7 @@ define([], function () {
   
           // Display the loading icon.
           this.showLoadingIcon(elementId);
-  
+          console.log(`fetch ID: ${elementId}`)
           // Build the URL using the provided encoding functions.
           const cleanArg = DocumentsOnline.url_Decode(arg).replaceAll("\\", "");
           const encodedArg = encodeURI(DocumentsOnline.fEncode(cleanArg));
