@@ -176,7 +176,7 @@ define([], function () {
         method: "GET",
         headers: { token: token, user: user },
       })
-        .then((response) => {response.text(); console.log(res);})
+        .then((response) => {response.text(); console.log(response);})
         // Parse as HTML instead of XML.
         .then((text) => (!text.trim() ? 1 : new window.DOMParser().parseFromString(text, "text/html")));
 
