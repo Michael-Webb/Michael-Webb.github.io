@@ -11,15 +11,18 @@ define([], function () {
       initialize(oControlHost, fnDoneInitializing) {
         this.oControlHost = oControlHost;
         const config = oControlHost.configuration;
-        this.sServerUrl          = config['Server Url'];
-        this.sDevUrl             = config['Development Server Url'];
-        //Icon Dimensions
-        this.iconHeight          = config['Icon Height']
-        this.iconWidth         = config['Icon Width']
-
-        this.useExclude          = config.Use_Exclude;
-        this.excludeValue        = config.Exclude_Value;
-
+        this.sServerUrl   = config['Server Url'];
+        this.sDevUrl      = config['Development Server Url'];
+        // Set the dev mode flag.
+        this.isDevMode    = config['Dev Mode'];
+  
+        // Icon Dimensions.
+        this.iconHeight   = config['Icon Height'];
+        this.iconWidth    = config['Icon Width'];
+  
+        this.useExclude   = config.Use_Exclude;
+        this.excludeValue = config.Exclude_Value;
+  
         // Create a cache (Map) for requests keyed by the full fetch URL.
         this.requestCache = new Map();
         fnDoneInitializing();
@@ -122,7 +125,10 @@ define([], function () {
         // Build the URL using the provided encoding functions.
         const cleanArg = DocumentsOnline.url_Decode(arg).replaceAll("\\", "");
         const encodedArg = encodeURI(DocumentsOnline.fEncode(cleanArg));
-        const fetchUrl = `${this.sServerUrl}arg=${encodedArg}&env=${DocumentsOnline.url_Decode(env)}`;
+  
+        // Choose the base URL depending on the Dev Mode flag.
+        const baseUrl = this.isDevMode ? this.sDevUrl : this.sServerUrl;
+        const fetchUrl = `${baseUrl}arg=${encodedArg}&env=${DocumentsOnline.url_Decode(env)}`;
   
         // Check the cache for an existing request.
         if (this.requestCache.has(fetchUrl)) {
@@ -338,5 +344,4 @@ define([], function () {
     }
   
     return DocumentsOnline;
-  });
-  
+});
