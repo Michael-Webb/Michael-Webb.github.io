@@ -87,11 +87,11 @@ define([], function () {
           const mode = (this.showIconText && this.showIconText.trim() !== "") ? this.showIconText : "icon";
           
           let content = "";
-          if (mode.lower() === "icon") {
+          if (mode.toLowerCase() === "icon") {
             content = DocumentsOnline.getPaperclipSVG(this.iconWidth, this.iconHeight);
-          } else if (mode.lower() === "text") {
+          } else if (mode.toLowerCase() === "text") {
             content = labelText;
-          } else if (mode.lower() === "both") {
+          } else if (mode.toLowerCase() === "both") {
             content = DocumentsOnline.getPaperclipSVG(this.iconWidth, this.iconHeight) + " " + labelText;
           } else {
             // Fallback to "Icon Only"
