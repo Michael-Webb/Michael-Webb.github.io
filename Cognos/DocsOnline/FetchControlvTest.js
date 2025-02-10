@@ -110,7 +110,6 @@ define([], function () {
           return;
         }
   
-        // Show the loading icon.
         this.showLoadingIcon(span);
   
         // Build the URL.
@@ -120,7 +119,7 @@ define([], function () {
         const fetchUrl = `${baseUrl}arg=${encodedArg}&env=${DocumentsOnline.url_Decode(env)}`;
         const storageKey = "DocumentsOnlineCache:" + fetchUrl;
   
-        // Define a common response processor.
+        // Common response processor.
         const processResponse = (data) => {
           if (data === 1) {
             this.removeLoadingIcon(span);
@@ -136,8 +135,9 @@ define([], function () {
         // If sessionStorage is enabled, check for a stored response.
         if (this.useSessionStorage && sessionStorage.getItem(storageKey) !== null) {
           const storedText = sessionStorage.getItem(storageKey);
-          const cachedData = storedText === "1" 
-            ? 1 
+          // If storedText equals "1", then no document was found.
+          const cachedData = storedText === "1"
+            ? 1
             : new window.DOMParser().parseFromString(storedText, "text/xml");
           const promise = Promise.resolve(cachedData);
           this.requestCache.set(fetchUrl, promise);
@@ -146,7 +146,7 @@ define([], function () {
           return;
         }
   
-        // Check our in-memory cache.
+        // Check in-memory cache.
         if (this.requestCache.has(fetchUrl)) {
           this.requestCache.get(fetchUrl)
             .then(processResponse)
@@ -161,16 +161,17 @@ define([], function () {
         })
           .then(response => response.text())
           .then(text => {
-            // If sessionStorage is enabled, store the raw response text.
+            // If there's no meaningful text, store "1" instead.
+            const processed = !text.trim() ? "1" : text;
             if (this.useSessionStorage) {
-              sessionStorage.setItem(storageKey, text);
+              sessionStorage.setItem(storageKey, processed);
             }
-            return !text.trim() 
-              ? 1 
+            return !text.trim()
+              ? 1
               : new window.DOMParser().parseFromString(text, "text/xml");
           });
-  
-        // Cache the promise in our in-memory Map.
+    
+        // Cache the promise.
         this.requestCache.set(fetchUrl, promise);
   
         promise.then(processResponse)
@@ -196,13 +197,13 @@ define([], function () {
           }, observerOptions);
           spans.forEach(span => observer.observe(span));
         } else {
-          // Fallback: process all spans immediately if IntersectionObserver isn't supported.
+          // Fallback if IntersectionObserver isn't supported.
           spans.forEach(span => this.processSpan(span));
         }
       }
-  
+    
       // --- DO NOT CHANGE THE FOLLOWING ENCODING FUNCTIONS ---
-  
+    
       static fEncode(vValue) {
         var Base64 = {
           _keyStr: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
