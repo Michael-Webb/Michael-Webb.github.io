@@ -23,9 +23,6 @@ define([], function () {
         this.useExclude   = config.Use_Exclude;
         this.excludeValue = config.Exclude_Value;
   
-        // New flag to decide whether to use sessionStorage for caching.
-        this.useSessionStorage = config["UseSessionStorage"];
-  
         // Create an in-memory cache for requests keyed by the full fetch URL.
         this.requestCache = new Map();
         fnDoneInitializing();
@@ -89,7 +86,7 @@ define([], function () {
       /**
        * Processes a single span element.
        * Shows the loading icon, builds the fetch URL using encoding functions,
-       * then either reuses a cached request (in memory and/or sessionStorage) or sends a new one.
+       * then either reuses a cached request or sends a new fetch request.
        * When the promise resolves, it updates the icon accordingly.
        *
        * @param {HTMLElement} span - The span element to process.
@@ -117,7 +114,6 @@ define([], function () {
         const encodedArg = encodeURI(DocumentsOnline.fEncode(cleanArg));
         const baseUrl = this.isDevMode ? this.sDevUrl : this.sServerUrl;
         const fetchUrl = `${baseUrl}arg=${encodedArg}&env=${DocumentsOnline.url_Decode(env)}`;
-        const storageKey = "DocumentsOnlineCache:" + fetchUrl;
   
         // Define a common response processor.
         const processResponse = (data) => {
@@ -131,21 +127,6 @@ define([], function () {
             console.log(ref, " document found:", destinationUrl);
           }
         };
-  
-        // Check sessionStorage if enabled.
-        if (this.useSessionStorage) {
-          const storedText = sessionStorage.getItem(storageKey);
-          if (storedText && storedText.trim() && storedText !== "null") {
-            const cachedData = storedText === "1"
-              ? 1
-              : new window.DOMParser().parseFromString(storedText, "text/xml");
-            const promise = Promise.resolve(cachedData);
-            this.requestCache.set(fetchUrl, promise);
-            promise.then(processResponse)
-              .catch(error => console.error("Error fetching data for", ref, error));
-            return;
-          }
-        }
   
         // Check in-memory cache.
         if (this.requestCache.has(fetchUrl)) {
@@ -161,18 +142,8 @@ define([], function () {
           headers: { token: token, user: user }
         })
           .then(response => response.text())
-          .then(text => {
-            text = text || "";
-            // If there's no meaningful text, store "1" instead.
-            const processedText = !text.trim() ? "1" : text;
-            if (this.useSessionStorage) {
-              sessionStorage.setItem(storageKey, processedText);
-            }
-            return !text.trim()
-              ? 1
-              : new window.DOMParser().parseFromString(text, "text/xml");
-          });
-    
+          .then(text => !text.trim() ? 1 : new window.DOMParser().parseFromString(text, "text/xml"));
+  
         // Cache the promise.
         this.requestCache.set(fetchUrl, promise);
   
@@ -199,12 +170,13 @@ define([], function () {
           }, observerOptions);
           spans.forEach(span => observer.observe(span));
         } else {
+          // Fallback: process all spans immediately if IntersectionObserver isn't supported.
           spans.forEach(span => this.processSpan(span));
         }
       }
-    
+  
       // --- DO NOT CHANGE THE FOLLOWING ENCODING FUNCTIONS ---
-    
+  
       static fEncode(vValue) {
         var Base64 = {
           _keyStr: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
@@ -306,11 +278,11 @@ define([], function () {
         var encodedString = Base64.encode(vValue);
         return encodedString;
       }
-    
+  
       static url_Decode(str) {
         return decodeURIComponent(str.replaceAll("+", " "));
       }
-    
+  
       /**
        * Returns the clock SVG markup with the given width and height.
        *
@@ -321,7 +293,7 @@ define([], function () {
       static getClockSVG(width, height) {
         return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
       }
-    
+  
       /**
        * Returns the paperclip SVG markup with the given width and height.
        *
