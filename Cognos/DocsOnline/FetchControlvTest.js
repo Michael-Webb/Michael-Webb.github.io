@@ -11,16 +11,15 @@ define([], function () {
       initialize(oControlHost, fnDoneInitializing) {
         this.oControlHost = oControlHost;
         const config = oControlHost.configuration;
-        this.sServerUrl          = config.ServerUrl;
-        // Use configuration for the SVG dimensions.
-        // For the clock icon, we assume: width = Clock_Font_Length and height = Clock_Font_Height.
-        this.clockFontLength     = config.Clock_Font_Length;
-        this.clockFontHeight     = config.Clock_Font_Height;
-        // For the paperclip icon, we assume: width = Paperclip_Font_Length and height = Paperclip_Font_Height.
-        this.paperclipFontLength = config.Paperclip_Font_Length;
-        this.paperclipFontHeight = config.Paperclip_Font_Height;
+        this.sServerUrl          = config['Server Url'];
+        this.sDevUrl             = config['Development Server Url'];
+        //Icon Dimensions
+        this.iconHeight          = config['Icon Height']
+        this.iconWidth         = config['Icon Width']
+
         this.useExclude          = config.Use_Exclude;
         this.excludeValue        = config.Exclude_Value;
+
         // Create a cache (Map) for requests keyed by the full fetch URL.
         this.requestCache = new Map();
         fnDoneInitializing();
@@ -48,7 +47,7 @@ define([], function () {
         const link = document.createElement("a");
         link.id = `${elementId}link`;
         // Insert the inline clock SVG with dimensions from configuration.
-        link.innerHTML = DocumentsOnline.getClockSVG(this.clockFontLength, this.clockFontHeight);
+        link.innerHTML = DocumentsOnline.getClockSVG(this.iconWidth, this.iconHeight);
         container.setAttribute("data-status", "document loading");
         container.appendChild(link);
       }
@@ -65,7 +64,7 @@ define([], function () {
           link.href = destinationUrl;
           link.target = "_blank";
           // Replace the clock SVG with the paperclip SVG using configured dimensions.
-          link.innerHTML = DocumentsOnline.getPaperclipSVG(this.paperclipFontLength, this.paperclipFontHeight);
+          link.innerHTML = DocumentsOnline.getPaperclipSVG(this.iconWidth, this.iconHeight);
         }
         const container = document.getElementById(elementId);
         if (container) {
