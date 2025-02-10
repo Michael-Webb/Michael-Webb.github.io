@@ -11,7 +11,7 @@ define([], function () {
       initialize(oControlHost, fnDoneInitializing) {
         this.oControlHost = oControlHost;
         const config = oControlHost.configuration;
-        // Although we no longer use these URLs (SVGs are inline), we still read the config.
+        // Retain these config values (even if the icons are now inline SVG).
         this.sServerUrl           = config.ServerUrl;
         this.clockFontHeight      = config.Clock_Font_Height;
         this.clockFontLength      = config.Clock_Font_Length;
@@ -19,26 +19,24 @@ define([], function () {
         this.paperclipFontLength  = config.Paperclip_Font_Length;
         this.useExclude           = config.Use_Exclude;
         this.excludeValue         = config.Exclude_Value;
-
-        console.log('DocsOnline initialize')
         fnDoneInitializing();
       }
   
       /**
        * Called by Cognos when the control should render itself.
-       * It processes each span with name="attachments" to draw the loading icon
-       * and then later replace it with a paperclip icon (or remove it if no document is found).
+       * It sets up lazy loading so that a fetch request is only sent
+       * for an attachment when its span scrolls into view.
        *
        * @param {object} oControlHost - The Cognos control host.
        */
       draw(oControlHost) {
-        this.fetchAttachmentData();
+        this.setupLazyLoading();
       }
   
       /**
-       * Inserts a loading icon (clock SVG) wrapped in an anchor element into the container.
+       * Inserts a loading icon (clock SVG) wrapped in an anchor element into the target container.
        *
-       * @param {string} elementId - The target element's ID.
+       * @param {string} elementId - The ID of the span element.
        */
       showLoadingIcon(elementId) {
         const container = document.getElementById(elementId);
@@ -54,7 +52,7 @@ define([], function () {
       /**
        * Replaces the loading icon with a paperclip icon and sets the hyperlink's destination.
        *
-       * @param {string} elementId - The target element's ID.
+       * @param {string} elementId - The ID of the span element.
        * @param {string} destinationUrl - The URL parsed from the XML response.
        */
       updatePaperclip(elementId, destinationUrl) {
@@ -74,7 +72,7 @@ define([], function () {
       /**
        * Removes the loading icon if no document was found.
        *
-       * @param {string} elementId - The target element's ID.
+       * @param {string} elementId - The ID of the span element.
        */
       removeLoadingIcon(elementId) {
         const container = document.getElementById(elementId);
@@ -87,68 +85,96 @@ define([], function () {
       }
   
       /**
-       * Loops through all spans with name="attachments" and, for each that is new,
-       * displays the loading icon and fetches the document data asynchronously.
+       * Processes a single span element.
+       * If the span has not been processed and is not excluded,
+       * it shows the loading icon, builds the fetch URL (using the encoding functions),
+       * sends the fetch request, and then either updates the icon with a paperclip
+       * or removes it if no document is found.
+       *
+       * @param {HTMLElement} span - The span element to process.
        */
-      fetchAttachmentData() {
-        
-        const spans = document.querySelectorAll("span[name='attachments']");
-        const requests = Array.from(spans).map((span) => {
-          const { token, arg, user, env, ref } = span.dataset;
-          const elementId = span.id;
-          const container = document.getElementById(elementId);
-          const currentStatus = container ? container.getAttribute("data-status") : "new";
+      processSpan(span) {
+        const { token, arg, user, env, ref } = span.dataset;
+        const elementId = span.id;
+        const container = document.getElementById(elementId);
+        const currentStatus = container ? container.getAttribute("data-status") : "new";
   
-          // Exclude rows based on configuration.
-          if (this.useExclude && ref.startsWith(this.excludeValue)) {
-            if (container) {
-              container.setAttribute("data-status", "no document found");
+        // If exclusion is turned on and the reference starts with the excluded value, mark as no document.
+        if (this.useExclude && ref.startsWith(this.excludeValue)) {
+          if (container) {
+            container.setAttribute("data-status", "no document found");
+          }
+          return;
+        }
+  
+        // Only process spans that are "new".
+        if (currentStatus !== "new") {
+          console.log(ref, "already processed:", currentStatus);
+          return;
+        }
+  
+        // Show the loading (clock) icon.
+        this.showLoadingIcon(elementId);
+  
+        // Build the fetch URL using the encoding functions.
+        const cleanArg = DocumentsOnline.url_Decode(arg).replaceAll("\\", "");
+        const encodedArg = encodeURI(DocumentsOnline.fEncode(cleanArg));
+        const fetchUrl = `${this.sServerUrl}arg=${encodedArg}&env=${DocumentsOnline.url_Decode(env)}`;
+  
+        fetch(fetchUrl, {
+          method: "GET",
+          headers: { token: token, user: user },
+        })
+          .then((response) => response.text())
+          .then((text) => {
+            // If response text is empty (or only whitespace), signal no document.
+            if (!text.trim()) {
+              return 1;
             }
-            return Promise.resolve();
-          }
-  
-          // Process only spans that have not yet been handled.
-          if (currentStatus !== "new") {
-            console.log(ref, "already processed:", currentStatus);
-            return Promise.resolve();
-          }
-  
-          // Display the loading icon.
-          this.showLoadingIcon(elementId);
-          console.log(`fetch ID: ${elementId}`)
-          // Build the URL using the provided encoding functions.
-          const cleanArg = DocumentsOnline.url_Decode(arg).replaceAll("\\", "");
-          const encodedArg = encodeURI(DocumentsOnline.fEncode(cleanArg));
-          const fetchUrl = `${this.sServerUrl}arg=${encodedArg}&env=${DocumentsOnline.url_Decode(env)}`;
-  
-          return fetch(fetchUrl, {
-            method: "GET",
-            headers: { token: token, user: user },
+            return new window.DOMParser().parseFromString(text, "text/xml");
           })
-            .then((response) => response.text())
-            .then((text) => {
-              // If response is empty (or whitespace), signal no document found.
-              if (!text.trim()) {
-                return 1;
+          .then((data) => {
+            if (data === 1) {
+              this.removeLoadingIcon(elementId);
+              console.log(ref, " no document found");
+            } else {
+              const valueEl = data.getElementsByTagName("value")[0];
+              const destinationUrl = valueEl ? valueEl.childNodes[0].nodeValue : "";
+              this.updatePaperclip(elementId, destinationUrl);
+              console.log(ref, " document found:", destinationUrl);
+            }
+          })
+          .catch((error) => {
+            console.error("Error fetching data for", ref, error);
+          });
+      }
+  
+      /**
+       * Sets up lazy loading for all spans with name="attachments".
+       * An IntersectionObserver watches each span, and when it scrolls into view,
+       * processSpan is called and the element is unobserved.
+       */
+      setupLazyLoading() {
+        const spans = document.querySelectorAll("span[name='attachments']");
+        if ("IntersectionObserver" in window) {
+          const observerOptions = { threshold: 0.1 };
+          const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                this.processSpan(entry.target);
+                observer.unobserve(entry.target);
               }
-              return new window.DOMParser().parseFromString(text, "text/xml");
-            })
-            .then((data) => {
-              if (data === 1) {
-                this.removeLoadingIcon(elementId);
-                console.log(ref, " no document found");
-              } else {
-                const valueEl = data.getElementsByTagName("value")[0];
-                const destinationUrl = valueEl ? valueEl.childNodes[0].nodeValue : "";
-                this.updatePaperclip(elementId, destinationUrl);
-                console.log(ref, " document found:", destinationUrl);
-              }
-            })
-            .catch((error) => {
-              console.error("Error fetching data for", ref, error);
             });
-        });
-        return Promise.allSettled(requests);
+          }, observerOptions);
+          spans.forEach((span) => {
+            observer.observe(span);
+          });
+        } else {
+          // Fallback: if IntersectionObserver is not supported, process all spans immediately.
+          spans.forEach((span) => {
+            this.processSpan(span);
+          });
+        }
       }
   
       // --- DO NOT CHANGE THE FOLLOWING ENCODING FUNCTIONS ---
