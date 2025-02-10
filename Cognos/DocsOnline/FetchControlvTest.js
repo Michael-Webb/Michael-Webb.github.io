@@ -84,14 +84,14 @@ define([], function () {
           // Determine the label text (defaulting to "View Attachment" if necessary)
           const labelText = (this.label && this.label.trim() !== "") ? this.label : "View Attachment";
           // Default to "Icon Only" if showIconText is null/empty.
-          const mode = (this.showIconText && this.showIconText.trim() !== "") ? this.showIconText : "Icon Only";
+          const mode = (this.showIconText && this.showIconText.trim() !== "") ? this.showIconText : "icon";
           
           let content = "";
-          if (mode === "Icon Only") {
+          if (mode.lower() === "icon") {
             content = DocumentsOnline.getPaperclipSVG(this.iconWidth, this.iconHeight);
-          } else if (mode === "Text Only") {
+          } else if (mode.lower() === "text") {
             content = labelText;
-          } else if (mode === "Icon and Text") {
+          } else if (mode.lower() === "both") {
             content = DocumentsOnline.getPaperclipSVG(this.iconWidth, this.iconHeight) + " " + labelText;
           } else {
             // Fallback to "Icon Only"
