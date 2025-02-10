@@ -4,7 +4,7 @@ define([], function () {
     class DocumentsOnline {
       /**
        * Called by Cognos to initialize the control.
-       * Reads configuration for URLs, icon dimensions, and other options.
+       * Reads configuration for URLs, icon dimensions, caching, and other options.
        *
        * @param {object} oControlHost - The Cognos control host.
        * @param {function} fnDoneInitializing - Callback indicating initialization is complete.
@@ -16,14 +16,17 @@ define([], function () {
         this.sDevUrl      = config["Development Server Url"];
         this.isDevMode    = config["Dev Mode"];
   
-        // Icon Dimensions.
+        // Icon dimensions
         this.iconHeight   = config["Icon Height"];
         this.iconWidth    = config["Icon Width"];
   
         this.useExclude   = config.Use_Exclude;
         this.excludeValue = config.Exclude_Value;
   
-        // Create a cache for requests keyed by the full fetch URL.
+        // New flag to decide whether to use sessionStorage for caching.
+        this.useSessionStorage = config["UseSessionStorage"];
+  
+        // Create an in-memory cache for requests keyed by the full fetch URL.
         this.requestCache = new Map();
         fnDoneInitializing();
       }
@@ -41,9 +44,9 @@ define([], function () {
   
       /**
        * Inserts a loading (clock) icon (as inline SVG) wrapped in an anchor element
-       * into the container element.
+       * into the container element (which is the span itself).
        *
-       * @param {HTMLElement} container - The span element (container) to update.
+       * @param {HTMLElement} container - The span element to update.
        */
       showLoadingIcon(container) {
         if (!container) return;
@@ -57,7 +60,7 @@ define([], function () {
       /**
        * Replaces the loading icon with a paperclip icon and sets the hyperlink's destination.
        *
-       * @param {HTMLElement} container - The span element (container) to update.
+       * @param {HTMLElement} container - The span element to update.
        * @param {string} destinationUrl - The URL parsed from the XML response.
        */
       updatePaperclip(container, destinationUrl) {
@@ -74,7 +77,7 @@ define([], function () {
       /**
        * Removes the loading icon if no document was found.
        *
-       * @param {HTMLElement} container - The span element (container) to update.
+       * @param {HTMLElement} container - The span element to update.
        */
       removeLoadingIcon(container) {
         if (!container) return;
@@ -86,7 +89,7 @@ define([], function () {
       /**
        * Processes a single span element.
        * Shows the loading icon, builds the fetch URL using encoding functions,
-       * then either reuses a cached request or sends a new one.
+       * then either reuses a cached request (in memory and/or sessionStorage) or sends a new one.
        * When the promise resolves, it updates the icon accordingly.
        *
        * @param {HTMLElement} span - The span element to process.
@@ -107,6 +110,7 @@ define([], function () {
           return;
         }
   
+        // Show the loading icon.
         this.showLoadingIcon(span);
   
         // Build the URL.
@@ -114,6 +118,7 @@ define([], function () {
         const encodedArg = encodeURI(DocumentsOnline.fEncode(cleanArg));
         const baseUrl = this.isDevMode ? this.sDevUrl : this.sServerUrl;
         const fetchUrl = `${baseUrl}arg=${encodedArg}&env=${DocumentsOnline.url_Decode(env)}`;
+        const storageKey = "DocumentsOnlineCache:" + fetchUrl;
   
         // Define a common response processor.
         const processResponse = (data) => {
@@ -128,7 +133,20 @@ define([], function () {
           }
         };
   
-        // If already cached, reuse the promise.
+        // If sessionStorage is enabled, check for a stored response.
+        if (this.useSessionStorage && sessionStorage.getItem(storageKey) !== null) {
+          const storedText = sessionStorage.getItem(storageKey);
+          const cachedData = storedText === "1" 
+            ? 1 
+            : new window.DOMParser().parseFromString(storedText, "text/xml");
+          const promise = Promise.resolve(cachedData);
+          this.requestCache.set(fetchUrl, promise);
+          promise.then(processResponse)
+            .catch(error => console.error("Error fetching data for", ref, error));
+          return;
+        }
+  
+        // Check our in-memory cache.
         if (this.requestCache.has(fetchUrl)) {
           this.requestCache.get(fetchUrl)
             .then(processResponse)
@@ -136,18 +154,26 @@ define([], function () {
           return;
         }
   
-        // Otherwise, fetch and cache the promise.
+        // If not cached, fetch from the network.
         const promise = fetch(fetchUrl, {
           method: "GET",
           headers: { token: token, user: user }
         })
           .then(response => response.text())
-          .then(text => !text.trim() ? 1 : new window.DOMParser().parseFromString(text, "text/xml"));
+          .then(text => {
+            // If sessionStorage is enabled, store the raw response text.
+            if (this.useSessionStorage) {
+              sessionStorage.setItem(storageKey, text);
+            }
+            return !text.trim() 
+              ? 1 
+              : new window.DOMParser().parseFromString(text, "text/xml");
+          });
   
+        // Cache the promise in our in-memory Map.
         this.requestCache.set(fetchUrl, promise);
   
-        promise
-          .then(processResponse)
+        promise.then(processResponse)
           .catch(error => console.error("Error fetching data for", ref, error));
       }
   
@@ -174,9 +200,9 @@ define([], function () {
           spans.forEach(span => this.processSpan(span));
         }
       }
-    
+  
       // --- DO NOT CHANGE THE FOLLOWING ENCODING FUNCTIONS ---
-    
+  
       static fEncode(vValue) {
         var Base64 = {
           _keyStr: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
