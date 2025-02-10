@@ -16,7 +16,7 @@ define([], function () {
         this.sDevUrl      = config["Development Server Url"];
         this.isDevMode    = config["Dev Mode"];
   
-        // Icon dimensions
+        // Icon dimensions.
         this.iconHeight   = config["Icon Height"];
         this.iconWidth    = config["Icon Width"];
   
@@ -119,7 +119,7 @@ define([], function () {
         const fetchUrl = `${baseUrl}arg=${encodedArg}&env=${DocumentsOnline.url_Decode(env)}`;
         const storageKey = "DocumentsOnlineCache:" + fetchUrl;
   
-        // Common response processor.
+        // Define a common response processor.
         const processResponse = (data) => {
           if (data === 1) {
             this.removeLoadingIcon(span);
@@ -132,18 +132,19 @@ define([], function () {
           }
         };
   
-        // If sessionStorage is enabled, check for a stored response.
-        if (this.useSessionStorage && sessionStorage.getItem(storageKey) !== null) {
+        // Check sessionStorage if enabled.
+        if (this.useSessionStorage) {
           const storedText = sessionStorage.getItem(storageKey);
-          // If storedText equals "1", then no document was found.
-          const cachedData = storedText === "1"
-            ? 1
-            : new window.DOMParser().parseFromString(storedText, "text/xml");
-          const promise = Promise.resolve(cachedData);
-          this.requestCache.set(fetchUrl, promise);
-          promise.then(processResponse)
-            .catch(error => console.error("Error fetching data for", ref, error));
-          return;
+          if (storedText && storedText.trim() && storedText !== "null") {
+            const cachedData = storedText === "1"
+              ? 1
+              : new window.DOMParser().parseFromString(storedText, "text/xml");
+            const promise = Promise.resolve(cachedData);
+            this.requestCache.set(fetchUrl, promise);
+            promise.then(processResponse)
+              .catch(error => console.error("Error fetching data for", ref, error));
+            return;
+          }
         }
   
         // Check in-memory cache.
@@ -161,10 +162,11 @@ define([], function () {
         })
           .then(response => response.text())
           .then(text => {
+            text = text || "";
             // If there's no meaningful text, store "1" instead.
-            const processed = !text.trim() ? "1" : text;
+            const processedText = !text.trim() ? "1" : text;
             if (this.useSessionStorage) {
-              sessionStorage.setItem(storageKey, processed);
+              sessionStorage.setItem(storageKey, processedText);
             }
             return !text.trim()
               ? 1
@@ -197,7 +199,6 @@ define([], function () {
           }, observerOptions);
           spans.forEach(span => observer.observe(span));
         } else {
-          // Fallback if IntersectionObserver isn't supported.
           spans.forEach(span => this.processSpan(span));
         }
       }
