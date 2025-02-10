@@ -4,6 +4,7 @@ define([], function () {
     class DocumentsOnline {
       /**
        * Called by Cognos to initialize the control.
+       * Reads configuration for URLs, icon dimensions, and other options.
        *
        * @param {object} oControlHost - The Cognos control host.
        * @param {function} fnDoneInitializing - Callback indicating initialization is complete.
@@ -11,19 +12,18 @@ define([], function () {
       initialize(oControlHost, fnDoneInitializing) {
         this.oControlHost = oControlHost;
         const config = oControlHost.configuration;
-        this.sServerUrl   = config['Server Url'];
-        this.sDevUrl      = config['Development Server Url'];
-        // Set the dev mode flag.
-        this.isDevMode    = config['Dev Mode'];
+        this.sServerUrl   = config["Server Url"];
+        this.sDevUrl      = config["Development Server Url"];
+        this.isDevMode    = config["Dev Mode"];
   
         // Icon Dimensions.
-        this.iconHeight   = config['Icon Height'];
-        this.iconWidth    = config['Icon Width'];
+        this.iconHeight   = config["Icon Height"];
+        this.iconWidth    = config["Icon Width"];
   
         this.useExclude   = config.Use_Exclude;
         this.excludeValue = config.Exclude_Value;
   
-        // Create a cache (Map) for requests keyed by the full fetch URL.
+        // Create a cache for requests keyed by the full fetch URL.
         this.requestCache = new Map();
         fnDoneInitializing();
       }
@@ -40,16 +40,15 @@ define([], function () {
       }
   
       /**
-       * Inserts a loading icon (clock SVG) wrapped in an anchor element into the target container.
+       * Inserts a loading (clock) icon (as inline SVG) wrapped in an anchor element
+       * into the container element.
        *
-       * @param {string} elementId - The ID of the span element.
+       * @param {HTMLElement} container - The span element (container) to update.
        */
-      showLoadingIcon(elementId) {
-        const container = document.getElementById(elementId);
+      showLoadingIcon(container) {
         if (!container) return;
         const link = document.createElement("a");
-        link.id = `${elementId}link`;
-        // Insert the inline clock SVG with dimensions from configuration.
+        link.id = `${container.id}link`;
         link.innerHTML = DocumentsOnline.getClockSVG(this.iconWidth, this.iconHeight);
         container.setAttribute("data-status", "document loading");
         container.appendChild(link);
@@ -58,58 +57,47 @@ define([], function () {
       /**
        * Replaces the loading icon with a paperclip icon and sets the hyperlink's destination.
        *
-       * @param {string} elementId - The ID of the span element.
+       * @param {HTMLElement} container - The span element (container) to update.
        * @param {string} destinationUrl - The URL parsed from the XML response.
        */
-      updatePaperclip(elementId, destinationUrl) {
-        const link = document.getElementById(`${elementId}link`);
+      updatePaperclip(container, destinationUrl) {
+        if (!container) return;
+        const link = container.querySelector(`#${container.id}link`);
         if (link) {
           link.href = destinationUrl;
           link.target = "_blank";
-          // Replace the clock SVG with the paperclip SVG using configured dimensions.
           link.innerHTML = DocumentsOnline.getPaperclipSVG(this.iconWidth, this.iconHeight);
         }
-        const container = document.getElementById(elementId);
-        if (container) {
-          container.setAttribute("data-status", "document found");
-        }
+        container.setAttribute("data-status", "document found");
       }
   
       /**
        * Removes the loading icon if no document was found.
        *
-       * @param {string} elementId - The ID of the span element.
+       * @param {HTMLElement} container - The span element (container) to update.
        */
-      removeLoadingIcon(elementId) {
-        const container = document.getElementById(elementId);
+      removeLoadingIcon(container) {
         if (!container) return;
-        const link = document.getElementById(`${elementId}link`);
-        if (link) {
-          link.remove();
-        }
+        const link = container.querySelector(`#${container.id}link`);
+        if (link) link.remove();
         container.setAttribute("data-status", "no document found");
       }
   
       /**
        * Processes a single span element.
-       * If the span has not been processed and is not excluded,
-       * it shows the loading icon, builds the fetch URL using the encoding functions,
-       * and then either reuses a cached fetch promise or sends a new fetch request.
-       * When the promise resolves, it updates the icon to a paperclip (or removes it).
+       * Shows the loading icon, builds the fetch URL using encoding functions,
+       * then either reuses a cached request or sends a new one.
+       * When the promise resolves, it updates the icon accordingly.
        *
        * @param {HTMLElement} span - The span element to process.
        */
       processSpan(span) {
         const { token, arg, user, env, ref } = span.dataset;
-        const elementId = span.id;
-        const container = document.getElementById(elementId);
-        const currentStatus = container ? container.getAttribute("data-status") : "new";
+        const currentStatus = span.getAttribute("data-status") || "new";
   
         // Exclude rows based on configuration.
         if (this.useExclude && ref.startsWith(this.excludeValue)) {
-          if (container) {
-            container.setAttribute("data-status", "no document found");
-          }
+          span.setAttribute("data-status", "no document found");
           return;
         }
   
@@ -119,101 +107,76 @@ define([], function () {
           return;
         }
   
-        // Show the loading (clock) icon.
-        this.showLoadingIcon(elementId);
+        this.showLoadingIcon(span);
   
-        // Build the URL using the provided encoding functions.
-        const cleanArg = DocumentsOnline.url_Decode(arg).replaceAll("\\", "");
+        // Build the URL.
+        const cleanArg = DocumentsOnline.url_Decode(arg).replace(/\\/g, "");
         const encodedArg = encodeURI(DocumentsOnline.fEncode(cleanArg));
-  
-        // Choose the base URL depending on the Dev Mode flag.
         const baseUrl = this.isDevMode ? this.sDevUrl : this.sServerUrl;
         const fetchUrl = `${baseUrl}arg=${encodedArg}&env=${DocumentsOnline.url_Decode(env)}`;
   
-        // Check the cache for an existing request.
+        // Define a common response processor.
+        const processResponse = (data) => {
+          if (data === 1) {
+            this.removeLoadingIcon(span);
+            console.log(ref, " no document found");
+          } else {
+            const valueEl = data.getElementsByTagName("value")[0];
+            const destinationUrl = valueEl ? valueEl.childNodes[0].nodeValue : "";
+            this.updatePaperclip(span, destinationUrl);
+            console.log(ref, " document found:", destinationUrl);
+          }
+        };
+  
+        // If already cached, reuse the promise.
         if (this.requestCache.has(fetchUrl)) {
           this.requestCache.get(fetchUrl)
-            .then((data) => {
-              if (data === 1) {
-                this.removeLoadingIcon(elementId);
-                console.log(ref, " no document found (cached)");
-              } else {
-                const valueEl = data.getElementsByTagName("value")[0];
-                const destinationUrl = valueEl ? valueEl.childNodes[0].nodeValue : "";
-                this.updatePaperclip(elementId, destinationUrl);
-                console.log(ref, " document found (cached):", destinationUrl);
-              }
-            })
-            .catch((error) => {
-              console.error("Error fetching data for", ref, error);
-            });
+            .then(processResponse)
+            .catch(error => console.error("Error fetching data for", ref, error));
           return;
         }
   
-        // If not cached, create the fetch promise.
+        // Otherwise, fetch and cache the promise.
         const promise = fetch(fetchUrl, {
           method: "GET",
-          headers: { token: token, user: user },
+          headers: { token: token, user: user }
         })
-          .then((response) => response.text())
-          .then((text) => {
-            if (!text.trim()) {
-              return 1;
-            }
-            return new window.DOMParser().parseFromString(text, "text/xml");
-          });
+          .then(response => response.text())
+          .then(text => !text.trim() ? 1 : new window.DOMParser().parseFromString(text, "text/xml"));
   
-        // Cache the promise.
         this.requestCache.set(fetchUrl, promise);
   
-        // Process the response.
         promise
-          .then((data) => {
-            if (data === 1) {
-              this.removeLoadingIcon(elementId);
-              console.log(ref, " no document found");
-            } else {
-              const valueEl = data.getElementsByTagName("value")[0];
-              const destinationUrl = valueEl ? valueEl.childNodes[0].nodeValue : "";
-              this.updatePaperclip(elementId, destinationUrl);
-              console.log(ref, " document found:", destinationUrl);
-            }
-          })
-          .catch((error) => {
-            console.error("Error fetching data for", ref, error);
-          });
+          .then(processResponse)
+          .catch(error => console.error("Error fetching data for", ref, error));
       }
   
       /**
        * Sets up lazy loading for all spans with name="attachments".
        * An IntersectionObserver watches each span, and when it scrolls into view,
-       * processSpan is called and the element is unobserved.
+       * processSpan is called and the span is then unobserved.
        */
       setupLazyLoading() {
         const spans = document.querySelectorAll("span[name='attachments']");
         if ("IntersectionObserver" in window) {
           const observerOptions = { threshold: 0.1 };
           const observer = new IntersectionObserver((entries, observer) => {
-            entries.forEach((entry) => {
+            entries.forEach(entry => {
               if (entry.isIntersecting) {
                 this.processSpan(entry.target);
                 observer.unobserve(entry.target);
               }
             });
           }, observerOptions);
-          spans.forEach((span) => {
-            observer.observe(span);
-          });
+          spans.forEach(span => observer.observe(span));
         } else {
           // Fallback: process all spans immediately if IntersectionObserver isn't supported.
-          spans.forEach((span) => {
-            this.processSpan(span);
-          });
+          spans.forEach(span => this.processSpan(span));
         }
       }
-  
+    
       // --- DO NOT CHANGE THE FOLLOWING ENCODING FUNCTIONS ---
-  
+    
       static fEncode(vValue) {
         var Base64 = {
           _keyStr: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
@@ -315,11 +278,11 @@ define([], function () {
         var encodedString = Base64.encode(vValue);
         return encodedString;
       }
-  
+    
       static url_Decode(str) {
         return decodeURIComponent(str.replaceAll("+", " "));
       }
-  
+    
       /**
        * Returns the clock SVG markup with the given width and height.
        *
@@ -330,7 +293,7 @@ define([], function () {
       static getClockSVG(width, height) {
         return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
       }
-  
+    
       /**
        * Returns the paperclip SVG markup with the given width and height.
        *
@@ -342,6 +305,7 @@ define([], function () {
         return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-paperclip"><path d="M13.234 20.252 21 12.3"/><path d="m16 6-8.414 8.586a2 2 0 0 0 0 2.828 2 2 0 0 0 2.828 0l8.414-8.586a4 4 0 0 0 0-5.656 4 4 0 0 0-5.656 0l-8.415 8.585a6 6 0 1 0 8.486 8.486"/></svg>`;
       }
     }
-  
+    
     return DocumentsOnline;
-});
+  });
+  
