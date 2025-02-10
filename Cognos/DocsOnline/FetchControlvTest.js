@@ -11,21 +11,25 @@ define([], function () {
       initialize(oControlHost, fnDoneInitializing) {
         this.oControlHost = oControlHost;
         const config = oControlHost.configuration;
-        // Retain these config values (even if the icons are now inline SVG).
-        this.sServerUrl           = config.ServerUrl;
-        this.clockFontHeight      = config.Clock_Font_Height;
-        this.clockFontLength      = config.Clock_Font_Length;
-        this.paperclipFontHeight  = config.Paperclip_Font_Height;
-        this.paperclipFontLength  = config.Paperclip_Font_Length;
-        this.useExclude           = config.Use_Exclude;
-        this.excludeValue         = config.Exclude_Value;
+        this.sServerUrl          = config.ServerUrl;
+        // Use configuration for the SVG dimensions.
+        // For the clock icon, we assume: width = Clock_Font_Length and height = Clock_Font_Height.
+        this.clockFontLength     = config.Clock_Font_Length;
+        this.clockFontHeight     = config.Clock_Font_Height;
+        // For the paperclip icon, we assume: width = Paperclip_Font_Length and height = Paperclip_Font_Height.
+        this.paperclipFontLength = config.Paperclip_Font_Length;
+        this.paperclipFontHeight = config.Paperclip_Font_Height;
+        this.useExclude          = config.Use_Exclude;
+        this.excludeValue        = config.Exclude_Value;
+        // Create a cache (Map) for requests keyed by the full fetch URL.
+        this.requestCache = new Map();
         fnDoneInitializing();
       }
   
       /**
        * Called by Cognos when the control should render itself.
-       * It sets up lazy loading so that a fetch request is only sent
-       * for an attachment when its span scrolls into view.
+       * Sets up lazy loading so that a fetch request is only sent for an attachment
+       * when its span scrolls into view.
        *
        * @param {object} oControlHost - The Cognos control host.
        */
@@ -43,8 +47,8 @@ define([], function () {
         if (!container) return;
         const link = document.createElement("a");
         link.id = `${elementId}link`;
-        // Insert the inline clock SVG.
-        link.innerHTML = DocumentsOnline.CLOCK_SVG;
+        // Insert the inline clock SVG with dimensions from configuration.
+        link.innerHTML = DocumentsOnline.getClockSVG(this.clockFontLength, this.clockFontHeight);
         container.setAttribute("data-status", "document loading");
         container.appendChild(link);
       }
@@ -60,8 +64,8 @@ define([], function () {
         if (link) {
           link.href = destinationUrl;
           link.target = "_blank";
-          // Replace the clock SVG with the paperclip SVG.
-          link.innerHTML = DocumentsOnline.PAPERCLIP_SVG;
+          // Replace the clock SVG with the paperclip SVG using configured dimensions.
+          link.innerHTML = DocumentsOnline.getPaperclipSVG(this.paperclipFontLength, this.paperclipFontHeight);
         }
         const container = document.getElementById(elementId);
         if (container) {
@@ -87,9 +91,9 @@ define([], function () {
       /**
        * Processes a single span element.
        * If the span has not been processed and is not excluded,
-       * it shows the loading icon, builds the fetch URL (using the encoding functions),
-       * sends the fetch request, and then either updates the icon with a paperclip
-       * or removes it if no document is found.
+       * it shows the loading icon, builds the fetch URL using the encoding functions,
+       * and then either reuses a cached fetch promise or sends a new fetch request.
+       * When the promise resolves, it updates the icon to a paperclip (or removes it).
        *
        * @param {HTMLElement} span - The span element to process.
        */
@@ -99,7 +103,7 @@ define([], function () {
         const container = document.getElementById(elementId);
         const currentStatus = container ? container.getAttribute("data-status") : "new";
   
-        // If exclusion is turned on and the reference starts with the excluded value, mark as no document.
+        // Exclude rows based on configuration.
         if (this.useExclude && ref.startsWith(this.excludeValue)) {
           if (container) {
             container.setAttribute("data-status", "no document found");
@@ -116,23 +120,49 @@ define([], function () {
         // Show the loading (clock) icon.
         this.showLoadingIcon(elementId);
   
-        // Build the fetch URL using the encoding functions.
+        // Build the URL using the provided encoding functions.
         const cleanArg = DocumentsOnline.url_Decode(arg).replaceAll("\\", "");
         const encodedArg = encodeURI(DocumentsOnline.fEncode(cleanArg));
         const fetchUrl = `${this.sServerUrl}arg=${encodedArg}&env=${DocumentsOnline.url_Decode(env)}`;
   
-        fetch(fetchUrl, {
+        // Check the cache for an existing request.
+        if (this.requestCache.has(fetchUrl)) {
+          this.requestCache.get(fetchUrl)
+            .then((data) => {
+              if (data === 1) {
+                this.removeLoadingIcon(elementId);
+                console.log(ref, " no document found (cached)");
+              } else {
+                const valueEl = data.getElementsByTagName("value")[0];
+                const destinationUrl = valueEl ? valueEl.childNodes[0].nodeValue : "";
+                this.updatePaperclip(elementId, destinationUrl);
+                console.log(ref, " document found (cached):", destinationUrl);
+              }
+            })
+            .catch((error) => {
+              console.error("Error fetching data for", ref, error);
+            });
+          return;
+        }
+  
+        // If not cached, create the fetch promise.
+        const promise = fetch(fetchUrl, {
           method: "GET",
           headers: { token: token, user: user },
         })
           .then((response) => response.text())
           .then((text) => {
-            // If response text is empty (or only whitespace), signal no document.
             if (!text.trim()) {
               return 1;
             }
             return new window.DOMParser().parseFromString(text, "text/xml");
-          })
+          });
+  
+        // Cache the promise.
+        this.requestCache.set(fetchUrl, promise);
+  
+        // Process the response.
+        promise
           .then((data) => {
             if (data === 1) {
               this.removeLoadingIcon(elementId);
@@ -170,7 +200,7 @@ define([], function () {
             observer.observe(span);
           });
         } else {
-          // Fallback: if IntersectionObserver is not supported, process all spans immediately.
+          // Fallback: process all spans immediately if IntersectionObserver isn't supported.
           spans.forEach((span) => {
             this.processSpan(span);
           });
@@ -284,12 +314,29 @@ define([], function () {
       static url_Decode(str) {
         return decodeURIComponent(str.replaceAll("+", " "));
       }
+  
+      /**
+       * Returns the clock SVG markup with the given width and height.
+       *
+       * @param {number|string} width - The desired width.
+       * @param {number|string} height - The desired height.
+       * @returns {string} The inline SVG markup.
+       */
+      static getClockSVG(width, height) {
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
+      }
+  
+      /**
+       * Returns the paperclip SVG markup with the given width and height.
+       *
+       * @param {number|string} width - The desired width.
+       * @param {number|string} height - The desired height.
+       * @returns {string} The inline SVG markup.
+       */
+      static getPaperclipSVG(width, height) {
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-paperclip"><path d="M13.234 20.252 21 12.3"/><path d="m16 6-8.414 8.586a2 2 0 0 0 0 2.828 2 2 0 0 0 2.828 0l8.414-8.586a4 4 0 0 0 0-5.656 4 4 0 0 0-5.656 0l-8.415 8.585a6 6 0 1 0 8.486 8.486"/></svg>`;
+      }
     }
-  
-    // Inline SVG definitions (using the provided SVG markup).
-    DocumentsOnline.CLOCK_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
-  
-    DocumentsOnline.PAPERCLIP_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-paperclip"><path d="M13.234 20.252 21 12.3"/><path d="m16 6-8.414 8.586a2 2 0 0 0 0 2.828 2 2 0 0 0 2.828 0l8.414-8.586a4 4 0 0 0 0-5.656 4 4 0 0 0-5.656 0l-8.415 8.585a6 6 0 1 0 8.486 8.486"/></svg>`;
   
     return DocumentsOnline;
   });
