@@ -19,6 +19,8 @@ define([], function () {
         this.paperclipFontLength  = config.Paperclip_Font_Length;
         this.useExclude           = config.Use_Exclude;
         this.excludeValue         = config.Exclude_Value;
+
+        console.log('DocsOnline initialize')
         fnDoneInitializing();
       }
   
