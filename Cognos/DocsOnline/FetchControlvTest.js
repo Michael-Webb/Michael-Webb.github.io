@@ -177,7 +177,7 @@ define([], function () {
       // If not cached, fetch from the network.
       const promise = fetch(fetchUrl, {
         method: "GET",
-        // headers: { token: token, user: user },
+        headers: { token: token, user: user },
       })
         .then((response) => response.text())
         .then((text) => (!text.trim() ? 1 : new window.DOMParser().parseFromString(text, "text/xml")));
@@ -219,7 +219,7 @@ define([], function () {
       const encodedArg = encodeURI(DocumentsOnline.fEncode(cleanArg));
       const baseUrl = this.isDevMode ? this.sDevUrl : this.sServerUrl;
       // Append the &html=true parameter.
-      const fetchUrl = `${baseUrl}arg=${encodedArg}&env=${DocumentsOnline.url_Decode(env)}&html=true&user=${user}&token=${token}`;
+      const fetchUrl = `${baseUrl}arg=${encodedArg}&env=${DocumentsOnline.url_Decode(env)}&user=${user}&token=${token}&html=true`;
 
       // Define a common response processor.
       const processResponse = (data) => {
@@ -248,7 +248,7 @@ define([], function () {
       // If not cached, fetch from the network.
       const promise = fetch(fetchUrl, {
         method: "GET",
-        // headers: { token: token, user: user },
+        headers: { token: token, user: user },
       })
         .then((response) => response.text())
         // Parse as HTML instead of XML.
