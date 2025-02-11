@@ -63,6 +63,7 @@ define([], function () {
       link.id = `${container.id}link`;
       link.innerHTML = DocumentsOnline.getClockSVG(this.iconWidth, this.iconHeight);
       container.setAttribute("data-status", "document loading");
+      container.setAttribute("title","Attachment Loading");
       container.appendChild(link);
     }
 
@@ -105,6 +106,8 @@ define([], function () {
         link.innerHTML = content;
       }
       container.setAttribute("data-status", "document found");
+      container.setAttribute("title","View Attachment Document");
+
     }
 
     /**

@@ -1,43 +1,60 @@
 {
-    "name": "DocsOnline_2025",
-    "schemaVersion": "1.0",
-    "extensions": [
-      {
-        "perspective": "common",
-        "comment": "This zip simply contains JavaScript file to be used in Documents Online reports. It should not affect any perspective, other than to make the js file available.",
-        "features": [
-          {
-            "id": "DocsOnlineCC"
-          },
-          {
-              "id":"DocsOnlineFunctions"
-          },
-          {
-            "id": "com.ibm.bi.common.media",
-            "comment": "This is the ID for the Widgets panel. It will be the container for the images below.",
-            "collectionItems": [
-              {
-                "containerId": "com.ibm.bi.common.media",
-                "id": "Paperclip",
-                "name": "Paperclip",
-                "options": {
-                  "altText": "View Attached Document",
-                  "imageLink": "v1/ext/DocsOnline/images/Paperclip.png"
-                }
-              },
-              {
-                "containerId": "com.ibm.bi.common.media",
-                "id": "Clock",
-                "name": "Clock",
-                "options": {
-                  "altText": "Attachment Loading",
-                  "imageLink": "v1/ext/DocsOnline/images/Clock.png"
-                }
+  "name": "DocsOnlinev5",
+  "schemaVersion": "1.0",
+  "extensions": [
+    {
+      "perspective": "common",
+      "comment": "This zip simply contains JavaScript file to be used in Documents Online reports. It should not affect any perspective, other than to make the js file available.",
+      "features": [
+        {
+          "id": "DocsOnlineCC"
+        },
+        {
+          "id": "DocsOnlineInline"
+        },
+        {
+          "id": "com.ibm.bi.common.media",
+          "comment": "This is the ID for the Widgets panel. It will be the container for the images below.",
+          "collectionItems": [
+            {
+              "containerId": "com.ibm.bi.common.media",
+              "id": "Paperclip",
+              "name": "Paperclip",
+              "options": {
+                "altText": "View Attached Document",
+                "imageLink": "v1/ext/DocsOnlinev5/images/Paperclip.png"
               }
-            ]
-          }
-        ]
-      }
-    ]
-  }
-  
+            },
+            {
+              "containerId": "com.ibm.bi.common.media",
+              "id": "Clock",
+              "name": "Clock",
+              "options": {
+                "altText": "Attachment Loading",
+                "imageLink": "v1/ext/DocsOnlinev5/images/Clock.png"
+              }
+            },
+            {
+              "containerId": "com.ibm.bi.common.media",
+              "id": "PaperclipIcon",
+              "name": "PaperclipIcon",
+              "options": {
+                "altText": "View Attached Document",
+                "imageLink": "v1/ext/DocsOnlinev5/images/LucideIcon/paperclip.svg"
+              }
+            },
+            {
+              "containerId": "com.ibm.bi.common.media",
+              "id": "ClockIcon",
+              "name": "ClockIcon",
+              "options": {
+                "altText": "Attachment Loading",
+                "imageLink": "v1/ext/DocsOnlinev5/images/LucideIcon/clock.svg"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
