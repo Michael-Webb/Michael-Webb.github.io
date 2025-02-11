@@ -156,7 +156,6 @@ define([], function () {
         if (data === 1) {
           this.removeLoadingIcon(span);
           console.log(ref, " no document found");
-          console.log(`${ref}`, data);
         } else {
           const valueEl = data.getElementsByTagName("value")[0];
           const destinationUrl = valueEl ? valueEl.childNodes[0].nodeValue : "";
@@ -226,7 +225,6 @@ define([], function () {
         if (data === 1) {
           this.removeLoadingIcon(span);
           console.log(ref, " no document found");
-          console.log(`${ref}`, data);
         } else {
           // Parse the returned HTML to extract the <a> element.
           const anchorEl = data.querySelector("a");
