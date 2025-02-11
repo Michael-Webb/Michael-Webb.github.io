@@ -149,7 +149,7 @@ define([], function () {
       const cleanArg = DocumentsOnline.url_Decode(arg).replace(/\\/g, "");
       const encodedArg = encodeURI(DocumentsOnline.fEncode(cleanArg));
       const baseUrl = this.isDevMode ? this.sDevUrl : this.sServerUrl;
-      const fetchUrl = `${baseUrl}arg=${encodedArg}&env=${DocumentsOnline.url_Decode(env)}&user=${user}`;
+      const fetchUrl = `${baseUrl}arg=${encodedArg}&env=${DocumentsOnline.url_Decode(env)}&user=${user}&token=${token}`;
 
       // Define a common response processor.
       const processResponse = (data) => {
