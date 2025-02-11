@@ -30,7 +30,9 @@ define([], function () {
       this.showIconText = config["Show Icon/Text"];
       this.label = config["Label"];
 
-      //
+      // New config option: processSpanType
+      // If set to "html" then processSpanHTML() will be used;
+      // if set to "xml" then processSpanXML() will be used.
       this.processSpanType = config["type"];
 
       // Create an in-memory cache for requests keyed by the full fetch URL.
@@ -118,14 +120,14 @@ define([], function () {
     }
 
     /**
-     * Processes a single span element.
+     * Processes a single span element using an XML response.
      * Shows the loading icon, builds the fetch URL using encoding functions,
      * then either reuses a cached request or sends a new fetch request.
      * When the promise resolves, it updates the link accordingly.
      *
      * @param {HTMLElement} span - The span element to process.
      */
-    processSpan(span) {
+    processSpanXML(span) {
       const { token, arg, user, env, ref } = span.dataset;
       const currentStatus = span.getAttribute("data-status") || "new";
 
@@ -147,7 +149,7 @@ define([], function () {
       const cleanArg = DocumentsOnline.url_Decode(arg).replace(/\\/g, "");
       const encodedArg = encodeURI(DocumentsOnline.fEncode(cleanArg));
       const baseUrl = this.isDevMode ? this.sDevUrl : this.sServerUrl;
-      const fetchUrl = `${baseUrl}arg=${encodedArg}&env=${DocumentsOnline.url_Decode(env)}`;
+      const fetchUrl = `${baseUrl}arg=${encodedArg}&env=${DocumentsOnline.url_Decode(env)}&user=${user}`;
 
       // Define a common response processor.
       const processResponse = (data) => {
@@ -175,7 +177,7 @@ define([], function () {
       // If not cached, fetch from the network.
       const promise = fetch(fetchUrl, {
         method: "GET",
-        headers: { token: token, user: user },
+        // headers: { token: token, user: user },
       })
         .then((response) => response.text())
         .then((text) => (!text.trim() ? 1 : new window.DOMParser().parseFromString(text, "text/xml")));
@@ -186,6 +188,14 @@ define([], function () {
       promise.then(processResponse).catch((error) => console.error("Error fetching data for", ref, error));
     }
 
+    /**
+     * Processes a single span element using an HTML response.
+     * Shows the loading icon, builds the fetch URL using encoding functions,
+     * then either reuses a cached request or sends a new fetch request.
+     * When the promise resolves, it updates the link accordingly.
+     *
+     * @param {HTMLElement} span - The span element to process.
+     */
     processSpanHTML(span) {
       const { token, arg, user, env, ref } = span.dataset;
       const currentStatus = span.getAttribute("data-status") || "new";
@@ -209,7 +219,7 @@ define([], function () {
       const encodedArg = encodeURI(DocumentsOnline.fEncode(cleanArg));
       const baseUrl = this.isDevMode ? this.sDevUrl : this.sServerUrl;
       // Append the &html=true parameter.
-      const fetchUrl = `${baseUrl}arg=${encodedArg}&env=${DocumentsOnline.url_Decode(env)}&html=true`;
+      const fetchUrl = `${baseUrl}arg=${encodedArg}&env=${DocumentsOnline.url_Decode(env)}&html=true&user=${user}`;
 
       // Define a common response processor.
       const processResponse = (data) => {
@@ -238,7 +248,7 @@ define([], function () {
       // If not cached, fetch from the network.
       const promise = fetch(fetchUrl, {
         method: "GET",
-        headers: { token: token, user: user },
+        // headers: { token: token, user: user },
       })
         .then((response) => response.text())
         // Parse as HTML instead of XML.
@@ -253,28 +263,31 @@ define([], function () {
     /**
      * Sets up lazy loading for all spans with name="attachments".
      * An IntersectionObserver watches each span, and when it scrolls into view,
-     * processSpan is called and the span is then unobserved.
+     * the appropriate processSpan function is called and the span is then unobserved.
      */
     setupLazyLoading() {
       const spans = document.querySelectorAll("span[name='attachments']");
+
+      // Determine which processing function to use based on the configuration.
+      // Default to processSpanXML if processSpanType is not set to "html".
+      const processSpanFn =
+        this.processSpanType && this.processSpanType.toLowerCase() === "html"
+          ? this.processSpanHTML.bind(this)
+          : this.processSpanXML.bind(this);
+
       if ("IntersectionObserver" in window) {
         const observerOptions = { threshold: 0.1 };
         const observer = new IntersectionObserver((entries, observer) => {
           entries.forEach((entry) => {
             if (entry.isIntersecting) {
-              if ((this.processSpanType = "html")) {
-                this.processSpanHTML(entry.target);
-              } else if (this.processSpanType = "xml") {
-                this.processSpan(entry.target);
-              }
-              this.processSpan(entry.target);
+              processSpanFn(entry.target);
               observer.unobserve(entry.target);
             }
           });
         }, observerOptions);
         spans.forEach((span) => observer.observe(span));
       } else {
-        spans.forEach((span) => this.processSpan(span));
+        spans.forEach((span) => processSpanFn(span));
       }
     }
 
