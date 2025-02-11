@@ -219,7 +219,7 @@ define([], function () {
       const encodedArg = encodeURI(DocumentsOnline.fEncode(cleanArg));
       const baseUrl = this.isDevMode ? this.sDevUrl : this.sServerUrl;
       // Append the &html=true parameter.
-      const fetchUrl = `${baseUrl}arg=${encodedArg}&env=${DocumentsOnline.url_Decode(env)}&html=true&user=${user}`;
+      const fetchUrl = `${baseUrl}arg=${encodedArg}&env=${DocumentsOnline.url_Decode(env)}&html=true&user=${user}&token=${token}`;
 
       // Define a common response processor.
       const processResponse = (data) => {
