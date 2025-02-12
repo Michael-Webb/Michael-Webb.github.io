@@ -872,6 +872,10 @@ define(() => {
             });
             this.updateSelectedCount();
             this.announceGroupSelection(groupElement, false);
+            // If "Show Selected" is active, reapply the filter so that unselected items are hidden.
+            if (this.showingSelectedOnly) {
+              this.applyShowSelectedFilter();
+            }
           }
         }
       });
