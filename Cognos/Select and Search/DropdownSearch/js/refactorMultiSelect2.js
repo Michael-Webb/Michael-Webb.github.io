@@ -496,10 +496,10 @@ define(() => {
                 <div class="search-options">
                   <label class="search-type-option"><span>Search type:</span></label>
                   <select class="search-type" aria-label="Search type" id="${this.searchTypeSelectId}">
-                    <option value="containsAny">Contains Any</option>
-                    <option value="containsAll">Contains All</option>
-                    <option value="startsWithAny">Starts With Any</option>
-                    <option value="startsWithFirstContainsRest">Starts With First Contains Rest</option>
+                    <option value="containsAny">Contains any of these keywords</option>
+                    <option value="containsAll">Contains all of these keywords</option>
+                    <option value="startsWithAny">Starts with any of these keywords</option>
+                    <option value="startsWithFirstContainsRest">Starts with first keyword and contains all of the remaining keywords</option>
                   </select>
                 </div>
                 <label class="case-option">
