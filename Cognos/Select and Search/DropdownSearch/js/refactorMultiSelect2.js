@@ -459,6 +459,13 @@ define(() => {
             clip: rect(0, 0, 0, 0);
             border: 0;
           }
+          .no-options {
+            padding: 1rem;
+            text-align: center;
+            color: #666;
+            font-size: 0.875rem;
+          }
+
         </style>`;
     }
 
@@ -512,7 +519,9 @@ define(() => {
                     <path d="M7 10l5 5 5-5H7z" />
                   </svg>
                 </button>
-                <button class="btn secondary show-selected-btn" aria-label="Show only selected options" id="${this.showSelectedId}">
+                <button class="btn secondary show-selected-btn" aria-label="Show only selected options" id="${
+                  this.showSelectedId
+                }">
                   Show Selected
                 </button>
               </div>
@@ -872,6 +881,11 @@ define(() => {
         this.showAllItems(list);
         this.updateSelectedCount();
         this.announceSearchResults();
+        // Remove any existing no-options message when showing all items.
+        const existingMsg = list.querySelector(".no-options");
+        if (existingMsg) {
+          existingMsg.remove();
+        }
         return;
       }
 
@@ -898,7 +912,28 @@ define(() => {
         }
       });
 
+      // Hide groups that now have no visible items.
       this.hideEmptyGroups(list);
+
+      // Check for visible checkbox items.
+      const visibleItems = list.querySelectorAll(".checkbox-item:not(.hidden)");
+      if (visibleItems.length === 0) {
+        // If no visible items exist, check if the no-options message is already added.
+        if (!list.querySelector(".no-options")) {
+          const messageElem = document.createElement("p");
+          messageElem.className = "no-options";
+          messageElem.textContent = "No Options Available";
+          // Optionally, you can style this message via CSS.
+          list.appendChild(messageElem);
+        }
+      } else {
+        // If there are visible items, remove any no-options message.
+        const messageElem = list.querySelector(".no-options");
+        if (messageElem) {
+          messageElem.remove();
+        }
+      }
+
       this.updateSelectedCount();
       this.announceSearchResults();
     }
@@ -1063,7 +1098,7 @@ define(() => {
         console.warn("List element not found.");
         return;
       }
-      
+    
       if (!this.showingSelectedOnly) {
         // Filter items: hide items that are not selected.
         const checkboxItems = list.querySelectorAll(".checkbox-item");
@@ -1079,6 +1114,24 @@ define(() => {
         });
         // Hide groups that now have no visible items.
         this.hideEmptyGroups(list);
+    
+        // Check for visible (i.e. selected) items.
+        const visibleItems = list.querySelectorAll(".checkbox-item:not(.hidden)");
+        if (visibleItems.length === 0) {
+          // If nothing is selected, add the no-options message.
+          if (!list.querySelector('.no-options')) {
+            const messageElem = document.createElement('p');
+            messageElem.className = 'no-options';
+            messageElem.textContent = 'No Options Available';
+            list.appendChild(messageElem);
+          }
+        } else {
+          // Remove any no-options message if it exists.
+          const messageElem = list.querySelector('.no-options');
+          if (messageElem) {
+            messageElem.remove();
+          }
+        }
         // Update button text and ARIA label.
         this.elements.showSelected.textContent = "Show All";
         this.elements.showSelected.setAttribute("aria-label", "Show all options");
@@ -1086,15 +1139,20 @@ define(() => {
       } else {
         // Remove filter: show all items.
         this.showAllItems(list);
+        // Remove the no-options message if it exists.
+        const messageElem = list.querySelector('.no-options');
+        if (messageElem) {
+          messageElem.remove();
+        }
         // Update button text and ARIA label.
         this.elements.showSelected.textContent = "Show Selected";
         this.elements.showSelected.setAttribute("aria-label", "Show only selected options");
         this.showingSelectedOnly = false;
       }
-      
-      // Update the header count if needed.
+    
       this.updateSelectedCount();
-    }    
+    }
+    
 
     /**
      * Render the control.
