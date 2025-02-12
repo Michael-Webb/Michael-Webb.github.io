@@ -10,9 +10,6 @@
           "id": "FetchControl"
         },
         {
-          "id": "FetchControlInline"
-        },
-        {
           "id": "com.ibm.bi.common.media",
           "comment": "This is the ID for the Widgets panel. It will be the container for the images below.",
           "collectionItems": [
