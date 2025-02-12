@@ -1068,6 +1068,7 @@ define(() => {
       // Update the header text and the tooltip.
       this.elements.header.querySelector("span").textContent = count ? `${count} selected` : "Select Options";
       this.elements.header.title = count ? selectedItems : "Select Options";
+      this.oControlHost.valueChanged()
     }
 
     /**
