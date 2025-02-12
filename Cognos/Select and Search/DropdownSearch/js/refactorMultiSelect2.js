@@ -372,7 +372,7 @@ define(() => {
           .checkbox-item {
             display: flex;
             align-items: center;
-            padding: var(--padding-md);
+            padding;
             cursor: pointer;
             transition: background 0.2s;
           }
@@ -978,18 +978,33 @@ define(() => {
      * Update the header text and title based on selected options.
      */
     updateSelectedCount() {
+      // Only count checkboxes inside the options list.
       const optionCheckboxes = this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked');
       const count = optionCheckboxes.length;
+    
       const selectedItems = Array.from(optionCheckboxes)
-        .map((cb) => {
-          const checkboxItem = cb.closest(".checkbox-item");
-          return checkboxItem ? checkboxItem.title : null;
+        .map(cb => {
+          // Look for the closest container with the "checkbox-item" class.
+          const labelEl = cb.closest('.checkbox-item');
+          if (labelEl) {
+            // First try to get the text from the <span> element.
+            const spanEl = labelEl.querySelector('span');
+            if (spanEl && spanEl.textContent.trim() !== "") {
+              return spanEl.textContent.trim();
+            }
+            // Fallback to the label's title attribute.
+            return labelEl.getAttribute('title') || "";
+          }
+          return "";
         })
-        .filter((title) => title !== null)
+        .filter(text => text !== "")
         .join(", ");
+    
+      // Update the header text and the tooltip.
       this.elements.header.querySelector("span").textContent = count ? `${count} selected` : "Select Options";
       this.elements.header.title = count ? selectedItems : "Select Options";
     }
+    
 
     /**
      * Apply the selection (notify the host control and finish).
