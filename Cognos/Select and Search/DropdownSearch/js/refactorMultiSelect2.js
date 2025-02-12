@@ -922,23 +922,28 @@ define(() => {
         console.warn("List element not found.");
         return;
       }
-
+    
       searchType = searchType || "containsAny";
+      
+      // If the search field is empty, use the appropriate filter:
       if (!Array.isArray(searchTerms) || searchTerms.length === 0 || searchTerms[0] === "") {
-        this.showAllItems(list);
+        if (this.showingSelectedOnly) {
+          this.applyShowSelectedFilter(); // Only show selected items
+        } else {
+          this.showAllItems(list); // Show all items
+        }
         this.updateSelectedCount();
         this.announceSearchResults();
-        // Remove any existing no-options message when showing all items.
         const existingMsg = list.querySelector(".no-options");
         if (existingMsg) {
           existingMsg.remove();
         }
         return;
       }
-
+    
       const useCaseInsensitive =
         this.caseInsensitive !== undefined ? this.caseInsensitive : this.caseInsensitiveDefault;
-
+    
       const checkboxItems = list.querySelectorAll(".checkbox-item");
       checkboxItems.forEach((item) => {
         const label = item.querySelector("span");
@@ -949,7 +954,17 @@ define(() => {
           compareValue = displayValue.toLowerCase();
           compareTerms = searchTerms.map((term) => term.toLowerCase());
         }
-        const isVisible = this.determineVisibility(compareValue, compareTerms, searchType);
+        
+        // Determine if the item matches the search criteria.
+        const searchMatch = this.determineVisibility(compareValue, compareTerms, searchType);
+        
+        // If the "Show Selected" filter is active, also require the item to be selected.
+        const checkbox = item.querySelector("input[type='checkbox']");
+        const selectedMatch = !this.showingSelectedOnly || (checkbox && checkbox.checked);
+    
+        // Combine the two filters.
+        const isVisible = searchMatch && selectedMatch;
+    
         if (isVisible) {
           item.classList.remove("hidden");
           item.style.display = "flex";
@@ -958,32 +973,30 @@ define(() => {
           item.style.display = "none";
         }
       });
-
+    
       // Hide groups that now have no visible items.
       this.hideEmptyGroups(list);
-
-      // Check for visible checkbox items.
+    
+      // If no visible items exist, add a no-options message.
       const visibleItems = list.querySelectorAll(".checkbox-item:not(.hidden)");
       if (visibleItems.length === 0) {
-        // If no visible items exist, check if the no-options message is already added.
         if (!list.querySelector(".no-options")) {
           const messageElem = document.createElement("p");
           messageElem.className = "no-options";
           messageElem.textContent = "No Options Available";
-          // Optionally, you can style this message via CSS.
           list.appendChild(messageElem);
         }
       } else {
-        // If there are visible items, remove any no-options message.
         const messageElem = list.querySelector(".no-options");
         if (messageElem) {
           messageElem.remove();
         }
       }
-
+    
       this.updateSelectedCount();
       this.announceSearchResults();
     }
+    
 
     /**
      * Show all items in the list.
@@ -1152,7 +1165,7 @@ define(() => {
         this.applyShowSelectedFilter();
 
         // Update button text and ARIA label.
-        this.elements.showSelected.textContent = "Show All";
+        this.elements.showSelected.textContent = "Show All Data";
         this.elements.showSelected.setAttribute("aria-label", "Show all options");
         this.showingSelectedOnly = true;
       } else {
