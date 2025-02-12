@@ -622,7 +622,7 @@ define(() => {
       } else {
         // Log a warning and show a fallback message.
         console.warn("Data store is not set or has no rows.");
-        html += `<p class="no-options">No options available.</p>`;
+        html += `<p class="no-options">No data available.</p>`;
       }
 
       html += `</div>`; // Close list.
@@ -1162,7 +1162,7 @@ define(() => {
         if (!list.querySelector(".no-options")) {
           const messageElem = document.createElement("p");
           messageElem.className = "no-options";
-          messageElem.textContent = "No Options Available";
+          messageElem.textContent = "No Selections Made";
           list.appendChild(messageElem);
         }
       } else {
