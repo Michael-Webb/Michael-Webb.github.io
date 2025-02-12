@@ -1046,6 +1046,8 @@ define(() => {
       optionCheckboxes.forEach((checkbox) => {
         checkbox.checked = this.mainParamValues.includes(checkbox.value);
       });
+      // **Update the header to show how many options are currently selected.**
+      this.updateSelectedCount();
     }
 
     /**
