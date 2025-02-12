@@ -61,7 +61,6 @@ define(() => {
       this.mainParamValues = [];
       const { "Parameter Name": paramName, "Case Insensitive Search Default": caseInsensitiveDefault } =
         oControlHost.configuration;
-
       const mainParams = oControlHost.getParameter(paramName);
       if (mainParams && Array.isArray(mainParams.values)) {
         mainParams.values.forEach((val) => {
@@ -71,6 +70,7 @@ define(() => {
           }
         });
       }
+      console.log("mainParams & mainParamValues ", mainParams, mainParamValues);
       this.caseInsensitiveDefault = caseInsensitiveDefault !== undefined ? Boolean(caseInsensitiveDefault) : true;
       this.caseInsensitive = this.caseInsensitiveDefault;
 
@@ -925,7 +925,7 @@ define(() => {
      * Checks if at least one checkbox is selected.
      */
     isInValidState() {
-      return this.elements.dropdown.querySelectorAll('input[type="checkbox"]:checked').length > 0;
+      return this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked').length > 0;
     }
 
     /**
@@ -936,9 +936,10 @@ define(() => {
       if (!sParamName) {
         return null;
       }
-      const selectedValues = Array.from(this.elements.dropdown.querySelectorAll('input[type="checkbox"]:checked')).map(
-        (cb) => cb.value
-      );
+      const selectedValues = Array.from(
+        this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked')
+      ).map((cb) => cb.value);
+
       const params = [
         {
           parameter: sParamName,
