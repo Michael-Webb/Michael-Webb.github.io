@@ -35,6 +35,9 @@ define(() => {
       this.searchTypeSelectId = null;
       this.searchResultsLiveId = null;
 
+      this.showSelectedId = null;
+      this.showingSelectedOnly = false; // Track whether we’re filtering to show only selected items
+
       // Cached DOM elements
       this.elements = {};
 
@@ -102,6 +105,7 @@ define(() => {
       this.deselectAllId = this.generateId("deselectAll");
       this.searchTypeSelectId = this.generateId("searchTypeSelect");
       this.searchResultsLiveId = this.generateId("searchResultsLive");
+      this.showSelectedId = this.generateId("showSelected");
 
       // Clear any previously stored groups or checkboxes.
       this.groups = [];
@@ -609,6 +613,7 @@ define(() => {
             <div class="select-controls">
               <button class="btn secondary select-btn" aria-label="Select all options" id="${this.selectAllId}">Select all</button>
               <button class="btn secondary deselect-btn" aria-label="Clear all selections" id="${this.deselectAllId}">Clear</button>
+              <button class="btn secondary show-selected-btn" aria-label="Show only selected options" id="${this.showSelectedId}">Show Selected</button>
             </div>
             <button class="btn primary apply-btn" id="${this.applyBtnId}">Apply</button>
           </div>
@@ -651,6 +656,7 @@ define(() => {
       this.elements.searchTypeSelect = container.querySelector(`#${this.searchTypeSelectId}`);
       this.elements.searchResultsLive = container.querySelector(`#${this.searchResultsLiveId}`);
       this.elements.searchIcon = container.querySelector("#searchIcon");
+      this.elements.showSelected = container.querySelector(`#${this.showSelectedId}`);
 
       // Verify that all required elements are present.
       const missingElements = [];
@@ -750,6 +756,11 @@ define(() => {
       // Select all and clear all buttons.
       this.elements.selectAll.addEventListener("click", () => this.toggleAllItems(true));
       this.elements.deselectAll.addEventListener("click", () => this.toggleAllItems(false));
+
+      // Attach event listener for the Show Selected button.
+      if (this.elements.showSelected) {
+        this.elements.showSelected.addEventListener("click", () => this.toggleSelectedFilter());
+      }
 
       // Apply selection button.
       this.elements.applyBtn.addEventListener("click", () => this.applySelection());
@@ -985,30 +996,29 @@ define(() => {
       // Only count checkboxes inside the options list.
       const optionCheckboxes = this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked');
       const count = optionCheckboxes.length;
-    
+
       const selectedItems = Array.from(optionCheckboxes)
-        .map(cb => {
+        .map((cb) => {
           // Look for the closest container with the "checkbox-item" class.
-          const labelEl = cb.closest('.checkbox-item');
+          const labelEl = cb.closest(".checkbox-item");
           if (labelEl) {
             // First try to get the text from the <span> element.
-            const spanEl = labelEl.querySelector('span');
+            const spanEl = labelEl.querySelector("span");
             if (spanEl && spanEl.textContent.trim() !== "") {
               return spanEl.textContent.trim();
             }
             // Fallback to the label's title attribute.
-            return labelEl.getAttribute('title') || "";
+            return labelEl.getAttribute("title") || "";
           }
           return "";
         })
-        .filter(text => text !== "")
+        .filter((text) => text !== "")
         .join(", ");
-    
+
       // Update the header text and the tooltip.
       this.elements.header.querySelector("span").textContent = count ? `${count} selected` : "Select Options";
       this.elements.header.title = count ? selectedItems : "Select Options";
     }
-    
 
     /**
      * Apply the selection (notify the host control and finish).
@@ -1032,6 +1042,44 @@ define(() => {
       this.updateSelectedCount();
       this.announceAllSelection(checked);
     }
+    toggleSelectedFilter() {
+      const list = this.elements.dropdown.querySelector(".list");
+      if (!list) {
+        console.warn("List element not found.");
+        return;
+      }
+      
+      if (!this.showingSelectedOnly) {
+        // Filter items: hide items that are not selected.
+        const checkboxItems = list.querySelectorAll(".checkbox-item");
+        checkboxItems.forEach((item) => {
+          const checkbox = item.querySelector("input[type='checkbox']");
+          if (!checkbox.checked) {
+            item.classList.add("hidden");
+            item.style.display = "none";
+          } else {
+            item.classList.remove("hidden");
+            item.style.display = "flex";
+          }
+        });
+        // Hide groups that now have no visible items.
+        this.hideEmptyGroups(list);
+        // Update button text and ARIA label.
+        this.elements.showSelected.textContent = "Show All";
+        this.elements.showSelected.setAttribute("aria-label", "Show all options");
+        this.showingSelectedOnly = true;
+      } else {
+        // Remove filter: show all items.
+        this.showAllItems(list);
+        // Update button text and ARIA label.
+        this.elements.showSelected.textContent = "Show Selected";
+        this.elements.showSelected.setAttribute("aria-label", "Show only selected options");
+        this.showingSelectedOnly = false;
+      }
+      
+      // Update the header count if needed.
+      this.updateSelectedCount();
+    }    
 
     /**
      * Render the control.
