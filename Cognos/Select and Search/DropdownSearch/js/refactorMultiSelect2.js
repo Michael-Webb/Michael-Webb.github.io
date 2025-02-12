@@ -252,6 +252,13 @@ define(() => {
             cursor: pointer;
             padding: 0;
           }
+          .header-buttons {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem; /* Adjust spacing as needed */
+            margin-top: 0.5rem; /* Optional: adds spacing below the search input */
+          }
+
           .advanced-search {
             display: flex;
             align-items: center;
@@ -492,14 +499,23 @@ define(() => {
                   ${this.getSearchIconSVG(true)}
                 </button>
               </div>
-              <button class="advanced-search" aria-expanded="false" aria-controls="${this.searchControlsId}" id="${
-        this.advancedBtnId
-      }">
-                <span>Advanced</span>
-                <svg class="chevron" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
-                  <path d="M7 10l5 5 5-5H7z" />
-                </svg>
-              </button>
+              <div class="header-buttons">
+                <button class="advanced-search" 
+                        aria-expanded="false" 
+                        aria-controls="${this.searchControlsId}" 
+                        id="${this.advancedBtnId}"
+                >
+                  <span>
+                   Advanced
+                   </span>
+                  <svg class="chevron" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                    <path d="M7 10l5 5 5-5H7z" />
+                  </svg>
+                </button>
+                <button class="btn secondary show-selected-btn" aria-label="Show only selected options" id="${this.showSelectedId}">
+                  Show Selected
+                </button>
+              </div>
               <div id="${this.searchControlsId}" class="search-controls">
                 <div class="search-options">
                   <label class="search-type-option"><span>Search type:</span></label>
@@ -613,7 +629,6 @@ define(() => {
             <div class="select-controls">
               <button class="btn secondary select-btn" aria-label="Select all options" id="${this.selectAllId}">Select all</button>
               <button class="btn secondary deselect-btn" aria-label="Clear all selections" id="${this.deselectAllId}">Clear</button>
-              <button class="btn secondary show-selected-btn" aria-label="Show only selected options" id="${this.showSelectedId}">Show Selected</button>
             </div>
             <button class="btn primary apply-btn" id="${this.applyBtnId}">Apply</button>
           </div>
