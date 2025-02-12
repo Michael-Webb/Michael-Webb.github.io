@@ -70,7 +70,7 @@ define(() => {
           }
         });
       }
-      console.log("mainParams & mainParamValues ", mainParams, mainParamValues);
+      console.log("mainParams & mainParamValues ", mainParams);
       this.caseInsensitiveDefault = caseInsensitiveDefault !== undefined ? Boolean(caseInsensitiveDefault) : true;
       this.caseInsensitive = this.caseInsensitiveDefault;
 
