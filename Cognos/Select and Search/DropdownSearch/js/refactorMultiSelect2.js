@@ -1160,13 +1160,17 @@ define(() => {
       }
 
       if (!this.showingSelectedOnly) {
-        // Activate show-selected filtering.
+        // Activate "Show Selected" mode.
+        this.showingSelectedOnly = true;
         this.applyShowSelectedFilter();
         this.elements.showSelected.textContent = "Show All";
         this.elements.showSelected.setAttribute("aria-label", "Show all options");
-        this.showingSelectedOnly = true;
       } else {
-        // Deactivate the filter, but respect any search criteria.
+        // Deactivate "Show Selected" mode.
+        // First, update the flag to false.
+        this.showingSelectedOnly = false;
+
+        // Then reapply filtering based on search criteria.
         const searchValue = this.elements.search.value.trim();
         const searchType = this.elements.searchTypeSelect.value;
         if (searchValue !== "") {
@@ -1175,16 +1179,10 @@ define(() => {
         } else {
           this.showAllItems(list);
         }
-        // Clean up any "no-options" message.
-        const messageElem = list.querySelector(".no-options");
-        if (messageElem) {
-          messageElem.remove();
-        }
+
         this.elements.showSelected.textContent = "Show Selected";
         this.elements.showSelected.setAttribute("aria-label", "Show only selected options");
-        this.showingSelectedOnly = false;
       }
-
       this.updateSelectedCount();
     }
 
