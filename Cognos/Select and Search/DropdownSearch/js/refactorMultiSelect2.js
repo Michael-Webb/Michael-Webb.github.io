@@ -61,21 +61,52 @@ define(() => {
      */
     initialize(oControlHost, fnDoneInitializing) {
       this.oControlHost = oControlHost;
+
+      // Destructure configuration properties with defaults
+      const {
+        "Parameter Name": paramName,
+        "Case Insensitive Search Default": caseInsensitiveDefault,
+        "Value Use Column": valueUseCol = 0,
+        "Value Display Column": valueDispCol = 1,
+        "Grouping Parent Name": groupingParamName = "",
+        "Group Values": groupVals = false,
+        "Parent Value Use Column": groupingValUseCol = 2,
+        "Parent Value Display Column": groupingValDispCol = 3,
+        "Dropdown Width": dropdownWidth = "250px",
+        "Content Width": contentWidth = "250px",
+        "Multiple Select": multipleSelect = false,
+        "AutoSubmit": autoSubmit = true,
+        "Compact": isCompact = false,
+      } = oControlHost.configuration;
+
+      // Assign to instance properties for later use
+      this.paramName = paramName;
+      this.caseInsensitiveDefault = caseInsensitiveDefault !== undefined ? Boolean(caseInsensitiveDefault) : true;
+      this.caseInsensitive = this.caseInsensitiveDefault;
+      this.valueUseCol = valueUseCol;
+      this.valueDispCol = valueDispCol;
+      this.groupingParamName = groupingParamName;
+      this.groupVals = groupVals;
+      this.groupingValUseCol = groupingValUseCol;
+      this.groupingValDispCol = groupingValDispCol;
+      this.dropdownWidth = dropdownWidth;
+      this.contentWidth = contentWidth;
+      this.isMultiple = !!multipleSelect;
+      this.autoSubmit = autoSubmit;
+      this.isCompact = isCompact;
+
+      // Initialize main parameter values
       this.mainParamValues = [];
-      const { "Parameter Name": paramName, "Case Insensitive Search Default": caseInsensitiveDefault } =
-        oControlHost.configuration;
-      const mainParams = oControlHost.getParameter(paramName);
+      const mainParams = oControlHost.getParameter(this.paramName);
       if (mainParams && Array.isArray(mainParams.values)) {
         mainParams.values.forEach((val) => {
-          // Exclude the default checkbox value (e.g., "on") from mainParamValues.
+          // Exclude the default checkbox value (e.g., "on")
           if (val.use !== "on") {
             this.mainParamValues.push(val.use);
           }
         });
       }
-      console.log("mainParams & mainParamValues ", mainParams);
-      this.caseInsensitiveDefault = caseInsensitiveDefault !== undefined ? Boolean(caseInsensitiveDefault) : true;
-      this.caseInsensitive = this.caseInsensitiveDefault;
+      console.log("mainParams & mainParamValues", mainParams);
 
       fnDoneInitializing();
     }
@@ -111,34 +142,44 @@ define(() => {
       this.groups = [];
       this.checkboxes = [];
 
-      // Destructure configuration options (with defaults)
-      const {
-        "Value Use Column": valueUseCol = 0,
-        "Value Display Column": valueDispCol = 1,
-        "Grouping Parent Name": groupingParamName = "",
-        "Group Values": groupVals = false,
-        "Parent Value Use Column": groupingValUseCol = 2,
-        "Parent Value Display Column": groupingValDispCol = 3,
-        "Dropdown Width": dropdownWidth = "250px",
-        "Content Width": contentWidth = "250px",
-        Compact: isCompact = false,
-      } = this.oControlHost.configuration;
+      // // Destructure configuration options (with defaults)
+      // const {
+      //   "Value Use Column": valueUseCol = 0,
+      //   "Value Display Column": valueDispCol = 1,
+      //   "Grouping Parent Name": groupingParamName = "",
+      //   "Group Values": groupVals = false,
+      //   "Parent Value Use Column": groupingValUseCol = 2,
+      //   "Parent Value Display Column": groupingValDispCol = 3,
+      //   "Dropdown Width": dropdownWidth = "250px",
+      //   "Content Width": contentWidth = "250px",
+      //   Compact: isCompact = false,
+      // } = this.oControlHost.configuration;
+
+      // const valueUseCol = this.valueUseCol;
+      // const valueDispCol = this.valueDispCol;
+      // const groupingParamName = this.groupingParamName;
+      // const groupVals = this.groupVals;
+      // const groupingValUseCol = this.groupingValUseCol;
+      // const groupingValDispCol = this.groupingValDispCol;
+      // const dropdownWidth = this.dropdownWidth;
+      // const contentWidth = this.contentWidth;
+      // const isCompact = this.isCompact;
 
       // Determine dropdown CSS class (adding compact style if needed)
-      let dropdownClass = "dropdown-container" + (isCompact ? " compact" : "");
+      let dropdownClass = "dropdown-container" + (this.isCompact ? " compact" : "");
 
       // Build HTML parts using helper methods.
-      const styleBlock = this.generateStyleBlock(dropdownWidth, contentWidth);
+      const styleBlock = this.generateStyleBlock(this.dropdownWidth, this.contentWidth);
       const headerHTML = this.generateHeaderHTML();
       const contentHTML = this.generateContentHTML({
-        valueUseCol,
-        valueDispCol,
-        groupingParamName,
-        groupVals,
-        groupingValUseCol,
-        groupingValDispCol,
+        valueUseCol: this.valueUseCol,
+        valueDispCol: this.valueDispCol,
+        groupingParamName: this.groupingParamName,
+        groupVals: this.groupVals,
+        groupingValUseCol: this.groupingValUseCol,
+        groupingValDispCol: this.groupingValDispCol,
       });
-      const footerHTML = this.generateFooterHTML();
+      this.generateFooterHTML();
 
       return `
           ${styleBlock}
@@ -1004,7 +1045,7 @@ define(() => {
      * Return the parameters for submission.
      */
     getParameters() {
-      const sParamName = this.oControlHost.configuration["Parameter Name"];
+      const sParamName = this.paramName
       if (!sParamName) {
         return null;
       }
@@ -1184,17 +1225,7 @@ define(() => {
       }
       this.isMultiple = !!oControlHost.configuration["Multiple Select"];
       this.autoSubmit = oControlHost.configuration["AutoSubmit"] !== false;
-      const {
-        "Value Use Column": valueUseCol = 0,
-        "Value Display Column": valueDispCol = 1,
-        "Grouping Parent Name": groupingParamName = "",
-        "Group Values": groupVals = false,
-        "Parent Value Use Column": groupingValUseCol = 2,
-        "Parent Value Display Column": groupingValDispCol = 3,
-        Compact: isCompact = false,
-      } = oControlHost.configuration;
-      this.hasGrouping = groupVals && groupingParamName !== "";
-      this.isCompact = isCompact;
+      this.hasGrouping = this.groupVals && this.groupingParamName !== "";
 
       // Generate and set the template HTML.
       oControlHost.container.innerHTML = this.generateTemplateHTML();
