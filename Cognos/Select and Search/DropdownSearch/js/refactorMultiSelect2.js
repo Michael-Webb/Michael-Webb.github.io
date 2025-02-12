@@ -846,8 +846,15 @@ define(() => {
           e.stopPropagation();
           const groupElement = target.closest(".group");
           if (groupElement) {
+            // Only select checkboxes if their parent item is visible.
             const checkboxes = groupElement.querySelectorAll('input[type="checkbox"]');
-            checkboxes.forEach((cb) => (cb.checked = true));
+            checkboxes.forEach((cb) => {
+              const item = cb.closest(".checkbox-item");
+              // Check if the item is visible (offsetParent is null when display is "none")
+              if (item && item.offsetParent !== null) {
+                cb.checked = true;
+              }
+            });
             this.updateSelectedCount();
             this.announceGroupSelection(groupElement, true);
           }
@@ -857,7 +864,12 @@ define(() => {
           const groupElement = target.closest(".group");
           if (groupElement) {
             const checkboxes = groupElement.querySelectorAll('input[type="checkbox"]');
-            checkboxes.forEach((cb) => (cb.checked = false));
+            checkboxes.forEach((cb) => {
+              const item = cb.closest(".checkbox-item");
+              if (item && item.offsetParent !== null) {
+                cb.checked = false;
+              }
+            });
             this.updateSelectedCount();
             this.announceGroupSelection(groupElement, false);
           }
