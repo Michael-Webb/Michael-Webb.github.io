@@ -1162,7 +1162,7 @@ define(() => {
         if (!list.querySelector(".no-options")) {
           const messageElem = document.createElement("p");
           messageElem.className = "no-options";
-          messageElem.textContent = "No Selections Made";
+          messageElem.textContent = "No Current Selections Made";
           list.appendChild(messageElem);
         }
       } else {
