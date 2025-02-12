@@ -506,6 +506,8 @@ define(() => {
 
       // Check if the data store is set and has rows.
       if (this.m_oDataStore && this.m_oDataStore.rowCount) {
+        console.log("Datastore: ",this.m_oDataStore)
+        
         if (groupVals && groupingParamName !== "") {
           // --- Grouped options ---
           let groups = {};
