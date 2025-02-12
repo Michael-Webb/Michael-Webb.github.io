@@ -74,7 +74,7 @@ define(() => {
     /**
      * Receives authored data.
      */
-    setData(oDataStore) {
+    setData(oControlhost,oDataStore) {
       this.m_oDataStore = oDataStore;
       console.log("SetData: ",this.m_oDataStore)
     }
