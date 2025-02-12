@@ -75,8 +75,8 @@ define(() => {
         "Dropdown Width": dropdownWidth = "250px",
         "Content Width": contentWidth = "250px",
         "Multiple Select": multipleSelect = false,
-        "AutoSubmit": autoSubmit = true,
-        "Compact": isCompact = false,
+        AutoSubmit: autoSubmit = true,
+        Compact: isCompact = false,
       } = oControlHost.configuration;
 
       // Assign to instance properties for later use
@@ -922,9 +922,9 @@ define(() => {
         console.warn("List element not found.");
         return;
       }
-    
+
       searchType = searchType || "containsAny";
-      
+
       // If the search field is empty, use the appropriate filter:
       if (!Array.isArray(searchTerms) || searchTerms.length === 0 || searchTerms[0] === "") {
         if (this.showingSelectedOnly) {
@@ -940,10 +940,10 @@ define(() => {
         }
         return;
       }
-    
+
       const useCaseInsensitive =
         this.caseInsensitive !== undefined ? this.caseInsensitive : this.caseInsensitiveDefault;
-    
+
       const checkboxItems = list.querySelectorAll(".checkbox-item");
       checkboxItems.forEach((item) => {
         const label = item.querySelector("span");
@@ -954,17 +954,17 @@ define(() => {
           compareValue = displayValue.toLowerCase();
           compareTerms = searchTerms.map((term) => term.toLowerCase());
         }
-        
+
         // Determine if the item matches the search criteria.
         const searchMatch = this.determineVisibility(compareValue, compareTerms, searchType);
-        
+
         // If the "Show Selected" filter is active, also require the item to be selected.
         const checkbox = item.querySelector("input[type='checkbox']");
         const selectedMatch = !this.showingSelectedOnly || (checkbox && checkbox.checked);
-    
+
         // Combine the two filters.
         const isVisible = searchMatch && selectedMatch;
-    
+
         if (isVisible) {
           item.classList.remove("hidden");
           item.style.display = "flex";
@@ -973,10 +973,10 @@ define(() => {
           item.style.display = "none";
         }
       });
-    
+
       // Hide groups that now have no visible items.
       this.hideEmptyGroups(list);
-    
+
       // If no visible items exist, add a no-options message.
       const visibleItems = list.querySelectorAll(".checkbox-item:not(.hidden)");
       if (visibleItems.length === 0) {
@@ -992,11 +992,10 @@ define(() => {
           messageElem.remove();
         }
       }
-    
+
       this.updateSelectedCount();
       this.announceSearchResults();
     }
-    
 
     /**
      * Show all items in the list.
@@ -1058,7 +1057,7 @@ define(() => {
      * Return the parameters for submission.
      */
     getParameters() {
-      const sParamName = this.paramName
+      const sParamName = this.paramName;
       if (!sParamName) {
         return null;
       }
@@ -1163,22 +1162,24 @@ define(() => {
       if (!this.showingSelectedOnly) {
         // Activate show-selected filtering.
         this.applyShowSelectedFilter();
-
-        // Update button text and ARIA label.
-        this.elements.showSelected.textContent = "Show All Data";
+        this.elements.showSelected.textContent = "Show All";
         this.elements.showSelected.setAttribute("aria-label", "Show all options");
         this.showingSelectedOnly = true;
       } else {
-        // Deactivate the filter: show all items.
-        this.showAllItems(list);
-
-        // Remove any no-options message if it exists.
+        // Deactivate the filter, but respect any search criteria.
+        const searchValue = this.elements.search.value.trim();
+        const searchType = this.elements.searchTypeSelect.value;
+        if (searchValue !== "") {
+          const searchTerms = searchValue.split(",").map((term) => term.trim());
+          this.filterItems(searchTerms, searchType);
+        } else {
+          this.showAllItems(list);
+        }
+        // Clean up any "no-options" message.
         const messageElem = list.querySelector(".no-options");
         if (messageElem) {
           messageElem.remove();
         }
-
-        // Update button text and ARIA label.
         this.elements.showSelected.textContent = "Show Selected";
         this.elements.showSelected.setAttribute("aria-label", "Show only selected options");
         this.showingSelectedOnly = false;
