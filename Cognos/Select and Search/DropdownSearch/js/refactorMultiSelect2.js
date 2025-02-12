@@ -304,9 +304,16 @@ define(() => {
             cursor: pointer;
             border-radius: var(--radius);
           }
+          input[type="checkbox"] {
+            margin: 0rem 0.5rem 0rem 0rem;
+            flex-shrink: 0;
+            transform: translateY(1px);
+            vertical-align: middle !important;
+          }
           .case-checkbox {
             margin: 0;
           }
+          
           .case-checkbox:focus-visible {
             outline: 2px solid var(--primary);
             outline-offset: 2px;
@@ -376,14 +383,9 @@ define(() => {
             padding:var(--padding-sm);
             cursor: pointer;
             transition: background 0.2s;
-            transform: translateY(2px);
           }
           .checkbox-item:hover {
             background: var(--bg-hover);
-          }
-          .checkbox-item input[type="checkbox"] {
-            margin: 0rem 0.5rem 0rem 0rem;
-            flex-shrink: 0;
           }
           .checkbox-item input[type="checkbox"]:focus-visible {
             outline: 2px solid var(--primary);
