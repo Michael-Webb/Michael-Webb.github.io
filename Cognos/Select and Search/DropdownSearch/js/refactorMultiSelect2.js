@@ -1159,30 +1159,37 @@ define(() => {
         return;
       }
 
+      const searchValue = this.elements.search.value.trim();
+      const searchType = this.elements.searchTypeSelect.value;
+
       if (!this.showingSelectedOnly) {
         // Activate "Show Selected" mode.
         this.showingSelectedOnly = true;
-        this.applyShowSelectedFilter();
+        if (searchValue !== "") {
+          // Use filterItems so that both search and selection are respected.
+          const searchTerms = searchValue.split(",").map((term) => term.trim());
+          this.filterItems(searchTerms, searchType);
+        } else {
+          // No search text—apply selection-only filter.
+          this.applyShowSelectedFilter();
+        }
         this.elements.showSelected.textContent = "Show All";
         this.elements.showSelected.setAttribute("aria-label", "Show all options");
       } else {
         // Deactivate "Show Selected" mode.
-        // First, update the flag to false.
         this.showingSelectedOnly = false;
-
-        // Then reapply filtering based on search criteria.
-        const searchValue = this.elements.search.value.trim();
-        const searchType = this.elements.searchTypeSelect.value;
         if (searchValue !== "") {
+          // Re-run the search filter so that unselected items matching the search are shown.
           const searchTerms = searchValue.split(",").map((term) => term.trim());
           this.filterItems(searchTerms, searchType);
         } else {
+          // No search text—show all items.
           this.showAllItems(list);
         }
-
         this.elements.showSelected.textContent = "Show Selected";
         this.elements.showSelected.setAttribute("aria-label", "Show only selected options");
       }
+
       this.updateSelectedCount();
     }
 
