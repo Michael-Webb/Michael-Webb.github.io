@@ -347,6 +347,7 @@ define(() => {
             border-radius: var(--radius);
             font-size: 0.875rem;
             cursor: pointer;
+            white-space: nowrap
           }
           .btn:focus-visible {
             outline: 2px solid var(--primary);
