@@ -257,7 +257,7 @@ define(() => {
             border: none;
             font-size: 0.875rem;
             cursor: pointer;
-            padding: 0.25rem 0.75rem;
+            padding: 0.25rem .25rem .25rem 0rem;
           }
           .advanced-search:focus-visible {
             outline: 1px solid var(--primary);
@@ -376,6 +376,7 @@ define(() => {
             padding:var(--padding-sm);
             cursor: pointer;
             transition: background 0.2s;
+            transform: translateY(2px);
           }
           .checkbox-item:hover {
             background: var(--bg-hover);
@@ -455,8 +456,8 @@ define(() => {
       return `
           <button class="dropdown-header" aria-expanded="false" aria-controls="${this.contentId}" aria-haspopup="true" id="${this.headerId}">
             <span>Select Options</span>
-            <svg class="chevron" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-              <path d="M7 10l5 5 5-5H7z" />
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down">
+              <path d="m6 9 6 6 6-6"/>
             </svg>
           </button>
         `;
