@@ -76,6 +76,7 @@ define(() => {
      */
     setData(oDataStore) {
       this.m_oDataStore = oDataStore;
+      console.log("SetData: ",this.m_oDataStore)
     }
 
     /**
