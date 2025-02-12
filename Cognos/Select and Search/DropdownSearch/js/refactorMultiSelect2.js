@@ -790,7 +790,13 @@ define(() => {
       this.elements.applyBtn.addEventListener("click", () => this.applySelection());
 
       // Update the selected count when any change occurs.
-      this.elements.dropdown.addEventListener("change", () => this.updateSelectedCount());
+      this.elements.dropdown.addEventListener("change", () => {
+        // If we're filtering to show only selected items, reapply the filter.
+        if (this.showingSelectedOnly) {
+          this.applyShowSelectedFilter();
+        }
+        this.updateSelectedCount();
+      });
 
       // Delegate group control events.
       this.elements.dropdown.addEventListener("click", (e) => {
@@ -1068,7 +1074,7 @@ define(() => {
       // Update the header text and the tooltip.
       this.elements.header.querySelector("span").textContent = count ? `${count} selected` : "Select Options";
       this.elements.header.title = count ? selectedItems : "Select Options";
-      this.oControlHost.valueChanged()
+      this.oControlHost.valueChanged();
     }
 
     /**
@@ -1099,61 +1105,74 @@ define(() => {
         console.warn("List element not found.");
         return;
       }
-    
+
       if (!this.showingSelectedOnly) {
-        // Filter items: hide items that are not selected.
-        const checkboxItems = list.querySelectorAll(".checkbox-item");
-        checkboxItems.forEach((item) => {
-          const checkbox = item.querySelector("input[type='checkbox']");
-          if (!checkbox.checked) {
-            item.classList.add("hidden");
-            item.style.display = "none";
-          } else {
-            item.classList.remove("hidden");
-            item.style.display = "flex";
-          }
-        });
-        // Hide groups that now have no visible items.
-        this.hideEmptyGroups(list);
-    
-        // Check for visible (i.e. selected) items.
-        const visibleItems = list.querySelectorAll(".checkbox-item:not(.hidden)");
-        if (visibleItems.length === 0) {
-          // If nothing is selected, add the no-options message.
-          if (!list.querySelector('.no-options')) {
-            const messageElem = document.createElement('p');
-            messageElem.className = 'no-options';
-            messageElem.textContent = 'No Options Available';
-            list.appendChild(messageElem);
-          }
-        } else {
-          // Remove any no-options message if it exists.
-          const messageElem = list.querySelector('.no-options');
-          if (messageElem) {
-            messageElem.remove();
-          }
-        }
+        // Activate show-selected filtering.
+        this.applyShowSelectedFilter();
+
         // Update button text and ARIA label.
         this.elements.showSelected.textContent = "Show All";
         this.elements.showSelected.setAttribute("aria-label", "Show all options");
         this.showingSelectedOnly = true;
       } else {
-        // Remove filter: show all items.
+        // Deactivate the filter: show all items.
         this.showAllItems(list);
-        // Remove the no-options message if it exists.
-        const messageElem = list.querySelector('.no-options');
+
+        // Remove any no-options message if it exists.
+        const messageElem = list.querySelector(".no-options");
         if (messageElem) {
           messageElem.remove();
         }
+
         // Update button text and ARIA label.
         this.elements.showSelected.textContent = "Show Selected";
         this.elements.showSelected.setAttribute("aria-label", "Show only selected options");
         this.showingSelectedOnly = false;
       }
-    
+
       this.updateSelectedCount();
     }
-    
+
+    applyShowSelectedFilter() {
+      const list = this.elements.dropdown.querySelector(".list");
+      if (!list) {
+        console.warn("List element not found.");
+        return;
+      }
+
+      // Loop over each checkbox item and show/hide based on whether it's selected.
+      const checkboxItems = list.querySelectorAll(".checkbox-item");
+      checkboxItems.forEach((item) => {
+        const checkbox = item.querySelector("input[type='checkbox']");
+        if (!checkbox.checked) {
+          item.classList.add("hidden");
+          item.style.display = "none";
+        } else {
+          item.classList.remove("hidden");
+          item.style.display = "flex";
+        }
+      });
+
+      // Hide groups that have no visible items.
+      this.hideEmptyGroups(list);
+
+      // Check if there are any visible selected items.
+      const visibleItems = list.querySelectorAll(".checkbox-item:not(.hidden)");
+      if (visibleItems.length === 0) {
+        if (!list.querySelector(".no-options")) {
+          const messageElem = document.createElement("p");
+          messageElem.className = "no-options";
+          messageElem.textContent = "No Options Available";
+          list.appendChild(messageElem);
+        }
+      } else {
+        // Remove the no-options message if items are visible.
+        const messageElem = list.querySelector(".no-options");
+        if (messageElem) {
+          messageElem.remove();
+        }
+      }
+    }
 
     /**
      * Render the control.
