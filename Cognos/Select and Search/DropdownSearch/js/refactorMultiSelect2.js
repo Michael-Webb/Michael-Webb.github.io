@@ -65,6 +65,7 @@ define(() => {
       if (mainParams && Array.isArray(mainParams.values)) {
         mainParams.values.forEach((val) => this.mainParamValues.push(val.use));
       }
+      console.log(mainParams)
       this.caseInsensitiveDefault = caseInsensitiveDefault !== undefined ? Boolean(caseInsensitiveDefault) : true;
       this.caseInsensitive = this.caseInsensitiveDefault;
 
