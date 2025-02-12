@@ -1238,7 +1238,7 @@ define(() => {
         if (!list.querySelector(".no-options")) {
           const messageElem = document.createElement("p");
           messageElem.className = "no-options";
-          messageElem.textContent = "No Current Selections Made";
+          messageElem.textContent = "No Selections Made";
           list.appendChild(messageElem);
         }
       } else {
