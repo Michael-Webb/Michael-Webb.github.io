@@ -61,11 +61,16 @@ define(() => {
       this.mainParamValues = [];
       const { "Parameter Name": paramName, "Case Insensitive Search Default": caseInsensitiveDefault } =
         oControlHost.configuration;
+
       const mainParams = oControlHost.getParameter(paramName);
       if (mainParams && Array.isArray(mainParams.values)) {
-        mainParams.values.forEach((val) => this.mainParamValues.push(val.use));
+        mainParams.values.forEach((val) => {
+          // Exclude the default checkbox value (e.g., "on") from mainParamValues.
+          if (val.use !== "on") {
+            this.mainParamValues.push(val.use);
+          }
+        });
       }
-      console.log(mainParams)
       this.caseInsensitiveDefault = caseInsensitiveDefault !== undefined ? Boolean(caseInsensitiveDefault) : true;
       this.caseInsensitive = this.caseInsensitiveDefault;
 
@@ -75,9 +80,9 @@ define(() => {
     /**
      * Receives authored data.
      */
-    setData(oControlhost,oDataStore) {
+    setData(oControlhost, oDataStore) {
       this.m_oDataStore = oDataStore;
-      console.log("SetData: ",this.m_oDataStore)
+      console.log("SetData: ", this.m_oDataStore);
     }
 
     /**
@@ -508,8 +513,8 @@ define(() => {
 
       // Check if the data store is set and has rows.
       if (this.m_oDataStore && this.m_oDataStore.rowCount) {
-        console.log("Datastore: ",this.m_oDataStore)
-        
+        console.log("Datastore: ", this.m_oDataStore);
+
         if (groupVals && groupingParamName !== "") {
           // --- Grouped options ---
           let groups = {};
