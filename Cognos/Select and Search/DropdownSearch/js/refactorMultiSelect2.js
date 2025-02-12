@@ -161,9 +161,10 @@ define(() => {
             --text: #1f2937;
             --bg-hover: #f9fafb;
             --radius: .5rem;
-            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 1px 3px 1px;
             --padding-lg: 0.75rem 1rem;
             --padding-md: 0.5rem 0.75rem;
+            --padding-sm: 0.25rem 0.75rem;
             --margin-md: 0.25rem;
           }
           .dropdown-container {
@@ -176,7 +177,7 @@ define(() => {
           }
           .dropdown-header {
             width: 100%;
-            padding: 0.5rem 0.75rem;
+            padding: var(--padding-md);
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -256,7 +257,7 @@ define(() => {
             border: none;
             font-size: 0.875rem;
             cursor: pointer;
-            padding: 0.25rem 0;
+            padding: 0.25rem 0.75rem;
           }
           .advanced-search:focus-visible {
             outline: 1px solid var(--primary);
@@ -314,7 +315,7 @@ define(() => {
             margin-bottom: var(--margin-md);
           }
           .group-header {
-            padding: var(--padding-md);
+            padding: .25rem .75rem .25rem .5rem;
             background: var(--bg-hover);
             font-weight: 500;
             font-size: 0.875rem;
@@ -372,7 +373,7 @@ define(() => {
           .checkbox-item {
             display: flex;
             align-items: center;
-            padding;
+            padding:var(--padding-sm);
             cursor: pointer;
             transition: background 0.2s;
           }
@@ -380,7 +381,7 @@ define(() => {
             background: var(--bg-hover);
           }
           .checkbox-item input[type="checkbox"] {
-            margin-right: 0.5rem;
+            margin: 0rem 0.5rem 0rem 0rem;
             flex-shrink: 0;
           }
           .checkbox-item input[type="checkbox"]:focus-visible {
