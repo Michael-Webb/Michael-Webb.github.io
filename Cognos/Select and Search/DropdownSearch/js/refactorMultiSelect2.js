@@ -179,7 +179,7 @@ define(() => {
         groupingValUseCol: this.groupingValUseCol,
         groupingValDispCol: this.groupingValDispCol,
       });
-      this.generateFooterHTML();
+      const footerHTML = this.generateFooterHTML();
 
       return `
           ${styleBlock}
