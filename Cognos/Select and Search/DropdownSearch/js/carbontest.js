@@ -105,5 +105,5 @@ define([], function () {
     destroy(oControlHost) {}
   }
 
-  return AdvancedControl;
+  return CarbonDropdown;
 });
