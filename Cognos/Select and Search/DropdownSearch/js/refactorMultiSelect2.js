@@ -882,6 +882,84 @@ define(() => {
     }
 
     /**
+     * Update the list display by applying the search filter first and then the show-selected filter.
+     */
+    updateFilteredItems() {
+      const list = this.elements.dropdown.querySelector(".list");
+      if (!list) {
+        console.warn("List element not found.");
+        return;
+      }
+
+      // Get the current search criteria.
+      const searchValue = this.elements.search.value.trim();
+      const searchType = this.elements.searchTypeSelect.value;
+      const searchTerms = searchValue ? searchValue.split(",").map((term) => term.trim()) : [];
+
+      // Get all checkbox items.
+      const items = Array.from(list.querySelectorAll(".checkbox-item"));
+
+      // STEP 1: Apply search filter to all items.
+      items.forEach((item) => {
+        // Get the display text.
+        const labelEl = item.querySelector("span");
+        const displayValue = labelEl ? labelEl.textContent : "";
+        // Apply case insensitivity if needed.
+        const compareValue = this.caseInsensitive ? displayValue.toLowerCase() : displayValue;
+        const compareTerms = this.caseInsensitive ? searchTerms.map((t) => t.toLowerCase()) : searchTerms;
+
+        // If there are no search terms, or the item matches the search criteria, mark it as visible.
+        const matchesSearch =
+          compareTerms.length === 0 || this.determineVisibility(compareValue, compareTerms, searchType);
+
+        if (matchesSearch) {
+          // Make the item visible (we may hide it in the next step if necessary).
+          item.classList.remove("hidden");
+          item.style.display = "flex";
+        } else {
+          item.classList.add("hidden");
+          item.style.display = "none";
+        }
+      });
+
+      // STEP 2: If "Show Selected" is active, further hide any item that is not selected.
+      if (this.showingSelectedOnly) {
+        items.forEach((item) => {
+          const checkbox = item.querySelector("input[type='checkbox']");
+          if (!checkbox.checked) {
+            item.classList.add("hidden");
+            item.style.display = "none";
+          }
+        });
+      }
+
+      // STEP 3: Update group visibility (hide groups that have no visible items)
+      this.hideEmptyGroups(list);
+
+      // STEP 4: Show "no options" message if needed.
+      const visibleItems = list.querySelectorAll(".checkbox-item:not(.hidden)");
+      if (visibleItems.length === 0) {
+        if (!list.querySelector(".no-options")) {
+          const messageElem = document.createElement("p");
+          messageElem.className = "no-options";
+          messageElem.textContent =
+            visibleItems.length === 0 && searchTerms.length > 0
+              ? "No options match your search."
+              : "No Current Selections Made";
+          list.appendChild(messageElem);
+        }
+      } else {
+        const messageElem = list.querySelector(".no-options");
+        if (messageElem) {
+          messageElem.remove();
+        }
+      }
+
+      // Update the header count
+      this.updateSelectedCount();
+    }
+
+    /**
      * Close dropdown when clicking outside.
      */
     handleDocumentClick(e) {
