@@ -28,7 +28,7 @@ define([], function () {
         visibility: hidden;
       }`
       );
-      sHTML = `
+      let sHTML = `
       <script type="module" src="https://1.www.s81c.com/common/carbon/web-components/tag/v2/latest/dropdown.min.js"></script>
       <div id="app">
       <cds-dropdown trigger-content="Select an item">
