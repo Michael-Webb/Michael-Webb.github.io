@@ -15,9 +15,10 @@ define([], function () {
      *Draw the control. This method is optional if the control has no UI.
      */
     draw(oControlHost) {
-      oControlHost.container.setAttribute(
-        "style",
-        `#app {
+      
+      let sHTML = `
+      <style type="text/css">
+      #app {
         font-family: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
         width: 300px;
         margin: 2rem;
@@ -26,9 +27,8 @@ define([], function () {
       cds-dropdown:not(:defined),
       cds-dropdown-item:not(:defined) {
         visibility: hidden;
-      }`
-      );
-      let sHTML = `
+      }
+    </style>
       <script type="module" src="https://1.www.s81c.com/common/carbon/web-components/tag/v2/latest/dropdown.min.js"></script>
       <div id="app">
       <cds-dropdown trigger-content="Select an item">
