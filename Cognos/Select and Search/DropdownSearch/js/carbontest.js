@@ -1,4 +1,4 @@
-define([], function () {
+define(['https://1.www.s81c.com/common/carbon/web-components/tag/v2/latest/dropdown.min.js'], function (drop) {
   "use strict";
   class CarbonDropdown {
     /*
@@ -34,7 +34,9 @@ define([], function () {
         visibility: hidden;
       }`
       );
-      sHTML = `<div id="app">
+      sHTML = `
+      <script type="module" src="https://1.www.s81c.com/common/carbon/web-components/tag/v2/latest/dropdown.min.js"></script>
+      <div id="app">
       <cds-dropdown trigger-content="Select an item">
         <cds-dropdown-item value="all">Option 1</cds-dropdown-item>
         <cds-dropdown-item value="cloudFoundry">Option 2</cds-dropdown-item>
