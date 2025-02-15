@@ -1,4 +1,4 @@
-define(['https://1.www.s81c.com/common/carbon/web-components/tag/v2/latest/dropdown.min.js'], function (drop) {
+define([], function () {
   "use strict";
   class CarbonDropdown {
     /*
@@ -8,13 +8,7 @@ define(['https://1.www.s81c.com/common/carbon/web-components/tag/v2/latest/dropd
      *
      */
     initialize(oControlHost, fnDoneInitializing) {
-      require([
-        "https://1.www.s81c.com/common/carbon/web-components/tag/v2/latest/dropdown.min.js",
-      ], this.dependenciesLoaded.bind(this, fnDoneInitializing));
-    }
-
-    dependenciesLoaded(fnDoneInitializing, oModule) {
-      fnDoneInitializing();
+        fnDoneInitializing();
     }
 
     /*
