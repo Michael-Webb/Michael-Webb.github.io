@@ -8,8 +8,14 @@ define([], function () {
      *
      */
     initialize(oControlHost, fnDoneInitializing) {
+        require([
+          "https://1.www.s81c.com/common/carbon/web-components/tag/v2/latest/dropdown.min.js",
+        ], this.dependenciesLoaded.bind(this, fnDoneInitializing));
+      }
+  
+      dependenciesLoaded(fnDoneInitializing, oModule) {
         fnDoneInitializing();
-    }
+      }
 
     /*
      *Draw the control. This method is optional if the control has no UI.
