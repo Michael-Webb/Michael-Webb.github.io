@@ -732,7 +732,7 @@ define(() => {
         }
       }
       if (missingElements.length > 0) {
-        console.error("Missing elements: ", missingElements.join(", "));
+        console.warn("Missing elements: ", missingElements.join(", "));
         return;
       }
 
