@@ -146,29 +146,6 @@ define(() => {
       this.groups = [];
       this.checkboxes = [];
 
-      // // Destructure configuration options (with defaults)
-      // const {
-      //   "Value Use Column": valueUseCol = 0,
-      //   "Value Display Column": valueDispCol = 1,
-      //   "Grouping Parent Name": groupingParamName = "",
-      //   "Group Values": groupVals = false,
-      //   "Parent Value Use Column": groupingValUseCol = 2,
-      //   "Parent Value Display Column": groupingValDispCol = 3,
-      //   "Dropdown Width": dropdownWidth = "250px",
-      //   "Content Width": contentWidth = "250px",
-      //   Compact: isCompact = false,
-      // } = this.oControlHost.configuration;
-
-      // const valueUseCol = this.valueUseCol;
-      // const valueDispCol = this.valueDispCol;
-      // const groupingParamName = this.groupingParamName;
-      // const groupVals = this.groupVals;
-      // const groupingValUseCol = this.groupingValUseCol;
-      // const groupingValDispCol = this.groupingValDispCol;
-      // const dropdownWidth = this.dropdownWidth;
-      // const contentWidth = this.contentWidth;
-      // const isCompact = this.isCompact;
-
       // Determine dropdown CSS class (adding compact style if needed)
       let dropdownClass = "dropdown-container" + (this.isCompact ? " compact" : "");
 
@@ -620,10 +597,14 @@ define(() => {
                 <div class="group" id="${groupId}">
                   <div class="group-header" id="${groupHeaderId}">
                     <span title="${group.display}">${group.display}</span>
-                    <div class="group-controls">
+                    ${
+                      this.isMultiple
+                        ? `<div class="group-controls">
                       <button class="btn secondary group-select" aria-label="Select all items in ${group.display}" id="${groupSelectId}">Select All</button>
                       <button class="btn secondary group-deselect" aria-label="Clear all selections in ${group.display}" id="${groupDeselectId}">Clear</button>
-                    </div>
+                    </div>`
+                        : ""
+                    }
                   </div>
                   <div class="group-items" role="group" aria-label="${group.display} options" id="${groupItemsId}">
               `;
@@ -676,9 +657,24 @@ define(() => {
 
     /**
      * Generate the footer section.
+     * For single-selection:
+     *   - If autoSubmit is true, no footer is rendered.
+     *   - If autoSubmit is false, only the Apply button is rendered.
+     * For multiple-selection, the full footer is shown.
      */
     generateFooterHTML() {
-      return `
+      if (!this.isMultiple) {
+        if (this.autoSubmit) {
+          return ""; // No footer when autoSubmit is enabled for single-selection
+        } else {
+          return `
+            <div class="dropdown-footer">
+              <button class="btn primary apply-btn" id="${this.applyBtnId}">Apply</button>
+            </div>
+          `;
+        }
+      } else {
+        return `
           <div class="dropdown-footer">
             <div class="select-controls">
               <button class="btn secondary select-btn" aria-label="Select all options" id="${this.selectAllId}">Select all</button>
@@ -687,6 +683,7 @@ define(() => {
             <button class="btn primary apply-btn" id="${this.applyBtnId}">Apply</button>
           </div>
         `;
+      }
     }
 
     /**
@@ -822,9 +819,13 @@ define(() => {
         this.filterItems(searchTerms, this.elements.searchTypeSelect.value);
       });
 
-      // Select all and clear all buttons.
-      this.elements.selectAll.addEventListener("click", () => this.toggleAllItems(true));
-      this.elements.deselectAll.addEventListener("click", () => this.toggleAllItems(false));
+      // Select all and clear all buttons (if they exist).
+      if (this.elements.selectAll) {
+        this.elements.selectAll.addEventListener("click", () => this.toggleAllItems(true));
+      }
+      if (this.elements.deselectAll) {
+        this.elements.deselectAll.addEventListener("click", () => this.toggleAllItems(false));
+      }
 
       // Attach event listener for the Show Selected button.
       if (this.elements.showSelected) {
@@ -832,10 +833,24 @@ define(() => {
       }
 
       // Apply selection button.
-      this.elements.applyBtn.addEventListener("click", () => this.applySelection());
+      if (this.elements.applyBtn) {
+        this.elements.applyBtn.addEventListener("click", () => this.applySelection());
+      }
 
-      // Update the selected count when any change occurs.
-      this.elements.dropdown.addEventListener("change", () => {
+      // Enforce single-selection if not multiple:
+      // When any checkbox is changed, if it is now checked then uncheck all others.
+      this.elements.dropdown.addEventListener("change", (e) => {
+        if (!this.isMultiple && e.target.matches('input[type="checkbox"]')) {
+          if (e.target.checked) {
+            const checkboxes = this.elements.dropdown.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach((cb) => {
+              if (cb !== e.target) {
+                cb.checked = false;
+              }
+            });
+          }
+        }
+
         const searchValue = this.elements.search.value.trim();
         const searchTerms = searchValue ? searchValue.split(",").map((term) => term.trim()) : [];
         const searchType = this.elements.searchTypeSelect.value;
