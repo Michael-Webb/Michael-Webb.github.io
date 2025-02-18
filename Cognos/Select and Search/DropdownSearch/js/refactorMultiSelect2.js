@@ -716,23 +716,49 @@ define(() => {
       this.elements.search = container.querySelector(`#${this.searchId}`);
       this.elements.advancedBtn = container.querySelector(`#${this.advancedBtnId}`);
       this.elements.searchControls = container.querySelector(`#${this.searchControlsId}`);
-      this.elements.applyBtn = container.querySelector(`#${this.applyBtnId}`);
-      this.elements.selectAll = container.querySelector(`#${this.selectAllId}`);
-      this.elements.deselectAll = container.querySelector(`#${this.deselectAllId}`);
       this.elements.searchTypeSelect = container.querySelector(`#${this.searchTypeSelectId}`);
       this.elements.searchResultsLive = container.querySelector(`#${this.searchResultsLiveId}`);
       this.elements.searchIcon = container.querySelector("#searchIcon");
       this.elements.showSelected = container.querySelector(`#${this.showSelectedId}`);
-
+    
+      // Only expect selectAll and deselectAll (and applyBtn) if they were rendered.
+      if (this.isMultiple) {
+        this.elements.selectAll = container.querySelector(`#${this.selectAllId}`);
+        this.elements.deselectAll = container.querySelector(`#${this.deselectAllId}`);
+      }
+      if (!this.autoSubmit || this.isMultiple) {
+        this.elements.applyBtn = container.querySelector(`#${this.applyBtnId}`);
+      }
+    
+      // Define the required element keys based on configuration.
+      const requiredKeys = [
+        'dropdown',
+        'header',
+        'content',
+        'search',
+        'advancedBtn',
+        'searchControls',
+        'searchTypeSelect',
+        'searchResultsLive',
+        'searchIcon',
+        'showSelected'
+      ];
+      if (this.isMultiple) {
+        requiredKeys.push('selectAll', 'deselectAll');
+      }
+      if (!this.autoSubmit || this.isMultiple) {
+        requiredKeys.push('applyBtn');
+      }
+    
       // Verify that all required elements are present.
       const missingElements = [];
-      for (const [key, element] of Object.entries(this.elements)) {
-        if (!element) {
+      for (const key of requiredKeys) {
+        if (!this.elements[key]) {
           missingElements.push(key);
         }
       }
       if (missingElements.length > 0) {
-        console.warn("Missing elements: ", missingElements.join(", "));
+        console.error("Missing elements: ", missingElements.join(", "));
         return;
       }
 
