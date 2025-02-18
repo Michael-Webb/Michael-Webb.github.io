@@ -45,6 +45,10 @@ define(() => {
       this.checkboxes = [];
       this.debounceDelay = 100; // milliseconds
 
+      // Initialize properties to store the last filter state.
+      this.lastSearchValue = "";
+      this.lastSearchType = "";
+
       // Bound event handler references for cleanup
       this.boundDocumentClickHandler = this.handleDocumentClick.bind(this);
       this.boundDropdownKeydownHandler = this.handleDropdownKeydown.bind(this);
@@ -832,10 +836,19 @@ define(() => {
 
       // Update the selected count when any change occurs.
       this.elements.dropdown.addEventListener("change", () => {
-        // If we're filtering to show only selected items, reapply the filter.
-        if (this.showingSelectedOnly) {
-          this.applyShowSelectedFilter();
+        const searchValue = this.elements.search.value.trim();
+        const searchTerms = searchValue ? searchValue.split(",").map((term) => term.trim()) : [];
+        const searchType = this.elements.searchTypeSelect.value;
+
+        // Only reapply filtering if the search criteria changed
+        if (searchValue !== this.lastSearchValue || searchType !== this.lastSearchType) {
+          this.lastSearchValue = searchValue;
+          this.lastSearchType = searchType;
+          if (this.showingSelectedOnly) {
+            this.filterItems(searchTerms, searchType);
+          }
         }
+
         this.updateSelectedCount();
       });
 
@@ -1008,7 +1021,6 @@ define(() => {
       // Disable the search icon button if the search input is empty.
       this.elements.searchIcon.disabled = isEmpty;
     }
-    
 
     /**
      * Filter the list items based on the search terms and type.
