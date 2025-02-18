@@ -691,7 +691,7 @@ define(() => {
      */
     getSearchIconSVG(isEmpty) {
       if (isEmpty) {
-        return `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#808080" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search disabled">
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#808080" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search">
             <circle cx="11" cy="11" r="8"/>
             <path d="m21 21-4.3-4.3"/>
           </svg>`;
@@ -1005,7 +1005,10 @@ define(() => {
       const isEmpty = this.elements.search.value.trim() === "";
       this.elements.searchIcon.innerHTML = this.getSearchIconSVG(isEmpty);
       this.elements.searchIcon.setAttribute("aria-label", isEmpty ? "Search" : "Clear search");
+      // Disable the search icon button if the search input is empty.
+      this.elements.searchIcon.disabled = isEmpty;
     }
+    
 
     /**
      * Filter the list items based on the search terms and type.
