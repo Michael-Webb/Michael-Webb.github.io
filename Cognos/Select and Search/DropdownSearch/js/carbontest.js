@@ -89,9 +89,9 @@ define([], function () {
     /**
      * Checks if at least one checkbox is selected.
      */
-    isInValidState() {
-      return this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked').length > 0;
-    }
+    // isInValidState() {
+    //   return this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked').length > 0;
+    // }
 
     /**
      * Return the parameters for submission.
