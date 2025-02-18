@@ -148,10 +148,13 @@ define([], function () {
         appDiv.id = "app";
 
         // Create the dropdown element.
-        const dropdownEl = document.createElement("cds-dropdown");
-        const dropdownId = `${this.instancePrefix}-cds-dropdown`;
+        const dropdownEl = document.createElement("cds-combo-box");
+        const dropdownId = `${this.instancePrefix}-cds-combo-box`;
         dropdownEl.setAttribute("id", dropdownId);
-        dropdownEl.setAttribute("trigger-content", this.triggerLabel);
+        dropdownEl.setAttribute("label",this.triggerLabel)
+        dropdownEl.setAttribute("helper-text","This is some helper text")
+        dropdownEl.setAttribute("title-text","This is an example title")
+        dropdownEl.setAttribute("warn-text","Warning Text")
 
         // Dynamically generate dropdown items from the data store.
         // Assumes that `valueUseCol` and `valueDispCol` are defined in your context.
@@ -161,7 +164,7 @@ define([], function () {
           // Optionally generate an ID for tracking
           const itemId = this.generateId("item");
 
-          const itemEl = document.createElement("cds-dropdown-item");
+          const itemEl = document.createElement("cds-combo-box-item");
           itemEl.setAttribute("value", mainUse);
           // If you want, you can set the id:
           itemEl.setAttribute("id", itemId);
