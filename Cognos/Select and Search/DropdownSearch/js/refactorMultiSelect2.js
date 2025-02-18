@@ -69,7 +69,7 @@ define(() => {
       // Destructure configuration properties with defaults
       const {
         "Parameter Name": paramName,
-        "Case Insensitive Search Default": caseInsensitiveDefault,
+        "Case Insensitive Search Default": caseInsensitiveDefault = true,
         "Value Use Column": valueUseCol = 0,
         "Value Display Column": valueDispCol = 1,
         "Grouping Parent Name": groupingParamName = "",
@@ -85,7 +85,7 @@ define(() => {
 
       // Assign to instance properties for later use
       this.paramName = paramName;
-      this.caseInsensitiveDefault = caseInsensitiveDefault !== undefined ? Boolean(caseInsensitiveDefault) : true;
+      this.caseInsensitiveDefault = Boolean(caseInsensitiveDefault);
       this.caseInsensitive = this.caseInsensitiveDefault;
       this.valueUseCol = valueUseCol;
       this.valueDispCol = valueDispCol;
@@ -720,7 +720,7 @@ define(() => {
       this.elements.searchResultsLive = container.querySelector(`#${this.searchResultsLiveId}`);
       this.elements.searchIcon = container.querySelector("#searchIcon");
       this.elements.showSelected = container.querySelector(`#${this.showSelectedId}`);
-    
+
       // Only expect selectAll and deselectAll (and applyBtn) if they were rendered.
       if (this.isMultiple) {
         this.elements.selectAll = container.querySelector(`#${this.selectAllId}`);
@@ -729,27 +729,27 @@ define(() => {
       if (!this.autoSubmit || this.isMultiple) {
         this.elements.applyBtn = container.querySelector(`#${this.applyBtnId}`);
       }
-    
+
       // Define the required element keys based on configuration.
       const requiredKeys = [
-        'dropdown',
-        'header',
-        'content',
-        'search',
-        'advancedBtn',
-        'searchControls',
-        'searchTypeSelect',
-        'searchResultsLive',
-        'searchIcon',
-        'showSelected'
+        "dropdown",
+        "header",
+        "content",
+        "search",
+        "advancedBtn",
+        "searchControls",
+        "searchTypeSelect",
+        "searchResultsLive",
+        "searchIcon",
+        "showSelected",
       ];
       if (this.isMultiple) {
-        requiredKeys.push('selectAll', 'deselectAll');
+        requiredKeys.push("selectAll", "deselectAll");
       }
       if (!this.autoSubmit || this.isMultiple) {
-        requiredKeys.push('applyBtn');
+        requiredKeys.push("applyBtn");
       }
-    
+
       // Verify that all required elements are present.
       const missingElements = [];
       for (const key of requiredKeys) {
@@ -797,12 +797,14 @@ define(() => {
       // Handle Escape key within the content.
       this.elements.content.addEventListener("keydown", this.boundDropdownKeydownHandler);
 
-      // Handle the case-insensitive checkbox.
+      // Cache the case-insensitive checkbox and set its initial state.
       const caseCheckbox = this.elements.dropdown.querySelector(".case-checkbox");
       if (caseCheckbox) {
         caseCheckbox.checked = this.caseInsensitiveDefault;
         caseCheckbox.addEventListener("change", () => {
+          // Update our flag based on user input.
           this.caseInsensitive = caseCheckbox.checked;
+          // Optionally, re-run filtering if needed:
           const searchValue = this.elements.search.value.trim();
           const searchTerms = searchValue.split(",").map((term) => term.trim());
           const searchType = this.elements.searchTypeSelect.value;
@@ -1091,8 +1093,7 @@ define(() => {
         return;
       }
 
-      const useCaseInsensitive =
-        this.caseInsensitive !== undefined ? this.caseInsensitive : this.caseInsensitiveDefault;
+      const useCaseInsensitive = this.caseInsensitive;
 
       const checkboxItems = list.querySelectorAll(".checkbox-item");
       checkboxItems.forEach((item) => {
