@@ -40,6 +40,39 @@ define([], function () {
     }
 
     initialize(oControlHost, fnDoneInitializing) {
+      // Destructure configuration properties with defaults
+      const {
+        "Parameter Name": paramName,
+        "Case Insensitive Search Default": caseInsensitiveDefault,
+        "Value Use Column": valueUseCol = 0,
+        "Value Display Column": valueDispCol = 1,
+        "Grouping Parent Name": groupingParamName = "",
+        "Group Values": groupVals = false,
+        "Parent Value Use Column": groupingValUseCol = 2,
+        "Parent Value Display Column": groupingValDispCol = 3,
+        "Dropdown Width": dropdownWidth = "250px",
+        "Content Width": contentWidth = "250px",
+        "Multiple Select": multipleSelect = false,
+        AutoSubmit: autoSubmit = true,
+        Compact: isCompact = false,
+      } = oControlHost.configuration;
+
+       // Assign to instance properties for later use
+       this.paramName = paramName;
+       this.caseInsensitiveDefault = caseInsensitiveDefault !== undefined ? Boolean(caseInsensitiveDefault) : true;
+       this.caseInsensitive = this.caseInsensitiveDefault;
+       this.valueUseCol = valueUseCol;
+       this.valueDispCol = valueDispCol;
+       this.groupingParamName = groupingParamName;
+       this.groupVals = groupVals;
+       this.groupingValUseCol = groupingValUseCol;
+       this.groupingValDispCol = groupingValDispCol;
+       this.dropdownWidth = dropdownWidth;
+       this.contentWidth = contentWidth;
+       this.isMultiple = !!multipleSelect;
+       this.autoSubmit = autoSubmit;
+       this.isCompact = isCompact;
+
       // Create a promise to load the external stylesheet.
       const cssPromise = new Promise((resolve, reject) => {
         const linkEl = document.createElement("link");
@@ -150,7 +183,7 @@ define([], function () {
           const itemEl = document.createElement("cds-dropdown-item");
           itemEl.setAttribute("value", mainUse);
           // If you want, you can set the id:
-          itemEl.setAttribute('id', itemId);
+          itemEl.setAttribute("id", itemId);
           itemEl.textContent = mainDisp;
           dropdownEl.appendChild(itemEl);
         }
