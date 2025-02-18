@@ -155,8 +155,8 @@ define([], function () {
         // Dynamically generate dropdown items from the data store.
         // Assumes that `valueUseCol` and `valueDispCol` are defined in your context.
         for (let i = 0; i < this.m_oDataStore.rowCount; i++) {
-          const mainUse = this.m_oDataStore.getCellValue(i, valueUseCol);
-          const mainDisp = this.m_oDataStore.getCellValue(i, valueDispCol);
+          const mainUse = this.m_oDataStore.getCellValue(i, this.valueUseCol);
+          const mainDisp = this.m_oDataStore.getCellValue(i, this.valueDispCol);
           // Optionally generate an ID for tracking
           const itemId = this.generateId("item");
 
