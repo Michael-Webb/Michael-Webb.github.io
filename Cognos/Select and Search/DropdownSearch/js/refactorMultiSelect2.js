@@ -338,6 +338,7 @@ define(() => {
             border-radius: var(--radius);
             font-size: 0.875rem;
             outline: none;
+            cursor: default;
           }
           .search-type:focus-visible {
             outline: 1px solid var(--primary);
