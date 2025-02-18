@@ -66,7 +66,7 @@ define([], function () {
 
       // Create a promise for loading the dropdown module via dynamic import.
       const dropdownModulePromise = import(
-        "https://1.www.s81c.com/common/carbon/web-components/tag/v2/latest/dropdown.min.js"
+        "https://1.www.s81c.com/common/carbon/web-components/version/v2.23.0/combo-box.min.js"
       );
 
       // Wait for both the stylesheet and the dropdown JS module to load.
