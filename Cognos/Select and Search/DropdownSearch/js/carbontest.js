@@ -173,7 +173,6 @@ define([], function () {
         appDiv.appendChild(dropdownEl);
 
         // Clear the existing content and add our new elements.
-        oControlHost.container.innerHTML = "";
         oControlHost.container.appendChild(styleEl);
         oControlHost.container.appendChild(appDiv);
       }
