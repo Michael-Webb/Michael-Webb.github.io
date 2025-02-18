@@ -36,7 +36,6 @@ define([], function () {
       this.checkboxes = [];
       this.debounceDelay = 100; // milliseconds
       this.sHTML = null;
-      this.triggerLabel = "";
     }
 
     initialize(oControlHost, fnDoneInitializing) {
@@ -46,12 +45,14 @@ define([], function () {
         "Parameter Name": paramName,
         "Value Use Column": valueUseCol = 0,
         "Value Display Column": valueDispCol = 1,
+        "Label": triggerLabel = "Select an option..."
       } = oControlHost.configuration;
 
       // Assign to instance properties for later use
       this.paramName = paramName;
       this.valueUseCol = valueUseCol;
       this.valueDispCol = valueDispCol;
+      this.triggerLabel = triggerLabel;
 
       // Create a promise to load the external stylesheet.
       const cssPromise = new Promise((resolve, reject) => {
@@ -150,7 +151,7 @@ define([], function () {
         const dropdownEl = document.createElement("cds-dropdown");
         const dropdownId = `${this.instancePrefix}-cds-dropdown`;
         dropdownEl.setAttribute("id", dropdownId);
-        dropdownEl.setAttribute("trigger-content", this.triggerLabel || "Dropdown");
+        dropdownEl.setAttribute("trigger-content", this.triggerLabel);
 
         // Dynamically generate dropdown items from the data store.
         // Assumes that `valueUseCol` and `valueDispCol` are defined in your context.
