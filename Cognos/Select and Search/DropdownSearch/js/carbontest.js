@@ -61,7 +61,7 @@ define([], function () {
         linkEl.href = "https://1.www.s81c.com/common/carbon/web-components/tag/latest/themes.css";
         linkEl.onload = resolve;
         linkEl.onerror = () => reject(new Error("Failed to load stylesheet"));
-        document.head.appendChild(linkEl);
+        oControlHost.container.appendChild(linkEl);
       });
 
       // Create a promise for loading the dropdown module via dynamic import.
