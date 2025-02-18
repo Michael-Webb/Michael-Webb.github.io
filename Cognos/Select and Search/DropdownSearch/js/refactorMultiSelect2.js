@@ -517,7 +517,7 @@ define(() => {
       return `
           <button class="dropdown-header" aria-expanded="false" aria-controls="${this.contentId}" aria-haspopup="true" id="${this.headerId}">
             <span>Select Options</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down" disabled>
               <path d="m6 9 6 6 6-6"/>
             </svg>
           </button>
@@ -691,7 +691,7 @@ define(() => {
      */
     getSearchIconSVG(isEmpty) {
       if (isEmpty) {
-        return `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#808080" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search">
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#808080" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search disabled">
             <circle cx="11" cy="11" r="8"/>
             <path d="m21 21-4.3-4.3"/>
           </svg>`;
