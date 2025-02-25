@@ -279,7 +279,7 @@ define(() => {
             width: 100%;
             padding: 0.5rem 2rem 0.5rem 0.75rem;
             border: 1px solid var(--border);
-            border-radius: var(--radius);
+            border-radius: .5rem .5rem 0px 0px;
             margin-bottom: var(--margin-md);
             font-size: 0.875rem;
             box-sizing: border-box;
@@ -307,14 +307,13 @@ define(() => {
           .header-buttons {
             display: flex;
             align-items: center;
-            gap: 0.5rem; /* Adjust spacing as needed */
-            margin-top: 0.5rem; /* Optional: adds spacing below the search input */
+            gap: 0.5rem;
+            padding: 0.25rem .75rem 0.25rem 0.75rem
           }
 
           .advanced-search {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
             color: var(--primary);
             background: none;
             border: none;
@@ -329,7 +328,6 @@ define(() => {
           .search-controls {
             display: none;
             flex-direction: column;
-            gap: var(--margin-md);
             margin-top: var(--margin-md);
           }
           .search-controls.expanded {
@@ -337,14 +335,15 @@ define(() => {
           }
           .search-options {
             width: 75%;
+            margin: 0rem 0rem 0rem 0.75rem;
           }
           .search-type {
             width: 100%;
-            padding: 0.125rem 0.25rem;
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            font-size: 0.875rem;
+            font-size: 0.8rem;
             outline: none;
+            padding: 0.25rem 0rem;
           }
           .search-type:focus-visible {
             outline: 1px solid var(--primary);
@@ -356,16 +355,15 @@ define(() => {
             font-size: 0.75rem;
             color: var(--text);
             cursor: pointer;
-            border-radius: var(--radius);
           }
           .case-option {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            font-size: 0.875rem;
+            font-size: 0.8rem;
             color: var(--text);
             cursor: pointer;
             border-radius: var(--radius);
+            margin: 0rem 0.75rem 0.5rem 0.75rem;
           }
           input[type="checkbox"] {
             margin: 0rem 0.5rem 0rem 0rem;
