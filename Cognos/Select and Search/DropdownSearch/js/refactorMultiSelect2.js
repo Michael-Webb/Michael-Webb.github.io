@@ -1383,7 +1383,8 @@ define(() => {
       visibleCheckboxes.forEach((cb) => (cb.checked = checked));
       this.updateSelectedCount();
       this.announceAllSelection(checked);
-      // NEW CODE: If in "Show Selected" mode and we're unchecking items, hide them
+
+      //If in "Show Selected" mode and we're unchecking items, hide them
       if (this.showingSelectedOnly && !checked) {
         const list = this.elements.dropdown.querySelector(".list");
         // Hide all unchecked items
@@ -1394,6 +1395,9 @@ define(() => {
             item.style.display = "none";
           }
         });
+        
+        // NEW LINE: Update group headers visibility to hide empty groups
+        this.hideEmptyGroups(list);
 
         // Show "No selections" message
         if (!list.querySelector(".no-options")) {
