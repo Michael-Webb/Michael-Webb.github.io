@@ -11,6 +11,12 @@ define(() => {
   }
 
   class CustomControl {
+    // Constants for consistent messages
+    static NO_SEARCH_RESULTS_MSG = "No options match your search.";
+    static NO_SELECTIONS_MSG = "No selections made.";
+    static NO_OPTIONS_MSG = "No options available.";
+    static NO_DATA_MSG = "No Data Available";
+
     constructor() {
       this.mainParamValues = [];
       this.groupChildren = {};
@@ -50,9 +56,27 @@ define(() => {
       this.lastSearchType = "";
 
       // Bound event handler references for cleanup
-      this.boundDocumentClickHandler = this.handleDocumentClick.bind(this);
-      this.boundDropdownKeydownHandler = this.handleDropdownKeydown.bind(this);
-      this.boundCheckboxKeydownHandler = this.handleCheckboxKeydown.bind(this);
+      // this.boundDocumentClickHandler = this.handleDocumentClick.bind(this);
+      // this.boundDropdownKeydownHandler = this.handleDropdownKeydown.bind(this);
+      // this.boundCheckboxKeydownHandler = this.handleCheckboxKeydown.bind(this);
+
+      // Store all bound event handlers for cleanup
+      this.boundHandlers = {
+        documentClick: this.handleDocumentClick.bind(this),
+        dropdownKeydown: this.handleDropdownKeydown.bind(this),
+        checkboxKeydown: this.handleCheckboxKeydown.bind(this),
+        headerClick: null, // Will be assigned during applyEventListeners
+        advancedBtnClick: null,
+        searchInput: null,
+        searchIconClick: null,
+        searchTypeChange: null,
+        showSelectedClick: null,
+        applyBtnClick: null,
+        selectAllClick: null,
+        deselectAllClick: null,
+        dropdownChange: null,
+        // Add others as needed
+      };
     }
 
     generateId(baseString) {
@@ -264,6 +288,12 @@ define(() => {
             outline: none;
             border-color: var(--primary);
           }
+
+          .search-icon:disabled {
+            opacity: 0.5;
+            cursor: default;
+          }
+
           .search-icon {
             position: absolute;
             right: 0.5rem;
@@ -648,7 +678,7 @@ define(() => {
       } else {
         // Log a warning and show a fallback message.
         console.warn("Data store is not set or has no rows.");
-        html += `<p class="no-options">No data available.</p>`;
+        html += `<p class="no-options">${CustomControl.NO_DATA_MSG}</p>`;
       }
 
       html += `</div>`; // Close list.
@@ -709,6 +739,7 @@ define(() => {
      */
     applyEventListeners() {
       const container = this.oControlHost.container;
+
       // Cache element references.
       this.elements.dropdown = container.querySelector(`#${this.dropdownId}`);
       this.elements.header = container.querySelector(`#${this.headerId}`);
@@ -770,8 +801,13 @@ define(() => {
       // Hide the dropdown content initially.
       this.elements.content.classList.remove("visible");
 
+      // Initialize our boundHandlers object if it doesn't exist
+      if (!this.boundHandlers) {
+        this.boundHandlers = {};
+      }
+
       // Toggle dropdown when the header is clicked.
-      this.elements.header.addEventListener("click", (e) => {
+      this.boundHandlers.headerClick = (e) => {
         e.stopPropagation();
         const isVisible = this.elements.content.classList.contains("visible");
         if (isVisible) {
@@ -782,92 +818,98 @@ define(() => {
           this.elements.header.setAttribute("aria-expanded", "true");
           this.elements.search.focus();
         }
-      });
+      };
+      this.elements.header.addEventListener("click", this.boundHandlers.headerClick);
 
       // Close the dropdown if clicking outside.
-      document.addEventListener("click", this.boundDocumentClickHandler);
+      document.addEventListener("click", this.boundHandlers.documentClick);
 
       // Toggle advanced search controls.
-      this.elements.advancedBtn.addEventListener("click", () => {
+      this.boundHandlers.advancedBtnClick = () => {
         const expanded = this.elements.advancedBtn.classList.toggle("expanded");
         this.elements.searchControls.classList.toggle("expanded", expanded);
         this.elements.advancedBtn.setAttribute("aria-expanded", expanded);
-      });
+      };
+      this.elements.advancedBtn.addEventListener("click", this.boundHandlers.advancedBtnClick);
 
       // Handle Escape key within the content.
-      this.elements.content.addEventListener("keydown", this.boundDropdownKeydownHandler);
+      this.elements.content.addEventListener("keydown", this.boundHandlers.dropdownKeydown);
 
       // Cache the case-insensitive checkbox and set its initial state.
       const caseCheckbox = this.elements.dropdown.querySelector(".case-checkbox");
       if (caseCheckbox) {
         caseCheckbox.checked = this.caseInsensitiveDefault;
-        caseCheckbox.addEventListener("change", () => {
+
+        this.boundHandlers.caseCheckboxChange = () => {
           // Update our flag based on user input.
           this.caseInsensitive = caseCheckbox.checked;
-          // Optionally, re-run filtering if needed:
+          // Re-run filtering with current search terms
           const searchValue = this.elements.search.value.trim();
           const searchTerms = searchValue.split(",").map((term) => term.trim());
           const searchType = this.elements.searchTypeSelect.value;
           this.filterItems(searchTerms, searchType);
-        });
+        };
+        caseCheckbox.addEventListener("change", this.boundHandlers.caseCheckboxChange);
       }
 
       // Use event delegation for keyboard navigation on checkboxes.
-      this.elements.dropdown.addEventListener("keydown", this.boundCheckboxKeydownHandler);
+      this.elements.dropdown.addEventListener("keydown", this.boundHandlers.checkboxKeydown);
 
       // Attach a debounced input handler to the search input.
-      this.elements.search.addEventListener(
-        "input",
-        debounce(() => {
-          this.updateSearchIcon();
-          const searchValue = this.elements.search.value.trim();
-          const searchType = this.elements.searchTypeSelect.value;
-          const searchTerms = searchValue.split(",").map((term) => term.trim());
-          this.filterItems(searchTerms, searchType);
-        }, this.debounceDelay)
-      );
+      this.boundHandlers.searchInput = debounce(() => {
+        this.updateSearchIcon();
+        const searchValue = this.elements.search.value.trim();
+        const searchType = this.elements.searchTypeSelect.value;
+        const searchTerms = searchValue.split(",").map((term) => term.trim());
+        this.filterItems(searchTerms, searchType);
+      }, this.debounceDelay);
+      this.elements.search.addEventListener("input", this.boundHandlers.searchInput);
 
       // Clicking the search icon clears the search if there is text.
-      this.elements.searchIcon.addEventListener("click", () => {
+      this.boundHandlers.searchIconClick = () => {
         if (this.elements.search.value.trim() !== "") {
           this.elements.search.value = "";
           this.updateSearchIcon();
           this.elements.search.focus();
           this.filterItems([""], this.elements.searchTypeSelect.value);
         }
-      });
+      };
+      this.elements.searchIcon.addEventListener("click", this.boundHandlers.searchIconClick);
 
       // Update the search icon initially.
       this.updateSearchIcon();
 
       // Update filtering when the search type changes.
-      this.elements.searchTypeSelect.addEventListener("change", () => {
+      this.boundHandlers.searchTypeChange = () => {
         const searchValue = this.elements.search.value;
         const searchTerms = searchValue.split(",").map((term) => term.trim());
         this.filterItems(searchTerms, this.elements.searchTypeSelect.value);
-      });
+      };
+      this.elements.searchTypeSelect.addEventListener("change", this.boundHandlers.searchTypeChange);
 
       // Select all and clear all buttons (if they exist).
       if (this.elements.selectAll) {
-        this.elements.selectAll.addEventListener("click", () => this.toggleAllItems(true));
+        this.boundHandlers.selectAllClick = () => this.toggleAllItems(true);
+        this.elements.selectAll.addEventListener("click", this.boundHandlers.selectAllClick);
       }
       if (this.elements.deselectAll) {
-        this.elements.deselectAll.addEventListener("click", () => this.toggleAllItems(false));
+        this.boundHandlers.deselectAllClick = () => this.toggleAllItems(false);
+        this.elements.deselectAll.addEventListener("click", this.boundHandlers.deselectAllClick);
       }
 
       // Attach event listener for the Show Selected button.
-      if (this.elements.showSelected) {
-        this.elements.showSelected.addEventListener("click", () => this.toggleSelectedFilter());
-      }
+      this.boundHandlers.showSelectedClick = () => this.toggleSelectedFilter();
+      this.elements.showSelected.addEventListener("click", this.boundHandlers.showSelectedClick);
 
       // Apply selection button.
       if (this.elements.applyBtn) {
-        this.elements.applyBtn.addEventListener("click", () => this.applySelection());
+        this.boundHandlers.applyBtnClick = () => this.applySelection();
+        this.elements.applyBtn.addEventListener("click", this.boundHandlers.applyBtnClick);
       }
 
       // Enforce single-selection if not multiple:
       // When any checkbox is changed, if it is now checked then uncheck all others.
-      this.elements.dropdown.addEventListener("change", (e) => {
+      this.boundHandlers.dropdownChange = (e) => {
         if (!this.isMultiple && e.target.matches('input[type="checkbox"]')) {
           if (e.target.checked) {
             const checkboxes = this.elements.dropdown.querySelectorAll('input[type="checkbox"]');
@@ -876,6 +918,11 @@ define(() => {
                 cb.checked = false;
               }
             });
+
+            // Auto-submit for single selection if configured
+            if (this.autoSubmit) {
+              this.applySelection();
+            }
           }
         }
 
@@ -892,11 +939,24 @@ define(() => {
           }
         }
 
+        // Handle show-selected mode immediately for checkboxes being unchecked
+        if (this.showingSelectedOnly && e.target.matches('input[type="checkbox"]') && !e.target.checked) {
+          const item = e.target.closest(".checkbox-item");
+          if (item) {
+            item.classList.add("hidden");
+            item.style.display = "none";
+
+            // We may need to update group visibility too
+            this.hideEmptyGroups(this.elements.dropdown.querySelector(".list"));
+          }
+        }
+
         this.updateSelectedCount();
-      });
+      };
+      this.elements.dropdown.addEventListener("change", this.boundHandlers.dropdownChange);
 
       // Delegate group control events.
-      this.elements.dropdown.addEventListener("click", (e) => {
+      this.boundHandlers.groupControlClick = (e) => {
         const target = e.target;
         if (target.classList.contains("group-select")) {
           e.stopPropagation();
@@ -930,11 +990,21 @@ define(() => {
             this.announceGroupSelection(groupElement, false);
             // If "Show Selected" is active, reapply the filter so that unselected items are hidden.
             if (this.showingSelectedOnly) {
-              this.applyShowSelectedFilter();
+              // We could either re-apply the full filter or just hide the unchecked items
+              const visibleItems = groupElement.querySelectorAll(".checkbox-item");
+              visibleItems.forEach((item) => {
+                const checkbox = item.querySelector('input[type="checkbox"]');
+                if (!checkbox.checked) {
+                  item.classList.add("hidden");
+                  item.style.display = "none";
+                }
+              });
+              this.hideEmptyGroups(this.elements.dropdown.querySelector(".list"));
             }
           }
         }
-      });
+      };
+      this.elements.dropdown.addEventListener("click", this.boundHandlers.groupControlClick);
     }
 
     /**
@@ -999,9 +1069,7 @@ define(() => {
           const messageElem = document.createElement("p");
           messageElem.className = "no-options";
           messageElem.textContent =
-            visibleItems.length === 0 && searchTerms.length > 0
-              ? "No options match your search."
-              : "No Current Selections Made";
+            visibleItems.length === 0 && searchTerms.length > 0 ? CustomControl.NO_SEARCH_RESULTS_MSG : CustomControl.NO_SELECTIONS_MSG;
           list.appendChild(messageElem);
         }
       } else {
@@ -1134,7 +1202,7 @@ define(() => {
         if (!list.querySelector(".no-options")) {
           const messageElem = document.createElement("p");
           messageElem.className = "no-options";
-          messageElem.textContent = "No Options Available";
+          messageElem.textContent = CustomControl.NO_OPTIONS_MSG;
           list.appendChild(messageElem);
         }
       } else {
@@ -1303,6 +1371,7 @@ define(() => {
       this.updateSelectedCount();
       this.announceAllSelection(checked);
     }
+
     toggleSelectedFilter() {
       const list = this.elements.dropdown.querySelector(".list");
       if (!list) {
@@ -1373,7 +1442,7 @@ define(() => {
         if (!list.querySelector(".no-options")) {
           const messageElem = document.createElement("p");
           messageElem.className = "no-options";
-          messageElem.textContent = "No Selections Made";
+          messageElem.textContent = CustomControl.NO_SELECTIONS_MSG;
           list.appendChild(messageElem);
         }
       } else {
@@ -1416,14 +1485,64 @@ define(() => {
      * Cleanup event listeners and references.
      */
     destroy() {
-      document.removeEventListener("click", this.boundDocumentClickHandler);
-      if (this.elements.dropdown) {
-        this.elements.dropdown.removeEventListener("keydown", this.boundCheckboxKeydownHandler);
+      // Remove document-level listeners
+      document.removeEventListener("click", this.boundHandlers.documentClick);
+
+      // Clean up each element's listeners (if the element exists)
+      if (this.elements.header) {
+        this.elements.header.removeEventListener("click", this.boundHandlers.headerClick);
       }
+
       if (this.elements.content) {
-        this.elements.content.removeEventListener("keydown", this.boundDropdownKeydownHandler);
+        this.elements.content.removeEventListener("keydown", this.boundHandlers.dropdownKeydown);
       }
-      // Additional cleanup if needed.
+
+      if (this.elements.advancedBtn) {
+        this.elements.advancedBtn.removeEventListener("click", this.boundHandlers.advancedBtnClick);
+      }
+
+      if (this.elements.search) {
+        this.elements.search.removeEventListener("input", this.boundHandlers.searchInput);
+      }
+
+      if (this.elements.searchIcon) {
+        this.elements.searchIcon.removeEventListener("click", this.boundHandlers.searchIconClick);
+      }
+
+      if (this.elements.searchTypeSelect) {
+        this.elements.searchTypeSelect.removeEventListener("change", this.boundHandlers.searchTypeChange);
+      }
+
+      if (this.elements.showSelected) {
+        this.elements.showSelected.removeEventListener("click", this.boundHandlers.showSelectedClick);
+      }
+
+      if (this.elements.applyBtn) {
+        this.elements.applyBtn.removeEventListener("click", this.boundHandlers.applyBtnClick);
+      }
+
+      if (this.elements.selectAll) {
+        this.elements.selectAll.removeEventListener("click", this.boundHandlers.selectAllClick);
+      }
+
+      if (this.elements.deselectAll) {
+        this.elements.deselectAll.removeEventListener("click", this.boundHandlers.deselectAllClick);
+      }
+
+      if (this.elements.dropdown) {
+        this.elements.dropdown.removeEventListener("keydown", this.boundHandlers.checkboxKeydown);
+        this.elements.dropdown.removeEventListener("change", this.boundHandlers.dropdownChange);
+        this.elements.dropdown.removeEventListener("click", this.boundHandlers.groupControlClick);
+
+        // Also clean up case checkbox if it exists
+        const caseCheckbox = this.elements.dropdown.querySelector(".case-checkbox");
+        if (caseCheckbox) {
+          caseCheckbox.removeEventListener("change", this.boundHandlers.caseCheckboxChange);
+        }
+      }
+
+      // Clear all references
+      this.boundHandlers = {};
       this.elements = {};
     }
   }
