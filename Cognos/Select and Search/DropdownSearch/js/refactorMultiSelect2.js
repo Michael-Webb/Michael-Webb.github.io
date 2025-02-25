@@ -1000,6 +1000,17 @@ define(() => {
                 }
               });
               this.hideEmptyGroups(this.elements.dropdown.querySelector(".list"));
+              // NEW CODE: Check if all items are now hidden and show message if needed
+              const list = this.elements.dropdown.querySelector(".list");
+              const allVisibleItems = list.querySelectorAll(".checkbox-item:not(.hidden)");
+              if (allVisibleItems.length === 0) {
+                if (!list.querySelector(".no-options")) {
+                  const messageElem = document.createElement("p");
+                  messageElem.className = "no-options";
+                  messageElem.textContent = CustomControl.NO_SELECTIONS_MSG;
+                  list.appendChild(messageElem);
+                }
+              }
             }
           }
         }
@@ -1069,7 +1080,9 @@ define(() => {
           const messageElem = document.createElement("p");
           messageElem.className = "no-options";
           messageElem.textContent =
-            visibleItems.length === 0 && searchTerms.length > 0 ? CustomControl.NO_SEARCH_RESULTS_MSG : CustomControl.NO_SELECTIONS_MSG;
+            visibleItems.length === 0 && searchTerms.length > 0
+              ? CustomControl.NO_SEARCH_RESULTS_MSG
+              : CustomControl.NO_SELECTIONS_MSG;
           list.appendChild(messageElem);
         }
       } else {
@@ -1370,6 +1383,26 @@ define(() => {
       visibleCheckboxes.forEach((cb) => (cb.checked = checked));
       this.updateSelectedCount();
       this.announceAllSelection(checked);
+      // NEW CODE: If in "Show Selected" mode and we're unchecking items, hide them
+      if (this.showingSelectedOnly && !checked) {
+        const list = this.elements.dropdown.querySelector(".list");
+        // Hide all unchecked items
+        visibleCheckboxes.forEach((cb) => {
+          const item = cb.closest(".checkbox-item");
+          if (item) {
+            item.classList.add("hidden");
+            item.style.display = "none";
+          }
+        });
+
+        // Show "No selections" message
+        if (!list.querySelector(".no-options")) {
+          const messageElem = document.createElement("p");
+          messageElem.className = "no-options";
+          messageElem.textContent = CustomControl.NO_SELECTIONS_MSG;
+          list.appendChild(messageElem);
+        }
+      }
     }
 
     toggleSelectedFilter() {
