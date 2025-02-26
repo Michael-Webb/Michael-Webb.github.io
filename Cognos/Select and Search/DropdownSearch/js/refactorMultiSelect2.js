@@ -1329,7 +1329,7 @@ define(() => {
         this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked')
       ).map((cb) => cb.value);
 
-      console.log("Parameters to be sent:", JSON.stringify(params));
+      console.log("Selected checkboxes:", selectedValues.length);
 
       // No parameters if no values are selected
       if (selectedValues.length === 0) {
