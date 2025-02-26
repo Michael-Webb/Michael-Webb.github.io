@@ -1197,10 +1197,10 @@ define(() => {
         const label = item.querySelector("span");
         const displayValue = label ? label.textContent : "";
         let compareValue = displayValue;
-        let compareTerms = searchTerms;
+        let compareTerms = cleanedSearchTerms;
         if (useCaseInsensitive) {
           compareValue = displayValue.toLowerCase();
-          compareTerms = searchTerms.map((term) => term.toLowerCase());
+          compareTerms = cleanedSearchTerms.map((term) => term.toLowerCase());
         }
 
         // Determine if the item matches the search criteria.
