@@ -103,7 +103,7 @@ define(() => {
         "Dropdown Width": dropdownWidth = "250px",
         "Content Width": contentWidth = "250px",
         "Multiple Select": multipleSelect = false,
-        "Search Delimiter Icon":searchDelimiter =",",
+        "Search Delimiter Icon": searchDelimiter = ",",
         AutoSubmit: autoSubmit = true,
         Compact: isCompact = false,
       } = oControlHost.configuration;
@@ -123,7 +123,7 @@ define(() => {
       this.isMultiple = !!multipleSelect;
       this.autoSubmit = autoSubmit;
       this.isCompact = isCompact;
-      this.searchDelimiter = searchDelimiter
+      this.searchDelimiter = searchDelimiter;
 
       // Initialize main parameter values
       this.mainParamValues = [];
@@ -947,7 +947,20 @@ define(() => {
             item.style.display = "none";
 
             // We may need to update group visibility too
-            this.hideEmptyGroups(this.elements.dropdown.querySelector(".list"));
+            const list = this.elements.dropdown.querySelector(".list");
+            this.hideEmptyGroups(list);
+
+            // Check if there are any visible items left
+            const visibleItems = list.querySelectorAll(".checkbox-item:not(.hidden)");
+            if (visibleItems.length === 0) {
+              // If no items are visible, show the "No selections" message
+              if (!list.querySelector(".no-options")) {
+                const messageElem = document.createElement("p");
+                messageElem.className = "no-options";
+                messageElem.textContent = CustomControl.NO_SELECTIONS_MSG;
+                list.appendChild(messageElem);
+              }
+            }
           }
         }
 
@@ -1395,8 +1408,8 @@ define(() => {
             item.style.display = "none";
           }
         });
-        
-        // NEW LINE: Update group headers visibility to hide empty groups
+
+        // Update group headers visibility to hide empty groups
         this.hideEmptyGroups(list);
 
         // Show "No selections" message
