@@ -103,6 +103,7 @@ define(() => {
         "Dropdown Width": dropdownWidth = "250px",
         "Content Width": contentWidth = "250px",
         "Multiple Select": multipleSelect = false,
+        "Search Delimiter Icon":searchDelimiter =",",
         AutoSubmit: autoSubmit = true,
         Compact: isCompact = false,
       } = oControlHost.configuration;
@@ -122,6 +123,7 @@ define(() => {
       this.isMultiple = !!multipleSelect;
       this.autoSubmit = autoSubmit;
       this.isCompact = isCompact;
+      this.searchDelimiter = searchDelimiter
 
       // Initialize main parameter values
       this.mainParamValues = [];
@@ -267,7 +269,6 @@ define(() => {
           }
           .search-container {
             width: 100%;
-            padding: var(--padding-lg);
             box-sizing: border-box;
           }
           .search-wrapper {
@@ -364,6 +365,7 @@ define(() => {
             cursor: pointer;
             border-radius: var(--radius);
             margin: 0rem 0.75rem 0.5rem 0.75rem;
+            gap: .5rem;
           }
           input[type="checkbox"] {
             margin: 0rem 0.5rem 0rem 0rem;
@@ -586,8 +588,8 @@ define(() => {
                   </select>
                 </div>
                 <label class="case-option">
+                 <span>Case insensitive</span>
                   <input type="checkbox" class="case-checkbox" ${caseInsensitiveChecked} />
-                  <span>Case insensitive</span>
                 </label>
               </div>
             </div>
@@ -843,7 +845,7 @@ define(() => {
           this.caseInsensitive = caseCheckbox.checked;
           // Re-run filtering with current search terms
           const searchValue = this.elements.search.value.trim();
-          const searchTerms = searchValue.split(",").map((term) => term.trim());
+          const searchTerms = searchValue.split(this.searchDelimiter).map((term) => term.trim());
           const searchType = this.elements.searchTypeSelect.value;
           this.filterItems(searchTerms, searchType);
         };
@@ -858,7 +860,7 @@ define(() => {
         this.updateSearchIcon();
         const searchValue = this.elements.search.value.trim();
         const searchType = this.elements.searchTypeSelect.value;
-        const searchTerms = searchValue.split(",").map((term) => term.trim());
+        const searchTerms = searchValue.split(this.searchDelimiter).map((term) => term.trim());
         this.filterItems(searchTerms, searchType);
       }, this.debounceDelay);
       this.elements.search.addEventListener("input", this.boundHandlers.searchInput);
@@ -880,7 +882,7 @@ define(() => {
       // Update filtering when the search type changes.
       this.boundHandlers.searchTypeChange = () => {
         const searchValue = this.elements.search.value;
-        const searchTerms = searchValue.split(",").map((term) => term.trim());
+        const searchTerms = searchValue.split(this.searchDelimiter).map((term) => term.trim());
         this.filterItems(searchTerms, this.elements.searchTypeSelect.value);
       };
       this.elements.searchTypeSelect.addEventListener("change", this.boundHandlers.searchTypeChange);
@@ -925,7 +927,7 @@ define(() => {
         }
 
         const searchValue = this.elements.search.value.trim();
-        const searchTerms = searchValue ? searchValue.split(",").map((term) => term.trim()) : [];
+        const searchTerms = searchValue ? searchValue.split(this.searchDelimiter).map((term) => term.trim()) : [];
         const searchType = this.elements.searchTypeSelect.value;
 
         // Only reapply filtering if the search criteria changed
@@ -1029,7 +1031,7 @@ define(() => {
       // Get the current search criteria.
       const searchValue = this.elements.search.value.trim();
       const searchType = this.elements.searchTypeSelect.value;
-      const searchTerms = searchValue ? searchValue.split(",").map((term) => term.trim()) : [];
+      const searchTerms = searchValue ? searchValue.split(this.searchDelimiter).map((term) => term.trim()) : [];
 
       // Get all checkbox items.
       const items = Array.from(list.querySelectorAll(".checkbox-item"));
@@ -1422,7 +1424,7 @@ define(() => {
         this.showingSelectedOnly = true;
         if (searchValue !== "") {
           // Use filterItems so that both search and selection are respected.
-          const searchTerms = searchValue.split(",").map((term) => term.trim());
+          const searchTerms = searchValue.split(this.searchDelimiter).map((term) => term.trim());
           this.filterItems(searchTerms, searchType);
         } else {
           // No search text—apply selection-only filter.
@@ -1435,7 +1437,7 @@ define(() => {
         this.showingSelectedOnly = false;
         if (searchValue !== "") {
           // Re-run the search filter so that unselected items matching the search are shown.
-          const searchTerms = searchValue.split(",").map((term) => term.trim());
+          const searchTerms = searchValue.split(this.searchDelimiter).map((term) => term.trim());
           this.filterItems(searchTerms, searchType);
         } else {
           // No search text—show all items.
