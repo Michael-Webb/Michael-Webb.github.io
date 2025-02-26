@@ -1259,6 +1259,8 @@ define(() => {
      * Determine whether an item should be visible.
      */
     determineVisibility(compareValue, compareTerms, searchType) {
+      // Add safety check
+      if (!compareValue) return false;
       switch (searchType) {
         case "containsAny":
           return compareTerms.some((term) => compareValue.includes(term));
@@ -1412,12 +1414,16 @@ define(() => {
         // Update group headers visibility to hide empty groups
         this.hideEmptyGroups(list);
 
-        // Show "No selections" message
-        if (!list.querySelector(".no-options")) {
-          const messageElem = document.createElement("p");
-          messageElem.className = "no-options";
-          messageElem.textContent = CustomControl.NO_SELECTIONS_MSG;
-          list.appendChild(messageElem);
+        // Check if there are any visible items left
+        const visibleItems = list.querySelectorAll(".checkbox-item:not(.hidden)");
+        if (visibleItems.length === 0) {
+          // If no items are visible, show the "No selections" message
+          if (!list.querySelector(".no-options")) {
+            const messageElem = document.createElement("p");
+            messageElem.className = "no-options";
+            messageElem.textContent = CustomControl.NO_SELECTIONS_MSG;
+            list.appendChild(messageElem);
+          }
         }
       }
     }
