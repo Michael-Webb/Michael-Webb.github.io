@@ -1414,29 +1414,45 @@ define(() => {
     /**
      * Toggle all visible checkboxes.
      */
+    /**
+     * Toggle all visible checkboxes.
+     */
     toggleAllItems(checked) {
-      // Select all checkboxes within the list that are visible
-      // Using getComputedStyle is more reliable than checking class names
+      // Find all checkboxes that are currently visible without using window
       const visibleCheckboxes = Array.from(
         this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]')
       ).filter((cb) => {
         const item = cb.closest(".checkbox-item");
-        return item && window.getComputedStyle(item).display !== "none";
+        // An element is visible if:
+        // 1. It exists
+        // 2. It doesn't have the "hidden" class
+        // 3. It doesn't have display:none inline style
+        // 4. Its offsetParent is not null (true for visible elements)
+        return (
+          item && !item.classList.contains("hidden") && item.style.display !== "none" && item.offsetParent !== null
+        );
       });
 
-      console.log(`toggleAllItems: Found ${visibleCheckboxes.length} visible checkboxes`);
+      console.log(`Found ${visibleCheckboxes.length} visible checkboxes to ${checked ? "select" : "clear"}`);
 
-      // Update each checkbox and trigger change events
+      // Change checkbox states and dispatch events
       visibleCheckboxes.forEach((cb) => {
+        // Only change if needed to avoid unnecessary events
         if (cb.checked !== checked) {
           cb.checked = checked;
-          // Dispatch a change event to ensure the control state updates
-          const event = new Event("change", { bubbles: true });
-          cb.dispatchEvent(event);
+
+          // Create and dispatch a change event
+          const changeEvent = new Event("change", {
+            bubbles: true,
+            cancelable: true,
+          });
+
+          // This will trigger the dropdown change handler
+          cb.dispatchEvent(changeEvent);
         }
       });
 
-      // These function calls are still needed
+      // Update UI
       this.updateSelectedCount();
       this.announceAllSelection(checked);
 
@@ -1453,10 +1469,10 @@ define(() => {
           }
         });
 
-        // Update visibility of empty groups (still needed even in non-grouped mode)
+        // Update group visibility
         this.hideEmptyGroups(list);
 
-        // Show message if no items are visible
+        // Show message if no visible items
         const visibleItems = list.querySelectorAll(".checkbox-item:not(.hidden)");
         if (visibleItems.length === 0 && !list.querySelector(".no-options")) {
           const messageElem = document.createElement("p");
@@ -1465,12 +1481,6 @@ define(() => {
           list.appendChild(messageElem);
         }
       }
-
-      // Debug - log actual checked values after operation
-      const actuallySelected = Array.from(
-        this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked')
-      ).map((cb) => cb.value);
-      console.log(`After toggleAllItems(${checked}): ${actuallySelected.length} checkboxes are checked`);
     }
 
     toggleSelectedFilter() {
