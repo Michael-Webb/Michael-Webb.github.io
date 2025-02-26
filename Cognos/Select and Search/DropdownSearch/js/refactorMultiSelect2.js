@@ -4,10 +4,17 @@ define(() => {
   // Utility: Generic debounce function
   function debounce(fn, delay) {
     let timeout;
-    return function (...args) {
+    const debouncedFn = function (...args) {
       clearTimeout(timeout);
       timeout = setTimeout(() => fn.apply(this, args), delay);
     };
+
+    // Add a method to clear the timeout
+    debouncedFn.cancel = function () {
+      clearTimeout(timeout);
+    };
+
+    return debouncedFn;
   }
 
   class CustomControl {
@@ -136,7 +143,7 @@ define(() => {
           }
         });
       }
-      console.log("mainParams & mainParamValues", mainParams);
+      //console.log("mainParams & mainParamValues", mainParams);
 
       fnDoneInitializing();
     }
@@ -146,7 +153,7 @@ define(() => {
      */
     setData(oControlhost, oDataStore) {
       this.m_oDataStore = oDataStore;
-      console.log("SetData: ", this.m_oDataStore);
+      //console.log("SetData: ", this.m_oDataStore);
     }
 
     /**
@@ -599,7 +606,7 @@ define(() => {
 
       // Check if the data store is set and has rows.
       if (this.m_oDataStore && this.m_oDataStore.rowCount) {
-        console.log("Datastore: ", this.m_oDataStore);
+        //console.log("Datastore: ", this.m_oDataStore);
 
         if (groupVals && groupingParamName !== "") {
           // --- Grouped options ---
@@ -1318,7 +1325,7 @@ define(() => {
           values: selectedValues.map((val) => ({ use: String(val) })),
         },
       ];
-      console.log("Parameters to be sent:", JSON.stringify(params));
+      //console.log("Parameters to be sent:", JSON.stringify(params));
       return params.length > 0 ? params : null;
     }
 
@@ -1540,66 +1547,80 @@ define(() => {
     /**
      * Cleanup event listeners and references.
      */
+    /**
+     * Cleanup event listeners and references.
+     */
     destroy() {
-      // Remove document-level listeners
-      document.removeEventListener("click", this.boundHandlers.documentClick);
+      try {
+        // Helper function to safely remove event listeners
+        const safeRemoveListener = (element, eventType, handler) => {
+          if (element && handler) {
+            try {
+              element.removeEventListener(eventType, handler);
+            } catch (e) {
+              console.warn(`Failed to remove ${eventType} listener:`, e);
+            }
+          }
+        };
 
-      // Clean up each element's listeners (if the element exists)
-      if (this.elements.header) {
-        this.elements.header.removeEventListener("click", this.boundHandlers.headerClick);
-      }
+        // Document level listeners
+        safeRemoveListener(document, "click", this.boundHandlers.documentClick);
 
-      if (this.elements.content) {
-        this.elements.content.removeEventListener("keydown", this.boundHandlers.dropdownKeydown);
-      }
+        // Element-specific listeners
+        const elementListeners = [
+          { el: "header", event: "click", handler: "headerClick" },
+          { el: "content", event: "keydown", handler: "dropdownKeydown" },
+          { el: "advancedBtn", event: "click", handler: "advancedBtnClick" },
+          { el: "search", event: "input", handler: "searchInput" },
+          { el: "searchIcon", event: "click", handler: "searchIconClick" },
+          { el: "searchTypeSelect", event: "change", handler: "searchTypeChange" },
+          { el: "showSelected", event: "click", handler: "showSelectedClick" },
+          { el: "applyBtn", event: "click", handler: "applyBtnClick" },
+          { el: "selectAll", event: "click", handler: "selectAllClick" },
+          { el: "deselectAll", event: "click", handler: "deselectAllClick" },
+        ];
 
-      if (this.elements.advancedBtn) {
-        this.elements.advancedBtn.removeEventListener("click", this.boundHandlers.advancedBtnClick);
-      }
+        // Remove all element listeners
+        elementListeners.forEach((item) => {
+          safeRemoveListener(this.elements[item.el], item.event, this.boundHandlers[item.handler]);
+        });
 
-      if (this.elements.search) {
-        this.elements.search.removeEventListener("input", this.boundHandlers.searchInput);
-      }
+        // Handle the dropdown event listeners separately since there are multiple
+        if (this.elements.dropdown) {
+          const dropdownEvents = [
+            { event: "keydown", handler: "checkboxKeydown" },
+            { event: "change", handler: "dropdownChange" },
+            { event: "click", handler: "groupControlClick" },
+          ];
 
-      if (this.elements.searchIcon) {
-        this.elements.searchIcon.removeEventListener("click", this.boundHandlers.searchIconClick);
-      }
-
-      if (this.elements.searchTypeSelect) {
-        this.elements.searchTypeSelect.removeEventListener("change", this.boundHandlers.searchTypeChange);
-      }
-
-      if (this.elements.showSelected) {
-        this.elements.showSelected.removeEventListener("click", this.boundHandlers.showSelectedClick);
-      }
-
-      if (this.elements.applyBtn) {
-        this.elements.applyBtn.removeEventListener("click", this.boundHandlers.applyBtnClick);
-      }
-
-      if (this.elements.selectAll) {
-        this.elements.selectAll.removeEventListener("click", this.boundHandlers.selectAllClick);
-      }
-
-      if (this.elements.deselectAll) {
-        this.elements.deselectAll.removeEventListener("click", this.boundHandlers.deselectAllClick);
-      }
-
-      if (this.elements.dropdown) {
-        this.elements.dropdown.removeEventListener("keydown", this.boundHandlers.checkboxKeydown);
-        this.elements.dropdown.removeEventListener("change", this.boundHandlers.dropdownChange);
-        this.elements.dropdown.removeEventListener("click", this.boundHandlers.groupControlClick);
-
-        // Also clean up case checkbox if it exists
-        const caseCheckbox = this.elements.dropdown.querySelector(".case-checkbox");
-        if (caseCheckbox) {
-          caseCheckbox.removeEventListener("change", this.boundHandlers.caseCheckboxChange);
+          dropdownEvents.forEach((item) => {
+            safeRemoveListener(this.elements.dropdown, item.event, this.boundHandlers[item.handler]);
+          });
         }
-      }
 
-      // Clear all references
-      this.boundHandlers = {};
-      this.elements = {};
+        // Cancel any pending debounced functions
+        if (this.boundHandlers.searchInput && typeof this.boundHandlers.searchInput.cancel === "function") {
+          this.boundHandlers.searchInput.cancel();
+        }
+
+        // Handle the case checkbox which is found via querySelector
+        // This is better handled by caching the element earlier, but as a fallback:
+        try {
+          const caseCheckbox = this.elements.dropdown && this.elements.dropdown.querySelector(".case-checkbox");
+          safeRemoveListener(caseCheckbox, "change", this.boundHandlers.caseCheckboxChange);
+        } catch (e) {
+          console.warn("Failed to clean up case checkbox:", e);
+        }
+
+        // Clear all references
+        this.boundHandlers = {};
+        this.elements = {};
+      } catch (e) {
+        console.error("Error during component cleanup:", e);
+        // Even if there's an error, try to clear references
+        this.boundHandlers = {};
+        this.elements = {};
+      }
     }
   }
 
