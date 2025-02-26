@@ -919,6 +919,16 @@ define(() => {
       this.boundHandlers.dropdownChange = (e) => {
         // Only proceed if the change event came from a checkbox
         if (e.target.matches('input[type="checkbox"]')) {
+          
+          // Log checkbox state changes
+          console.log(`Checkbox ${e.target.value} changed to ${e.target.checked ? "checked" : "unchecked"}`);
+
+          // After handling the change, log all currently checked boxes
+          const allChecked = Array.from(
+            this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked')
+          ).map((cb) => cb.value);
+          console.log(`Total checked: ${allChecked.length}`, allChecked);
+
           // For single selection mode: uncheck all other checkboxes when one is checked
           if (!this.isMultiple && e.target.checked) {
             const checkboxes = this.elements.dropdown.querySelectorAll('input[type="checkbox"]');
