@@ -1171,8 +1171,11 @@ define(() => {
 
       searchType = searchType || "containsAny";
 
-      // If the search field is empty, use the appropriate filter:
-      if (!Array.isArray(searchTerms) || searchTerms.length === 0 || searchTerms[0] === "") {
+      // NEW CODE: Filter out empty strings from search terms
+      const cleanedSearchTerms = Array.isArray(searchTerms) ? searchTerms.filter((term) => term.trim() !== "") : [];
+
+      // If there are no valid search terms after cleaning, show all items or only selected items
+      if (cleanedSearchTerms.length === 0) {
         if (this.showingSelectedOnly) {
           this.applyShowSelectedFilter(); // Only show selected items
         } else {
