@@ -910,8 +910,10 @@ define(() => {
       // Enforce single-selection if not multiple:
       // When any checkbox is changed, if it is now checked then uncheck all others.
       this.boundHandlers.dropdownChange = (e) => {
-        if (!this.isMultiple && e.target.matches('input[type="checkbox"]')) {
-          if (e.target.checked) {
+        // Only proceed if the change event came from a checkbox
+        if (e.target.matches('input[type="checkbox"]')) {
+          // For single selection mode: uncheck all other checkboxes when one is checked
+          if (!this.isMultiple && e.target.checked) {
             const checkboxes = this.elements.dropdown.querySelectorAll('input[type="checkbox"]');
             checkboxes.forEach((cb) => {
               if (cb !== e.target) {
@@ -924,46 +926,41 @@ define(() => {
               this.applySelection();
             }
           }
-        }
 
-        const searchValue = this.elements.search.value.trim();
-        const searchTerms = searchValue ? searchValue.split(this.searchDelimiter).map((term) => term.trim()) : [];
-        const searchType = this.elements.searchTypeSelect.value;
-
-        // Only reapply filtering if the search criteria changed
-        if (searchValue !== this.lastSearchValue || searchType !== this.lastSearchType) {
-          this.lastSearchValue = searchValue;
-          this.lastSearchType = searchType;
+          // Handle "Show Selected" mode
           if (this.showingSelectedOnly) {
-            this.filterItems(searchTerms, searchType);
-          }
-        }
+            const item = e.target.closest(".checkbox-item");
+            if (item) {
+              if (e.target.checked) {
+                // If checking a box, ensure it's visible
+                item.classList.remove("hidden");
+                item.style.display = "flex";
+              } else {
+                // If unchecking a box, hide it
+                item.classList.add("hidden");
+                item.style.display = "none";
 
-        // Handle show-selected mode immediately for checkboxes being unchecked
-        if (this.showingSelectedOnly && e.target.matches('input[type="checkbox"]') && !e.target.checked) {
-          const item = e.target.closest(".checkbox-item");
-          if (item) {
-            item.classList.add("hidden");
-            item.style.display = "none";
+                // Get the list and update group visibility
+                const list = this.elements.dropdown.querySelector(".list");
+                this.hideEmptyGroups(list);
 
-            // We may need to update group visibility too
-            const list = this.elements.dropdown.querySelector(".list");
-            this.hideEmptyGroups(list);
-
-            // Check if there are any visible items left
-            const visibleItems = list.querySelectorAll(".checkbox-item:not(.hidden)");
-            if (visibleItems.length === 0) {
-              // If no items are visible, show the "No selections" message
-              if (!list.querySelector(".no-options")) {
-                const messageElem = document.createElement("p");
-                messageElem.className = "no-options";
-                messageElem.textContent = CustomControl.NO_SELECTIONS_MSG;
-                list.appendChild(messageElem);
+                // Check if there are any visible items left
+                const visibleItems = list.querySelectorAll(".checkbox-item:not(.hidden)");
+                if (visibleItems.length === 0) {
+                  // If no items are visible, show the "No selections" message
+                  if (!list.querySelector(".no-options")) {
+                    const messageElem = document.createElement("p");
+                    messageElem.className = "no-options";
+                    messageElem.textContent = CustomControl.NO_SELECTIONS_MSG;
+                    list.appendChild(messageElem);
+                  }
+                }
               }
             }
           }
         }
 
+        // Always update the selected count when any checkbox changes
         this.updateSelectedCount();
       };
       this.elements.dropdown.addEventListener("change", this.boundHandlers.dropdownChange);
