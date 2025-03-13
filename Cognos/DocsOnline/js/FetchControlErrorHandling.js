@@ -59,18 +59,18 @@ define([], function () {
      * @param {object} oControlHost - The Cognos control host.
      */
     draw(oControlHost) {
-        // Only attempt to set up if we have valid configuration
-        if (this.hasValidConfiguration) {
-          try {
-            this.setupLazyLoading();
-          } catch (error) {
-            console.error("Error during DocumentsOnline draw:", error);
-            // Don't throw, just log the error
-          }
-        } else {
-          console.warn("DocumentsOnline: Skipping draw due to invalid configuration");
+      // Only attempt to set up if we have valid configuration
+      if (this.hasValidConfiguration) {
+        try {
+          this.setupLazyLoading();
+        } catch (error) {
+          console.error("Error during DocumentsOnline draw:", error);
+          // Don't throw, just log the error
         }
+      } else {
+        console.warn("DocumentsOnline: Skipping draw due to invalid configuration");
       }
+    }
 
     /**
      * Inserts a loading (clock) icon (as inline SVG) wrapped in an anchor element
