@@ -20,6 +20,11 @@ define([], function () {
           console.warn("DocumentsOnline: No server URLs configured. Control will not fetch any documents.");
           // Still complete initialization so the report can render
           this.hasValidConfiguration = false;
+          throw new scriptableReportError(
+            "DocumentsOnline", // Module path
+            "initialize",      // Method
+            "Missing required configuration: either 'Server Url' or 'Development Server Url' must be specified."  // Description
+          );
           fnDoneInitializing();
           return;
         }
