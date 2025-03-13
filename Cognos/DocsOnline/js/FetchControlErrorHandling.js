@@ -59,7 +59,7 @@ define([], function () {
           );
         } else {
           // Just rethrow the error if it's already a scriptableReportError
-          throw error;
+          console.log(error);
         }
       }
     }
