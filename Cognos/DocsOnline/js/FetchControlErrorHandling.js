@@ -14,15 +14,18 @@ define([], function () {
         this.oControlHost = oControlHost;
         const config = oControlHost.configuration;
 
-        // Validate required configuration
+        // Check if required configuration is present
         if (!config["Server Url"] && !config["Development Server Url"]) {
-          throw new scriptableReportError(
-            "DocumentsOnline",
-            "initialize",
-            "Missing required configuration: either 'Server Url' or 'Development Server Url' must be specified."
-          );
+          // Just complete initialization without setting up URLs
+          console.warn("DocumentsOnline: No server URLs configured. Control will not fetch any documents.");
+          // Still complete initialization so the report can render
+          this.hasValidConfiguration = false;
+          fnDoneInitializing();
+          return;
         }
 
+        // Continue with normal initialization
+        this.hasValidConfiguration = true;
         this.sServerUrl = config["Server Url"];
         this.sDevUrl = config["Development Server Url"];
         this.isDevMode = config["Dev Mode"];
@@ -33,34 +36,18 @@ define([], function () {
 
         this.useExclude = config.Use_Exclude;
         this.excludeValue = config.Exclude_Value;
-
-        // New configuration: Show Icon/Text and the optional Label.
-        // Possible values: "Icon Only", "Text Only", "Icon and Text".
-        // If null/empty, default to "Icon Only".
         this.showIconText = config["Show Icon/Text"];
         this.label = config["Label"];
-
-        // New config option: processSpanType
-        // If set to "html" then processSpanHTML() will be used;
-        // if set to "xml" then processSpanXML() will be used.
         this.processSpanType = config["type"];
 
         // Create an in-memory cache for requests keyed by the full fetch URL.
         this.requestCache = new Map();
         fnDoneInitializing();
       } catch (error) {
-        // Don't try to determine the error type - just throw a new scriptableReportError
-        // with the proper information
-        if (error.message) {
-          throw new scriptableReportError(
-            "DocumentsOnline",
-            "initialize",
-            "Failed to initialize control: " + error.message
-          );
-        } else {
-          // Just rethrow the error if it's already a scriptableReportError
-          console.log(error);
-        }
+        // Log error but still complete initialization
+        console.error("Error during DocumentsOnline initialization:", error);
+        this.hasValidConfiguration = false;
+        fnDoneInitializing();
       }
     }
 
@@ -72,12 +59,18 @@ define([], function () {
      * @param {object} oControlHost - The Cognos control host.
      */
     draw(oControlHost) {
-      try {
-        this.setupLazyLoading();
-      } catch (error) {
-        throw new scriptableReportError("DocumentsOnline", "draw", "Failed to render control: " + error.message);
+        // Only attempt to set up if we have valid configuration
+        if (this.hasValidConfiguration) {
+          try {
+            this.setupLazyLoading();
+          } catch (error) {
+            console.error("Error during DocumentsOnline draw:", error);
+            // Don't throw, just log the error
+          }
+        } else {
+          console.warn("DocumentsOnline: Skipping draw due to invalid configuration");
+        }
       }
-    }
 
     /**
      * Inserts a loading (clock) icon (as inline SVG) wrapped in an anchor element
