@@ -8,11 +8,11 @@ Updated 03/13/2025
 
 Table of Contents
 
-[Revision List 2](#_Toc192836763)
+[Revision List 2]
 
-[Release: 2](#_Toc192836764)
+[Release: 2]
 
-[Revision 1: 2](#_Toc192836765)
+[Revision 1] (## Revision 1)
 
 [Revision 2: 2](#_Toc192836766)
 
