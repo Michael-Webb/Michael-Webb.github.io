@@ -1,9 +1,3 @@
-Michael Webb
-
-Cal Poly Pomona Foundation
-
-<michael.webb@outlook.com>
-
 **Docs Online – 2025**
 
 **updated guide for Connecting Cognos to Docs online**
