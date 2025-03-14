@@ -1,0 +1,303 @@
+<report xmlns="http://developer.cognos.com/schemas/report/15.5/"           expressionLocale="en-us" useStyleVersion="11.6"><!--RSU-SPC-0093 The report specification was upgraded from "http://developer.cognos.com/schemas/report/14.2/" to "http://developer.cognos.com/schemas/report/15.5/" at 2022-11-15. 8:8:22-->
+				
+				<drillBehavior/>
+				<layouts>
+					<layout>
+						<reportPages>
+							
+						<page name="Page1">
+								<style>
+									<defaultStyles>
+										<defaultStyle refStyle="pg"/>
+									</defaultStyles>
+								</style>
+								<pageBody>
+									<style>
+										<defaultStyles>
+											<defaultStyle refStyle="pb"/>
+										</defaultStyles>
+									<CSS value="text-align:center"/></style>
+									<contents><HTMLItem description="Functions">
+			<dataSource>
+				<staticValue>&lt;script type = &quot;text/javascript&quot; &gt;
+/* 
+Author: Michael Webb
+Contact: mlwebb@cpp.edu or michael.webb@outlook.com
+Name: Fetch Control
+
+Purpose:    To receive data values from a Cognos report, fetch a url from Documents Online service &apos;/getAttachments.aspx&apos;, 
+            and print a hyperlink image that points to an attached document. 
+            
+            What makes this unique is this is made as an asyncronous javascript module that works in Cognos 11.1.7 and 
+            should work in any Cognos 11.0.x report. You can find scriptable report module documentation from IBM at:
+                https://public.dhe.ibm.com/software/data/sw-library/cognos/mobile/scriptable_reports/index.htmlscriptable 
+
+Setup: This script requires the following query items either added to the list or the list properties: 
+            1. Argument
+            2. Token
+            3. User
+            4. Environment
+            5. Unique ID (per row)
+            6. Server Url
+            7. clock img url
+            8. paperclip img url
+        Interactive Reports must be check to &quot;Yes&quot;
+        a Span HTML item must be added in the report
+        Custom Control
+        Cognos admin to add this script to the /js/ folder on the cognos server
+*/
+function urldec(str) {
+    return decodeURIComponent(str.replaceAll(&quot;+&quot;, &quot; &quot;));
+  }
+  //Central square fEncode() script
+  function fEncode(vValue) {
+    var Base64 = {
+      _keyStr:
+        &quot;ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=&quot;,
+      encode: function (e) {
+        var t = &quot;&quot;;
+        var n, r, i, s, o, u, a;
+        var f = 0;
+        e = Base64._utf8_encode(e);
+        while (f &lt; e.length) {
+          n = e.charCodeAt(f++);
+          r = e.charCodeAt(f++);
+          i = e.charCodeAt(f++);
+          s = n &gt;&gt; 2;
+          o = ((n &amp; 3) &lt;&lt; 4) | (r &gt;&gt; 4);
+          u = ((r &amp; 15) &lt;&lt; 2) | (i &gt;&gt; 6);
+          a = i &amp; 63;
+          if (isNaN(r)) {
+            u = a = 64;
+          } else if (isNaN(i)) {
+            a = 64;
+          }
+          t =
+            t +
+            this._keyStr.charAt(s) +
+            this._keyStr.charAt(o) +
+            this._keyStr.charAt(u) +
+            this._keyStr.charAt(a);
+        }
+        return t;
+      },
+      decode: function (e) {
+        var t = &quot;&quot;;
+        var n, r, i;
+        var s, o, u, a;
+        var f = 0;
+        e = e.replace(/[^A-Za-z0-9\+\/\=]/g, &quot;&quot;);
+        while (f &lt; e.length) {
+          s = this._keyStr.indexOf(e.charAt(f++));
+          o = this._keyStr.indexOf(e.charAt(f++));
+          u = this._keyStr.indexOf(e.charAt(f++));
+          a = this._keyStr.indexOf(e.charAt(f++));
+          n = (s &lt;&lt; 2) | (o &gt;&gt; 4);
+          r = ((o &amp; 15) &lt;&lt; 4) | (u &gt;&gt; 2);
+          i = ((u &amp; 3) &lt;&lt; 6) | a;
+          t = t + String.fromCharCode(n);
+          if (u != 64) {
+            t = t + String.fromCharCode(r);
+          }
+          if (a != 64) {
+            t = t + String.fromCharCode(i);
+          }
+        }
+        t = Base64._utf8_decode(t);
+        return t;
+      },
+      _utf8_encode: function (e) {
+        e = e.replace(/\r\n/g, &quot;\n&quot;);
+        var t = &quot;&quot;;
+        for (var n = 0; n &lt; e.length; n++) {
+          var r = e.charCodeAt(n);
+          if (r &lt; 128) {
+            t += String.fromCharCode(r);
+          } else if (r &gt; 127 &amp;&amp; r &lt; 2048) {
+            t += String.fromCharCode((r &gt;&gt; 6) | 192);
+            t += String.fromCharCode((r &amp; 63) | 128);
+          } else {
+            t += String.fromCharCode((r &gt;&gt; 12) | 224);
+            t += String.fromCharCode(((r &gt;&gt; 6) &amp; 63) | 128);
+            t += String.fromCharCode((r &amp; 63) | 128);
+          }
+        }
+        return t;
+      },
+      _utf8_decode: function (e) {
+        var t = &quot;&quot;;
+        var n = 0;
+        var r = (c1 = c2 = 0);
+        while (n &lt; e.length) {
+          r = e.charCodeAt(n);
+          if (r &lt; 128) {
+            t += String.fromCharCode(r);
+            n++;
+          } else if (r &gt; 191 &amp;&amp; r &lt; 224) {
+            c2 = e.charCodeAt(n + 1);
+            t += String.fromCharCode(((r &amp; 31) &lt;&lt; 6) | (c2 &amp; 63));
+            n += 2;
+          } else {
+            c2 = e.charCodeAt(n + 1);
+            c3 = e.charCodeAt(n + 2);
+            t += String.fromCharCode(
+              ((r &amp; 15) &lt;&lt; 12) | ((c2 &amp; 63) &lt;&lt; 6) | (c3 &amp; 63)
+            );
+            n += 3;
+          }
+        }
+        return t;
+      },
+    };
+    var encodedString = Base64.encode(vValue);
+    return encodedString;
+  }
+function checkForAttachment() {
+  //this is URLDecode all the data item strings from the HTML Item Span
+  
+  let nL = [...document.querySelectorAll(&apos;span[name=&quot;attachments&quot;]&apos;)];
+
+  console.log(&quot;NodeList: &quot;, nL);
+
+  //for each element in the nL array do a fetch against url and then do something
+  nL.forEach((node) =&gt; {
+    try {
+      //check if a paperclip or a # value is set in the node span &apos;src&apos;
+      let check_img = document.getElementById(urldec(node.dataset.unid));
+      console.log(check_img.getAttribute(&quot;src&quot;) === null);
+      return;
+    } catch {
+      //console.log(&apos;false&apos;)
+    }
+    // If no img is in the span then add the clock image to the element iwth a unique ID and add a hyperlink with src=# within it
+    let add_timer = document.createElement(&quot;img&quot;);
+    add_timer.width = node.dataset.font;
+    add_timer.height = node.dataset.font;
+    add_timer.src = `${urldec(node.dataset.clock)}`;
+    add_timer.id = `${urldec(node.dataset.unid)}`;
+    //console.log(&apos;ids&apos;, `${node.dataset.unid}`)
+    let add_link = document.createElement(&quot;a&quot;);
+    add_link.setAttribute(&quot;href&quot;, &quot;#&quot;);
+    add_link.setAttribute(&quot;target&quot;, &quot;_blank&quot;);
+    node.appendChild(add_link);
+    add_link.appendChild(add_timer);
+    //for each node in the nodelist execute a fetch request
+    fetch(
+      `${
+        urldec(node.dataset.server) +
+        encodeURI(
+          fEncode(urldec(node.dataset.arg).replaceAll(&quot;\\&quot;, &quot;&quot;))
+        ) +
+        `${urldec(node.dataset.env)}`
+      }`,
+      {
+        method: &quot;GET&quot;,
+        headers: {
+          token: `${node.dataset.token}`,
+          user: `${urldec(node.dataset.user)}`,
+        },
+      }
+    )
+      .then((response) =&gt; {
+        let res = response.text();
+        //console.log(res)
+        return res;
+      })
+      .then((xmlstr) =&gt;
+        new window.DOMParser().parseFromString(xmlstr, &quot;text/xml&quot;)
+      )
+      .then((data) =&gt; {
+        /*if the Docs Online service returns &quot; &quot; or &quot;&quot; that means no document exists or the string was encoded incorrectly
+            If an XML string is passed it will apply the URL in the &quot;value&quot; node to the &apos;src&apos; of the hyperlink with a unique ID
+            */
+        if (data != &quot; &quot;) {
+          let vXML =
+            data.getElementsByTagName(&quot;value&quot;)[0].childNodes[0].nodeValue;
+          //console.log(&apos;Fetch Response&apos;,vXML);
+          let change_img = document.getElementById(
+            `${this.urldec(node.dataset.unid)}`
+          );
+          change_img.width = node.dataset.font/2;
+          change_img.height = node.dataset.font;
+          change_img.src = `${urldec(node.dataset.paperclip)}`;
+          let add_link2 = document.createElement(&quot;a&quot;);
+          add_link2.setAttribute(&quot;href&quot;, vXML);
+          add_link2.setAttribute(&quot;target&quot;, &quot;_blank&quot;);
+          node.appendChild(add_link2);
+          add_link2.appendChild(change_img);
+        }
+      })
+      .catch((error) =&gt; {
+        //console.log(&apos;No Document&apos;)
+        let dd = document.getElementById(`${urldec(node.dataset.unid)}`);
+        let clock = dd.getAttribute(&quot;src&quot;);
+        dd.setAttribute(&quot;src&quot;, &quot;#&quot;);
+        //console.log(&apos;clock&apos;,clock);
+      })
+      .finally((end) =&gt; {
+        //console.log(&apos;finished&apos;)
+      });
+  });
+  return
+}
+
+
+&lt;/script&gt;</staticValue>
+			</dataSource>
+		</HTMLItem><list horizontalPagination="true" name="List2" refQuery="PO Master">
+			
+			
+			
+			<noDataHandler>
+				<contents>
+					<block>
+						<contents>
+							<textItem>
+								<dataSource>
+									<staticValue>No Data Available</staticValue>
+								</dataSource>
+								<style>
+									<CSS value="padding:10px 18px;"/>
+								</style>
+							</textItem>
+						</contents>
+					</block>
+				</contents>
+			</noDataHandler>
+			<style>
+				<CSS value="border-collapse:collapse;font-size:12pt"/>
+				<defaultStyles>
+					<defaultStyle refStyle="ls"/>
+				</defaultStyles>
+			</style>
+		<listColumns><listColumn><listColumnTitle><style><defaultStyles><defaultStyle refStyle="lt"/></defaultStyles></style><contents><textItem><dataSource><dataItemLabel refDataItem="PO"/></dataSource></textItem></contents></listColumnTitle><listColumnBody><style><defaultStyles><defaultStyle refStyle="lc"/></defaultStyles></style><contents><textItem><dataSource><dataItemValue refDataItem="PO"/></dataSource></textItem></contents></listColumnBody></listColumn><listColumn><listColumnTitle><style><defaultStyles><defaultStyle refStyle="lt"/></defaultStyles></style><contents><table><style><defaultStyles><defaultStyle refStyle="tb"/></defaultStyles><CSS value="border-collapse:collapse;width:100%"/></style><tableRows><tableRow><tableCells><tableCell><contents><textItem><dataSource><staticValue>Attachments </staticValue></dataSource></textItem></contents></tableCell><tableCell><contents><image>
+			<dataSource>
+				<staticValue>../samples/images/paperclip.gif</staticValue>
+			</dataSource>
+		</image></contents></tableCell></tableCells></tableRow></tableRows></table></contents></listColumnTitle><listColumnBody><style><defaultStyles><defaultStyle refStyle="lc"/></defaultStyles><CSS value="text-align:center"/></style><contents><HTMLItem description="SPAN">
+			<dataSource>
+				
+			<reportExpression>&apos;&lt;span name=&quot;attachments&quot; data-token=&quot;&apos;+[PO Master].[Auth Token]+&apos;&quot; data-unid=&quot;&apos;+URLEncode([PO Master].[uniqueid])+&apos;&quot; data-arg=&quot;&apos;+URLEncode([PO Master].[Arguments])+&apos;&quot; data-user=&quot;&apos;+URLEncode([PO Master].[User])+&apos;&quot; data-env=&quot;&apos;+URLEncode([PO Master].[Environment])+&apos;&quot; data-server=&quot;&apos;+URLEncode([PO Master].[ServerUrl])+&apos;&quot; data-clock=&quot;&apos;+URLEncode([PO Master].[Clock])+&apos;&quot; data-paperclip=&quot;&apos;+URLEncode([PO Master].[Paperclip])+&apos;&quot; data-font=&quot;16&quot;/&gt;&apos;</reportExpression></dataSource>
+		</HTMLItem><HTMLItem description="RUN">
+			<dataSource>
+				
+			<reportExpression>&apos;&lt;script type&quot;javascript&quot; defer&gt;
+
+checkForAttachment()
+
+&lt;/script&gt;&apos;</reportExpression></dataSource>
+		</HTMLItem></contents></listColumnBody></listColumn><listColumn><listColumnTitle><style><defaultStyles><defaultStyle refStyle="lt"/></defaultStyles></style><contents><textItem><dataSource><dataItemLabel refDataItem="PR Number"/></dataSource></textItem></contents></listColumnTitle><listColumnBody><style><defaultStyles><defaultStyle refStyle="lc"/></defaultStyles></style><contents><textItem><dataSource><dataItemValue refDataItem="PR Number"/></dataSource></textItem></contents></listColumnBody></listColumn><listColumn><listColumnTitle><style><defaultStyles><defaultStyle refStyle="lt"/></defaultStyles></style><contents><textItem><dataSource><dataItemLabel refDataItem="Vendor ID"/></dataSource></textItem></contents></listColumnTitle><listColumnBody><style><defaultStyles><defaultStyle refStyle="lc"/></defaultStyles></style><contents><textItem><dataSource><dataItemValue refDataItem="Vendor ID"/></dataSource></textItem></contents></listColumnBody></listColumn><listColumn><listColumnTitle><style><defaultStyles><defaultStyle refStyle="lt"/></defaultStyles></style><contents><textItem><dataSource><dataItemLabel refDataItem="Requested Date"/></dataSource></textItem></contents></listColumnTitle><listColumnBody><style><defaultStyles><defaultStyle refStyle="lc"/></defaultStyles></style><contents><textItem><dataSource><dataItemValue refDataItem="Requested Date"/></dataSource></textItem></contents></listColumnBody></listColumn><listColumn><listColumnTitle><style><defaultStyles><defaultStyle refStyle="lt"/></defaultStyles></style><contents><textItem><dataSource><dataItemLabel refDataItem="Vendor Name"/></dataSource></textItem></contents></listColumnTitle><listColumnBody><style><defaultStyles><defaultStyle refStyle="lc"/></defaultStyles></style><contents><textItem><dataSource><dataItemValue refDataItem="Vendor Name"/></dataSource></textItem></contents></listColumnBody></listColumn></listColumns><propertyList><propertyItem refDataItem="PR Number"/><propertyItem refDataItem="ServerUrl"/><propertyItem refDataItem="Arguments"/><propertyItem refDataItem="Environment"/><propertyItem refDataItem="User"/><propertyItem refDataItem="Auth Token"/><propertyItem refDataItem="Paperclip"/><propertyItem refDataItem="Clock"/><propertyItem refDataItem="uniqueid"/></propertyList><sortList><sortItem sortOrder="descending" refDataItem="Requested Date"/></sortList></list></contents>
+								</pageBody>
+							<XMLAttributes><XMLAttribute output="no" name="RS_legacyDrillDown" value="0"/></XMLAttributes></page></reportPages>
+					</layout>
+				</layouts>
+			<XMLAttributes><XMLAttribute name="RS_CreateExtendedDataItems" output="no" value="true"/><XMLAttribute name="listSeparator" output="no" value=","/><XMLAttribute output="no" name="decimalSeparator" value="."/><XMLAttribute output="no" name="RS_modelModificationTime" value="2018-06-28T15:16:19.917Z"/></XMLAttributes><modelPath>/content/folder[@name=&apos;Finance Enterprise&apos;]/folder[@name=&apos;Finance&apos;]/folder[@name=&apos;Packages&apos;]/package[@name=&apos;SPS Procurement&apos;]/model[@name=&apos;model&apos;]</modelPath><queries><query name="PO Master"><source><model/></source><selection><dataItem aggregate="none" name="PR Number" rollupAggregate="none"><expression>[Finance Master].[Purchase Requests].[PR]</expression><XMLAttributes><XMLAttribute name="RS_dataType" output="no" value="3"/><XMLAttribute name="RS_dataUsage" output="no" value="1"/></XMLAttributes></dataItem><dataItem aggregate="none" name="PO" rollupAggregate="none"><expression>[Finance Master].[Purchase Requests].[PO]</expression><XMLAttributes><XMLAttribute name="RS_dataType" output="no" value="3"/><XMLAttribute name="RS_dataUsage" output="no" value="1"/></XMLAttributes></dataItem><dataItem aggregate="none" name="Requested Date" rollupAggregate="none"><expression>[Finance Master].[Purchase Requests].[Requested Date]</expression><XMLAttributes><XMLAttribute name="RS_dataType" output="no" value="7"/><XMLAttribute name="RS_dataUsage" output="no" value="1"/></XMLAttributes></dataItem><dataItem aggregate="none" name="Vendor ID" rollupAggregate="none"><expression>[Finance Master].[Purchase Requests].[Vendor ID]</expression><XMLAttributes><XMLAttribute name="RS_dataType" output="no" value="3"/><XMLAttribute name="RS_dataUsage" output="no" value="0"/></XMLAttributes></dataItem><dataItem aggregate="none" name="Vendor Name" rollupAggregate="none"><expression>[Finance Master].[Purchase Requests].[Vendor Name]</expression><XMLAttributes><XMLAttribute name="RS_dataType" output="no" value="3"/><XMLAttribute name="RS_dataUsage" output="no" value="0"/></XMLAttributes></dataItem><dataItem name="ServerUrl"><expression>#/* Network Location for the getAttachments.aspx page */#
+
+&apos;https://cppfosapp.fdn.cpp.edu/Finance/Documents/getAttachments.aspx?arg=&apos;</expression></dataItem><dataItem name="Arguments"><expression>#/* Table names, column names and values as it is in DB */#
+&apos;&lt;&apos; || 
+
+&apos;POP_PV_DTL&apos; 
+|| &apos; &apos; || &apos;POP_PR_NO&apos; || &apos;=\&quot;&apos; || [PR Number] || &apos;\&quot;&apos; 
+
+|| &apos;/&gt;&apos;
+</expression></dataItem><dataItem name="Environment"><expression>&apos;&amp;env=&apos; || #sq($account.parameters.ActiveEnvironment)#</expression></dataItem><dataItem name="User"><expression>&apos;&amp;env=&apos; || #sq($account.parameters.ActiveEnvironment)#</expression></dataItem><dataItem name="Auth Token"><expression># sq(URLEncode($account.parameters.AuthToken)) #</expression></dataItem><dataItem name="Paperclip"><expression>&apos;/Cognos11/bi/samples/images/paperclip.gif&apos;</expression></dataItem><dataItem name="Clock"><expression>&apos;/Cognos11/bi/samples/images/common/clock.png&apos;</expression></dataItem><dataItem name="uniqueid"><expression>trim([PR Number])||trim([PO])||trim([Vendor ID])</expression></dataItem></selection></query></queries><reportName>Docs Online Drill-Through Legacy Version</reportName></report>

@@ -1,0 +1,9 @@
+#/* Network Location for the getAttachments.aspx page */#
+
+'https://os-app-p.abcwua.org/Finance/Documents/getAttachments.aspx?arg='
+
+
+
+
+#Only change the https://os-app-p.abcwua.org/Finance/Documents/ part from the Server of the document in FE. 
+For Instance I went to PO Inquiry POUPPR and opened one of the documents (the top one) and pulled the link out of the address were the pdf lives in their repository and then added it to the front of /getAttachments.aspx?arg='   #

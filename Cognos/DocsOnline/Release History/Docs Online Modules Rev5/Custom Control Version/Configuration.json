@@ -1,0 +1,20 @@
+{
+    "Server Url": "https://<PROD_BASEURL_OSAPP>/Finance/Documents/getAttachments.aspx?",
+    "Development Server Url": "https://<DEV_BASEURL_OSAPP>/Finance/Documents/getAttachments.aspx?",
+    "Dev Mode": false,
+    "Show Console Messages": false,
+    "Use Lazy Loading": true,
+    "Show Icon/Text": "icon",
+    "ShowIconText COMMENT1": "Possible Values: icon, text, or both. 'icon' is default",
+    "ShowIconText COMMENT2": "icon is default",
+    "Label": "View Attachment",
+    "Icon Height": "12",
+    "Icon Width": "12",
+    "Use_Exclude": true,
+    "Exclude_Value": "TTL",
+    "Exclude_Value COMMENT1": "Excludes values that starts with Exclude_Value",
+    "Exclude_Value COMMENT2": "Specifically in the SPAN HTML Item for data-ref",
+    "Exclude_Value COMMENT3": "data-ref=\"'+URLEncode([Reference])+'\" ",
+    "Exclude_Value COMMENT4": "We exclude TTL% for performance optimization",
+    "Type": "html"
+}

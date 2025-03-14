@@ -1,0 +1,13 @@
+#/* Table names, column names and values as it is in DB */#
+
+'<' || 
+
+'OH_BIR_MSTR'
+|| ' ' || 'OH_REF' || '=\"' || [Invoice] || '\"'
+|| ' ' || 'OH_PE_ID' || '=\"' || [Vendor ID] || '\"'
+
+
+|| '/>'
+
+
+#Translating the Server Table/Filed name to the name used in the query#

@@ -1,0 +1,11 @@
+'<span name="attachments" 
+data-token="'+[Auth Token]+'" 
+data-unid="'+URLEncode([uniqueid])+'" 
+data-arg="'+URLEncode([Arguments])+'" 
+data-user="'+URLEncode([User])+'" 
+data-env="'+URLEncode([Environment])+'" 
+data-server="'+URLEncode([ServerUrl])+'" 
+data-clock="'+URLEncode([Clock])+'" 
+data-paperclip="'+URLEncode([Paperclip])+'" 
+data-status = "new" 
+data-font="16"/>'

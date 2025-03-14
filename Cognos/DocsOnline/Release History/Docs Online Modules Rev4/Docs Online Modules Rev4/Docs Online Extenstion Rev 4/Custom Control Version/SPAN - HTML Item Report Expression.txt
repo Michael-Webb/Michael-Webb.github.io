@@ -1,0 +1,7 @@
+'<span name="attachments" 
+data-token="'+[Auth Token]+'" 
+data-arg="'+URLEncode([Arguments])+'" 
+data-user="'+URLEncode([User])+'" 
+data-env="'+URLEncode([Environment])+'" 
+data-status = "new" 
+/>'

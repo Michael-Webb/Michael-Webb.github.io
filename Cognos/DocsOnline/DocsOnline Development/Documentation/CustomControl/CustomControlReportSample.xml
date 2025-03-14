@@ -1,0 +1,729 @@
+<report
+	xmlns="http://developer.cognos.com/schemas/report/15.5/"           expressionLocale="en-us" useStyleVersion="11.6">
+	<!--RSU-SPC-0093 The report specification was upgraded from "http://developer.cognos.com/schemas/report/14.2/" to "http://developer.cognos.com/schemas/report/15.5/" at 2022-11-15. 8:8:22-->
+	<drillBehavior/>
+	<layouts>
+		<layout>
+			<reportPages>
+				<page name="Page1">
+					<style>
+						<defaultStyles>
+							<defaultStyle refStyle="pg"/>
+						</defaultStyles>
+					</style>
+					<pageBody>
+						<style>
+							<defaultStyles>
+								<defaultStyle refStyle="pb"/>
+							</defaultStyles>
+							<CSS value="text-align:center"/>
+						</style>
+						<contents>
+							<list name="List2" refQuery="PO Master" rowsPerPage="10">
+								<noDataHandler>
+									<contents>
+										<block>
+											<contents>
+												<textItem>
+													<dataSource>
+														<staticValue>No Data Available</staticValue>
+													</dataSource>
+													<style>
+														<CSS value="padding:10px 18px;"/>
+													</style>
+												</textItem>
+											</contents>
+										</block>
+									</contents>
+								</noDataHandler>
+								<style>
+									<CSS value="border-collapse:collapse;font-size:12pt"/>
+									<defaultStyles>
+										<defaultStyle refStyle="ls"/>
+										<defaultStyle refStyle="GuidedLayoutMargin"/>
+									</defaultStyles>
+								</style>
+								<listColumns>
+									<listColumn>
+										<listColumnTitle>
+											<style>
+												<defaultStyles>
+													<defaultStyle refStyle="lt"/>
+												</defaultStyles>
+												<CSS value="text-align:left"/>
+											</style>
+											<contents>
+												<textItem>
+													<dataSource>
+														<dataItemLabel refDataItem="PO"/>
+													</dataSource>
+												</textItem>
+											</contents>
+										</listColumnTitle>
+										<listColumnBody>
+											<style>
+												<defaultStyles>
+													<defaultStyle refStyle="lc"/>
+												</defaultStyles>
+												<CSS value="text-align:left;vertical-align:middle"/>
+											</style>
+											<contents>
+												<textItem>
+													<dataSource>
+														<dataItemValue refDataItem="PO"/>
+													</dataSource>
+												</textItem>
+											</contents>
+										</listColumnBody>
+									</listColumn>
+									<listColumn>
+										<listColumnTitle>
+											<style>
+												<defaultStyles>
+													<defaultStyle refStyle="lt"/>
+												</defaultStyles>
+												<CSS value="text-align:left"/>
+											</style>
+											<contents>
+												<table>
+													<style>
+														<defaultStyles>
+															<defaultStyle refStyle="tb"/>
+														</defaultStyles>
+														<CSS value="border-collapse:collapse;width:100%"/>
+													</style>
+													<tableRows>
+														<tableRow>
+															<tableCells>
+																<tableCell>
+																	<contents>
+																		<image>
+																			<dataSource>
+																				<staticValue>/Cognos11/bi/v1/ext/DocsOnline/images/paperclip.png</staticValue>
+																			</dataSource>
+																		</image>
+																	</contents>
+																	<style>
+																		<CSS value="padding-right:12px"/>
+																		<defaultStyles>
+																			<defaultStyle refStyle="np"/>
+																		</defaultStyles>
+																	</style>
+																</tableCell>
+																<tableCell>
+																	<contents>
+																		<textItem>
+																			<dataSource>
+																				<dataItemLabel refDataItem="PR Number"/>
+																			</dataSource>
+																		</textItem>
+																	</contents>
+																	<style>
+																		<CSS value="text-align:left"/>
+																	</style>
+																</tableCell>
+															</tableCells>
+														</tableRow>
+													</tableRows>
+												</table>
+												<customControl path="..\v1\ext\DocsOnline\FetchControl.js">
+													<configuration>
+														<![CDATA[{
+    "Server Url": "https://.../Finance/Documents/getAttachments.aspx?",
+    "Development Server Url": "https://.../Finance/Documents/getAttachments.aspx?",
+    "Dev Mode": false,
+    "Show Console Messages": true,
+    "Use Lazy Loading": true,
+    "Loading Mode Comment": "Use lazy or eager as values",
+    "Show Icon/Text": "icon",
+    "ShowIconText COMMENT1": "Possible Values: icon, text, or both. 'icon' is default",
+    "ShowIconText COMMENT2": "icon is default",
+    "Label": "View Attachment",
+    "Icon Height": "12",
+    "Icon Width": "12",
+    "Use_Exclude": true,
+    "Exclude_Value": "TTL",
+    "Exclude_Value COMMENT1": "Excludes values that starts with Exclude_Value",
+    "Exclude_Value COMMENT2": "Specifically in the SPAN HTML Item for data-ref",
+    "Exclude_Value COMMENT3": "data-ref=\"'+URLEncode([Reference])+'\" ",
+    "Exclude_Value COMMENT4": "We exclude TTL% for performance optimization",
+    "Type": "xml"
+}]]>
+													</configuration>
+												</customControl>
+											</contents>
+										</listColumnTitle>
+										<listColumnBody>
+											<style>
+												<defaultStyles>
+													<defaultStyle refStyle="lc"/>
+												</defaultStyles>
+												<CSS value="text-align:left;vertical-align:middle"/>
+											</style>
+											<contents>
+												<table>
+													<style>
+														<defaultStyles>
+															<defaultStyle refStyle="tb"/>
+														</defaultStyles>
+														<CSS value="border-collapse:collapse;width:100%"/>
+													</style>
+													<tableRows>
+														<tableRow>
+															<tableCells>
+																<tableCell>
+																	<contents>
+																		<HTMLItem description="Span Data">
+																			<dataSource>
+																				<reportExpression>&apos;&lt;span 
+name=&quot;attachments&quot; 
+data-token=&quot;&apos;+[Auth Token]+&apos;&quot; 
+data-arg=&quot;&apos;+URLEncode([Arguments])+&apos;&quot; 
+data-user=&quot;&apos;+URLEncode([User])+&apos;&quot; 
+data-env=&quot;&apos;+URLEncode([Environment])+&apos;&quot; 
+data-ref =&quot;&apos;+URLEncode([PR Number])+&apos;&quot;
+data-status=&quot;new&quot; 
+/&gt;&apos;</reportExpression>
+																			</dataSource>
+																		</HTMLItem>
+																	</contents>
+																	<style>
+																		<CSS value="padding-right:12px;vertical-align:middle"/>
+																		<defaultStyles>
+																			<defaultStyle refStyle="np"/>
+																		</defaultStyles>
+																	</style>
+																</tableCell>
+																<tableCell>
+																	<contents>
+																		<textItem>
+																			<dataSource>
+																				<dataItemValue refDataItem="PR Number"/>
+																			</dataSource>
+																		</textItem>
+																	</contents>
+																	<style>
+																		<CSS value="vertical-align:middle"/>
+																	</style>
+																</tableCell>
+															</tableCells>
+														</tableRow>
+													</tableRows>
+												</table>
+											</contents>
+										</listColumnBody>
+									</listColumn>
+									<listColumn>
+										<listColumnTitle>
+											<style>
+												<defaultStyles>
+													<defaultStyle refStyle="lt"/>
+												</defaultStyles>
+												<CSS value="text-align:left"/>
+											</style>
+											<contents>
+												<textItem>
+													<dataSource>
+														<dataItemLabel refDataItem="Vendor ID"/>
+													</dataSource>
+												</textItem>
+											</contents>
+										</listColumnTitle>
+										<listColumnBody>
+											<style>
+												<defaultStyles>
+													<defaultStyle refStyle="lc"/>
+												</defaultStyles>
+												<CSS value="text-align:left;vertical-align:middle"/>
+											</style>
+											<contents>
+												<textItem>
+													<dataSource>
+														<dataItemValue refDataItem="Vendor ID"/>
+													</dataSource>
+												</textItem>
+											</contents>
+										</listColumnBody>
+									</listColumn>
+									<listColumn>
+										<listColumnTitle>
+											<style>
+												<defaultStyles>
+													<defaultStyle refStyle="lt"/>
+												</defaultStyles>
+												<CSS value="text-align:left"/>
+											</style>
+											<contents>
+												<textItem>
+													<dataSource>
+														<dataItemLabel refDataItem="Requested Date"/>
+													</dataSource>
+												</textItem>
+											</contents>
+										</listColumnTitle>
+										<listColumnBody>
+											<style>
+												<defaultStyles>
+													<defaultStyle refStyle="lc"/>
+												</defaultStyles>
+												<CSS value="text-align:left;vertical-align:middle"/>
+											</style>
+											<contents>
+												<textItem>
+													<dataSource>
+														<dataItemValue refDataItem="Requested Date"/>
+													</dataSource>
+												</textItem>
+											</contents>
+										</listColumnBody>
+									</listColumn>
+								</listColumns>
+								<propertyList>
+									<propertyItem refDataItem="PR Number"/>
+									<propertyItem refDataItem="PO"/>
+									<propertyItem refDataItem="Arguments"/>
+									<propertyItem refDataItem="Environment"/>
+									<propertyItem refDataItem="User"/>
+									<propertyItem refDataItem="Auth Token"/>
+								</propertyList>
+								<sortList>
+									<sortItem refDataItem="Requested Date" sortOrder="descending"/>
+								</sortList>
+							</list>
+						</contents>
+					</pageBody>
+					<pageHeader>
+						<contents>
+							<HTMLItem description="Text Select" name="aSelect">
+								<dataSource>
+									<staticValue>&lt;style id=&quot;ToggleCopyStyle&quot;&gt; *{user-select: auto !important;    -moz-user-select: auto !important;    -webkit-user-select: auto !important;     -ms-user-select: auto !important;}&lt;/style&gt;</staticValue>
+								</dataSource>
+							</HTMLItem>
+							<table>
+								<style>
+									<defaultStyles>
+										<defaultStyle refStyle="tb"/>
+									</defaultStyles>
+									<CSS value="border-collapse:collapse;width:100%"/>
+								</style>
+								<tableRows>
+									<tableRow>
+										<tableCells>
+											<tableCell colSpan="2">
+												<contents>
+													<textItem>
+														<dataSource>
+															<staticValue>Docs Online Custom Control Demo</staticValue>
+														</dataSource>
+													</textItem>
+												</contents>
+												<style>
+													<CSS value="text-align:center;vertical-align:top"/>
+												</style>
+											</tableCell>
+										</tableCells>
+									</tableRow>
+								</tableRows>
+							</table>
+						</contents>
+						<style>
+							<CSS value="text-align:center;font-size:18pt;font-weight:bold"/>
+						</style>
+					</pageHeader>
+					<XMLAttributes>
+						<XMLAttribute output="no" name="RS_legacyDrillDown" value="0"/>
+					</XMLAttributes>
+				</page>
+			</reportPages>
+			<promptPages>
+				<page name="Prompt page1">
+					<pageHeader>
+						<contents>
+							<block>
+								<contents>
+									<textItem>
+										<dataSource>
+											<staticValue>PO Prompt Page</staticValue>
+										</dataSource>
+										<style>
+											<defaultStyles>
+												<defaultStyle refStyle="tt"/>
+											</defaultStyles>
+										</style>
+									</textItem>
+								</contents>
+								<style>
+									<defaultStyles>
+										<defaultStyle refStyle="ta"/>
+									</defaultStyles>
+								</style>
+							</block>
+						</contents>
+						<style>
+							<defaultStyles>
+								<defaultStyle refStyle="hp"/>
+							</defaultStyles>
+						</style>
+					</pageHeader>
+					<pageBody>
+						<contents>
+							<table>
+								<style>
+									<defaultStyles>
+										<defaultStyle refStyle="tb"/>
+									</defaultStyles>
+									<CSS value="border-collapse:collapse"/>
+								</style>
+								<tableRows>
+									<tableRow>
+										<tableCells>
+											<tableCell>
+												<contents>
+													<textItem>
+														<dataSource>
+															<staticValue>Start Date</staticValue>
+														</dataSource>
+													</textItem>
+												</contents>
+												<style>
+													<CSS value="padding-right:8px"/>
+												</style>
+											</tableCell>
+											<tableCell>
+												<contents>
+													<textItem>
+														<dataSource>
+															<staticValue>End Date</staticValue>
+														</dataSource>
+													</textItem>
+												</contents>
+												<style>
+													<CSS value="padding-top:12px"/>
+												</style>
+											</tableCell>
+										</tableCells>
+									</tableRow>
+									<tableRow>
+										<tableCells>
+											<tableCell>
+												<contents>
+													<selectDate hideAdornments="true" name="Startdate" parameter="Startdate" required="false" selectDateUI="editBox"/>
+												</contents>
+												<style>
+													<CSS value="padding-right:8px"/>
+												</style>
+											</tableCell>
+											<tableCell>
+												<contents>
+													<selectDate hideAdornments="true" name="EndDate" parameter="EndDate" required="false" selectDateUI="editBox"/>
+												</contents>
+											</tableCell>
+										</tableCells>
+									</tableRow>
+									<tableRow>
+										<tableCells>
+											<tableCell>
+												<contents>
+													<textItem>
+														<dataSource>
+															<staticValue>PO Number</staticValue>
+														</dataSource>
+													</textItem>
+												</contents>
+												<style>
+													<CSS value="padding-right:8px"/>
+												</style>
+											</tableCell>
+											<tableCell>
+												<contents>
+													<textItem>
+														<dataSource>
+															<staticValue>PR Number</staticValue>
+														</dataSource>
+													</textItem>
+												</contents>
+											</tableCell>
+										</tableCells>
+									</tableRow>
+									<tableRow>
+										<tableCells>
+											<tableCell>
+												<contents>
+													<textBox name="pProject2" parameter="PO" required="false">
+														<style>
+															<CSS value="width:150px;height:12px"/>
+														</style>
+													</textBox>
+												</contents>
+												<style>
+													<CSS value="padding-right:8px"/>
+												</style>
+											</tableCell>
+											<tableCell>
+												<contents>
+													<textBox name="pObject2" parameter="PR" required="false">
+														<style>
+															<CSS value="width:150px;height:12px"/>
+														</style>
+													</textBox>
+												</contents>
+											</tableCell>
+										</tableCells>
+									</tableRow>
+									<tableRow>
+										<tableCells>
+											<tableCell>
+												<contents>
+													<textItem>
+														<dataSource>
+															<staticValue>Vendor ID</staticValue>
+														</dataSource>
+													</textItem>
+												</contents>
+												<style>
+													<CSS value="padding-right:8px"/>
+												</style>
+											</tableCell>
+											<tableCell>
+												<contents>
+													<textItem>
+														<dataSource>
+															<staticValue>Vendor Name</staticValue>
+														</dataSource>
+													</textItem>
+												</contents>
+											</tableCell>
+										</tableCells>
+									</tableRow>
+									<tableRow>
+										<tableCells>
+											<tableCell>
+												<contents>
+													<textBox name="pFund2" parameter="PEID" required="false">
+														<style>
+															<CSS value="width:150px;height:12px"/>
+														</style>
+													</textBox>
+												</contents>
+												<style>
+													<CSS value="padding-right:8px"/>
+												</style>
+											</tableCell>
+											<tableCell>
+												<contents>
+													<textBox name="pObjectType2" parameter="vname" required="false">
+														<style>
+															<CSS value="width:150px;height:12px"/>
+														</style>
+													</textBox>
+												</contents>
+											</tableCell>
+										</tableCells>
+									</tableRow>
+									<tableRow>
+										<tableCells>
+											<tableCell>
+												<contents>
+													<block>
+														<contents/>
+														<style>
+															<CSS value="width:150px"/>
+														</style>
+													</block>
+												</contents>
+												<style>
+													<CSS value="padding-right:0px"/>
+												</style>
+											</tableCell>
+											<tableCell>
+												<contents>
+													<promptButton type="finish">
+														<contents/>
+														<style>
+															<defaultStyles>
+																<defaultStyle refStyle="bp"/>
+															</defaultStyles>
+															<CSS value="float:right"/>
+														</style>
+													</promptButton>
+												</contents>
+												<style>
+													<CSS value="padding-right:10px;padding-top:10px"/>
+												</style>
+											</tableCell>
+										</tableCells>
+									</tableRow>
+								</tableRows>
+							</table>
+							<customControl path="/Cognos11/bi/js/FromToDateValidation.js" uiType="none">
+								<configuration>{
+    &quot;fromPrompt&quot;: &quot;Startdate&quot;,
+    &quot;toPrompt&quot;: &quot;EndDate&quot;,
+    &quot;dynStartDate&quot;: &quot;moment().month(&apos;July&apos;).startOf(&apos;month&apos;)&quot;,
+    &quot;dynEndDate&quot;: &quot;moment().month(&apos;November&apos;).endOf(&apos;month&apos;)&quot;
+}</configuration>
+							</customControl>
+						</contents>
+						<style>
+							<defaultStyles>
+								<defaultStyle refStyle="py"/>
+							</defaultStyles>
+							<CSS value="text-align:center"/>
+						</style>
+					</pageBody>
+					<pageFooter>
+						<contents>
+							<promptButton type="cancel">
+								<contents/>
+								<style>
+									<defaultStyles>
+										<defaultStyle refStyle="bp"/>
+									</defaultStyles>
+								</style>
+							</promptButton>
+							<promptButton type="back">
+								<contents/>
+								<style>
+									<defaultStyles>
+										<defaultStyle refStyle="bp"/>
+									</defaultStyles>
+								</style>
+							</promptButton>
+							<promptButton type="next">
+								<contents/>
+								<style>
+									<defaultStyles>
+										<defaultStyle refStyle="bp"/>
+									</defaultStyles>
+								</style>
+							</promptButton>
+							<promptButton type="finish">
+								<contents/>
+								<style>
+									<defaultStyles>
+										<defaultStyle refStyle="bp"/>
+									</defaultStyles>
+								</style>
+							</promptButton>
+						</contents>
+						<style>
+							<defaultStyles>
+								<defaultStyle refStyle="fp"/>
+							</defaultStyles>
+						</style>
+					</pageFooter>
+					<style>
+						<defaultStyles>
+							<defaultStyle refStyle="pp"/>
+						</defaultStyles>
+					</style>
+				</page>
+			</promptPages>
+		</layout>
+	</layouts>
+	<XMLAttributes>
+		<XMLAttribute output="no" name="RS_CreateExtendedDataItems" value="true"/>
+		<XMLAttribute output="no" name="listSeparator" value=","/>
+		<XMLAttribute output="no" name="decimalSeparator" value="."/>
+		<XMLAttribute output="no" name="RS_modelModificationTime" value="2024-01-11T15:14:51.753Z"/>
+	</XMLAttributes>
+	<modelPath>/content/folder[@name=&apos;Finance Enterprise&apos;]/folder[@name=&apos;Finance&apos;]/folder[@name=&apos;Packages&apos;]/package[@name=&apos;Finance Enterprise Procurement&apos;]/model[@name=&apos;model&apos;]</modelPath>
+	<queries>
+		<query name="PO Master">
+			<source>
+				<model/>
+			</source>
+			<selection>
+				<dataItem aggregate="none" name="PR Number" rollupAggregate="none">
+					<expression>[Finance Master].[Purchase Requests].[PR]</expression>
+					<XMLAttributes>
+						<XMLAttribute name="RS_dataType" output="no" value="3"/>
+						<XMLAttribute name="RS_dataUsage" output="no" value="1"/>
+					</XMLAttributes>
+				</dataItem>
+				<dataItem aggregate="none" name="PO" rollupAggregate="none">
+					<expression>[Finance Master].[Purchase Requests].[PO]</expression>
+					<XMLAttributes>
+						<XMLAttribute name="RS_dataType" output="no" value="3"/>
+						<XMLAttribute name="RS_dataUsage" output="no" value="1"/>
+					</XMLAttributes>
+				</dataItem>
+				<dataItem aggregate="none" name="Requested Date" rollupAggregate="none">
+					<expression>[Finance Master].[Purchase Requests].[Requested Date]</expression>
+					<XMLAttributes>
+						<XMLAttribute name="RS_dataType" output="no" value="7"/>
+						<XMLAttribute name="RS_dataUsage" output="no" value="1"/>
+					</XMLAttributes>
+				</dataItem>
+				<dataItem aggregate="none" name="Vendor ID" rollupAggregate="none">
+					<expression>[Finance Master].[Purchase Requests].[Vendor ID]</expression>
+					<XMLAttributes>
+						<XMLAttribute name="RS_dataType" output="no" value="3"/>
+						<XMLAttribute name="RS_dataUsage" output="no" value="0"/>
+					</XMLAttributes>
+				</dataItem>
+				<dataItem aggregate="none" name="Vendor Name" rollupAggregate="none">
+					<expression>[Finance Master].[Purchase Requests].[Vendor Name]</expression>
+					<XMLAttributes>
+						<XMLAttribute name="RS_dataType" output="no" value="3"/>
+						<XMLAttribute name="RS_dataUsage" output="no" value="0"/>
+					</XMLAttributes>
+				</dataItem>
+				<dataItem name="Arguments">
+					<expression>#/* Table names, column names and values as it is in DB */#
+&apos;&lt;&apos; || 
+
+&apos;POP_PV_DTL&apos;
+|| &apos; &apos; || &apos;POP_PR_NO&apos; || &apos;=\&quot;&apos; || [PR Number] || &apos;\&quot;&apos; 
+
+|| &apos;/&gt;&apos;
+</expression>
+				</dataItem>
+				<dataItem name="Environment">
+					<expression>#sq($account.parameters.ActiveEnvironment)#</expression>
+				</dataItem>
+				<dataItem name="User">
+					<expression>#sq($account.personalInfo.userName)#</expression>
+				</dataItem>
+				<dataItem name="Auth Token">
+					<expression># sq(URLEncode($account.parameters.AuthToken)) #</expression>
+				</dataItem>
+			</selection>
+			<detailFilters>
+				<detailFilter>
+					<filterExpression>[Requested Date] between ?Startdate? and ?EndDate?</filterExpression>
+				</detailFilter>
+				<detailFilter use="optional">
+					<filterExpression>[PO] = ?PO?</filterExpression>
+				</detailFilter>
+				<detailFilter use="optional">
+					<filterExpression>[PR Number] = ?PR?</filterExpression>
+				</detailFilter>
+				<detailFilter use="optional">
+					<filterExpression>[Vendor ID] = ?PEID?</filterExpression>
+				</detailFilter>
+				<detailFilter use="optional">
+					<filterExpression>[Vendor Name] = ?vname?</filterExpression>
+				</detailFilter>
+			</detailFilters>
+		</query>
+	</queries>
+	<reportName>Docs Online Drill-Through Custom Control Simple</reportName>
+	<classStyles>
+		<classStyle name="GuidedLayoutLeftPadding">
+			<CSS value="padding-left:5px;border-top-width:1px;border-bottom-width:1px;border-left-width:1px;border-right-width:1px"/>
+		</classStyle>
+		<classStyle name="GuidedLayoutTopPadding">
+			<CSS value="padding-top:5px;border-top-width:1px;border-bottom-width:1px;border-left-width:1px;border-right-width:1px"/>
+		</classStyle>
+		<classStyle name="GuidedLayoutRightPadding">
+			<CSS value="padding-right:5px;border-top-width:1px;border-bottom-width:1px;border-left-width:1px;border-right-width:1px"/>
+		</classStyle>
+		<classStyle name="GuidedLayoutBottomPadding">
+			<CSS value="padding-bottom:5px;border-top-width:1px;border-bottom-width:1px;border-left-width:1px;border-right-width:1px"/>
+		</classStyle>
+		<classStyle name="GuidedLayoutMargin">
+			<CSS value="margin-bottom:10px"/>
+		</classStyle>
+	</classStyles>
+</report>

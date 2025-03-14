@@ -1,0 +1,68 @@
+<report xmlns="http://developer.cognos.com/schemas/report/15.5/"           expressionLocale="en-us" useStyleVersion="11.6"><!--RSU-SPC-0093 The report specification was upgraded from "http://developer.cognos.com/schemas/report/14.2/" to "http://developer.cognos.com/schemas/report/15.5/" at 2022-11-15. 8:8:22-->
+				
+				<drillBehavior/>
+				<layouts>
+					<layout>
+						<reportPages>
+							
+						<page name="Page1">
+								<style>
+									<defaultStyles>
+										<defaultStyle refStyle="pg"/>
+									</defaultStyles>
+								</style>
+								<pageBody>
+									<style>
+										<defaultStyles>
+											<defaultStyle refStyle="pb"/>
+										</defaultStyles>
+									<CSS value="text-align:center"/></style>
+									<contents><list horizontalPagination="true" name="List2" refQuery="PO Master">
+			
+			
+			
+			<noDataHandler>
+				<contents>
+					<block>
+						<contents>
+							<textItem>
+								<dataSource>
+									<staticValue>No Data Available</staticValue>
+								</dataSource>
+								<style>
+									<CSS value="padding:10px 18px;"/>
+								</style>
+							</textItem>
+						</contents>
+					</block>
+				</contents>
+			</noDataHandler>
+			<style>
+				<CSS value="border-collapse:collapse;font-size:12pt"/>
+				<defaultStyles>
+					<defaultStyle refStyle="ls"/>
+				</defaultStyles>
+			</style>
+		<listColumns><listColumn><listColumnTitle><style><defaultStyles><defaultStyle refStyle="lt"/></defaultStyles></style><contents><textItem><dataSource><dataItemLabel refDataItem="PO"/></dataSource></textItem></contents></listColumnTitle><listColumnBody><style><defaultStyles><defaultStyle refStyle="lc"/></defaultStyles></style><contents><textItem><dataSource><dataItemValue refDataItem="PO"/></dataSource></textItem></contents></listColumnBody></listColumn><listColumn><listColumnTitle><style><defaultStyles><defaultStyle refStyle="lt"/></defaultStyles></style><contents><table><style><defaultStyles><defaultStyle refStyle="tb"/></defaultStyles><CSS value="border-collapse:collapse;width:100%"/></style><tableRows><tableRow><tableCells><tableCell><contents><textItem><dataSource><staticValue>Attachments </staticValue></dataSource></textItem></contents></tableCell><tableCell><contents><image>
+			<dataSource>
+				<staticValue>../samples/images/paperclip.gif</staticValue>
+			</dataSource>
+		</image></contents></tableCell></tableCells></tableRow></tableRows></table><customControl uiType="none" path="\Cognos11\bi\js\FetchControl.js"/></contents></listColumnTitle><listColumnBody><style><defaultStyles><defaultStyle refStyle="lc"/></defaultStyles><CSS value="text-align:center"/></style><contents><HTMLItem description="Span Data">
+			<dataSource>
+				
+			<reportExpression>&apos;&lt;span name=&quot;attachments&quot; data-token=&quot;&apos;+[PO Master].[Auth Token]+&apos;&quot; data-unid=&quot;&apos;+URLEncode([PO Master].[uniqueid])+&apos;&quot; data-arg=&quot;&apos;+URLEncode([PO Master].[Arguments])+&apos;&quot; data-user=&quot;&apos;+URLEncode([PO Master].[User])+&apos;&quot; data-env=&quot;&apos;+URLEncode([PO Master].[Environment])+&apos;&quot; data-server=&quot;&apos;+URLEncode([PO Master].[ServerUrl])+&apos;&quot; data-clock=&quot;&apos;+URLEncode([PO Master].[Clock])+&apos;&quot; data-paperclip=&quot;&apos;+URLEncode([PO Master].[Paperclip])+&apos;&quot; data-font=&quot;16&quot;/&gt;&apos;</reportExpression></dataSource>
+		</HTMLItem></contents></listColumnBody></listColumn><listColumn><listColumnTitle><style><defaultStyles><defaultStyle refStyle="lt"/></defaultStyles></style><contents><textItem><dataSource><dataItemLabel refDataItem="PR Number"/></dataSource></textItem></contents></listColumnTitle><listColumnBody><style><defaultStyles><defaultStyle refStyle="lc"/></defaultStyles></style><contents><textItem><dataSource><dataItemValue refDataItem="PR Number"/></dataSource></textItem></contents></listColumnBody></listColumn><listColumn><listColumnTitle><style><defaultStyles><defaultStyle refStyle="lt"/></defaultStyles></style><contents><textItem><dataSource><dataItemLabel refDataItem="Vendor ID"/></dataSource></textItem></contents></listColumnTitle><listColumnBody><style><defaultStyles><defaultStyle refStyle="lc"/></defaultStyles></style><contents><textItem><dataSource><dataItemValue refDataItem="Vendor ID"/></dataSource></textItem></contents></listColumnBody></listColumn><listColumn><listColumnTitle><style><defaultStyles><defaultStyle refStyle="lt"/></defaultStyles></style><contents><textItem><dataSource><dataItemLabel refDataItem="Requested Date"/></dataSource></textItem></contents></listColumnTitle><listColumnBody><style><defaultStyles><defaultStyle refStyle="lc"/></defaultStyles></style><contents><textItem><dataSource><dataItemValue refDataItem="Requested Date"/></dataSource></textItem></contents></listColumnBody></listColumn><listColumn><listColumnTitle><style><defaultStyles><defaultStyle refStyle="lt"/></defaultStyles></style><contents><textItem><dataSource><dataItemLabel refDataItem="Vendor Name"/></dataSource></textItem></contents></listColumnTitle><listColumnBody><style><defaultStyles><defaultStyle refStyle="lc"/></defaultStyles></style><contents><textItem><dataSource><dataItemValue refDataItem="Vendor Name"/></dataSource></textItem></contents></listColumnBody></listColumn></listColumns><propertyList><propertyItem refDataItem="PR Number"/><propertyItem refDataItem="ServerUrl"/><propertyItem refDataItem="Arguments"/><propertyItem refDataItem="Environment"/><propertyItem refDataItem="User"/><propertyItem refDataItem="Auth Token"/><propertyItem refDataItem="Paperclip"/><propertyItem refDataItem="Clock"/><propertyItem refDataItem="uniqueid"/></propertyList><sortList><sortItem sortOrder="descending" refDataItem="Requested Date"/></sortList></list></contents>
+								</pageBody>
+							<XMLAttributes><XMLAttribute output="no" name="RS_legacyDrillDown" value="0"/></XMLAttributes></page></reportPages>
+					</layout>
+				</layouts>
+			<XMLAttributes><XMLAttribute name="RS_CreateExtendedDataItems" output="no" value="true"/><XMLAttribute name="listSeparator" output="no" value=","/><XMLAttribute output="no" name="RS_modelModificationTime" value="2018-06-28T15:16:19.917Z"/><XMLAttribute output="no" name="decimalSeparator" value="."/></XMLAttributes><modelPath>/content/folder[@name=&apos;Finance Enterprise&apos;]/folder[@name=&apos;Finance&apos;]/folder[@name=&apos;Packages&apos;]/package[@name=&apos;SPS Procurement&apos;]/model[@name=&apos;model&apos;]</modelPath><queries><query name="PO Master"><source><model/></source><selection><dataItem aggregate="none" name="PR Number" rollupAggregate="none"><expression>[Finance Master].[Purchase Requests].[PR]</expression><XMLAttributes><XMLAttribute name="RS_dataType" output="no" value="3"/><XMLAttribute name="RS_dataUsage" output="no" value="1"/></XMLAttributes></dataItem><dataItem aggregate="none" name="PO" rollupAggregate="none"><expression>[Finance Master].[Purchase Requests].[PO]</expression><XMLAttributes><XMLAttribute name="RS_dataType" output="no" value="3"/><XMLAttribute name="RS_dataUsage" output="no" value="1"/></XMLAttributes></dataItem><dataItem aggregate="none" name="Requested Date" rollupAggregate="none"><expression>[Finance Master].[Purchase Requests].[Requested Date]</expression><XMLAttributes><XMLAttribute name="RS_dataType" output="no" value="7"/><XMLAttribute name="RS_dataUsage" output="no" value="1"/></XMLAttributes></dataItem><dataItem aggregate="none" name="Vendor ID" rollupAggregate="none"><expression>[Finance Master].[Purchase Requests].[Vendor ID]</expression><XMLAttributes><XMLAttribute name="RS_dataType" output="no" value="3"/><XMLAttribute name="RS_dataUsage" output="no" value="0"/></XMLAttributes></dataItem><dataItem aggregate="none" name="Vendor Name" rollupAggregate="none"><expression>[Finance Master].[Purchase Requests].[Vendor Name]</expression><XMLAttributes><XMLAttribute name="RS_dataType" output="no" value="3"/><XMLAttribute name="RS_dataUsage" output="no" value="0"/></XMLAttributes></dataItem><dataItem name="ServerUrl"><expression>#/* Network Location for the getAttachments.aspx page */#
+
+&apos;https://cppfosapp.fdn.cpp.edu/Finance/Documents/getAttachments.aspx?arg=&apos;</expression></dataItem><dataItem name="Arguments"><expression>#/* Table names, column names and values as it is in DB */#
+&apos;&lt;&apos; || 
+
+&apos;POP_PV_DTL&apos;
+|| &apos; &apos; || &apos;POP_PR_NO&apos; || &apos;=\&quot;&apos; || [PR Number] || &apos;\&quot;&apos; 
+
+|| &apos;/&gt;&apos;
+</expression></dataItem><dataItem name="Environment"><expression>&apos;&amp;env=&apos; || #sq($account.parameters.ActiveEnvironment)#</expression></dataItem><dataItem name="User"><expression>&apos;&amp;env=&apos; || #sq($account.parameters.ActiveEnvironment)#</expression></dataItem><dataItem name="Auth Token"><expression># sq(URLEncode($account.parameters.AuthToken)) #</expression></dataItem><dataItem name="Paperclip"><expression>&apos;/Cognos11/bi/samples/images/paperclip.gif&apos;</expression></dataItem><dataItem name="Clock"><expression>&apos;/Cognos11/bi/samples/images/common/clock.png&apos;</expression></dataItem><dataItem name="uniqueid"><expression>trim([PR Number])||trim([PO])||trim([Vendor ID])</expression></dataItem></selection></query></queries><reportName>Docs Online Drill-Through Custom Control</reportName></report>

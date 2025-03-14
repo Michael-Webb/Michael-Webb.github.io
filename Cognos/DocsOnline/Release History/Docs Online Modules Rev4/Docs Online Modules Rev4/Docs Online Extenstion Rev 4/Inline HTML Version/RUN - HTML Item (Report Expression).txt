@@ -1,0 +1,7 @@
+/*Place this in a "Report Expression HTML Item" in an element that you want run each line for.*/ 
+
+'<script type"javascript" defer>
+
+checkForAttachment()
+
+</script>'

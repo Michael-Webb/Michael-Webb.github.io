@@ -1,0 +1,26 @@
+'<script type="text/javascript">  
+               var server = "' + [Invoice Info].[ServerUrl] + '";
+               var arg = encodeURI(fEncode("' + [Invoice Info].[Arguments] + '"));
+               var add = "' + [Invoice Info].[Environment] + '";
+
+               var token = "' + [Invoice Info].[Token] + '";
+               var user = "' + [Invoice Info].[User] + '";
+
+                xmlHttp=new XMLHttpRequest();
+                xmlHttp.open( "GET", server + arg + add, false);
+
+                              xmlHttp.setRequestHeader("token", token);
+                              xmlHttp.setRequestHeader("user", user);
+
+
+                xmlHttp.send( null );
+               if (xmlHttp.responseText.length > 1) {
+                              var vXML = xmlHttp.responseXML.getElementsByTagName("value")[0].childNodes[0].nodeValue;
+                              var vHTML = "<a href=\"" + vXML + "\" target=\"_blank\">' + [Invoice Info].[Invoice] + ' </a>"
+                              document.write(vHTML);
+               } else {
+                              var vQI = "' + [Invoice Info].[Invoice] + '";
+                              document.write(vQI);
+               }
+</script>'
+*--

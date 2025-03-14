@@ -1,0 +1,16 @@
+'<script type="text/javascript">  
+               var server = "' + [Invoice Info].[ServerUrl] + '";
+               var arg = encodeURI(fEncode("' + [Invoice Info].[Arguments] + '"));
+               var add = "' + [Invoice Info].[Environment] + '";
+
+               var token = "' + [Invoice Info].[Token] + '";
+               var user = "' + [Invoice Info].[User] + '";
+
+                document.write(server + arg + add + "Token=" + token + "User=" + user);
+</script>'
+
+
+
+
+
+#Change the Query Name to the Query where these 5 other fields have been entered#
