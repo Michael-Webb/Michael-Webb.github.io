@@ -14,19 +14,34 @@ define([], function () {
         this.oControlHost = oControlHost;
         const config = oControlHost.configuration;
 
-        // Check if required configuration is present
-        if (!config["Server Url"] && !config["Development Server Url"]) {
-          // Just complete initialization without setting up URLs
-          console.warn("DocumentsOnline: No server URLs configured. Control will not fetch any documents.");
-          // Still complete initialization so the report can render
-          this.hasValidConfiguration = false;
-          throw new scriptableReportError(
-            "DocumentsOnline", // Module path
-            "initialize",      // Method
-            "Missing required configuration: either 'Server Url' or 'Development Server Url' must be specified."  // Description
-          );
-          fnDoneInitializing();
-          return;
+        // Check if configuration is valid based on dev mode and server URLs
+        if (config["Dev Mode"] === true) {
+          // In dev mode, we need Development Server Url
+          if (!config["Development Server Url"]) {
+            console.warn("DocumentsOnline: Dev mode is enabled but no Development Server Url is configured.");
+            this.hasValidConfiguration = false;
+            throw new scriptableReportError(
+              "DocumentsOnline",
+              "initialize",
+              "Dev mode is enabled but no Development Server Url is configured."
+            );
+            // Note: Code after throw won't execute, but keeping this pattern for consistency
+            fnDoneInitializing();
+            return;
+          }
+        } else {
+          // In production mode, we need Server Url
+          if (!config["Server Url"]) {
+            console.warn("DocumentsOnline: Production mode is active but no Server Url is configured.");
+            this.hasValidConfiguration = false;
+            throw new scriptableReportError(
+              "DocumentsOnline",
+              "initialize",
+              "Production mode is active but no Server Url is configured."
+            );
+            fnDoneInitializing();
+            return;
+          }
         }
 
         // Continue with normal initialization
