@@ -5,18 +5,8 @@
 Revision 5
 
 Updated 03/13/2025
-
-# Revision List
-
-## Release
-
-Information
-
-- Initial Release
-
-## Revision 1
-
-- **CHANGE**: Updated the Paperclip image from .gif to .png in the e- [Revision List](#revision-list)
+Table of Contents
+- [Revision List](#revision-list)
   - [Release](#release)
   - [Revision 1](#revision-1)
   - [Revision 2](#revision-2)
@@ -51,7 +41,19 @@ Information
   - [Clock and Paperclip (Classic Viewer Only)](#clock-and-paperclip-classic-viewer-only)
 - [Troubleshooting and Formatting](#troubleshooting-and-formatting)
 - [For Developers](#for-developers)
-xamples and in all the files in the .zip folder
+
+
+# Revision List
+
+## Release
+
+Information
+
+- Initial Release
+
+## Revision 1
+
+- **CHANGE**: Updated the Paperclip image from .gif to .png in the examples and in all the files in the .zip folder
 - **CHANGE**: Fixed typos in comments within the script and the tutorial documentation
 - **CHANGE**: Previous version of FetchControl.js and inline script updated
   - Reports that when the clock image was wiped from the page a broken element appeared on the document.
