@@ -16,7 +16,42 @@ Information
 
 ## Revision 1
 
-- **CHANGE**: Updated the Paperclip image from .gif to .png in the examples and in all the files in the .zip folder
+- **CHANGE**: Updated the Paperclip image from .gif to .png in the e- [Revision List](#revision-list)
+  - [Release](#release)
+  - [Revision 1](#revision-1)
+  - [Revision 2](#revision-2)
+  - [Revision 3](#revision-3)
+  - [Revision 4 (Changes in Custom Control Module Version Only)](#revision-4-changes-in-custom-control-module-version-only)
+  - [Revision 5 (Changes in Custom Control Module Version Only)](#revision-5-changes-in-custom-control-module-version-only)
+- [Why this Update?](#why-this-update)
+- [What is a Custom Control?](#what-is-a-custom-control)
+- [References for Custom Controls](#references-for-custom-controls)
+- [Run with full interactivity? “Yes”](#run-with-full-interactivity-yes)
+- [Concept](#concept)
+- [Drill-Through to Documents Online functionality from a Cognos report](#drill-through-to-documents-online-functionality-from-a-cognos-report)
+- [Prerequisites](#prerequisites)
+  - [Files Included](#files-included)
+  - [What is Documents online](#what-is-documents-online)
+  - [Attachment Definitions](#attachment-definitions)
+  - [What does a Link to Docs Online Look Like?](#what-does-a-link-to-docs-online-look-like)
+- [First things first](#first-things-first)
+- [Steps to build a Docs Online Link](#steps-to-build-a-docs-online-link)
+  - [Upload the **DocsOnline.zip** Extension](#upload-the-docsonlinezip-extension)
+  - [Arguments](#arguments)
+  - [Environment](#environment)
+- [sq($account.parameters.ActiveEnvironment)](#sqaccountparametersactiveenvironment)
+  - [User](#user)
+- [sq($account.personalInfo.userName)](#sqaccountpersonalinfousername)
+- [sq($account.personalInfo.userName)](#sqaccountpersonalinfousername-1)
+  - [Token](#token)
+  - [Unique ID](#unique-id)
+  - [Add HTML Span and Custom Control to the Report Page](#add-html-span-and-custom-control-to-the-report-page)
+- [Classic Viewer (Legacy) Report Scripts](#classic-viewer-legacy-report-scripts)
+  - [Server URL (Classic Viewer Only)](#server-url-classic-viewer-only)
+  - [Clock and Paperclip (Classic Viewer Only)](#clock-and-paperclip-classic-viewer-only)
+- [Troubleshooting and Formatting](#troubleshooting-and-formatting)
+- [For Developers](#for-developers)
+xamples and in all the files in the .zip folder
 - **CHANGE**: Fixed typos in comments within the script and the tutorial documentation
 - **CHANGE**: Previous version of FetchControl.js and inline script updated
   - Reports that when the clock image was wiped from the page a broken element appeared on the document.
