@@ -1,6 +1,6 @@
 **Docs Online – 2025**
 
-**updated guide for Connecting Cognos to Docs online**
+**Updated guide for Connecting Cognos to Docs online**
 
 Revision 5
 
