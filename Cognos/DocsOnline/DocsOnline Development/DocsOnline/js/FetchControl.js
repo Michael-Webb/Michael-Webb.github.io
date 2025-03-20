@@ -94,6 +94,7 @@ define([], function () {
       } else {
         console.warn("DocumentsOnline: Skipping draw due to invalid configuration");
       }
+
     }
 
     /**
@@ -358,7 +359,11 @@ define([], function () {
         this.showLoadingIcon(span);
 
         // Build the URL.
+        
         const cleanArg = DocumentsOnline.url_Decode(arg).replace(/\\/g, "");
+        console.log("Arg",arg)
+        console.log("manualDecode",DocumentsOnline.url_Decode(arg))
+        console.log("CleanArg",cleanArg)
         const encodedArg = encodeURI(DocumentsOnline.fEncode(cleanArg));
         const baseUrl = this.isDevMode ? this.sDevUrl : this.sServerUrl;
 
