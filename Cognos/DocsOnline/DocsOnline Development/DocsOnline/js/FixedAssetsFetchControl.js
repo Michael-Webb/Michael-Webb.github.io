@@ -1,4 +1,4 @@
-(async function() {
+(async function () {
   // Grab sessionID, token, appURL, and jobURL from the first span with an id starting with "documentOnline-"
   let sessionID = "";
   let token = "";
@@ -23,10 +23,11 @@
     console.error("No span found with id starting with documentOnline- to extract sessionID, token, and URLs.");
   }
 
-  // Define icon dimensions and paperclip SVG
-  const ICON_WIDTH = "12";
-  const ICON_HEIGHT = "12";
+  // Define icon dimensions and SVGs
+  const ICON_WIDTH = "14px";
+  const ICON_HEIGHT = "14px";
   const paperclipSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="${ICON_WIDTH}" height="${ICON_HEIGHT}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-paperclip"><path d="M13.234 20.252 21 12.3"/><path d="m16 6-8.414 8.586a2 2 0 0 0 0 2.828 2 2 0 0 0 2.828 0l8.414-8.586a4 4 0 0 0 0-5.656 4 4 0 0 0-5.656 0l-8.415 8.585a6 6 0 1 0 8.486 8.486"/></svg>`;
+  const clockSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="${ICON_WIDTH}" height="${ICON_HEIGHT}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
 
   // Function to create and show a custom modal with document links
   function showDocumentModal(documentData) {
@@ -70,7 +71,7 @@
       closeButton.style.fontSize = "24px";
       closeButton.style.cursor = "pointer";
       closeButton.style.padding = "0 5px";
-      closeButton.onclick = function(e) {
+      closeButton.onclick = function (e) {
         e.preventDefault();
         e.stopPropagation();
         document.body.removeChild(modalOverlay);
@@ -94,7 +95,7 @@
 
           const linkElement = document.createElement("a");
           linkElement.href = doc.url;
-          linkElement.textContent = (index + 1) + ": " + doc.description;
+          linkElement.textContent = index + 1 + ": " + doc.description;
           linkElement.target = "_blank";
 
           linkParagraph.appendChild(linkElement);
@@ -114,7 +115,7 @@
       okButton.style.border = "none";
       okButton.style.borderRadius = "3px";
       okButton.style.cursor = "pointer";
-      okButton.onclick = function(e) {
+      okButton.onclick = function (e) {
         e.preventDefault();
         e.stopPropagation();
         document.body.removeChild(modalOverlay);
@@ -127,13 +128,13 @@
       modalContent.appendChild(modalFooter);
       modalOverlay.appendChild(modalContent);
 
-      modalContent.onclick = function(e) {
+      modalContent.onclick = function (e) {
         e.stopPropagation();
       };
 
       document.body.appendChild(modalOverlay);
 
-      modalOverlay.onclick = function(e) {
+      modalOverlay.onclick = function (e) {
         document.body.removeChild(modalOverlay);
       };
     } catch (error) {
@@ -228,51 +229,54 @@
 
   // 3. Process spans for attachments only after authentication is complete
   const spans = document.querySelectorAll(`span[id^="documentOnline-"]`);
-  spans.forEach(span => {
+  spans.forEach((span) => {
     const assetID = span.getAttribute("data-ref");
     console.log("Processing asset ID:", assetID);
 
-    fetch(
-      `${appBaseURL}Production-UI/api/finance/legacy/documents/FAIdnt/attachments/`,
-      {
-        method: "POST",
-        headers: {
-          accept: "application/json, text/plain, */*",
-          "accept-language": "en-US,en;q=0.9",
-          "content-type": "application/json",
-          glledger: "GL",
-          jlledger: "--",
-          mask: "FAUPAS",
-          runtimemask: "FAUPAS",
-          "sec-fetch-dest": "empty",
-          "sec-fetch-mode": "cors",
-          "sec-fetch-site": "same-origin",
-        },
-        body: JSON.stringify({ Faid: assetID }),
-        mode: "cors",
-        credentials: "include",
-        "Access-Control-Allow-Credentials": "*",
-      }
-    )
-      .then(response => {
+    // Create or retrieve a container span to display the icon
+    let container = document.getElementById(assetID);
+    if (!container) {
+      container = document.createElement("span");
+      container.id = assetID;
+      span.parentNode.insertBefore(container, span.nextSibling);
+    } else {
+      container.innerHTML = "";
+    }
+
+    // Insert clock SVG as a loading placeholder
+    container.innerHTML = clockSVG;
+
+    fetch(`${appBaseURL}Production-UI/api/finance/legacy/documents/FAIdnt/attachments/`, {
+      method: "POST",
+      headers: {
+        accept: "application/json, text/plain, */*",
+        "accept-language": "en-US,en;q=0.9",
+        "content-type": "application/json",
+        glledger: "GL",
+        jlledger: "--",
+        mask: "FAUPAS",
+        runtimemask: "FAUPAS",
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-site": "same-origin",
+      },
+      body: JSON.stringify({ Faid: assetID }),
+      mode: "cors",
+      credentials: "include",
+      "Access-Control-Allow-Credentials": "*",
+    })
+      .then((response) => {
         if (!response.ok) {
           throw new Error(`Failed to fetch attachment for asset ID ${assetID}: ${response.status}`);
         }
         return response.json();
       })
-      .then(data => {
+      .then((data) => {
         console.log(`Attachment data for asset ID ${assetID}:`, data);
+        // Remove the clock SVG placeholder
+        container.innerHTML = "";
         if (data && data.length > 0) {
           console.log("Found", data.length, "documents for asset ID:", assetID);
-
-          let container = document.getElementById(assetID);
-          if (!container) {
-            container = document.createElement("span");
-            container.id = assetID;
-            span.parentNode.insertBefore(container, span.nextSibling);
-          } else {
-            container.innerHTML = "";
-          }
 
           const button = document.createElement("button");
           button.innerHTML = paperclipSVG;
@@ -280,11 +284,11 @@
           button.style.background = "none";
           button.style.cursor = "pointer";
           button.style.padding = "0";
-          button.style.margin = "2px";
+          button.title = `${data.length} document${data.length > 1 ? "s" : ""}`;
 
           button.setAttribute("data-documents", JSON.stringify(data));
 
-          button.onclick = function(e) {
+          button.onclick = function (e) {
             e.preventDefault();
             e.stopPropagation();
             try {
@@ -301,10 +305,13 @@
           console.log("Button added for asset ID:", assetID);
         } else {
           console.log("No documents found for asset ID:", assetID);
+          // If no documents are found, the clock SVG has already been removed.
         }
       })
-      .catch(error => {
+      .catch((error) => {
         console.error("Error fetching attachment for asset ID", assetID, error);
+        // On error, remove the clock SVG
+        container.innerHTML = "";
       });
   });
 })();
