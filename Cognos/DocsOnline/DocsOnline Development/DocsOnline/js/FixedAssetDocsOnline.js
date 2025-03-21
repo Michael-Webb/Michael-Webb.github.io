@@ -1,13 +1,11 @@
-
-const APP_BASE_URL = "https://cppfosapp.fdn.cpp.edu/"
-const JOB_BASE_URL = "https://cppfosjob.fdn.cpp.edu/"
-
+const APP_BASE_URL = "https://cppfosapp.fdn.cpp.edu/";
+const JOB_BASE_URL = "https://cppfosjob.fdn.cpp.edu/";
 
 // Function to create and show a custom modal with document links
 function showDocumentModal(documentData) {
   try {
     // Create modal overlay
-    var modalOverlay = document.createElement("div");
+    const modalOverlay = document.createElement("div");
     modalOverlay.style.position = "fixed";
     modalOverlay.style.top = "0";
     modalOverlay.style.left = "0";
@@ -20,7 +18,7 @@ function showDocumentModal(documentData) {
     modalOverlay.style.zIndex = "9999";
 
     // Create modal content
-    var modalContent = document.createElement("div");
+    const modalContent = document.createElement("div");
     modalContent.style.backgroundColor = "white";
     modalContent.style.padding = "20px";
     modalContent.style.borderRadius = "5px";
@@ -30,25 +28,25 @@ function showDocumentModal(documentData) {
     modalContent.style.overflowY = "auto";
     modalContent.style.position = "relative";
 
-    // Create modal header
-    var modalHeader = document.createElement("div");
+    // Create header
+    const modalHeader = document.createElement("div");
     modalHeader.style.display = "flex";
     modalHeader.style.justifyContent = "space-between";
     modalHeader.style.alignItems = "center";
     modalHeader.style.marginBottom = "15px";
 
-    var modalTitle = document.createElement("h3");
+    const modalTitle = document.createElement("h3");
     modalTitle.textContent = "Document Links";
     modalTitle.style.margin = "0";
 
-    var closeButton = document.createElement("button");
+    const closeButton = document.createElement("button");
     closeButton.textContent = "×";
     closeButton.style.background = "none";
     closeButton.style.border = "none";
     closeButton.style.fontSize = "24px";
     closeButton.style.cursor = "pointer";
     closeButton.style.padding = "0 5px";
-    closeButton.onclick = function (e) {
+    closeButton.onclick = (e) => {
       e.preventDefault();
       e.stopPropagation();
       document.body.removeChild(modalOverlay);
@@ -58,38 +56,37 @@ function showDocumentModal(documentData) {
     modalHeader.appendChild(closeButton);
 
     // Create modal body
-    var modalBody = document.createElement("div");
+    const modalBody = document.createElement("div");
     modalBody.style.marginTop = "10px";
     modalBody.style.marginBottom = "10px";
 
-    // Add document links
-    var paragraphElement = document.createElement("p");
+    // Intro paragraph
+    const paragraphElement = document.createElement("p");
     paragraphElement.textContent = "The following documents are available:";
     modalBody.appendChild(paragraphElement);
 
-    // Create links as separate elements instead of HTML string
-    for (var i = 0; i < documentData.length; i++) {
-      if (documentData[i].url) {
-        var linkParagraph = document.createElement("p");
+    // Loop through document links
+    documentData.forEach((doc, i) => {
+      if (doc.url) {
+        const linkParagraph = document.createElement("p");
         linkParagraph.style.margin = "5px 0";
 
-        var linkElement = document.createElement("a");
-        linkElement.href = documentData[i].url;
-        linkElement.textContent =
-          "Document " + (i + 1) + ": " + documentData[i].description;
+        const linkElement = document.createElement("a");
+        linkElement.href = doc.url;
+        linkElement.textContent = `Document ${i + 1}: ${doc.description}`;
         linkElement.target = "_blank";
 
         linkParagraph.appendChild(linkElement);
         modalBody.appendChild(linkParagraph);
       }
-    }
+    });
 
     // Create modal footer
-    var modalFooter = document.createElement("div");
+    const modalFooter = document.createElement("div");
     modalFooter.style.marginTop = "20px";
     modalFooter.style.textAlign = "right";
 
-    var okButton = document.createElement("button");
+    const okButton = document.createElement("button");
     okButton.textContent = "OK";
     okButton.style.padding = "5px 10px";
     okButton.style.backgroundColor = "#4CAF50";
@@ -97,7 +94,7 @@ function showDocumentModal(documentData) {
     okButton.style.border = "none";
     okButton.style.borderRadius = "3px";
     okButton.style.cursor = "pointer";
-    okButton.onclick = function (e) {
+    okButton.onclick = (e) => {
       e.preventDefault();
       e.stopPropagation();
       document.body.removeChild(modalOverlay);
@@ -111,16 +108,12 @@ function showDocumentModal(documentData) {
     modalContent.appendChild(modalFooter);
     modalOverlay.appendChild(modalContent);
 
-    // Prevent event propagation within modal content
-    modalContent.onclick = function (e) {
-      e.stopPropagation();
-    };
+    // Prevent click propagation within modal content
+    modalContent.onclick = (e) => e.stopPropagation();
 
-    // Add modal to page
+    // Append modal and close if clicking outside it
     document.body.appendChild(modalOverlay);
-
-    // Close when clicking outside the modal
-    modalOverlay.onclick = function (e) {
+    modalOverlay.onclick = (e) => {
       document.body.removeChild(modalOverlay);
     };
   } catch (error) {
@@ -129,68 +122,35 @@ function showDocumentModal(documentData) {
   }
 }
 
-// Debug info
-console.log("Script starting for document detection");
-
-// Add custom contains selector for jQuery-like functionality
-if (!Element.prototype.matches) {
-  Element.prototype.matches =
-    Element.prototype.msMatchesSelector ||
-    Element.prototype.webkitMatchesSelector;
-}
-
-if (typeof document.querySelector !== "undefined") {
-  // Add contains selector
-  document.querySelectorAll = (function (nativeQSA) {
-    return function (selector) {
-      if (selector && selector.indexOf && selector.indexOf(":contains") > -1) {
-        var parts = selector.split(":contains(");
-        var pre = parts[0];
-        var post = parts[1].slice(0, -1);
-        var elements = document.querySelectorAll(pre || "*");
-        var results = [];
-
-        for (var i = 0; i < elements.length; i++) {
-          if (elements[i].textContent.indexOf(post) > -1) {
-            results.push(elements[i]);
-          }
-        }
-
-        return results;
-      }
-      return nativeQSA.call(document, selector);
-    };
-  })(document.querySelectorAll);
-}
-
-// Function to find all asset spans
+// Updated function to find asset spans and include sessionID and token from the span attributes.
 function findAssetSpans() {
-  var spans = [];
-  var allElements = document.querySelectorAll(`[id^="documentOnline-"]`);
-
-  for (var i = 0; i < allElements.length; i++) {
-    var span = allElements[i];
-    var assetId = span.getAttribute("data-ref");
-
-    if (assetId) {
+  const spans = [];
+  const allElements = document.querySelectorAll(`[id^="documentOnline-"]`);
+  for (let i = 0; i < allElements.length; i++) {
+    const span = allElements[i];
+    const assetId = span.getAttribute("data-ref");
+    const sessionID = span.getAttribute("data-sessionID");
+    const token = span.getAttribute("data-token");
+    if (assetId && sessionID && token) {
       spans.push({
         element: span,
         assetId: assetId,
+        sessionID: sessionID,
+        token: token,
       });
     }
   }
-
   console.log("Found " + spans.length + " asset spans");
   return spans;
 }
 
-// Function to fetch documents for a specific asset
-function fetchDocumentsForAsset(assetSpan, apiToken,appBaseURL,jobBaseURL) {
-  var assetId = assetSpan.assetId;
-  var element = assetSpan.element;
+// The fetchDocumentsForAsset function remains similar to your current implementation.
+function fetchDocumentsForAsset(assetSpan, apiToken, appBaseURL, jobBaseURL) {
+  const assetId = assetSpan.assetId;
+  const element = assetSpan.element;
 
   // Create status indicator
-  var statusIndicator = document.createElement("span");
+  const statusIndicator = document.createElement("span");
   statusIndicator.textContent = "Fetching documents...";
   statusIndicator.style.fontSize = "12px";
   statusIndicator.style.color = "#666";
@@ -199,7 +159,6 @@ function fetchDocumentsForAsset(assetSpan, apiToken,appBaseURL,jobBaseURL) {
 
   console.log("Fetching documents for asset ID: " + assetId);
 
-  // Try various approaches to fetch documents
   return fetch(
     `${appBaseURL}Production-UI/api/finance/legacy/documents/FAIdnt/attachments/`,
     {
@@ -217,25 +176,21 @@ function fetchDocumentsForAsset(assetSpan, apiToken,appBaseURL,jobBaseURL) {
         "sec-fetch-mode": "cors",
         "sec-fetch-site": "same-origin",
       },
-      body: JSON.stringify({
-        Faid: assetId,
-      }),
+      body: JSON.stringify({ Faid: assetId }),
       mode: "cors",
       credentials: "include",
     }
   )
-    .then(function (response) {
+    .then((response) => {
       if (!response.ok) {
         throw new Error("Failed to fetch documents: " + response.status);
       }
       return response.json();
     })
-    .catch(function (error) {
-      // Try XMLHttpRequest as fallback
+    .catch((error) => {
       console.log("Fetch failed, trying XMLHttpRequest for asset: " + assetId);
-
-      return new Promise(function (resolve, reject) {
-        var xhr = new XMLHttpRequest();
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
         xhr.open(
           "POST",
           `${jobBaseURL}Production-UI/api/finance/legacy/documents/FAIdnt/attachments/`,
@@ -251,7 +206,7 @@ function fetchDocumentsForAsset(assetSpan, apiToken,appBaseURL,jobBaseURL) {
         xhr.onload = function () {
           if (xhr.status >= 200 && xhr.status < 300) {
             try {
-              var data = JSON.parse(xhr.responseText);
+              const data = JSON.parse(xhr.responseText);
               resolve(data);
             } catch (e) {
               reject(new Error("Failed to parse document response"));
@@ -268,25 +223,17 @@ function fetchDocumentsForAsset(assetSpan, apiToken,appBaseURL,jobBaseURL) {
         xhr.send(JSON.stringify({ Faid: assetId }));
       });
     })
-    .then(function (data) {
-      // Remove status indicator
+    .then((data) => {
       if (statusIndicator && statusIndicator.parentNode) {
         statusIndicator.parentNode.removeChild(statusIndicator);
       }
 
-      // Process the documents data
       if (data && data.length > 0) {
-        console.log(
-          "Found " + data.length + " documents for asset ID: " + assetId
-        );
-
-        // Create a button
-        var button = document.createElement("button");
+        console.log("Found " + data.length + " documents for asset ID: " + assetId);
+        const button = document.createElement("button");
         button.textContent = "View Documents (" + data.length + ")";
         button.className = "btn btn-primary btn-sm";
         button.id = "btn-" + assetId;
-
-        // Add inline styles
         button.style.padding = "3px 8px";
         button.style.backgroundColor = "#337ab7";
         button.style.color = "white";
@@ -295,16 +242,13 @@ function fetchDocumentsForAsset(assetSpan, apiToken,appBaseURL,jobBaseURL) {
         button.style.cursor = "pointer";
         button.style.fontSize = "12px";
         button.style.margin = "2px";
-
-        // Save document data
         button.setAttribute("data-documents", JSON.stringify(data));
 
-        // Add click event
         button.onclick = function (e) {
           e.preventDefault();
           e.stopPropagation();
           try {
-            var btnDocuments = JSON.parse(this.getAttribute("data-documents"));
+            const btnDocuments = JSON.parse(this.getAttribute("data-documents"));
             showDocumentModal(btnDocuments);
           } catch (error) {
             console.error("Error showing modal:", error);
@@ -313,13 +257,10 @@ function fetchDocumentsForAsset(assetSpan, apiToken,appBaseURL,jobBaseURL) {
           return false;
         };
 
-        // Add button to the asset span
         element.appendChild(button);
       } else {
         console.log("No documents found for asset ID: " + assetId);
-
-        // Show "No documents" indicator
-        var noDocsIndicator = document.createElement("span");
+        const noDocsIndicator = document.createElement("span");
         noDocsIndicator.textContent = "No documents available";
         noDocsIndicator.style.fontSize = "12px";
         noDocsIndicator.style.color = "#999";
@@ -329,51 +270,29 @@ function fetchDocumentsForAsset(assetSpan, apiToken,appBaseURL,jobBaseURL) {
 
       return data;
     })
-    .catch(function (error) {
-      console.error(
-        "Error fetching documents for asset " + assetId + ":",
-        error
-      );
-
-      // Remove status indicator
+    .catch((error) => {
+      console.error("Error fetching documents for asset " + assetId + ":", error);
       if (statusIndicator && statusIndicator.parentNode) {
         statusIndicator.parentNode.removeChild(statusIndicator);
       }
-
-      // Show error indicator
-      var errorIndicator = document.createElement("span");
+      const errorIndicator = document.createElement("span");
       errorIndicator.textContent = "Error: " + error.message;
       errorIndicator.style.fontSize = "12px";
       errorIndicator.style.color = "red";
       errorIndicator.style.marginLeft = "5px";
       element.appendChild(errorIndicator);
-
       return null;
     });
 }
 
-// Main function to process all assets
-function processAllAssets(appBaseURL,jobBaseURL) {
-  // Find all asset spans
-  var assetSpans = findAssetSpans();
+// Process a group of asset spans that share the same sessionID and token
+function processAssetGroup(groupSpans, appBaseURL, jobBaseURL) {
+  // Use the sessionID and token from the first span in this group
+  const sessionID = groupSpans[0].sessionID;
+  const token = groupSpans[0].token;
+  console.log("Getting API token for group with sessionID:", sessionID);
 
-  if (assetSpans.length === 0) {
-    console.log("No asset spans found, nothing to process");
-    return;
-  }
-
-  console.log("Starting authentication for " + assetSpans.length + " assets");
-
-  // Prepare authentication parameters
-  var sessionID = "'+[SessionId]+'";
-  var token = "'+[Token]+'";
-  sessionID = encodeURIComponent(sessionID);
-  token = encodeURIComponent(token);
-
-  // Step 1: Get API Token
-  console.log("Getting API token...");
-
-  fetch(
+  return fetch(
     `${jobBaseURL}Production/api/user/apiToken?sessionId=` +
       sessionID +
       "&authToken=" +
@@ -386,29 +305,27 @@ function processAllAssets(appBaseURL,jobBaseURL) {
       },
       referrer: appBaseURL,
       referrerPolicy: "strict-origin-when-cross-origin",
-      body: null,
       method: "GET",
       mode: "cors",
       credentials: "omit",
     }
   )
-    .then(function (response) {
+    .then((response) => {
       if (!response.ok) {
         throw new Error("API Token fetch failed: " + response.status);
       }
       return response.json();
     })
-    .then(function (tokenData) {
+    .then((tokenData) => {
       if (!tokenData || !tokenData.apiToken) {
         throw new Error("No API token in response");
       }
+      const apiToken = tokenData.apiToken;
+      console.log("API Token obtained for group with sessionID:", sessionID);
 
-      var apiToken = tokenData.apiToken;
-      console.log("API Token obtained successfully");
-
-      // Step 2: Validate the token
+      // Validate the token
       return fetch(
-        "https://cppfosjob.fdn.cpp.edu/Production/api/User/ValidateSecurityToken",
+        `${JOB_BASE_URL}Production/api/User/ValidateSecurityToken`,
         {
           headers: {
             accept: "*/*",
@@ -416,7 +333,7 @@ function processAllAssets(appBaseURL,jobBaseURL) {
             "content-type": "application/x-www-form-urlencoded",
             Authorization: "Bearer " + apiToken,
           },
-          referrer: "https://cppfosapp.fdn.cpp.edu/",
+          referrer: APP_BASE_URL,
           referrerPolicy: "strict-origin-when-cross-origin",
           body:
             "sessionId=" +
@@ -428,37 +345,29 @@ function processAllAssets(appBaseURL,jobBaseURL) {
           mode: "cors",
           credentials: "omit",
         }
-      ).then(function (validateResponse) {
+      ).then((validateResponse) => {
         if (!validateResponse.ok) {
           throw new Error(
             "Token validation failed: " + validateResponse.status
           );
         }
+        console.log("Token validated for group with sessionID:", sessionID);
 
-        console.log(
-          "Token validated successfully, processing " +
-            assetSpans.length +
-            " assets"
-        );
-
-        // Step 3: Process each asset in sequence
-        var promiseChain = Promise.resolve();
-
-        assetSpans.forEach(function (assetSpan) {
-          promiseChain = promiseChain.then(function () {
-            return fetchDocumentsForAsset(assetSpan, apiToken,appBaseURL,jobBaseURL);
-          });
+        // Process each asset in this group sequentially
+        let promiseChain = Promise.resolve();
+        groupSpans.forEach((assetSpan) => {
+          promiseChain = promiseChain.then(() =>
+            fetchDocumentsForAsset(assetSpan, apiToken, appBaseURL, jobBaseURL)
+          );
         });
-
         return promiseChain;
       });
     })
-    .catch(function (error) {
-      console.error("Authentication error:", error);
-
-      // Show error for all asset spans
-      assetSpans.forEach(function (assetSpan) {
-        var errorIndicator = document.createElement("span");
+    .catch((error) => {
+      console.error("Error processing asset group with sessionID:", sessionID, error);
+      // Optionally mark error on each asset in this group
+      groupSpans.forEach((assetSpan) => {
+        const errorIndicator = document.createElement("span");
         errorIndicator.textContent = "Auth Error: " + error.message;
         errorIndicator.style.fontSize = "12px";
         errorIndicator.style.color = "red";
@@ -468,9 +377,40 @@ function processAllAssets(appBaseURL,jobBaseURL) {
     });
 }
 
-// Start processing when DOM is loaded
+// Main function to process all assets.
+// This function groups spans by their sessionID/token pair and then processes each group.
+function processAllAssets(appBaseURL, jobBaseURL) {
+  const assetSpans = findAssetSpans();
+  if (assetSpans.length === 0) {
+    console.log("No asset spans found, nothing to process");
+    return;
+  }
+
+  // Group spans by sessionID and token
+  const groups = {};
+  assetSpans.forEach((span) => {
+    const key = span.sessionID + "|" + span.token;
+    if (!groups[key]) {
+      groups[key] = [];
+    }
+    groups[key].push(span);
+  });
+
+  // Process each group sequentially
+  let promiseChain = Promise.resolve();
+  Object.keys(groups).forEach((key) => {
+    const groupSpans = groups[key];
+    promiseChain = promiseChain.then(() =>
+      processAssetGroup(groupSpans, appBaseURL, jobBaseURL)
+    );
+  });
+}
+
+// Since module scripts are deferred by default, simply include this file in your HTML:
 if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", processAllAssets(APP_BASE_URL, JOB_BASE_URL));
+  document.addEventListener("DOMContentLoaded", () => {
+    processAllAssets(APP_BASE_URL, JOB_BASE_URL);
+  });
 } else {
   processAllAssets(APP_BASE_URL, JOB_BASE_URL);
 }
