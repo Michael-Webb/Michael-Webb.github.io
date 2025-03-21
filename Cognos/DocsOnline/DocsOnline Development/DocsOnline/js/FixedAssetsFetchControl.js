@@ -94,7 +94,7 @@
 
           const linkElement = document.createElement("a");
           linkElement.href = doc.url;
-          linkElement.textContent = "Document " + (index + 1) + ": " + doc.description;
+          linkElement.textContent = (index + 1) + ": " + doc.description;
           linkElement.target = "_blank";
 
           linkParagraph.appendChild(linkElement);

@@ -18,7 +18,7 @@ export async function initDocumentAttachments() {
   if (firstSpan) {
     sessionID = firstSpan.getAttribute("data-sessionId") || "";
     token = firstSpan.getAttribute("data-token") || "";
-    // Extract and decode app and job URLs if they exist
+    // Extract and decode app and job URLs if theyF exist
     const appURLFromSpan = firstSpan.getAttribute("data-appURL");
     const jobURLFromSpan = firstSpan.getAttribute("data-jobURL");
     if (appURLFromSpan) {
@@ -104,7 +104,7 @@ export async function initDocumentAttachments() {
 
           const linkElement = document.createElement("a");
           linkElement.href = doc.url;
-          linkElement.textContent = "Document " + (index + 1) + ": " + doc.description;
+          linkElement.textContent = (index + 1) + ": " + doc.description;
           linkElement.target = "_blank";
 
           linkParagraph.appendChild(linkElement);
