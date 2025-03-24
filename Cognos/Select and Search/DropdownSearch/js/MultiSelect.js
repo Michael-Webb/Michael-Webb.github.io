@@ -657,7 +657,7 @@ define(() => {
                       this.isMultiple
                         ? `<div class="group-controls">
                       <button class="btn secondary group-select" aria-label="Select all items in ${group.display}" title="Select all items in ${group.display}" id="${groupSelectId}">Select All</button>
-                      <button class="btn secondary group-deselect" aria-label="Clear all selections in ${group.display}" title=aria-label="Clear all selections in ${group.display}" id="${groupDeselectId}">Clear</button>
+                      <button class="btn secondary group-deselect" aria-label="Clear all selections in ${group.display}" title="aria-label="Clear all selections in ${group.display}" id="${groupDeselectId}">Clear</button>
                     </div>`
                         : ""
                     }
@@ -1735,4 +1735,4 @@ define(() => {
 
   return CustomControl;
 });
-//v327
+//v331
