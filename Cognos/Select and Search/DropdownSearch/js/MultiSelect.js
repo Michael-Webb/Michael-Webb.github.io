@@ -1324,7 +1324,8 @@ define(() => {
     // Modify isInValidState to consider the change flag:
     isInValidState() {
       return (
-        this.hasChanged || this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked').length > 0
+        this.hasChanged 
+        //|| this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked').length > 0
       );
     }
 
@@ -1658,4 +1659,4 @@ define(() => {
 
   return CustomControl;
 });
-//v211
+//v213
