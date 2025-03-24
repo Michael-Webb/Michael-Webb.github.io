@@ -979,9 +979,7 @@ define(() => {
           const currentSelections = Array.from(
             this.elements.dropdown.querySelectorAll(".list input[type='checkbox']:checked")
           ).map((cb) => cb.value);
-          if (JSON.stringify(currentSelections) !== JSON.stringify(this.initialSelectedValues)) {
-            this.hasChanged = true;
-          }
+          this.hasChanged = JSON.stringify(currentSelections) !== JSON.stringify(this.initialSelectedValues);
         }
 
         // Always update the selected count when any checkbox changes
@@ -1663,4 +1661,4 @@ define(() => {
 
   return CustomControl;
 });
-//v219
+//v223
