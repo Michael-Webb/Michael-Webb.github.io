@@ -143,7 +143,7 @@ define(() => {
           }
         });
       }
-      console.log("mainParams & mainParamValues", mainParams,this.mainParamValues);
+      console.log("mainParams & mainParamValues", mainParams, this.mainParamValues);
 
       fnDoneInitializing();
     }
@@ -974,16 +974,11 @@ define(() => {
               }
             }
           }
-
-          // Compare current selections to initial selections.
-          const currentSelections = Array.from(
-            this.elements.dropdown.querySelectorAll(".list input[type='checkbox']:checked")
-          ).map((cb) => cb.value);
-          this.hasChanged = JSON.stringify(currentSelections) !== JSON.stringify(this.initialSelectedValues);
         }
 
         // Always update the selected count when any checkbox changes
         this.updateSelectedCount();
+        this.updateChangeFlag();
       };
 
       this.elements.dropdown.addEventListener("change", this.boundHandlers.dropdownChange);
@@ -1005,6 +1000,7 @@ define(() => {
               }
             });
             this.updateSelectedCount();
+            this.updateChangeFlag();
             this.announceGroupSelection(groupElement, true);
           }
         }
@@ -1020,6 +1016,7 @@ define(() => {
               }
             });
             this.updateSelectedCount();
+            this.updateChangeFlag();
             this.announceGroupSelection(groupElement, false);
             // If "Show Selected" is active, reapply the filter so that unselected items are hidden.
             if (this.showingSelectedOnly) {
@@ -1127,6 +1124,7 @@ define(() => {
 
       // Update the header count
       this.updateSelectedCount();
+      this.updateChangeFlag();
     }
 
     /**
@@ -1457,6 +1455,7 @@ define(() => {
 
       // Update header count and announce selection
       this.updateSelectedCount();
+      this.updateChangeFlag();
       this.announceAllSelection(checked);
 
       // If "Show Selected" is active and we're clearing selections, reapply the filter.
@@ -1508,6 +1507,7 @@ define(() => {
       }
 
       this.updateSelectedCount();
+      this.updateChangeFlag();
     }
 
     applyShowSelectedFilter() {
@@ -1579,9 +1579,17 @@ define(() => {
       this.initialSelectedValues = Array.from(
         this.elements.dropdown.querySelectorAll(".list input[type='checkbox']:checked")
       ).map((cb) => cb.value);
-      this.hasChanged = false;
+      this.updateChangeFlag();
       this.updateSelectedCount();
     }
+
+    updateChangeFlag() {
+      const currentSelections = Array.from(
+        this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked')
+      ).map((cb) => cb.value);
+      this.hasChanged = JSON.stringify(currentSelections) !== JSON.stringify(this.initialSelectedValues);
+    }
+
     /**
      * Cleanup event listeners and references.
      */
@@ -1661,4 +1669,4 @@ define(() => {
 
   return CustomControl;
 });
-//v227
+//v238
