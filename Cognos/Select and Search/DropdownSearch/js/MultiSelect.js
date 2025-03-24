@@ -1432,42 +1432,38 @@ define(() => {
       ).map((cb) => cb.value);
       console.log("Before toggle - Selected:", beforeSelected.length, beforeSelected);
 
-      // Be more specific - only target checkboxes inside the list container
+      // Only target checkboxes inside the list container that are currently visible.
       const listElement = this.elements.dropdown.querySelector(".list");
-
-      // Find all visible checkboxes that should be affected
       const visibleCheckboxes = Array.from(listElement.querySelectorAll('input[type="checkbox"]')).filter((cb) => {
         const checkboxItem = cb.closest(".checkbox-item");
         return checkboxItem && !checkboxItem.classList.contains("hidden") && checkboxItem.style.display !== "none";
       });
-
       console.log("Visible checkboxes found:", visibleCheckboxes.length);
 
       // Apply the checked state to all visible checkboxes
       visibleCheckboxes.forEach((cb) => {
         cb.checked = checked;
-        // Log each change
         console.log(`Setting ${cb.value} to ${checked}`);
       });
 
-      // Debug: What did we end up with?
+      // Debug: Check the new state
       const afterSelected = Array.from(
         this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked')
       ).map((cb) => cb.value);
       console.log("After toggle - Selected:", afterSelected.length, afterSelected);
 
-      // Make sure parameters will reflect the changes
+      // Update header count and announce selection
       this.updateSelectedCount();
       this.announceAllSelection(checked);
 
-      // Get the parameters to verify they're correct
+      // If "Show Selected" is active and we're clearing selections, reapply the filter.
+      if (this.showingSelectedOnly && !checked) {
+        this.applyShowSelectedFilter();
+      }
+
+      // Log parameters to verify the new state.
       const params = this.getParameters();
       console.log("Parameters after toggle:", params);
-
-      // Rest of original function for "Show Selected" mode...
-      if (this.showingSelectedOnly && !checked) {
-        // [Original code unchanged]
-      }
     }
 
     toggleSelectedFilter() {
@@ -1662,4 +1658,4 @@ define(() => {
 
   return CustomControl;
 });
-//v205
+//v211
