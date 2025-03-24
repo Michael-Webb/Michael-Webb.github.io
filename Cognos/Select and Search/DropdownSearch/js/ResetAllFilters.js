@@ -15,10 +15,8 @@ define(function () {
     }
     f_clearButtonClick(oControlHost) {
       const aControls = oControlHost.page.getAllPromptControls();
-
       console.log("aControls",aControls)
       oControlHost.page.application.clearParameterValues();
-      oControlHost.valueChanged();
       oControlHost.finish();
     }
   }
