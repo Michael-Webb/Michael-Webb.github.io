@@ -171,6 +171,7 @@ define(() => {
       this.applyBtnId = this.generateId("applyBtn");
       this.selectAllId = this.generateId("selectAll");
       this.deselectAllId = this.generateId("deselectAll");
+      this.resetBtnID = this.generateId("resetBtn");
       this.searchTypeSelectId = this.generateId("searchTypeSelect");
       this.searchResultsLiveId = this.generateId("searchResultsLive");
       this.showSelectedId = this.generateId("showSelected");
@@ -456,7 +457,6 @@ define(() => {
           }
           .reset-btn {
             /* For example, add a left margin to separate it from the Clear button */
-            margin-left: 0.5rem;
             /* Additional styling can go here */
           }
           .reset-btn:disabled {
@@ -735,8 +735,8 @@ define(() => {
             <div class="select-controls">
               <button class="btn secondary select-btn" aria-label="Select all options" id="${this.selectAllId}">Select all</button>
               <button class="btn secondary deselect-btn" aria-label="Clear all selections" id="${this.deselectAllId}">Clear</button>
-              <button class="btn secondary reset-btn" aria-label="Reset to initial selections" id="resetBtn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rotate-ccw">
+              <button class="btn secondary reset-btn" aria-label="Reset to initial selections" id="${this.resetBtnID}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rotate-ccw">
                   <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
                   <path d="M3 3v5h5"/>
                 </svg>
@@ -1095,6 +1095,7 @@ define(() => {
       // Update UI components
       this.updateSelectedCount();
       this.updateChangeFlag();
+      this.updateFilteredItems();
     }
 
     /**
@@ -1734,4 +1735,4 @@ define(() => {
 
   return CustomControl;
 });
-//v257
+//v307
