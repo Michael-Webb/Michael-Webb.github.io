@@ -1095,7 +1095,6 @@ define(() => {
       // Update UI components
       this.updateSelectedCount();
       this.updateChangeFlag();
-      this.updateFilteredItems();
     }
 
     /**
@@ -1735,4 +1734,4 @@ define(() => {
 
   return CustomControl;
 });
-//v307
+//v310
