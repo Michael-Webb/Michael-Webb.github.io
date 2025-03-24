@@ -1278,6 +1278,12 @@ define(() => {
       });
       const groups = list.querySelectorAll(".group");
       groups.forEach((group) => (group.style.display = "block"));
+
+      // Remove any existing "no-options" message
+      const existingMsg = list.querySelector(".no-options");
+      if (existingMsg) {
+        existingMsg.remove();
+      }
     }
 
     /**
@@ -1323,10 +1329,8 @@ define(() => {
      */
     // Modify isInValidState to consider the change flag:
     isInValidState() {
-      return (
-        this.hasChanged 
-        //|| this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked').length > 0
-      );
+      return this.hasChanged;
+      //|| this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked').length > 0
     }
 
     /**
@@ -1659,4 +1663,4 @@ define(() => {
 
   return CustomControl;
 });
-//v213
+//v219
