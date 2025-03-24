@@ -974,11 +974,20 @@ define(() => {
               }
             }
           }
+
+          // Compare current selections to initial selections.
+          const currentSelections = Array.from(
+            this.elements.dropdown.querySelectorAll(".list input[type='checkbox']:checked")
+          ).map((cb) => cb.value);
+          if (JSON.stringify(currentSelections) !== JSON.stringify(this.initialSelectedValues)) {
+            this.hasChanged = true;
+          }
         }
 
         // Always update the selected count when any checkbox changes
         this.updateSelectedCount();
       };
+
       this.elements.dropdown.addEventListener("change", this.boundHandlers.dropdownChange);
 
       // Delegate group control events.
@@ -1312,8 +1321,11 @@ define(() => {
     /**
      * Checks if at least one checkbox is selected.
      */
+    // Modify isInValidState to consider the change flag:
     isInValidState() {
-      return this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked').length > 0;
+      return (
+        this.hasChanged || this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked').length > 0
+      );
     }
 
     /**
@@ -1559,11 +1571,16 @@ define(() => {
       this.applyEventListeners();
 
       // Initialize checkboxes based on the main parameter values.
+      // In your draw() method, after setting up the checkboxes:
       const optionCheckboxes = this.elements.dropdown.querySelectorAll(".list input[type='checkbox']");
       optionCheckboxes.forEach((checkbox) => {
         checkbox.checked = this.mainParamValues.includes(checkbox.value);
       });
-      // **Update the header to show how many options are currently selected.**
+      // Store the initial state and initialize the change flag.
+      this.initialSelectedValues = Array.from(
+        this.elements.dropdown.querySelectorAll(".list input[type='checkbox']:checked")
+      ).map((cb) => cb.value);
+      this.hasChanged = false;
       this.updateSelectedCount();
     }
 
