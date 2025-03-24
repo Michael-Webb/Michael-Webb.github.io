@@ -742,7 +742,7 @@ define(() => {
                 </svg>
               </button>
             </div>
-            <button class="btn primary apply-btn" id="${this.applyBtnId}">Apply</button>
+            <button class="btn primary apply-btn" aria-label="Apply and run prompt" title="Apply and run prompt" id="${this.applyBtnId}">Apply</button>
           </div>
         `;
       }
@@ -1734,4 +1734,4 @@ define(() => {
 
   return CustomControl;
 });
-//v318
+//v320
