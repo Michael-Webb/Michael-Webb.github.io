@@ -1588,7 +1588,15 @@ define(() => {
         this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked')
       ).map((cb) => cb.value);
       this.hasChanged = JSON.stringify(currentSelections) !== JSON.stringify(this.initialSelectedValues);
+      this.updateApplyButtonState()
     }
+
+    updateApplyButtonState() {
+      if (this.elements.applyBtn) {
+        this.elements.applyBtn.disabled = !this.isInValidState();
+      }
+    }
+    
 
     /**
      * Cleanup event listeners and references.
@@ -1669,4 +1677,4 @@ define(() => {
 
   return CustomControl;
 });
-//v238
+//v242
