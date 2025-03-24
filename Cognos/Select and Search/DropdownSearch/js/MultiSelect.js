@@ -940,7 +940,7 @@ define(() => {
       }
 
       // After the other button initializations:
-      this.elements.resetBtn = container.querySelector("#resetBtn");
+      this.elements.resetBtn = container.querySelector(`#${this.resetBtnID}`);
       this.boundHandlers.resetBtnClick = () => this.resetToInitial();
       if (this.elements.resetBtn) {
         this.elements.resetBtn.addEventListener("click", this.boundHandlers.resetBtnClick);
@@ -1734,4 +1734,4 @@ define(() => {
 
   return CustomControl;
 });
-//v310
+//v315
