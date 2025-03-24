@@ -1583,10 +1583,6 @@ define(() => {
       this.hasChanged = false;
       this.updateSelectedCount();
     }
-
-    /**
-     * Cleanup event listeners and references.
-     */
     /**
      * Cleanup event listeners and references.
      */
