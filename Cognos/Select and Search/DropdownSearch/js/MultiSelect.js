@@ -454,6 +454,18 @@ define(() => {
           .btn.secondary:hover {
             background: var(--bg-hover);
           }
+          .reset-btn {
+            /* For example, add a left margin to separate it from the Clear button */
+            margin-left: 0.5rem;
+            /* Additional styling can go here */
+          }
+          .reset-btn:disabled {
+            cursor: default;
+            opacity: 0.6;
+            background-color: #f3f4f6; /* light gray background */
+            border: 1px solid #d1d5db; /* gray border */
+            color: #9ca3af; /* gray text */
+          }
           .checkbox-item {
             display: flex;
             align-items: center;
@@ -723,6 +735,12 @@ define(() => {
             <div class="select-controls">
               <button class="btn secondary select-btn" aria-label="Select all options" id="${this.selectAllId}">Select all</button>
               <button class="btn secondary deselect-btn" aria-label="Clear all selections" id="${this.deselectAllId}">Clear</button>
+              <button class="btn secondary reset-btn" aria-label="Reset to initial selections" id="resetBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rotate-ccw">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                  <path d="M3 3v5h5"/>
+                </svg>
+              </button>
             </div>
             <button class="btn primary apply-btn" id="${this.applyBtnId}">Apply</button>
           </div>
@@ -921,6 +939,13 @@ define(() => {
         this.elements.applyBtn.addEventListener("click", this.boundHandlers.applyBtnClick);
       }
 
+      // After the other button initializations:
+      this.elements.resetBtn = container.querySelector("#resetBtn");
+      this.boundHandlers.resetBtnClick = () => this.resetToInitial();
+      if (this.elements.resetBtn) {
+        this.elements.resetBtn.addEventListener("click", this.boundHandlers.resetBtnClick);
+      }
+
       // Enforce single-selection if not multiple:
       // When any checkbox is changed, if it is now checked then uncheck all others.
       this.boundHandlers.dropdownChange = (e) => {
@@ -1053,6 +1078,23 @@ define(() => {
         }
       };
       this.elements.dropdown.addEventListener("click", this.boundHandlers.groupControlClick);
+    }
+
+    resetToInitial() {
+      // Get all checkboxes
+      const checkboxes = this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]');
+      checkboxes.forEach((cb) => {
+        // Reset the checked property based on the initial selections.
+        cb.checked = this.initialSelectedValues.includes(cb.value);
+      });
+
+      // Optionally, if you’re using filters like "Show Selected", you might want to show all items.
+      const list = this.elements.dropdown.querySelector(".list");
+      this.showAllItems(list);
+
+      // Update UI components
+      this.updateSelectedCount();
+      this.updateChangeFlag();
     }
 
     /**
@@ -1595,12 +1637,20 @@ define(() => {
         this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked')
       ).map((cb) => cb.value);
       this.hasChanged = JSON.stringify(currentSelections) !== JSON.stringify(this.initialSelectedValues);
-      this.updateApplyButtonState()
+      this.updateApplyButtonState();
+      this.updateResetButtonState();
     }
 
     updateApplyButtonState() {
       if (this.elements.applyBtn) {
         this.elements.applyBtn.disabled = !this.isInValidState();
+      }
+    }
+
+    updateResetButtonState() {
+      if (this.elements.resetBtn) {
+        // Disable the reset button if no changes have been made (i.e. state is initial)
+        this.elements.resetBtn.disabled = !this.hasChanged;
       }
     }
     
@@ -1684,4 +1734,4 @@ define(() => {
 
   return CustomControl;
 });
-//v246
+//v257
