@@ -733,9 +733,9 @@ define(() => {
         return `
           <div class="dropdown-footer">
             <div class="select-controls">
-              <button class="btn secondary select-btn" aria-label="Select all options" id="${this.selectAllId}">Select all</button>
-              <button class="btn secondary deselect-btn" aria-label="Clear all selections" id="${this.deselectAllId}">Clear</button>
-              <button class="btn secondary reset-btn" aria-label="Reset to initial selections" id="${this.resetBtnID}">
+              <button class="btn secondary select-btn" aria-label="Select all options" title="Select all options" id="${this.selectAllId}">Select all</button>
+              <button class="btn secondary deselect-btn" aria-label="Clear all selections"  title="Clear all selections" id="${this.deselectAllId}">Clear</button>
+              <button class="btn secondary reset-btn" aria-label="Reset to initial selections" title="Reset to initial selections" id="${this.resetBtnID}">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rotate-ccw">
                   <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
                   <path d="M3 3v5h5"/>
@@ -1734,4 +1734,4 @@ define(() => {
 
   return CustomControl;
 });
-//v315
+//v318
