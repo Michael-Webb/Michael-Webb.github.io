@@ -1222,7 +1222,7 @@ define(() => {
       const isEmpty = this.elements.search.value.trim() === "";
       this.elements.searchIcon.innerHTML = this.getSearchIconSVG(isEmpty);
       this.elements.searchIcon.setAttribute("aria-label", isEmpty ? "Search" : "Clear search");
-      this.elements.searchIcon.setAttribute("title", isEmpty ? "Search" : "Clear search");asdf
+      this.elements.searchIcon.setAttribute("title", isEmpty ? "Search" : "Clear search");
       // Disable the search icon button if the search input is empty.
       this.elements.searchIcon.disabled = isEmpty;
     }
@@ -1735,4 +1735,4 @@ define(() => {
 
   return CustomControl;
 });
-//v324
+//v327
