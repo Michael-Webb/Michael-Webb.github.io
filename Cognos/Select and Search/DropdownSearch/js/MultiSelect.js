@@ -656,8 +656,8 @@ define(() => {
                     ${
                       this.isMultiple
                         ? `<div class="group-controls">
-                      <button class="btn secondary group-select" aria-label="Select all items in ${group.display}" id="${groupSelectId}">Select All</button>
-                      <button class="btn secondary group-deselect" aria-label="Clear all selections in ${group.display}" id="${groupDeselectId}">Clear</button>
+                      <button class="btn secondary group-select" aria-label="Select all items in ${group.display}" title="Select all items in ${group.display}" id="${groupSelectId}">Select All</button>
+                      <button class="btn secondary group-deselect" aria-label="Clear all selections in ${group.display}" title=aria-label="Clear all selections in ${group.display}" id="${groupDeselectId}">Clear</button>
                     </div>`
                         : ""
                     }
@@ -725,7 +725,7 @@ define(() => {
         } else {
           return `
             <div class="dropdown-footer">
-              <button class="btn primary apply-btn" id="${this.applyBtnId}">Apply</button>
+              <button class="btn primary apply-btn" aria-label="Apply and run prompt" title="Apply and run prompt" id="${this.applyBtnId}">Apply</button>
             </div>
           `;
         }
@@ -1222,6 +1222,7 @@ define(() => {
       const isEmpty = this.elements.search.value.trim() === "";
       this.elements.searchIcon.innerHTML = this.getSearchIconSVG(isEmpty);
       this.elements.searchIcon.setAttribute("aria-label", isEmpty ? "Search" : "Clear search");
+      this.elements.searchIcon.setAttribute("title", isEmpty ? "Search" : "Clear search");asdf
       // Disable the search icon button if the search input is empty.
       this.elements.searchIcon.disabled = isEmpty;
     }
@@ -1734,4 +1735,4 @@ define(() => {
 
   return CustomControl;
 });
-//v320
+//v324
