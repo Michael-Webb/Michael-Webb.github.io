@@ -439,6 +439,13 @@ define(() => {
           .btn.primary:hover {
             background: var(--primary-hover);
           }
+          .apply-btn:disabled {
+            background-color: #f3f4f6; /* light gray background */
+            border: 1px solid #d1d5db; /* gray border */
+            color: #9ca3af; /* gray text */
+            cursor: default;
+            opacity: 0.6;
+          }
           .btn.secondary {
             background: white;
             border: 1px solid var(--border);
@@ -1677,4 +1684,4 @@ define(() => {
 
   return CustomControl;
 });
-//v242
+//v246
