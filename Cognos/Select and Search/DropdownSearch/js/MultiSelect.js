@@ -1343,9 +1343,9 @@ define(() => {
       console.log("Selected checkboxes:", selectedValues);
 
       // No parameters if no values are selected
-      if (selectedValues.length === 0) {
-        return null;
-      }
+      // if (selectedValues.length === 0) {
+      //   return null;
+      // }
 
       const params = [
         {
@@ -1662,3 +1662,4 @@ define(() => {
 
   return CustomControl;
 });
+//v205
