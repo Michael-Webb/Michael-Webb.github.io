@@ -143,7 +143,7 @@ define(() => {
           }
         });
       }
-      //console.log("mainParams & mainParamValues", mainParams);
+      console.log("mainParams & mainParamValues", mainParams,mainParamValues);
 
       fnDoneInitializing();
     }
@@ -1661,4 +1661,4 @@ define(() => {
 
   return CustomControl;
 });
-//v223
+//v226
