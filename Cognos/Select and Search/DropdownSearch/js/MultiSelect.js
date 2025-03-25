@@ -1411,6 +1411,8 @@ define(() => {
       const selectedCount = this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked').length;
       const hasSelections = selectedCount > 0;
 
+      this.updateChangeFlag()
+
       // Log the state for debugging
       console.log(
         `MultiSelect ${this.paramName} validity check: selected=${selectedCount}, changed=${this.hasChanged}`
