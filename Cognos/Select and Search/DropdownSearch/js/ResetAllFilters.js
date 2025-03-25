@@ -72,13 +72,6 @@ define(function () {
 
     async f_clearButtonClick(oControlHost, controlArray) {
       try {
-        // If no specific controls are provided, find all custom controls
-        if (controlArray.length === 0) {
-          const customControls = oControlHost.page.getControlsByNodeName("customControl");
-          console.log(`Found ${customControls.length} custom controls`);
-          controlArray = customControls.map((control) => control.name);
-        }
-
         console.log(`Attempting to clear ${controlArray.length} controls: ${controlArray.join(", ")}`);
 
         // Process each control
@@ -121,13 +114,6 @@ define(function () {
 
     async f_resetButtonClick(oControlHost, controlArray) {
       try {
-        // If no specific controls are provided, find all custom controls
-        if (controlArray.length === 0) {
-          const customControls = oControlHost.page.getControlsByNodeName("customControl");
-          console.log(`Found ${customControls.length} custom controls`);
-          controlArray = customControls.map((control) => control.name);
-        }
-
         console.log(`Attempting to reset ${controlArray.length} controls: ${controlArray.join(", ")}`);
 
         // Process each control
@@ -177,32 +163,21 @@ define(function () {
           .map((item) => item.trim())
           .filter((item) => item);
 
-        // Attempt to get custom controls.
-        let customControls = [];
-        if (typeof oControlHost.page.getControlsByNodeName === "function") {
-          customControls = oControlHost.page.getControlsByNodeName("customControl");
-          console.log(`Found ${customControls.length} custom controls via getControlsByNodeName`);
-        } else {
-          console.warn("getControlsByNodeName is not a function; using configuration controls");
-          customControls = controlNamesArray.map((name) => oControlHost.page.getControlByName(name)).filter((c) => c);
-          console.log(`Using ${customControls.length} controls from configuration`);
-        }
-        if (customControls.length === 0 && controlNamesArray.length > 0) {
-          customControls = controlNamesArray
-            .map((name) => oControlHost.page.getControlByName(name))
-            .filter((control) => control);
-        }
+        // Use control names from configuration only.
+        let customControls = controlNamesArray.map((name) => oControlHost.page.getControlByName(name)).filter((c) => c);
+        console.log(`Using ${customControls.length} controls from configuration`);
 
-        // Determine overall validity: if any MultiSelect has changed from its initial state.
+        // Determine overall validity:
+        // If any MultiSelect control (identified by having clearAllSelections) has changed from its initial state,
+        // then overall validity is true.
         let overallValidity = false;
         const controlPromises = customControls.map(async (control) => {
           try {
             const controlName = control.name || "unnamed";
             const instance = await control.instance;
-            // Only process MultiSelect controls (identified by having clearAllSelections)
             if (instance && typeof instance.clearAllSelections === "function") {
-              // Use the instance’s isInValidState() method (which should return true when changed),
-              // or fall back on a stored change flag (hasChanged)
+              // Use the instance’s isInValidState() method if available,
+              // otherwise fall back on a stored change flag (hasChanged)
               const controlValid = instance.isInValidState
                 ? instance.isInValidState()
                 : instance.hasChanged !== undefined
