@@ -48,9 +48,9 @@ define(function () {
       el.innerHTML =
         "<style>" +
         ".buttonContainer { display: flex; gap: 10px; }" +
-        ".myButton { min-height:36px; min-width:64px; cursor:pointer; margin-left:16px; color:#4178BE; font-size:14px; padding:0px 24px; background-color:white; border:1px solid #4178BE; }" +
-        ".myButton:hover { background-color:#4178BE; color:white; border:1px solid #4178BE; }" +
-        ".btnSubmit:disabled { opacity: 0.5; cursor: default; }" +
+        ".myButton { min-height:36px; min-width:64px; cursor:pointer; margin-left:16px; color:#1F57A4; font-family:inherit;font-size:14px; font-weight:bold; padding:0px 24px; background-color:#FFFFFF; border:2px solid #1F57A4; text-align:center;}" +
+        ".myButton:hover { background-color:#4178BE; color:white; border:2px solid #4178BE; }" +
+        ".btnSubmit:disabled {cursor:default; color:#8FA9CF; fill:##8FA9CF; border-color: #8FA9CF;}" +
         "</style>" +
         '<div class="buttonContainer">' +
         '<button class="myButton btnClear" type="button" title="Clear all filter values">Clear All</button>' +
@@ -256,4 +256,4 @@ define(function () {
 
   return ResetAllParameters;
 });
-//v101
+//v134
