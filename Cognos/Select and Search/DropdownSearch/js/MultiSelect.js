@@ -1706,10 +1706,11 @@ define(() => {
       this.updateApplyButtonState();
       this.updateResetButtonState();
 
-      // If using a global callback, optionally debounce this call
-      // if (typeof window.onMultiSelectChange === "function") {
-      //   window.onMultiSelectChange();
-      // }
+      // Trigger the overall validity check immediately.
+      if (typeof window.onMultiSelectChange === "function") {
+        // Use a zero-delay timeout to ensure the DOM is updated before running the check.
+        setTimeout(() => window.onMultiSelectChange(), 0);
+      }
     }
 
     updateApplyButtonState() {
