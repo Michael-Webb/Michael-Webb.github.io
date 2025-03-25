@@ -1442,10 +1442,28 @@ define(() => {
     /**
      * Checks if at least one checkbox is selected.
      */
-    // Modify isInValidState to consider the change flag:
+    // // Modify isInValidState to consider the change flag:
+    // isInValidState() {
+    //   return this.hasChanged;
+    //   //|| this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked').length > 0
+    // }
+
     isInValidState() {
+      return true;
+    }
+
+    hasSelections() {
+      if (!this.elements || !this.elements.dropdown) return false;
+      return this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked').length > 0;
+    }
+
+    hasChangedFromInitial() {
       return this.hasChanged;
-      //|| this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked').length > 0
+    }
+
+    // Make isInValidState always return true so it doesn't block submission
+    isInValidState() {
+      return true; // Let the ResetAllFilters control determine validity
     }
 
     /**
