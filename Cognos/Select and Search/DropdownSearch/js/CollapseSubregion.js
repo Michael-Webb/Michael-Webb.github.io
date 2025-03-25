@@ -77,12 +77,12 @@ define(function () {
 
       if (b) {
         this.m_btn.innerHTML = this.m_bVertical
-          ? '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down" disabled><path d="m6 9 6 6 6-6"/></svg>'
-          : '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-left" disabled><path d="m15 18-6-6 6-6"/></svg>';
+          ? `<svg xmlns="http://www.w3.org/2000/svg" width="${this.getConfigurationValue("Icon Width", "24px")}" height="${this.getConfigurationValue("Icon Height", "24px")}"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down" disabled><path d="m6 9 6 6 6-6"/></svg>`
+          : `<svg xmlns="http://www.w3.org/2000/svg" width="${this.getConfigurationValue("Icon Width", "24px")}" height="${this.getConfigurationValue("Icon Height", "24px")}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-left" disabled><path d="m15 18-6-6 6-6"/></svg>`;
       } else {
         this.m_btn.innerHTML = this.m_bVertical
-          ? '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-up" disabled><path d="m6 15 6-6 6 6"/></svg>'
-          : '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right" disabled><path d="m9 18 6-6-6-6"/></svg>';
+          ? `<svg xmlns="http://www.w3.org/2000/svg" width="${this.getConfigurationValue("Icon Width", "24px")}" height="${this.getConfigurationValue("Icon Height", "24px")}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-up" disabled><path d="m6 15 6-6 6 6"/></svg>`
+          : `<svg xmlns="http://www.w3.org/2000/svg" width="${this.getConfigurationValue("Icon Width", "24px")}" height="${this.getConfigurationValue("Icon Height", "24px")}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right" disabled><path d="m9 18 6-6-6-6"/></svg>`;
       }
 
       this.m_btn.title = b ? "Hide" : "Show";
