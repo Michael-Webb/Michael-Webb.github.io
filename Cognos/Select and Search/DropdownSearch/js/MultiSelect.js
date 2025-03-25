@@ -1404,7 +1404,7 @@ define(() => {
     /**
      * Checks if current state differs from initial state.
      */
-    isInValidState() {
+    isInValidState(oControlHost) {
       // Get current selections
       if (!this.elements || !this.elements.dropdown) return false;
 
