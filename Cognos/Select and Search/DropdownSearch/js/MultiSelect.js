@@ -1737,6 +1737,10 @@ define(() => {
       this.hasChanged = JSON.stringify(currentSelections) !== JSON.stringify(this.initialSelectedValues);
       this.updateApplyButtonState();
       this.updateResetButtonState();
+      // Trigger a global callback to update overall validity, if set.
+      if (typeof window.onMultiSelectChange === "function") {
+        window.onMultiSelectChange();
+      }
     }
 
     updateApplyButtonState() {
@@ -1872,4 +1876,4 @@ define(() => {
 
   return CustomControl;
 });
-//v1012
+//v1041

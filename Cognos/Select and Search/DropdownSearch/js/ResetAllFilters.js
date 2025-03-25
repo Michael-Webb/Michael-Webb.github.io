@@ -45,11 +45,12 @@ define(function () {
         }
       };
 
-      // Example in ResetAllFilters.js (in your draw() method)
+      // Set up a debounced check validity function if needed.
       this.debouncedCheckValidity = debounce(() => {
         this.checkAllControlsValidity(oControlHost);
       }, 100);
 
+      // Optionally, you can still have your MutationObserver here if you want to catch other DOM changes:
       const observer = new MutationObserver(() => {
         this.debouncedCheckValidity();
       });
@@ -60,7 +61,12 @@ define(function () {
       });
       this.observer = observer;
 
-      // Initial validation
+      // Set the global callback so that MultiSelect changes trigger a validity check.
+      window.onMultiSelectChange = () => {
+        this.checkAllControlsValidity(oControlHost);
+      };
+
+      // Perform the initial validity check.
       this.checkAllControlsValidity(oControlHost);
     }
 
@@ -240,4 +246,4 @@ define(function () {
 
   return ResetAllParameters;
 });
-//v1033
+//v1041
