@@ -47,11 +47,13 @@ define(() => {
         this.applySelection();
       }
     }
+    // Static registry for open dropdowns
+    static openDropdown = null;
     // Constants for consistent messages
     static NO_SEARCH_RESULTS_MSG = "No options match your search.";
     static NO_SELECTIONS_MSG = "No selections made.";
     static NO_OPTIONS_MSG = "No options available.";
-    static NO_DATA_MSG = "No Data Available";
+    static NO_DATA_MSG = "No data available";
 
     constructor() {
       // // Initialize the registry if it doesn't exist yet
@@ -903,13 +905,21 @@ define(() => {
       this.boundHandlers.headerClick = (e) => {
         e.stopPropagation();
         const isVisible = this.elements.content.classList.contains("visible");
+
+        // If this dropdown is already visible, just close it
         if (isVisible) {
-          this.elements.content.classList.remove("visible");
-          this.elements.header.setAttribute("aria-expanded", "false");
+          this.closeDropdown();
         } else {
-          this.elements.content.classList.add("visible");
-          this.elements.header.setAttribute("aria-expanded", "true");
-          this.elements.search.focus();
+          // Close any other open dropdown first
+          if (CustomControl.openDropdown && CustomControl.openDropdown !== this) {
+            CustomControl.openDropdown.closeDropdown();
+          }
+
+          // Then open this dropdown
+          this.openDropdown();
+
+          // Set this as the currently open dropdown
+          CustomControl.openDropdown = this;
         }
       };
       this.elements.header.addEventListener("click", this.boundHandlers.headerClick);
@@ -1242,8 +1252,7 @@ define(() => {
      */
     handleDocumentClick(e) {
       if (!this.elements.dropdown.contains(e.target)) {
-        this.elements.content.classList.remove("visible");
-        this.elements.header.setAttribute("aria-expanded", "false");
+        this.closeDropdown();
       }
     }
 
@@ -1252,8 +1261,7 @@ define(() => {
      */
     handleDropdownKeydown(e) {
       if (e.key === "Escape") {
-        this.elements.content.classList.remove("visible");
-        this.elements.header.setAttribute("aria-expanded", "false");
+        this.closeDropdown();
         this.elements.header.focus();
       }
     }
@@ -1453,11 +1461,6 @@ define(() => {
       ).map((cb) => cb.value);
 
       console.log("Selected checkboxes:", selectedValues);
-
-      // No parameters if no values are selected
-      // if (selectedValues.length === 0) {
-      //   return null;
-      // }
 
       const params = [
         {
@@ -1716,6 +1719,28 @@ define(() => {
       }
     }
 
+    // Add these new methods to handle opening and closing the dropdown
+
+    openDropdown() {
+      if (!this.elements || !this.elements.content) return;
+
+      this.elements.content.classList.add("visible");
+      this.elements.header.setAttribute("aria-expanded", "true");
+      this.elements.search.focus();
+    }
+
+    closeDropdown() {
+      if (!this.elements || !this.elements.content) return;
+
+      this.elements.content.classList.remove("visible");
+      this.elements.header.setAttribute("aria-expanded", "false");
+
+      // If this is the currently tracked open dropdown, clear that reference
+      if (CustomControl.openDropdown === this) {
+        CustomControl.openDropdown = null;
+      }
+    }
+
     /**
      * Cleanup event listeners and references.
      */
@@ -1814,4 +1839,4 @@ define(() => {
 
   return CustomControl;
 });
-//v855
+//v905
