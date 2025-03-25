@@ -163,8 +163,8 @@ define(() => {
     initialize(oControlHost, fnDoneInitializing) {
       this.oControlHost = oControlHost;
 
-      // Register this instance
-      CustomControl.instances.push(this);
+      // // Register this instance
+      // CustomControl.instances.push(this);
 
       // Destructure configuration properties with defaults
       const {
