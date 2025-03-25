@@ -164,12 +164,12 @@ define(function () {
     }
 
     async checkAllControlsValidity(oControlHost) {
-      // Guard against re-entrancy to avoid recursion
-      if (this._isCheckingValidity) {
-        return this.isValid;
-      }
-      this._isCheckingValidity = true;
       try {
+        // Disconnect the observer to avoid recursive calls.
+        if (this.observer) {
+          this.observer.disconnect();
+        }
+
         // Get control names from configuration.
         let controlNames = oControlHost.configuration.ControlNames || "";
         let controlNamesArray = controlNames
@@ -177,14 +177,13 @@ define(function () {
           .map((item) => item.trim())
           .filter((item) => item);
 
-        // Attempt to get all custom controls
+        // Get custom controls either by node name or configuration.
         let customControls = [];
         try {
           customControls = oControlHost.page.getControlsByNodeName("customControl");
           console.log(`Found ${customControls.length} custom controls via getControlsByNodeName`);
         } catch (e) {
           console.warn("getControlsByNodeName failed:", e);
-          // Fallback: use controls defined in configuration.
           customControls = controlNamesArray.map((name) => oControlHost.page.getControlByName(name)).filter((c) => c);
           console.log(`Using ${customControls.length} controls from configuration`);
         }
@@ -194,16 +193,16 @@ define(function () {
             .filter((control) => control);
         }
 
-        // Overall validity: true if any MultiSelect instance is changed from its initial state.
+        // Overall validity: true if at least one MultiSelect has changed from its initial state.
         let overallValidity = false;
         const controlPromises = customControls.map(async (control) => {
           try {
             const controlName = control.name || "unnamed";
             const instance = await control.instance;
-            // Only process controls with MultiSelect behavior.
+            // Only process MultiSelect controls (identified by having clearAllSelections)
             if (instance && typeof instance.clearAllSelections === "function") {
-              // Call isInValidState() which should return true when the instance has changed from its initial state.
-              let controlValid =
+              // Use isInValidState() if implemented; otherwise, use the hasChanged flag.
+              const controlValid =
                 typeof instance.isInValidState === "function"
                   ? instance.isInValidState()
                   : instance.hasChanged !== undefined
@@ -223,21 +222,33 @@ define(function () {
         console.log(`Overall form validity: ${overallValidity}`);
         this.isValid = overallValidity;
 
-        // Update the submit button's state immediately.
+        // Update the submit button state immediately.
         const submitButton = document.getElementById("submitButton");
         if (submitButton) {
           submitButton.disabled = !overallValidity;
+          // Optionally force a reflow.
+          submitButton.offsetWidth;
           console.log(`Submit button ${overallValidity ? "enabled" : "disabled"}`);
         }
         oControlHost.validStateChanged();
+
+        // Reconnect the observer after a short delay.
+        if (this.observer) {
+          setTimeout(() => {
+            this.observer.observe(oControlHost.container, {
+              subtree: true,
+              attributes: true,
+              childList: true,
+            });
+          }, 50);
+        }
+
         return overallValidity;
       } catch (err) {
         console.error("Error checking controls validity:", err);
         this.isValid = false;
         oControlHost.validStateChanged();
         return false;
-      } finally {
-        this._isCheckingValidity = false;
       }
     }
 
@@ -251,4 +262,4 @@ define(function () {
 
   return ResetAllParameters;
 });
-//v1017
+//v1019
