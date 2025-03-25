@@ -16,6 +16,11 @@ define(function () {
         .split(",")
         .map((item) => item.trim())
         .filter((item) => item);
+      console.log("controlNamesArray", controlNamesArray);
+      // Use control names from configuration only.
+      let customControls = controlNamesArray.map((name) => oControlHost.page.getControlByName(name)).filter((c) => c);
+      console.log(`Using ${customControls.length} controls from configuration`, customControls, controlNamesArray);
+
       const el = oControlHost.container;
 
       // Create the styles and container first
@@ -108,7 +113,7 @@ define(function () {
       }
 
       // Clear parameter values through the standard API
-    //   oControlHost.page.application.clearParameterValues();
+      //   oControlHost.page.application.clearParameterValues();
       oControlHost.finish();
     }
 
@@ -150,7 +155,7 @@ define(function () {
       }
 
       // Reset parameter values to initial values through the standard API
-    //   oControlHost.ValidStateChanged()
+      //   oControlHost.ValidStateChanged()
       oControlHost.finish();
     }
 
@@ -165,7 +170,7 @@ define(function () {
 
         // Use control names from configuration only.
         let customControls = controlNamesArray.map((name) => oControlHost.page.getControlByName(name)).filter((c) => c);
-        console.log(`Using ${customControls.length} controls from configuration`,customControls,controlNamesArray);
+        console.log(`Using ${customControls.length} controls from configuration`, customControls, controlNamesArray);
 
         // Determine overall validity:
         // If any MultiSelect control (identified by having clearAllSelections) has changed from its initial state,
@@ -220,4 +225,4 @@ define(function () {
 
   return ResetAllParameters;
 });
-//v1144
+//v1147
