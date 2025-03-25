@@ -281,11 +281,11 @@ define(() => {
             outline: 2px solid var(--primary);
             outline-offset: 2px;
           }
-          #${this.contentId} .dropdown-content{
+          .dropdown-content{
             position: absolute;
             top: 100%;
             left: 0;
-            width: ${contentWidth};
+
             background: white;
             border-radius: var(--radius);
             border: 1px solid var(--border);
@@ -294,7 +294,10 @@ define(() => {
             margin-top: 0.5rem;
             display: none;
           }
-          #${this.contentId} .dropdown-content.visible {
+            #${this.contentId}{
+            width: ${contentWidth};
+          }
+          .dropdown-content.visible {
             display: block;
           }
           .header {
