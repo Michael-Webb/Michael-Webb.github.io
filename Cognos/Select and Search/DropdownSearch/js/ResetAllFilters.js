@@ -108,7 +108,7 @@ define(function () {
       }
 
       // Clear parameter values through the standard API
-      oControlHost.page.application.clearParameterValues();
+    //   oControlHost.page.application.clearParameterValues();
       oControlHost.finish();
     }
 
@@ -150,7 +150,7 @@ define(function () {
       }
 
       // Reset parameter values to initial values through the standard API
-      oControlHost.ValidStateChanged()
+    //   oControlHost.ValidStateChanged()
       oControlHost.finish();
     }
 
@@ -202,7 +202,6 @@ define(function () {
           submitButton.disabled = !overallValidity;
           console.log(`Submit button ${overallValidity ? "enabled" : "disabled"}`);
         }
-        oControlHost.validStateChanged();
         return overallValidity;
       } catch (err) {
         console.error("Error checking controls validity:", err);
@@ -221,4 +220,4 @@ define(function () {
 
   return ResetAllParameters;
 });
-//v1133
+//v1138
