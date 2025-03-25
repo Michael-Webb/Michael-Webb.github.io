@@ -1,4 +1,4 @@
-// ResetAllFilters.js
+// PromptButtons.js
 define(function () {
   "use strict";
   // Utility: Generic debounce function
@@ -246,4 +246,4 @@ define(function () {
 
   return ResetAllParameters;
 });
-//v1147
+//v1224

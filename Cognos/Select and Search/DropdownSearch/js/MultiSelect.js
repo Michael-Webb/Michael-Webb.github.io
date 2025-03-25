@@ -1689,21 +1689,24 @@ define(() => {
     }
 
     updateChangeFlag() {
+      // Get current selections
       const currentSelections = Array.from(
         this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked')
       ).map((cb) => cb.value);
-      this.hasChanged = JSON.stringify(currentSelections) !== JSON.stringify(this.initialSelectedValues);
-      console.log(
-        this.hasChanged,
-        this.instancePrefix,
-        JSON.stringify(currentSelections),
-        JSON.stringify(this.initialSelectedValues)
-      );
-      console.log('updateChangeFlag run')
-      this.oControlHost.validStateChanged();
+
+      // Determine if the state has changed compared to the initial selections
+      const changed = JSON.stringify(currentSelections) !== JSON.stringify(this.initialSelectedValues);
+
+      // Only trigger validity update if the change flag has transitioned
+      if (this.hasChanged !== changed) {
+        this.hasChanged = changed;
+        // Only call validStateChanged if there is an actual change
+        this.oControlHost.validStateChanged();
+      }
       this.updateApplyButtonState();
       this.updateResetButtonState();
-      // Trigger a global callback to update overall validity, if set.
+
+      // If using a global callback, optionally debounce this call
       if (typeof window.onMultiSelectChange === "function") {
         window.onMultiSelectChange();
       }
@@ -1823,4 +1826,4 @@ define(() => {
 
   return CustomControl;
 });
-//v1206
+//v1224
