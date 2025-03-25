@@ -66,8 +66,8 @@ define(function () {
         this.m_btn = elContainer.lastChild;
         this.m_btn.onclick = this.onClick.bind(this);
         
-        // Restore state after we have the containerId
-        this.restoreState();
+        // Apply state - either from session storage or from configuration
+        this.applyInitialState();
         
         // Update button appearance
         this.updateButton();
@@ -117,8 +117,8 @@ define(function () {
         }
       }
       
-      // Restore display state from session storage
-      restoreState() {
+      // Check for saved state, fall back to config if none exists
+      applyInitialState() {
         try {
           if (!this.m_containerId) {
             return; // Skip if containerId not set yet
@@ -126,19 +126,32 @@ define(function () {
           
           const storageKey = this.getStorageKey();
           const savedState = sessionStorage.getItem(storageKey);
+          const control = this.m_oControlHost.page.getControlByName(this.m_sControlName);
           
           if (savedState !== null) {
+            // Session storage exists, use it
             const isDisplayed = savedState === "1";
-            const control = this.m_oControlHost.page.getControlByName(this.m_sControlName);
-            
-            // Set display based on saved state, only if it differs from current state
             const currentDisplay = control.getDisplay();
+            
+            // Only toggle if needed
             if (isDisplayed !== currentDisplay) {
               control.toggleDisplay();
             }
+          } else {
+            // No session storage, use configuration value
+            const initiallyExpanded = this.getConfigurationValue("Initially Expanded", true);
+            const currentDisplay = control.getDisplay();
+            
+            // Only toggle if needed
+            if (initiallyExpanded !== currentDisplay) {
+              control.toggleDisplay();
+            }
+            
+            // Save this initial state
+            this.saveState(initiallyExpanded);
           }
         } catch (e) {
-          console.warn("Failed to restore state from sessionStorage:", e);
+          console.warn("Failed to apply initial state:", e);
         }
       }
     }
