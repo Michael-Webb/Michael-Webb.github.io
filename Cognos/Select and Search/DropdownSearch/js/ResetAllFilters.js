@@ -40,7 +40,7 @@ define(function () {
       console.log("controlNamesArray", controlNamesArray);
       // Use control names from configuration only.
       let customControls = controlNamesArray.map((name) => oControlHost.page.getControlByName(name)).filter((c) => c);
-      console.log(`Using ${customControls.length} controls from configuration`, customControls, controlNamesArray);
+      //console.log(`Using ${customControls.length} controls from configuration`, customControls, controlNamesArray);
 
       const el = oControlHost.container;
 
@@ -98,7 +98,7 @@ define(function () {
 
     async f_clearButtonClick(oControlHost, controlArray) {
       try {
-        console.log(`Attempting to clear ${controlArray.length} controls: ${controlArray.join(", ")}`);
+        //console.log(`Attempting to clear ${controlArray.length} controls: ${controlArray.join(", ")}`);
 
         // Process each control
         const controlPromises = controlArray.map(async (controlName) => {
@@ -112,7 +112,7 @@ define(function () {
             const instance = await control.instance;
             if (instance && typeof instance.clearAllSelections === "function") {
               instance.clearAllSelections();
-              console.log(`Cleared control: ${controlName}`);
+              //console.log(`Cleared control: ${controlName}`);
               return true;
             } else {
               console.warn(`Control ${controlName} does not have clearAllSelections method`);
@@ -128,7 +128,7 @@ define(function () {
         const results = await Promise.all(controlPromises);
         const successCount = results.filter((result) => result).length;
 
-        console.log(`Successfully cleared ${successCount} out of ${controlArray.length} controls`);
+        //console.log(`Successfully cleared ${successCount} out of ${controlArray.length} controls`);
       } catch (err) {
         console.error("Error clearing controls:", err);
       }
@@ -140,7 +140,7 @@ define(function () {
 
     async f_resetButtonClick(oControlHost, controlArray) {
       try {
-        console.log(`Attempting to reset ${controlArray.length} controls: ${controlArray.join(", ")}`);
+        //console.log(`Attempting to reset ${controlArray.length} controls: ${controlArray.join(", ")}`);
 
         // Process each control
         const controlPromises = controlArray.map(async (controlName) => {
@@ -154,7 +154,7 @@ define(function () {
             const instance = await control.instance;
             if (instance && typeof instance.resetToInitial === "function") {
               instance.resetToInitial();
-              console.log(`Reset control: ${controlName}`);
+              //console.log(`Reset control: ${controlName}`);
               return true;
             } else {
               console.warn(`Control ${controlName} does not have resetToInitial method`);
@@ -170,7 +170,7 @@ define(function () {
         const results = await Promise.all(controlPromises);
         const successCount = results.filter((result) => result).length;
 
-        console.log(`Successfully reset ${successCount} out of ${controlArray.length} controls`);
+        //console.log(`Successfully reset ${successCount} out of ${controlArray.length} controls`);
       } catch (err) {
         console.error("Error resetting controls:", err);
       }
@@ -196,7 +196,7 @@ define(function () {
 
         let customControls = controlNamesArray.map((name) => oControlHost.page.getControlByName(name)).filter((c) => c);
 
-        console.log(`Using ${customControls.length} controls from configuration`, customControls, controlNamesArray);
+        //console.log(`Using ${customControls.length} controls from configuration`, customControls, controlNamesArray);
 
         let overallValidity = false;
         const controlPromises = customControls.map(async (control) => {
@@ -210,7 +210,7 @@ define(function () {
                 : instance.hasChanged !== undefined
                 ? instance.hasChanged
                 : false;
-              console.log(`Control ${controlName} validity: ${controlValid}`);
+              //console.log(`Control ${controlName} validity: ${controlValid}`);
               if (controlValid) {
                 overallValidity = true;
               }
@@ -220,14 +220,14 @@ define(function () {
           }
         });
         await Promise.all(controlPromises);
-        console.log(`Overall form validity: ${overallValidity}`);
+        //console.log(`Overall form validity: ${overallValidity}`);
         this.isValid = overallValidity;
 
         // Update the submit button’s disabled state
         const submitButton = document.getElementById("submitButton");
         if (submitButton) {
           submitButton.disabled = !overallValidity;
-          console.log(`Submit button ${overallValidity ? "enabled" : "disabled"}`);
+          //console.log(`Submit button ${overallValidity ? "enabled" : "disabled"}`);
         }
         return overallValidity;
       } catch (err) {
@@ -244,6 +244,10 @@ define(function () {
           });
         }
       }
+    }
+    isInValidState(oControlHost){
+        this.checkAllControlsValidity(oControlHost)
+        console.log("Made Valid")
     }
 
     // Make sure to clean up the interval in destroy method
