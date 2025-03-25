@@ -194,7 +194,8 @@ define(function () {
             .filter((control) => control);
         }
 
-        let allControlsValid = true;
+        let allControlsValid = customControls.length > 0; // Only valid if we found controls
+        let foundAnyMultiSelect = false;
 
         // Check each control
         const controlPromises = customControls.map(async (control) => {
@@ -206,18 +207,36 @@ define(function () {
 
             // Only process MultiSelect controls with clearAllSelections method
             if (instance && typeof instance.clearAllSelections === "function") {
+              foundAnyMultiSelect = true;
               // Get current validity state directly from the control
-              const isValid = instance.isInValidState(oControlHost);
+              const isValid = instance.isInValidState && instance.isInValidState(oControlHost);
 
-              if (!isValid) {
-                allControlsValid = false;
+              console.log(`Control ${controlName} validity state:`, isValid);
+
+              // Check if the control has selections too
+              let hasSelections = false;
+              if (instance.hasSelections) {
+                hasSelections = instance.hasSelections();
+                console.log(`Control ${controlName} has selections:`, hasSelections);
               }
 
-              return { controlName, isValid };
+              // A control is valid if it explicitly returns true from isInValidState
+              // or if it has selections
+              const controlIsValid = isValid === true || hasSelections === true;
+
+              if (!controlIsValid) {
+                allControlsValid = false;
+                console.log(`Control ${controlName} is NOT valid`);
+              } else {
+                console.log(`Control ${controlName} is valid`);
+              }
+
+              return { controlName, isValid: controlIsValid };
             }
             return null;
           } catch (err) {
-            console.error(`Error checking control:`, err);
+            console.error(`Error checking control ${control?.name}:`, err);
+            allControlsValid = false; // Error means not valid
             return null;
           }
         });
@@ -225,8 +244,20 @@ define(function () {
         // Wait for all control checks to complete
         const results = await Promise.all(controlPromises);
         const validControls = results.filter((r) => r && r.isValid);
+        const validControlNames = validControls.map((r) => r.controlName).join(", ");
+        const invalidControls = results.filter((r) => r && !r.isValid);
+        const invalidControlNames = invalidControls.map((r) => r.controlName).join(", ");
 
-        console.log(`${validControls.length} of ${results.filter((r) => r).length} controls are valid`);
+        console.log(`Valid controls (${validControls.length}): ${validControlNames}`);
+        console.log(`Invalid controls (${invalidControls.length}): ${invalidControlNames}`);
+
+        // If we didn't find any MultiSelect controls, we're not valid
+        if (!foundAnyMultiSelect) {
+          allControlsValid = false;
+          console.log("No MultiSelect controls found, form is invalid");
+        }
+
+        console.log(`Overall form validity: ${allControlsValid}`);
 
         // Update our validity state
         this.isValid = allControlsValid;
@@ -235,6 +266,7 @@ define(function () {
         const submitButton = document.getElementById("submitButton");
         if (submitButton) {
           submitButton.disabled = !allControlsValid;
+          console.log(`Submit button ${allControlsValid ? "enabled" : "disabled"}`);
         }
 
         // Notify Cognos that our validity state might have changed
@@ -258,4 +290,4 @@ define(function () {
 
   return ResetAllParameters;
 });
-//v905
+//v945

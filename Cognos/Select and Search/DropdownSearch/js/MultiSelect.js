@@ -1449,9 +1449,25 @@ define(() => {
     // }
 
     isInValidState() {
-      return true;
+      // Get current selections
+      if (!this.elements || !this.elements.dropdown) return false;
+      
+      const selectedCount = this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked').length;
+      const hasSelections = selectedCount > 0;
+      const hasChanged = this.hasChanged;
+      
+      console.log(`Control ${this.paramName} validity check: selected=${selectedCount}, changed=${hasChanged}`);
+      
+      // For single-select with autoSubmit, require changes
+      if (!this.isMultiple && this.autoSubmit) {
+        return hasChanged;
+      }
+      
+      // For multiple-select, require either changes or selections
+      return hasChanged || hasSelections;
     }
-
+    
+    // Add a helper method that can be called from ResetAllFilters
     hasSelections() {
       if (!this.elements || !this.elements.dropdown) return false;
       return this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked').length > 0;
@@ -1857,4 +1873,4 @@ define(() => {
 
   return CustomControl;
 });
-//v905
+//v945
