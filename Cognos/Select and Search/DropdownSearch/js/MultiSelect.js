@@ -252,7 +252,7 @@ define(() => {
             --padding-sm: 0.25rem 0.75rem;
             --margin-md: 0.25rem;
           }
-          .dropdown-container {
+          #${this.dropdownId} {
             position: relative;
             width: ${dropdownWidth};
             font-family: system-ui, sans-serif;
@@ -281,7 +281,7 @@ define(() => {
             outline: 2px solid var(--primary);
             outline-offset: 2px;
           }
-          .dropdown-content {
+          #${this.contentId} {
             position: absolute;
             top: 100%;
             left: 0;
@@ -1827,4 +1827,4 @@ define(() => {
 
   return CustomControl;
 });
-//v1232
+//v111
