@@ -281,7 +281,7 @@ define(() => {
             outline: 2px solid var(--primary);
             outline-offset: 2px;
           }
-          #${this.contentId} {
+          #${this.contentId} .dropdown-content{
             position: absolute;
             top: 100%;
             left: 0;
@@ -294,7 +294,7 @@ define(() => {
             margin-top: 0.5rem;
             display: none;
           }
-          .dropdown-content.visible {
+          #${this.contentId} .dropdown-content.visible {
             display: block;
           }
           .header {
@@ -1827,4 +1827,4 @@ define(() => {
 
   return CustomControl;
 });
-//v111
+//v116
