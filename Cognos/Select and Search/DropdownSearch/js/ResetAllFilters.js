@@ -7,10 +7,17 @@ define(function () {
       this.isValid = false; // Track validity state
     }
 
-    // Add the required isInValidState method that Cognos will call
-    isInValidState(oControlHost) {
-      return this.isValid;
-    }
+    initialize(oControlHost, fnDoneInitializing) {
+        try {
+            let cc = oControlHost.page.getControlsByNodeName("customControl");
+            console.log(`Found ${cc.length} custom controls via getControlsByNodeName`);
+          } catch (e) {
+            console.warn("getControlsByNodeName failed:", e);
+            cc = controlNamesArray.map((name) => oControlHost.page.getControlByName(name)).filter((c) => c);
+            console.log(`Using ${cc.length} controls from configuration`);
+          }
+        fnDoneInitializing();
+      }
     draw(oControlHost) {
       let controlNames = oControlHost.configuration.ControlNames || "";
       let controlNamesArray = controlNames
