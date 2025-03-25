@@ -56,23 +56,6 @@ define(() => {
     static NO_DATA_MSG = "No data available";
 
     constructor() {
-      // // Initialize the registry if it doesn't exist yet
-      // if (!window.MultiSelectRegistry) {
-      //   window.MultiSelectRegistry = {
-      //     instances: [],
-      //     clearAll: function (controlNames = null) {
-      //       window.MultiSelectRegistry.instances.forEach((instance) => {
-      //         if (!controlNames || controlNames.includes(instance.paramName)) {
-      //           instance.clearAllSelections();
-      //         }
-      //       });
-      //     },
-      //   };
-      // }
-
-      // // Register this instance in the constructor
-      // this.registered = false;
-
       this.mainParamValues = [];
       this.groupChildren = {};
       this.isMultiple = false;
@@ -110,11 +93,6 @@ define(() => {
       this.lastSearchValue = "";
       this.lastSearchType = "";
 
-      // Bound event handler references for cleanup
-      // this.boundDocumentClickHandler = this.handleDocumentClick.bind(this);
-      // this.boundDropdownKeydownHandler = this.handleDropdownKeydown.bind(this);
-      // this.boundCheckboxKeydownHandler = this.handleCheckboxKeydown.bind(this);
-
       // Store all bound event handlers for cleanup
       this.boundHandlers = {
         documentClick: this.handleDocumentClick.bind(this),
@@ -130,18 +108,8 @@ define(() => {
         selectAllClick: null,
         deselectAllClick: null,
         dropdownChange: null,
-        // Add others as needed
       };
     }
-
-    // // Add a method to register the instance
-    // registerInstance() {
-    //   if (!this.registered && this.paramName) {
-    //     window.MultiSelectRegistry.instances.push(this);
-    //     this.registered = true;
-    //     console.log(`Registered MultiSelect instance: ${this.paramName}`);
-    //   }
-    // }
 
     generateId(baseString) {
       this.uniqueIdCounter++;
@@ -153,9 +121,6 @@ define(() => {
      */
     initialize(oControlHost, fnDoneInitializing) {
       this.oControlHost = oControlHost;
-
-      // // Register this instance
-      // CustomControl.instances.push(this);
 
       // Destructure configuration properties with defaults
       const {
@@ -203,9 +168,6 @@ define(() => {
           }
         });
       }
-
-      // // Register this instance now that we have the paramName
-      // this.registerInstance();
       console.log("mainParams & mainParamValues", mainParams, this.mainParamValues);
 
       fnDoneInitializing();
@@ -1442,13 +1404,6 @@ define(() => {
     /**
      * Checks if at least one checkbox is selected.
      */
-    // // Modify isInValidState to consider the change flag:
-    // isInValidState() {
-    //   return this.hasChanged;
-    //   //|| this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked').length > 0
-    // }
-
-    // In MultiSelect.js
     isInValidState() {
       // Get current selections
       if (!this.elements || !this.elements.dropdown) return false;
@@ -1475,11 +1430,6 @@ define(() => {
     hasChangedFromInitial() {
       return this.hasChanged;
     }
-
-    // // Make isInValidState always return true so it doesn't block submission
-    // isInValidState() {
-    //   return true; // Let the ResetAllFilters control determine validity
-    // }
 
     /**
      * Return the parameters for submission.
@@ -1735,6 +1685,7 @@ define(() => {
         this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked')
       ).map((cb) => cb.value);
       this.hasChanged = JSON.stringify(currentSelections) !== JSON.stringify(this.initialSelectedValues);
+      this.oControlHost.validStateChanged()
       this.updateApplyButtonState();
       this.updateResetButtonState();
       // Trigger a global callback to update overall validity, if set.
@@ -1793,15 +1744,6 @@ define(() => {
             }
           }
         };
-
-        // // Unregister this instance
-        // if (window.MultiSelectRegistry && this.registered) {
-        //   const index = window.MultiSelectRegistry.instances.findIndex((instance) => instance === this);
-        //   if (index > -1) {
-        //     window.MultiSelectRegistry.instances.splice(index, 1);
-        //     console.log(`Unregistered MultiSelect instance: ${this.paramName}`);
-        //   }
-        // }
 
         // Document level listeners
         safeRemoveListener(document, "click", this.boundHandlers.documentClick);
@@ -1863,17 +1805,7 @@ define(() => {
       }
     }
   }
-  // // Outside the class definition, ensure the global function is defined only once
-  // if (!window.resetAllMultiSelects) {
-  //   window.resetAllMultiSelects = function (controlNames = null) {
-  //     if (window.MultiSelectRegistry) {
-  //       window.MultiSelectRegistry.clearAll(controlNames);
-  //       return true;
-  //     }
-  //     return false;
-  //   };
-  // }
 
   return CustomControl;
 });
-//v1041
+//v1047

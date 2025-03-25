@@ -150,7 +150,7 @@ define(function () {
       }
 
       // Reset parameter values to initial values through the standard API
-      oControlHost.page.application.resetParameterValues();
+      oControlHost.ValidStateChanged()
       oControlHost.finish();
     }
 
