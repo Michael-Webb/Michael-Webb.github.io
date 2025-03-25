@@ -23,23 +23,24 @@ define(function () {
     f_clearButtonClick(oControlHost, controlArray) {
       // Call the global function exposed by MultiSelect.js
       if (typeof window.resetAllMultiSelects === "function") {
-        // If controlArray is empty, it will clear all multi-selects
-        // Otherwise, it will only clear the ones specified in controlArray
-        window.resetAllMultiSelects(controlArray.length > 0 ? controlArray : null);
-        console.log(`Cleared ${controlArray.length > 0 ? "specific" : "all"} MultiSelect controls`);
+        const success = window.resetAllMultiSelects(controlArray.length > 0 ? controlArray : null);
+        if (success) {
+          console.log(`Cleared ${controlArray.length > 0 ? "specific" : "all"} MultiSelect controls`);
+        } else {
+          console.warn("No MultiSelect registry found. Make sure MultiSelect.js has been loaded.");
+        }
       } else {
-        console.warn("resetAllMultiSelects function not found in global scope");
+        console.warn(
+          "resetAllMultiSelects function not found in global scope. Make sure MultiSelect.js has been loaded."
+        );
       }
 
-      // Optionally, still clear parameter values through the standard API
-      // This line is optional depending on your needs
+      // Still clear parameter values through the standard API
       oControlHost.page.application.clearParameterValues();
-
-      // Finish the interaction
       oControlHost.finish();
     }
   }
 
   return ResetAllParameters;
 });
-//v817
+//v825

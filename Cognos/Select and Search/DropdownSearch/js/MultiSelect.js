@@ -19,17 +19,17 @@ define(() => {
   }
 
   class CustomControl {
-    static instances = [];
+    // static instances = [];
 
-    // Static method to clear all instances
-    static clearAll(controlNames = null) {
-      CustomControl.instances.forEach((instance) => {
-        // If controlNames is provided, only clear instances with matching names
-        if (!controlNames || controlNames.includes(instance.paramName)) {
-          instance.clearAllSelections();
-        }
-      });
-    }
+    // // Static method to clear all instances
+    // static clearAll(controlNames = null) {
+    //   CustomControl.instances.forEach((instance) => {
+    //     // If controlNames is provided, only clear instances with matching names
+    //     if (!controlNames || controlNames.includes(instance.paramName)) {
+    //       instance.clearAllSelections();
+    //     }
+    //   });
+    // }
 
     clearAllSelections() {
       if (!this.elements || !this.elements.dropdown) return;
@@ -53,12 +53,11 @@ define(() => {
       this.updateSelectedCount();
       this.updateChangeFlag();
 
-      // Optionally submit if autoSubmit is true
+      // Auto-submit if configured to do so
       if (this.autoSubmit) {
         this.applySelection();
       }
     }
-
     // Constants for consistent messages
     static NO_SEARCH_RESULTS_MSG = "No options match your search.";
     static NO_SELECTIONS_MSG = "No selections made.";
@@ -66,6 +65,23 @@ define(() => {
     static NO_DATA_MSG = "No Data Available";
 
     constructor() {
+      // Initialize the registry if it doesn't exist yet
+      if (!window.MultiSelectRegistry) {
+        window.MultiSelectRegistry = {
+          instances: [],
+          clearAll: function (controlNames = null) {
+            window.MultiSelectRegistry.instances.forEach((instance) => {
+              if (!controlNames || controlNames.includes(instance.paramName)) {
+                instance.clearAllSelections();
+              }
+            });
+          },
+        };
+      }
+
+      // Register this instance in the constructor
+      this.registered = false;
+
       this.mainParamValues = [];
       this.groupChildren = {};
       this.isMultiple = false;
@@ -125,6 +141,15 @@ define(() => {
         dropdownChange: null,
         // Add others as needed
       };
+    }
+
+    // Add a method to register the instance
+    registerInstance() {
+      if (!this.registered && this.paramName) {
+        window.MultiSelectRegistry.instances.push(this);
+        this.registered = true;
+        console.log(`Registered MultiSelect instance: ${this.paramName}`);
+      }
     }
 
     generateId(baseString) {
@@ -187,6 +212,9 @@ define(() => {
           }
         });
       }
+
+      // Register this instance now that we have the paramName
+      this.registerInstance();
       console.log("mainParams & mainParamValues", mainParams, this.mainParamValues);
 
       fnDoneInitializing();
@@ -1715,10 +1743,13 @@ define(() => {
           }
         };
 
-        // Remove this instance from the registry
-        const index = CustomControl.instances.indexOf(this);
-        if (index > -1) {
-          CustomControl.instances.splice(index, 1);
+        // Unregister this instance
+        if (window.MultiSelectRegistry && this.registered) {
+          const index = window.MultiSelectRegistry.instances.findIndex((instance) => instance === this);
+          if (index > -1) {
+            window.MultiSelectRegistry.instances.splice(index, 1);
+            console.log(`Unregistered MultiSelect instance: ${this.paramName}`);
+          }
         }
 
         // Document level listeners
@@ -1781,11 +1812,17 @@ define(() => {
       }
     }
   }
-  // Outside the class, at the end of your define function before the return statement:
-  window.resetAllMultiSelects = function (controlNames = null) {
-    CustomControl.clearAll(controlNames);
-  };
+  // Outside the class definition, ensure the global function is defined only once
+  if (!window.resetAllMultiSelects) {
+    window.resetAllMultiSelects = function (controlNames = null) {
+      if (window.MultiSelectRegistry) {
+        window.MultiSelectRegistry.clearAll(controlNames);
+        return true;
+      }
+      return false;
+    };
+  }
 
   return CustomControl;
 });
-//v817
+//v825
