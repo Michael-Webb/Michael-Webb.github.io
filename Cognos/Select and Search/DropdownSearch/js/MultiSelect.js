@@ -1402,7 +1402,7 @@ define(() => {
     }
 
     /**
-     * Checks if at least one checkbox is selected.
+     * Checks if current state differs from initial state.
      */
     isInValidState() {
       // Get current selections
@@ -1420,6 +1420,9 @@ define(() => {
       // For user interaction, we want to require a change, not just presence of selections
       return this.hasChanged;
     }
+    // isInValidState(oControlHost) {
+    //   return true;
+    // }
 
     // Add a helper method that can be called from ResetAllFilters
     hasSelections() {
@@ -1685,7 +1688,8 @@ define(() => {
         this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked')
       ).map((cb) => cb.value);
       this.hasChanged = JSON.stringify(currentSelections) !== JSON.stringify(this.initialSelectedValues);
-      this.oControlHost.validStateChanged()
+      console.log(this.hasChanged,this.instancePrefix)
+      this.oControlHost.validStateChanged();
       this.updateApplyButtonState();
       this.updateResetButtonState();
       // Trigger a global callback to update overall validity, if set.
