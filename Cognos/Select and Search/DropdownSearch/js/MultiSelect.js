@@ -1448,25 +1448,24 @@ define(() => {
     //   //|| this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked').length > 0
     // }
 
+    // In MultiSelect.js
     isInValidState() {
       // Get current selections
       if (!this.elements || !this.elements.dropdown) return false;
-      
+
       const selectedCount = this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked').length;
       const hasSelections = selectedCount > 0;
-      const hasChanged = this.hasChanged;
-      
-      console.log(`Control ${this.paramName} validity check: selected=${selectedCount}, changed=${hasChanged}`);
-      
-      // For single-select with autoSubmit, require changes
-      if (!this.isMultiple && this.autoSubmit) {
-        return hasChanged;
-      }
-      
-      // For multiple-select, require either changes or selections
-      return hasChanged || hasSelections;
+
+      // Log the state for debugging
+      console.log(
+        `MultiSelect ${this.paramName} validity check: selected=${selectedCount}, changed=${this.hasChanged}`
+      );
+
+      // The control is valid if it has changed from initial state
+      // For user interaction, we want to require a change, not just presence of selections
+      return this.hasChanged;
     }
-    
+
     // Add a helper method that can be called from ResetAllFilters
     hasSelections() {
       if (!this.elements || !this.elements.dropdown) return false;
