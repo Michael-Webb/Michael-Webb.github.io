@@ -113,7 +113,7 @@ define(function () {
       }
 
       // Clear parameter values through the standard API
-      //   oControlHost.page.application.clearParameterValues();
+      oControlHost.page.application.clearParameterValues();
       oControlHost.finish();
     }
 
@@ -155,8 +155,8 @@ define(function () {
       }
 
       // Reset parameter values to initial values through the standard API
-      //   oControlHost.ValidStateChanged()
-      oControlHost.finish();
+      oControlHost.ValidStateChanged()
+      //oControlHost.finish();
     }
 
     async checkAllControlsValidity(oControlHost) {

@@ -1699,6 +1699,7 @@ define(() => {
         JSON.stringify(currentSelections),
         JSON.stringify(this.initialSelectedValues)
       );
+      console.log('updateChangeFlag run')
       this.oControlHost.validStateChanged();
       this.updateApplyButtonState();
       this.updateResetButtonState();
@@ -1710,7 +1711,7 @@ define(() => {
 
     updateApplyButtonState() {
       if (this.elements.applyBtn) {
-        this.elements.applyBtn.disabled = !this.isInValidState();
+        this.elements.applyBtn.disabled = !this.isInValidState(this.oControlHost);
       }
     }
 
@@ -1822,4 +1823,4 @@ define(() => {
 
   return CustomControl;
 });
-//v1154
+//v1206
