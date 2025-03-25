@@ -252,7 +252,7 @@ define(() => {
             --padding-sm: 0.25rem 0.75rem;
             --margin-md: 0.25rem;
           }
-          #${this.containerId} .dropdown-container {
+          #${this.dropdownId} .dropdown-container {
             position: relative;
             width: ${dropdownWidth};
             font-family: system-ui, sans-serif;
@@ -281,7 +281,7 @@ define(() => {
             outline: 2px solid var(--primary);
             outline-offset: 2px;
           }
-          #${this.containerId} .dropdown-content {
+          #${this.dropdownId} .dropdown-content {
             position: absolute;
             top: 100%;
             left: 0;
