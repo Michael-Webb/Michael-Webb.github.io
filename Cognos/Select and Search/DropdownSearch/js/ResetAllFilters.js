@@ -165,25 +165,26 @@ define(function () {
 
     async checkAllControlsValidity(oControlHost) {
       try {
-        // Disconnect the observer so our DOM changes don't re-trigger this check.
+        // Disconnect the observer to prevent our own DOM updates from re-triggering this check.
         if (this.observer) {
           this.observer.disconnect();
         }
 
-        // Get control names from configuration and build an array.
+        // Get control names from configuration.
         let controlNames = oControlHost.configuration.ControlNames || "";
         let controlNamesArray = controlNames
           .split(",")
           .map((item) => item.trim())
           .filter((item) => item);
 
-        // Attempt to get all custom controls
+        // Try to get controls by node name.
         let customControls = [];
         try {
           customControls = oControlHost.page.getControlsByNodeName("customControl");
           console.log(`Found ${customControls.length} custom controls via getControlsByNodeName`);
         } catch (e) {
           console.warn("getControlsByNodeName failed:", e);
+          // Fallback to using configured control names.
           customControls = controlNamesArray.map((name) => oControlHost.page.getControlByName(name)).filter((c) => c);
           console.log(`Using ${customControls.length} controls from configuration`);
         }
@@ -193,26 +194,24 @@ define(function () {
             .filter((control) => control);
         }
 
-        // Overall validity: true if at least one MultiSelect is changed from its initial state.
+        // Overall validity is true if at least one MultiSelect instance has changed from its initial state.
         let overallValidity = false;
 
-        // Check each control.
+        // Loop through each control.
         const controlPromises = customControls.map(async (control) => {
           try {
             const controlName = control.name || "unnamed";
             const instance = await control.instance;
-            // Only process controls that support MultiSelect behavior.
+            // Only process controls that implement MultiSelect behavior.
             if (instance && typeof instance.clearAllSelections === "function") {
-              // Prefer calling isInValidState() if defined.
+              // Use isInValidState() from the instance, which should return true when changed.
               let controlValid = false;
               if (typeof instance.isInValidState === "function") {
                 controlValid = instance.isInValidState();
               } else {
-                // Fall back to checking a stored change flag.
                 controlValid = instance.hasChanged !== undefined ? instance.hasChanged : false;
               }
               console.log(`Control ${controlName} validity: ${controlValid}`);
-              // If any control reports a change, the overall form is valid.
               if (controlValid) {
                 overallValidity = true;
               }
@@ -227,17 +226,20 @@ define(function () {
 
         console.log(`Overall form validity: ${overallValidity}`);
 
-        // Update our validity state and the submit button.
+        // Update our internal validity state.
         this.isValid = overallValidity;
+
+        // Update the submit button's state.
         const submitButton = document.getElementById("submitButton");
         if (submitButton) {
           submitButton.disabled = !overallValidity;
+          // Force a reflow to update the appearance immediately.
+          submitButton.offsetWidth;
           console.log(`Submit button ${overallValidity ? "enabled" : "disabled"}`);
         }
-        // Notify Cognos that validity state has changed.
         oControlHost.validStateChanged();
 
-        // Reconnect the observer after our updates.
+        // Reconnect the observer.
         if (this.observer) {
           this.observer.observe(oControlHost.container, {
             subtree: true,
@@ -265,4 +267,4 @@ define(function () {
 
   return ResetAllParameters;
 });
-//v945
+//v1012
