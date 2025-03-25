@@ -14,7 +14,7 @@ define(function () {
       el.querySelector(".btnClear").onclick = this.f_clearButtonClick.bind(this, oControlHost);
     }
     f_clearButtonClick(oControlHost) {
-      const aControls = oControlHost.page.getAllPromptControls();
+      const aControls = oControlHost.page.getControlsByName(true);
       console.log("aControls",aControls)
       oControlHost.page.application.clearParameterValues();
       oControlHost.finish();
