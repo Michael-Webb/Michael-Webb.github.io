@@ -55,7 +55,7 @@ define(function () {
       this.observer = observer;
 
       // Observe changes in the page container
-      observer.observe(oControlHost.page.container, {
+      observer.observe(oControlHost.container, {
         subtree: true,
         attributes: true,
         childList: true,
