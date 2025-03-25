@@ -1,6 +1,21 @@
 // ResetAllFilters.js
 define(function () {
   "use strict";
+  // Utility: Generic debounce function
+  function debounce(fn, delay) {
+    let timeout;
+    const debouncedFn = function (...args) {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => fn.apply(this, args), delay);
+    };
+
+    // Add a method to clear the timeout
+    debouncedFn.cancel = function () {
+      clearTimeout(timeout);
+    };
+
+    return debouncedFn;
+  }
 
   class ResetAllParameters {
     constructor() {
@@ -8,6 +23,12 @@ define(function () {
     }
 
     initialize(oControlHost, fnDoneInitializing) {
+      let controlNames = oControlHost.configuration.ControlNames || "";
+      let controlNamesArray = controlNames
+        .split(",")
+        .map((item) => item.trim())
+        .filter((item) => item);
+      console.log("Init controlNamesArray", controlNamesArray);
       fnDoneInitializing();
     }
     draw(oControlHost) {
@@ -155,7 +176,7 @@ define(function () {
       }
 
       // Reset parameter values to initial values through the standard API
-      oControlHost.ValidStateChanged()
+      oControlHost.ValidStateChanged();
       //oControlHost.finish();
     }
 
