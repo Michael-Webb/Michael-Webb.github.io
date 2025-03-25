@@ -165,7 +165,7 @@ define(function () {
 
         // Use control names from configuration only.
         let customControls = controlNamesArray.map((name) => oControlHost.page.getControlByName(name)).filter((c) => c);
-        console.log(`Using ${customControls.length} controls from configuration`);
+        console.log(`Using ${customControls.length} controls from configuration`,customControls,controlNamesArray);
 
         // Determine overall validity:
         // If any MultiSelect control (identified by having clearAllSelections) has changed from its initial state,
@@ -220,4 +220,4 @@ define(function () {
 
   return ResetAllParameters;
 });
-//v1138
+//v1144
