@@ -8,16 +8,8 @@ define(function () {
     }
 
     initialize(oControlHost, fnDoneInitializing) {
-        try {
-            let cc = oControlHost.page.getControlsByNodeName("customControl");
-            console.log(`Found ${cc.length} custom controls via getControlsByNodeName`);
-          } catch (e) {
-            console.warn("getControlsByNodeName failed:", e);
-            cc = controlNamesArray.map((name) => oControlHost.page.getControlByName(name)).filter((c) => c);
-            console.log(`Using ${cc.length} controls from configuration`);
-          }
-        fnDoneInitializing();
-      }
+      fnDoneInitializing();
+    }
     draw(oControlHost) {
       let controlNames = oControlHost.configuration.ControlNames || "";
       let controlNamesArray = controlNames
@@ -53,20 +45,20 @@ define(function () {
         }
       };
 
-      // Set up the mutation observer
-      const observer = new MutationObserver(() => {
+      // Example in ResetAllFilters.js (in your draw() method)
+      this.debouncedCheckValidity = debounce(() => {
         this.checkAllControlsValidity(oControlHost);
+      }, 100);
+
+      const observer = new MutationObserver(() => {
+        this.debouncedCheckValidity();
       });
-
-      // Store a reference to the observer for cleanup
-      this.observer = observer;
-
-      // Observe changes in the page container
       observer.observe(oControlHost.container, {
         subtree: true,
         attributes: true,
         childList: true,
       });
+      this.observer = observer;
 
       // Initial validation
       this.checkAllControlsValidity(oControlHost);
@@ -179,13 +171,13 @@ define(function () {
           .map((item) => item.trim())
           .filter((item) => item);
 
-        // Get custom controls by node name or fall back to configuration.
+        // Attempt to get custom controls.
         let customControls = [];
-        try {
+        if (typeof oControlHost.page.getControlsByNodeName === "function") {
           customControls = oControlHost.page.getControlsByNodeName("customControl");
           console.log(`Found ${customControls.length} custom controls via getControlsByNodeName`);
-        } catch (e) {
-          console.warn("getControlsByNodeName failed:", e);
+        } else {
+          console.warn("getControlsByNodeName is not a function; using configuration controls");
           customControls = controlNamesArray.map((name) => oControlHost.page.getControlByName(name)).filter((c) => c);
           console.log(`Using ${customControls.length} controls from configuration`);
         }
@@ -195,16 +187,16 @@ define(function () {
             .filter((control) => control);
         }
 
-        // Determine overall validity:
-        // If any MultiSelect instance has changed (its isInValidState returns true),
-        // overall validity is true.
+        // Determine overall validity: if any MultiSelect has changed from its initial state.
         let overallValidity = false;
         const controlPromises = customControls.map(async (control) => {
           try {
             const controlName = control.name || "unnamed";
             const instance = await control.instance;
-            // Only process controls that behave like MultiSelect (identified by having clearAllSelections)
+            // Only process MultiSelect controls (identified by having clearAllSelections)
             if (instance && typeof instance.clearAllSelections === "function") {
+              // Use the instance’s isInValidState() method (which should return true when changed),
+              // or fall back on a stored change flag (hasChanged)
               const controlValid = instance.isInValidState
                 ? instance.isInValidState()
                 : instance.hasChanged !== undefined
@@ -221,22 +213,15 @@ define(function () {
         });
         await Promise.all(controlPromises);
         console.log(`Overall form validity: ${overallValidity}`);
+        this.isValid = overallValidity;
 
-        // Use requestAnimationFrame to update the submit button on the next frame.
-        requestAnimationFrame(() => {
-          const submitButton = document.getElementById("submitButton");
-          if (submitButton) {
-            submitButton.disabled = !overallValidity;
-            // Optionally force a reflow (toggling display can trigger a repaint)
-            submitButton.style.display = "none";
-            // Read offsetHeight to force reflow.
-            submitButton.offsetHeight;
-            submitButton.style.display = "";
-            console.log(`Submit button ${overallValidity ? "enabled" : "disabled"}`);
-          }
-          oControlHost.validStateChanged();
-        });
-
+        // Update the submit button's disabled state.
+        const submitButton = document.getElementById("submitButton");
+        if (submitButton) {
+          submitButton.disabled = !overallValidity;
+          console.log(`Submit button ${overallValidity ? "enabled" : "disabled"}`);
+        }
+        oControlHost.validStateChanged();
         return overallValidity;
       } catch (err) {
         console.error("Error checking controls validity:", err);
@@ -255,4 +240,4 @@ define(function () {
 
   return ResetAllParameters;
 });
-//v1022
+//v1033
