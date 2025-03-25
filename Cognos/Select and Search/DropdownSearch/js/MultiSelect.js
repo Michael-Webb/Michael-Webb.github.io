@@ -290,7 +290,7 @@ define(() => {
             border-radius: var(--radius);
             border: 1px solid var(--border);
             box-shadow: var(--shadow);
-            z-index: 1000;
+            z-index: 9999;
             margin-top: 0.5rem;
             display: none;
           }
