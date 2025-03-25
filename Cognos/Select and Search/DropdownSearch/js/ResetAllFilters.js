@@ -165,12 +165,43 @@ define(function () {
 
     async checkAllControlsValidity(oControlHost) {
       try {
-        const customControls = oControlHost.page.getControlsByNodeName("customControl");
+        // Get control names from configuration
+        let controlNames = oControlHost.configuration.ControlNames || "";
+        let controlNamesArray = controlNames
+          .split(",")
+          .map((item) => item.trim())
+          .filter((item) => item);
+
+        // Try to get controls by node name (same as in other methods)
+        let customControls = [];
+        try {
+          customControls = oControlHost.page.getControlsByNodeName("customControl");
+          console.log(`Found ${customControls.length} custom controls via getControlsByNodeName`);
+        } catch (e) {
+          console.warn("getControlsByNodeName failed:", e);
+          // Fallback to defined controls only
+          customControls = controlNamesArray.map((name) => oControlHost.page.getControlByName(name)).filter((c) => c);
+          console.log(`Using ${customControls.length} controls from configuration`);
+        }
+
+        // If no controls found and we have names, get them individually
+        if (customControls.length === 0 && controlNamesArray.length > 0) {
+          customControls = controlNamesArray
+            .map((name) => {
+              const control = oControlHost.page.getControlByName(name);
+              return control;
+            })
+            .filter((control) => control);
+        }
+
         let allControlsValid = true;
 
-        // Check each MultiSelect control
+        // Check each control
         const controlPromises = customControls.map(async (control) => {
           try {
+            // Make sure control has a name property
+            const controlName = control.name || "unnamed";
+
             const instance = await control.instance;
 
             // Only process MultiSelect controls with clearAllSelections method
@@ -182,11 +213,11 @@ define(function () {
                 allControlsValid = false;
               }
 
-              return { controlName: control.name, isValid };
+              return { controlName, isValid };
             }
             return null;
           } catch (err) {
-            console.error(`Error checking control ${control.name}:`, err);
+            console.error(`Error checking control:`, err);
             return null;
           }
         });
@@ -199,6 +230,12 @@ define(function () {
 
         // Update our validity state
         this.isValid = allControlsValid;
+
+        // Update the submit button state
+        const submitButton = document.getElementById("submitButton");
+        if (submitButton) {
+          submitButton.disabled = !allControlsValid;
+        }
 
         // Notify Cognos that our validity state might have changed
         oControlHost.validStateChanged();
@@ -213,8 +250,8 @@ define(function () {
     }
     // Make sure to clean up the interval in destroy method
     destroy(oControlHost) {
-      if (this.validityCheckInterval) {
-        clearInterval(this.validityCheckInterval);
+      if (this.observer) {
+        this.observer.disconnect();
       }
     }
   }
