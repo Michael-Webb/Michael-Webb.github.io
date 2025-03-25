@@ -1707,9 +1707,9 @@ define(() => {
       this.updateResetButtonState();
 
       // If using a global callback, optionally debounce this call
-      if (typeof window.onMultiSelectChange === "function") {
-        window.onMultiSelectChange();
-      }
+      // if (typeof window.onMultiSelectChange === "function") {
+      //   window.onMultiSelectChange();
+      // }
     }
 
     updateApplyButtonState() {
@@ -1826,4 +1826,4 @@ define(() => {
 
   return CustomControl;
 });
-//v1224
+//v1229
