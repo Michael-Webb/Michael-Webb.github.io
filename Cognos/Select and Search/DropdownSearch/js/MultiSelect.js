@@ -19,18 +19,7 @@ define(() => {
   }
 
   class CustomControl {
-    // static instances = [];
-
-    // // Static method to clear all instances
-    // static clearAll(controlNames = null) {
-    //   CustomControl.instances.forEach((instance) => {
-    //     // If controlNames is provided, only clear instances with matching names
-    //     if (!controlNames || controlNames.includes(instance.paramName)) {
-    //       instance.clearAllSelections();
-    //     }
-    //   });
-    // }
-
+    // Add a public method to clear selections
     clearAllSelections() {
       if (!this.elements || !this.elements.dropdown) return;
 
@@ -65,22 +54,22 @@ define(() => {
     static NO_DATA_MSG = "No Data Available";
 
     constructor() {
-      // Initialize the registry if it doesn't exist yet
-      if (!window.MultiSelectRegistry) {
-        window.MultiSelectRegistry = {
-          instances: [],
-          clearAll: function (controlNames = null) {
-            window.MultiSelectRegistry.instances.forEach((instance) => {
-              if (!controlNames || controlNames.includes(instance.paramName)) {
-                instance.clearAllSelections();
-              }
-            });
-          },
-        };
-      }
+      // // Initialize the registry if it doesn't exist yet
+      // if (!window.MultiSelectRegistry) {
+      //   window.MultiSelectRegistry = {
+      //     instances: [],
+      //     clearAll: function (controlNames = null) {
+      //       window.MultiSelectRegistry.instances.forEach((instance) => {
+      //         if (!controlNames || controlNames.includes(instance.paramName)) {
+      //           instance.clearAllSelections();
+      //         }
+      //       });
+      //     },
+      //   };
+      // }
 
-      // Register this instance in the constructor
-      this.registered = false;
+      // // Register this instance in the constructor
+      // this.registered = false;
 
       this.mainParamValues = [];
       this.groupChildren = {};
@@ -143,14 +132,14 @@ define(() => {
       };
     }
 
-    // Add a method to register the instance
-    registerInstance() {
-      if (!this.registered && this.paramName) {
-        window.MultiSelectRegistry.instances.push(this);
-        this.registered = true;
-        console.log(`Registered MultiSelect instance: ${this.paramName}`);
-      }
-    }
+    // // Add a method to register the instance
+    // registerInstance() {
+    //   if (!this.registered && this.paramName) {
+    //     window.MultiSelectRegistry.instances.push(this);
+    //     this.registered = true;
+    //     console.log(`Registered MultiSelect instance: ${this.paramName}`);
+    //   }
+    // }
 
     generateId(baseString) {
       this.uniqueIdCounter++;
@@ -213,8 +202,8 @@ define(() => {
         });
       }
 
-      // Register this instance now that we have the paramName
-      this.registerInstance();
+      // // Register this instance now that we have the paramName
+      // this.registerInstance();
       console.log("mainParams & mainParamValues", mainParams, this.mainParamValues);
 
       fnDoneInitializing();
@@ -1743,14 +1732,14 @@ define(() => {
           }
         };
 
-        // Unregister this instance
-        if (window.MultiSelectRegistry && this.registered) {
-          const index = window.MultiSelectRegistry.instances.findIndex((instance) => instance === this);
-          if (index > -1) {
-            window.MultiSelectRegistry.instances.splice(index, 1);
-            console.log(`Unregistered MultiSelect instance: ${this.paramName}`);
-          }
-        }
+        // // Unregister this instance
+        // if (window.MultiSelectRegistry && this.registered) {
+        //   const index = window.MultiSelectRegistry.instances.findIndex((instance) => instance === this);
+        //   if (index > -1) {
+        //     window.MultiSelectRegistry.instances.splice(index, 1);
+        //     console.log(`Unregistered MultiSelect instance: ${this.paramName}`);
+        //   }
+        // }
 
         // Document level listeners
         safeRemoveListener(document, "click", this.boundHandlers.documentClick);
@@ -1812,17 +1801,17 @@ define(() => {
       }
     }
   }
-  // Outside the class definition, ensure the global function is defined only once
-  if (!window.resetAllMultiSelects) {
-    window.resetAllMultiSelects = function (controlNames = null) {
-      if (window.MultiSelectRegistry) {
-        window.MultiSelectRegistry.clearAll(controlNames);
-        return true;
-      }
-      return false;
-    };
-  }
+  // // Outside the class definition, ensure the global function is defined only once
+  // if (!window.resetAllMultiSelects) {
+  //   window.resetAllMultiSelects = function (controlNames = null) {
+  //     if (window.MultiSelectRegistry) {
+  //       window.MultiSelectRegistry.clearAll(controlNames);
+  //       return true;
+  //     }
+  //     return false;
+  //   };
+  // }
 
   return CustomControl;
 });
-//v825
+//v846
