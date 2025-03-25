@@ -181,29 +181,30 @@ define(function () {
     }
 
     async checkAllControlsValidity(oControlHost) {
+      // Temporarily disconnect the observer to prevent re-triggering
+      if (this.observer) {
+        this.observer.disconnect();
+      }
+
       try {
-        // Get control names from configuration.
+        // Existing logic to check validity...
         let controlNames = oControlHost.configuration.ControlNames || "";
         let controlNamesArray = controlNames
           .split(",")
           .map((item) => item.trim())
           .filter((item) => item);
 
-        // Use control names from configuration only.
         let customControls = controlNamesArray.map((name) => oControlHost.page.getControlByName(name)).filter((c) => c);
+
         console.log(`Using ${customControls.length} controls from configuration`, customControls, controlNamesArray);
 
-        // Determine overall validity:
-        // If any MultiSelect control (identified by having clearAllSelections) has changed from its initial state,
-        // then overall validity is true.
         let overallValidity = false;
         const controlPromises = customControls.map(async (control) => {
           try {
             const controlName = control.name || "unnamed";
             const instance = await control.instance;
             if (instance && typeof instance.clearAllSelections === "function") {
-              // Use the instance’s isInValidState() method if available,
-              // otherwise fall back on a stored change flag (hasChanged)
+              // Get the validity based on your custom method
               const controlValid = instance.isInValidState
                 ? instance.isInValidState()
                 : instance.hasChanged !== undefined
@@ -222,7 +223,7 @@ define(function () {
         console.log(`Overall form validity: ${overallValidity}`);
         this.isValid = overallValidity;
 
-        // Update the submit button's disabled state.
+        // Update the submit button’s disabled state
         const submitButton = document.getElementById("submitButton");
         if (submitButton) {
           submitButton.disabled = !overallValidity;
@@ -233,6 +234,15 @@ define(function () {
         console.error("Error checking controls validity:", err);
         oControlHost.validStateChanged();
         return false;
+      } finally {
+        // Reconnect the observer after the validity check is complete
+        if (this.observer) {
+          this.observer.observe(oControlHost.container, {
+            subtree: true,
+            attributes: true,
+            childList: true,
+          });
+        }
       }
     }
 
@@ -246,4 +256,4 @@ define(function () {
 
   return ResetAllParameters;
 });
-//v1224
+//v1232
