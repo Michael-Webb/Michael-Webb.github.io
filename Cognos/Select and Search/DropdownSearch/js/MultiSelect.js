@@ -1688,7 +1688,7 @@ define(() => {
         this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked')
       ).map((cb) => cb.value);
       this.hasChanged = JSON.stringify(currentSelections) !== JSON.stringify(this.initialSelectedValues);
-      console.log(this.hasChanged,this.instancePrefix)
+      console.log(this.hasChanged,this.instancePrefix, JSON.stringify(currentSelections) ,JSON.stringify(this.initialSelectedValues))
       this.oControlHost.validStateChanged();
       this.updateApplyButtonState();
       this.updateResetButtonState();
@@ -1812,4 +1812,4 @@ define(() => {
 
   return CustomControl;
 });
-//v1047
+//v1133
