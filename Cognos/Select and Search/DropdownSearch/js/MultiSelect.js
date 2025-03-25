@@ -1476,10 +1476,10 @@ define(() => {
       return this.hasChanged;
     }
 
-    // Make isInValidState always return true so it doesn't block submission
-    isInValidState() {
-      return true; // Let the ResetAllFilters control determine validity
-    }
+    // // Make isInValidState always return true so it doesn't block submission
+    // isInValidState() {
+    //   return true; // Let the ResetAllFilters control determine validity
+    // }
 
     /**
      * Return the parameters for submission.

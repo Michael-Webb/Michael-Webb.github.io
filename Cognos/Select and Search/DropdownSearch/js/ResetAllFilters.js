@@ -165,90 +165,79 @@ define(function () {
 
     async checkAllControlsValidity(oControlHost) {
       try {
-        // Disconnect the observer to prevent our own DOM changes from triggering the callback again.
+        // Disconnect the observer so our DOM changes don't re-trigger this check.
         if (this.observer) {
           this.observer.disconnect();
         }
 
-        // Get control names from configuration
+        // Get control names from configuration and build an array.
         let controlNames = oControlHost.configuration.ControlNames || "";
         let controlNamesArray = controlNames
           .split(",")
           .map((item) => item.trim())
           .filter((item) => item);
 
-        // Try to get controls by node name
+        // Attempt to get all custom controls
         let customControls = [];
         try {
           customControls = oControlHost.page.getControlsByNodeName("customControl");
           console.log(`Found ${customControls.length} custom controls via getControlsByNodeName`);
         } catch (e) {
           console.warn("getControlsByNodeName failed:", e);
-          // Fallback: use controls defined in configuration
           customControls = controlNamesArray.map((name) => oControlHost.page.getControlByName(name)).filter((c) => c);
           console.log(`Using ${customControls.length} controls from configuration`);
         }
-
-        // If no controls found but we have names, try to fetch them individually.
         if (customControls.length === 0 && controlNamesArray.length > 0) {
           customControls = controlNamesArray
             .map((name) => oControlHost.page.getControlByName(name))
             .filter((control) => control);
         }
 
-        let controlsWithChanges = [];
-        let controlsWithoutChanges = [];
+        // Overall validity: true if at least one MultiSelect is changed from its initial state.
+        let overallValidity = false;
 
-        // Check each control's state
+        // Check each control.
         const controlPromises = customControls.map(async (control) => {
           try {
             const controlName = control.name || "unnamed";
             const instance = await control.instance;
-
-            // Only process MultiSelect controls (identified by having clearAllSelections)
+            // Only process controls that support MultiSelect behavior.
             if (instance && typeof instance.clearAllSelections === "function") {
-              const hasSelections = instance.hasSelections ? instance.hasSelections() : false;
-              const hasChanged = instance.hasChanged !== undefined ? instance.hasChanged : false;
-
-              console.log(`Control ${controlName}: has selections=${hasSelections}, has changed=${hasChanged}`);
-
-              if (hasChanged) {
-                controlsWithChanges.push(controlName);
+              // Prefer calling isInValidState() if defined.
+              let controlValid = false;
+              if (typeof instance.isInValidState === "function") {
+                controlValid = instance.isInValidState();
               } else {
-                controlsWithoutChanges.push(controlName);
+                // Fall back to checking a stored change flag.
+                controlValid = instance.hasChanged !== undefined ? instance.hasChanged : false;
               }
-
-              return { controlName, hasSelections, hasChanged };
+              console.log(`Control ${controlName} validity: ${controlValid}`);
+              // If any control reports a change, the overall form is valid.
+              if (controlValid) {
+                overallValidity = true;
+              }
             }
-            return null;
           } catch (err) {
             console.error(`Error checking control ${control?.name}:`, err);
-            return null;
           }
         });
 
-        // Wait for all checks to complete
+        // Wait for all controls to be processed.
         await Promise.all(controlPromises);
 
-        // Form is valid if at least one control has changed from its initial state
-        const formIsValid = controlsWithChanges.length > 0;
+        console.log(`Overall form validity: ${overallValidity}`);
 
-        console.log(`Controls with changes (${controlsWithChanges.length}): ${controlsWithChanges.join(", ")}`);
-        console.log(
-          `Controls without changes (${controlsWithoutChanges.length}): ${controlsWithoutChanges.join(", ")}`
-        );
-        console.log(`Overall form validity: ${formIsValid}`);
-
-        // Update validity state and update submit button accordingly.
-        this.isValid = formIsValid;
+        // Update our validity state and the submit button.
+        this.isValid = overallValidity;
         const submitButton = document.getElementById("submitButton");
         if (submitButton) {
-          submitButton.disabled = !formIsValid;
-          console.log(`Submit button ${formIsValid ? "enabled" : "disabled"}`);
+          submitButton.disabled = !overallValidity;
+          console.log(`Submit button ${overallValidity ? "enabled" : "disabled"}`);
         }
+        // Notify Cognos that validity state has changed.
         oControlHost.validStateChanged();
 
-        // Reconnect the observer after our updates
+        // Reconnect the observer after our updates.
         if (this.observer) {
           this.observer.observe(oControlHost.container, {
             subtree: true,
@@ -257,7 +246,7 @@ define(function () {
           });
         }
 
-        return formIsValid;
+        return overallValidity;
       } catch (err) {
         console.error("Error checking controls validity:", err);
         this.isValid = false;
