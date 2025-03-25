@@ -168,7 +168,7 @@ define(() => {
           }
         });
       }
-      console.log("mainParams & mainParamValues", mainParams, this.mainParamValues);
+      //console.log("mainParams & mainParamValues", mainParams, this.mainParamValues);
 
       fnDoneInitializing();
     }
@@ -988,13 +988,13 @@ define(() => {
         // Only proceed if the change event came from a checkbox
         if (e.target.matches('input[type="checkbox"]')) {
           // Log checkbox state changes
-          console.log(`Checkbox ${e.target.value} changed to ${e.target.checked ? "checked" : "unchecked"}`);
+          //console.log(`Checkbox ${e.target.value} changed to ${e.target.checked ? "checked" : "unchecked"}`);
 
           // After handling the change, log all currently checked boxes
           const allChecked = Array.from(
             this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked')
           ).map((cb) => cb.value);
-          console.log(`Total checked: ${allChecked.length}`, allChecked);
+          //console.log(`Total checked: ${allChecked.length}`, allChecked);
 
           // For single selection mode: uncheck all other checkboxes when one is checked
           if (!this.isMultiple && e.target.checked) {
@@ -1420,9 +1420,7 @@ define(() => {
       this.hasChanged = JSON.stringify(currentSelections) !== JSON.stringify(this.initialSelectedValues);
 
       // Log the state for debugging
-      console.log(
-        `MultiSelect ${this.paramName} validity check: selected=${selectedCount}, changed=${this.hasChanged}`
-      );
+      //console.log(`MultiSelect ${this.paramName} validity check: selected=${selectedCount}, changed=${this.hasChanged}`);
 
       // The control is valid if it has changed from initial state
       // For user interaction, we want to require a change, not just presence of selections
@@ -1454,7 +1452,7 @@ define(() => {
         this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked')
       ).map((cb) => cb.value);
 
-      console.log("Selected checkboxes:", selectedValues);
+      //console.log("Selected checkboxes:", selectedValues);
 
       const params = [
         {
@@ -1533,13 +1531,13 @@ define(() => {
      * Toggle all visible checkboxes.
      */
     toggleAllItems(checked) {
-      console.log("Beginning toggleAllItems", checked);
+      //console.log("Beginning toggleAllItems", checked);
 
       // Debug: What are the current selected values?
       const beforeSelected = Array.from(
         this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked')
       ).map((cb) => cb.value);
-      console.log("Before toggle - Selected:", beforeSelected.length, beforeSelected);
+      //console.log("Before toggle - Selected:", beforeSelected.length, beforeSelected);
 
       // Only target checkboxes inside the list container that are currently visible.
       const listElement = this.elements.dropdown.querySelector(".list");
@@ -1547,19 +1545,19 @@ define(() => {
         const checkboxItem = cb.closest(".checkbox-item");
         return checkboxItem && !checkboxItem.classList.contains("hidden") && checkboxItem.style.display !== "none";
       });
-      console.log("Visible checkboxes found:", visibleCheckboxes.length);
+      //console.log("Visible checkboxes found:", visibleCheckboxes.length);
 
       // Apply the checked state to all visible checkboxes
       visibleCheckboxes.forEach((cb) => {
         cb.checked = checked;
-        console.log(`Setting ${cb.value} to ${checked}`);
+        //console.log(`Setting ${cb.value} to ${checked}`);
       });
 
       // Debug: Check the new state
       const afterSelected = Array.from(
         this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked')
       ).map((cb) => cb.value);
-      console.log("After toggle - Selected:", afterSelected.length, afterSelected);
+      //console.log("After toggle - Selected:", afterSelected.length, afterSelected);
 
       // Update header count and announce selection
       this.updateSelectedCount();
@@ -1573,7 +1571,7 @@ define(() => {
 
       // Log parameters to verify the new state.
       const params = this.getParameters();
-      console.log("Parameters after toggle:", params);
+      //console.log("Parameters after toggle:", params);
     }
 
     toggleSelectedFilter() {
@@ -1830,4 +1828,4 @@ define(() => {
 
   return CustomControl;
 });
-//v134
+//v146

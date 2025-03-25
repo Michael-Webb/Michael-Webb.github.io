@@ -245,10 +245,6 @@ define(function () {
         }
       }
     }
-    isInValidState(oControlHost){
-        this.checkAllControlsValidity(oControlHost)
-        console.log("Made Valid")
-    }
 
     // Make sure to clean up the interval in destroy method
     destroy(oControlHost) {
@@ -260,4 +256,4 @@ define(function () {
 
   return ResetAllParameters;
 });
-//v134
+//v146
