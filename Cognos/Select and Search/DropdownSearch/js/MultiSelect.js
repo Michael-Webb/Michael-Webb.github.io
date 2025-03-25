@@ -1,3 +1,4 @@
+//MultiSelect.js
 define(() => {
   "use strict";
 
@@ -18,6 +19,46 @@ define(() => {
   }
 
   class CustomControl {
+    static instances = [];
+
+    // Static method to clear all instances
+    static clearAll(controlNames = null) {
+      CustomControl.instances.forEach((instance) => {
+        // If controlNames is provided, only clear instances with matching names
+        if (!controlNames || controlNames.includes(instance.paramName)) {
+          instance.clearAllSelections();
+        }
+      });
+    }
+
+    clearAllSelections() {
+      if (!this.elements || !this.elements.dropdown) return;
+
+      // Get all checkboxes
+      const checkboxes = this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]');
+      checkboxes.forEach((cb) => {
+        cb.checked = false;
+      });
+
+      // If showing selected only, revert to showing all
+      if (this.showingSelectedOnly) {
+        this.showingSelectedOnly = false;
+        this.elements.showSelected.textContent = "Show Selected";
+
+        const list = this.elements.dropdown.querySelector(".list");
+        this.showAllItems(list);
+      }
+
+      // Update UI components
+      this.updateSelectedCount();
+      this.updateChangeFlag();
+
+      // Optionally submit if autoSubmit is true
+      if (this.autoSubmit) {
+        this.applySelection();
+      }
+    }
+
     // Constants for consistent messages
     static NO_SEARCH_RESULTS_MSG = "No options match your search.";
     static NO_SELECTIONS_MSG = "No selections made.";
@@ -96,6 +137,9 @@ define(() => {
      */
     initialize(oControlHost, fnDoneInitializing) {
       this.oControlHost = oControlHost;
+
+      // Register this instance
+      CustomControl.instances.push(this);
 
       // Destructure configuration properties with defaults
       const {
@@ -1654,7 +1698,6 @@ define(() => {
         this.elements.resetBtn.disabled = !this.hasChanged;
       }
     }
-    
 
     /**
      * Cleanup event listeners and references.
@@ -1671,6 +1714,12 @@ define(() => {
             }
           }
         };
+
+        // Remove this instance from the registry
+        const index = CustomControl.instances.indexOf(this);
+        if (index > -1) {
+          CustomControl.instances.splice(index, 1);
+        }
 
         // Document level listeners
         safeRemoveListener(document, "click", this.boundHandlers.documentClick);
@@ -1732,7 +1781,11 @@ define(() => {
       }
     }
   }
+  // Outside the class, at the end of your define function before the return statement:
+  window.resetAllMultiSelects = function (controlNames = null) {
+    CustomControl.clearAll(controlNames);
+  };
 
   return CustomControl;
 });
-//v450
+//v817
