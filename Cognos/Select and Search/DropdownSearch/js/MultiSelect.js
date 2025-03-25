@@ -1411,7 +1411,10 @@ define(() => {
       const selectedCount = this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked').length;
       const hasSelections = selectedCount > 0;
 
-      this.updateChangeFlag()
+      const currentSelections = Array.from(
+        this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked')
+      ).map((cb) => cb.value);
+      this.hasChanged = JSON.stringify(currentSelections) !== JSON.stringify(this.initialSelectedValues);
 
       // Log the state for debugging
       console.log(
@@ -1690,7 +1693,12 @@ define(() => {
         this.elements.dropdown.querySelectorAll('.list input[type="checkbox"]:checked')
       ).map((cb) => cb.value);
       this.hasChanged = JSON.stringify(currentSelections) !== JSON.stringify(this.initialSelectedValues);
-      console.log(this.hasChanged,this.instancePrefix, JSON.stringify(currentSelections) ,JSON.stringify(this.initialSelectedValues))
+      console.log(
+        this.hasChanged,
+        this.instancePrefix,
+        JSON.stringify(currentSelections),
+        JSON.stringify(this.initialSelectedValues)
+      );
       this.oControlHost.validStateChanged();
       this.updateApplyButtonState();
       this.updateResetButtonState();
@@ -1814,4 +1822,4 @@ define(() => {
 
   return CustomControl;
 });
-//v1133
+//v1154
