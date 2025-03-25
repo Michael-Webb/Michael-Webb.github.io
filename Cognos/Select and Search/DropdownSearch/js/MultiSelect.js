@@ -239,7 +239,8 @@ define(() => {
      */
     generateStyleBlock(dropdownWidth, contentWidth) {
       return `<style>
-          :root {
+          /* Scoped CSS variables for this instance */
+          #${this.dropdownId} {
             --primary: #2563eb;
             --primary-hover: #1d4ed8;
             --border: #e5e7eb;
@@ -252,15 +253,16 @@ define(() => {
             --padding-sm: 0.25rem 0.75rem;
             --margin-md: 0.25rem;
           }
+          /* Scope all rules to this instance using the unique ID */
           #${this.dropdownId} .dropdown-container {
             position: relative;
             width: ${dropdownWidth};
             font-family: system-ui, sans-serif;
           }
-          .dropdown-container.compact {
+          #${this.dropdownId} .dropdown-container.compact {
             /* additional compact styles if needed */
           }
-          .dropdown-header {
+          #${this.dropdownId} .dropdown-header {
             width: 100%;
             padding: var(--padding-md);
             display: flex;
@@ -274,10 +276,10 @@ define(() => {
             transition: border-color 0.2s;
             box-sizing: border-box;
           }
-          .dropdown-header:hover {
+          #${this.dropdownId} .dropdown-header:hover {
             border-color: var(--primary);
           }
-          .dropdown-header:focus-visible {
+          #${this.dropdownId} .dropdown-header:focus-visible {
             outline: 2px solid var(--primary);
             outline-offset: 2px;
           }
@@ -294,22 +296,22 @@ define(() => {
             margin-top: 0.5rem;
             display: none;
           }
-          .dropdown-content.visible {
+          #${this.dropdownId} .dropdown-content.visible {
             display: block;
           }
-          .header {
+          #${this.dropdownId} .header {
             border-bottom: 1px solid var(--border);
           }
-          .search-container {
+          #${this.dropdownId} .search-container {
             width: 100%;
             box-sizing: border-box;
           }
-          .search-wrapper {
+          #${this.dropdownId} .search-wrapper {
             position: relative;
             display: inline-block;
             width: 100%;
           }
-          .search-input {
+          #${this.dropdownId} .search-input {
             width: 100%;
             padding: 0.5rem 2rem 0.5rem 0.75rem;
             border: 1px solid var(--border);
@@ -318,17 +320,15 @@ define(() => {
             font-size: 0.875rem;
             box-sizing: border-box;
           }
-          .search-input:focus {
+          #${this.dropdownId} .search-input:focus {
             outline: none;
             border-color: var(--primary);
           }
-
-          .search-icon:disabled {
+          #${this.dropdownId} .search-icon:disabled {
             opacity: 0.5;
             cursor: default;
           }
-
-          .search-icon {
+          #${this.dropdownId} .search-icon {
             position: absolute;
             right: 0.5rem;
             top: 50%;
@@ -338,14 +338,13 @@ define(() => {
             cursor: pointer;
             padding: 0;
           }
-          .header-buttons {
+          #${this.dropdownId} .header-buttons {
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            padding: 0.25rem .75rem 0.25rem 0.75rem
+            padding: 0.25rem 0.75rem;
           }
-
-          .advanced-search {
+          #${this.dropdownId} .advanced-search {
             display: flex;
             align-items: center;
             color: var(--primary);
@@ -353,36 +352,36 @@ define(() => {
             border: none;
             font-size: 0.875rem;
             cursor: pointer;
-            padding: 0.25rem .25rem .25rem 0rem;
+            padding: 0.25rem 0.25rem 0.25rem 0rem;
           }
-          .advanced-search:focus-visible {
+          #${this.dropdownId} .advanced-search:focus-visible {
             outline: 1px solid var(--primary);
             outline-offset: 2px;
           }
-          .search-controls {
+          #${this.dropdownId} .search-controls {
             display: none;
             flex-direction: column;
             margin-top: var(--margin-md);
           }
-          .search-controls.expanded {
+          #${this.dropdownId} .search-controls.expanded {
             display: flex;
           }
-          .search-options {
+          #${this.dropdownId} .search-options {
             width: 75%;
-            margin: 0rem 0rem 0rem 0.75rem;
+            margin: 0 0 0 0.75rem;
           }
-          .search-type {
+          #${this.dropdownId} .search-type {
             width: 100%;
             border: 1px solid var(--border);
             border-radius: var(--radius);
             font-size: 0.8rem;
             outline: none;
-            padding: 0.25rem 0rem;
+            padding: 0.25rem 0;
           }
-          .search-type:focus-visible {
+          #${this.dropdownId} .search-type:focus-visible {
             outline: 1px solid var(--primary);
           }
-          .search-type-option {
+          #${this.dropdownId} .search-type-option {
             display: flex;
             align-items: center;
             gap: 0.5rem;
@@ -390,35 +389,34 @@ define(() => {
             color: var(--text);
             cursor: pointer;
           }
-          .case-option {
+          #${this.dropdownId} .case-option {
             display: flex;
             align-items: center;
             font-size: 0.8rem;
             color: var(--text);
             cursor: pointer;
             border-radius: var(--radius);
-            margin: 0rem 0.75rem 0.5rem 0.75rem;
-            gap: .5rem;
+            margin: 0 0.75rem 0.5rem 0.75rem;
+            gap: 0.5rem;
           }
-          input[type="checkbox"] {
-            margin: 0rem 0.5rem 0rem 0rem;
+          #${this.dropdownId} input[type="checkbox"] {
+            margin: 0 0.5rem 0 0;
             flex-shrink: 0;
             transform: translateY(1px);
             vertical-align: middle !important;
           }
-          .case-checkbox {
+          #${this.dropdownId} .case-checkbox {
             margin: 0;
           }
-          
-          .case-checkbox:focus-visible {
+          #${this.dropdownId} .case-checkbox:focus-visible {
             outline: 2px solid var(--primary);
             outline-offset: 2px;
           }
-          .group {
+          #${this.dropdownId} .group {
             margin-bottom: var(--margin-md);
           }
-          .group-header {
-            padding: .25rem .75rem .25rem .5rem;
+          #${this.dropdownId} .group-header {
+            padding: 0.25rem 0.75rem 0.25rem 0.5rem;
             background: var(--bg-hover);
             font-weight: 500;
             font-size: 0.875rem;
@@ -429,7 +427,7 @@ define(() => {
             text-align: left;
             gap: 0.5rem;
           }
-          .group-header span {
+          #${this.dropdownId} .group-header span {
             display: block;
             line-height: 1;
             white-space: nowrap;
@@ -439,73 +437,72 @@ define(() => {
             min-width: 0;
             max-width: calc(100% - 120px);
           }
-          .group-controls {
+          #${this.dropdownId} .group-controls {
             display: flex;
             gap: 0.25rem;
             align-items: center;
             flex-shrink: 0;
             width: 120px;
           }
-          .btn {
+          #${this.dropdownId} .btn {
             padding: 0.375rem 0.5rem;
             border-radius: var(--radius);
             font-size: 0.875rem;
             cursor: pointer;
-            white-space: nowrap
+            white-space: nowrap;
           }
-          .btn:focus-visible {
+          #${this.dropdownId} .btn:focus-visible {
             outline: 2px solid var(--primary);
             outline-offset: 2px;
           }
-          .btn.primary {
+          #${this.dropdownId} .btn.primary {
             background: var(--primary);
             color: white;
             border: none;
           }
-          .btn.primary:hover {
+          #${this.dropdownId} .btn.primary:hover {
             background: var(--primary-hover);
           }
-          .apply-btn:disabled {
-            background-color: #f3f4f6; /* light gray background */
-            border: 1px solid #d1d5db; /* gray border */
-            color: #9ca3af; /* gray text */
+          #${this.dropdownId} .apply-btn:disabled {
+            background-color: #f3f4f6;
+            border: 1px solid #d1d5db;
+            color: #9ca3af;
             cursor: default;
             opacity: 0.6;
           }
-          .btn.secondary {
+          #${this.dropdownId} .btn.secondary {
             background: white;
             border: 1px solid var(--border);
             color: var(--text);
           }
-          .btn.secondary:hover {
+          #${this.dropdownId} .btn.secondary:hover {
             background: var(--bg-hover);
           }
-          .reset-btn {
+          #${this.dropdownId} .reset-btn {
             /* For example, add a left margin to separate it from the Clear button */
-            /* Additional styling can go here */
           }
-          .reset-btn:disabled {
+          #${this.dropdownId} .reset-btn:disabled {
             cursor: default;
             opacity: 0.6;
-            background-color: #f3f4f6; /* light gray background */
-            border: 1px solid #d1d5db; /* gray border */
-            color: #9ca3af; /* gray text */
+            background-color: #f3f4f6;
+            border: 1px solid #d1d5db;
+            color: #9ca3af;
           }
-          .checkbox-item {
+          #${this.dropdownId} .checkbox-item {
             display: flex;
             align-items: center;
-            padding:var(--padding-sm);
+            padding: var(--padding-sm);
             cursor: pointer;
             transition: background 0.2s;
           }
-          .checkbox-item:hover {
+          #${this.dropdownId} .checkbox-item:hover {
             background: var(--bg-hover);
           }
-          .checkbox-item input[type="checkbox"]:focus-visible {
+          #${this.dropdownId} .checkbox-item input[type="checkbox"]:focus-visible {
             outline: 2px solid var(--primary);
             outline-offset: 2px;
           }
-          .checkbox-item span {
+          #${this.dropdownId} .checkbox-item span {
             font-size: 0.875rem;
             color: var(--text);
             white-space: nowrap;
@@ -513,46 +510,46 @@ define(() => {
             text-overflow: ellipsis;
             min-width: 0;
           }
-          .hidden {
+          #${this.dropdownId} .hidden {
             display: none !important;
           }
-          .dropdown-footer {
+          #${this.dropdownId} .dropdown-footer {
             padding: var(--padding-lg);
             border-top: 1px solid var(--border);
             display: flex;
             justify-content: space-between;
             align-items: center;
           }
-          .select-controls {
+          #${this.dropdownId} .select-controls {
             display: flex;
             gap: 0.5rem;
           }
-          .chevron {
+          #${this.dropdownId} .chevron {
             fill: currentColor;
             transition: transform 0.2s;
           }
-          .expanded .chevron {
+          #${this.dropdownId} .expanded .chevron {
             transform: rotate(180deg);
           }
-          .list {
+          #${this.dropdownId} .list {
             max-height: 250px;
             overflow-y: auto;
             overflow-x: hidden;
           }
-          .list::-webkit-scrollbar {
+          #${this.dropdownId} .list::-webkit-scrollbar {
             width: 8px;
           }
-          .list::-webkit-scrollbar-track {
+          #${this.dropdownId} .list::-webkit-scrollbar-track {
             background: transparent;
           }
-          .list::-webkit-scrollbar-thumb {
+          #${this.dropdownId} .list::-webkit-scrollbar-thumb {
             background: #cbd5e1;
             border-radius: 4px;
           }
-          .list::-webkit-scrollbar-thumb:hover {
+          #${this.dropdownId} .list::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
           }
-          .sr-only {
+          #${this.dropdownId} .sr-only {
             position: absolute;
             width: 1px;
             height: 1px;
@@ -562,16 +559,15 @@ define(() => {
             clip: rect(0, 0, 0, 0);
             border: 0;
           }
-          .no-options {
+          #${this.dropdownId} .no-options {
             padding: 1rem;
             text-align: center;
             color: #666;
             font-size: 0.875rem;
           }
-
         </style>`;
     }
-
+    
     /**
      * Generate the header section.
      */
