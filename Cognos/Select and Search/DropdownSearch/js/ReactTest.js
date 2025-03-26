@@ -1,42 +1,48 @@
-require.config({
-  paths: {
-    // Note: Omit the ".js" extension because RequireJS appends it automatically.
-    react: "https://unpkg.com/react@18/umd/react.production.min",
-    "react-dom": "https://unpkg.com/react-dom@18/umd/react-dom.production.min",
-  },
-  shim: {
-    // If needed, these shims tell RequireJS what globals to use.
-    react: { exports: "React" },
-    "react-dom": { exports: "ReactDOM" },
-  },
-});
-
-define(["react", "react-dom", "MyReactComponent"], function (React, ReactDOM) {
-  "use strict";
-
-  class AdvancedControl {
-    initialize(oControlHost, fnDoneInitializing) {
-      fnDoneInitializing();
+define([], function() {
+    "use strict";
+  
+    class AdvancedControl {
+      initialize(oControlHost, fnDoneInitializing) {
+        require([
+          "https://unpkg.com/react@18/umd/react.production.min",
+          "https://unpkg.com/react-dom@18/umd/react-dom.production.min"
+        ], this.dependenciesLoaded.bind(this, fnDoneInitializing));
+      }
+  
+      dependenciesLoaded(fnDoneInitializing, React, ReactDOM) {
+        // Store the loaded dependencies
+        this.React = React;
+        this.ReactDOM = ReactDOM;
+  
+        // Define an inline React component that renders some text
+        this.MyReactComponent = function(props) {
+          return React.createElement("div", null, props.text);
+        };
+  
+        fnDoneInitializing();
+      }
+  
+      // Render the inline React component with a text prop
+      draw(oControlHost) {
+        this.ReactDOM.render(
+          this.React.createElement(this.MyReactComponent, { text: "Hello from React!" }),
+          oControlHost.container
+        );
+      }
+  
+      // Unmount the component when the control is destroyed
+      destroy(oControlHost) {
+        this.ReactDOM.unmountComponentAtNode(oControlHost.container);
+      }
+  
+      // Other lifecycle methods as needed
+      show(oControlHost) {}
+      hide(oControlHost) {}
+      isInValidState(oControlHost) {}
+      getParameters(oControlHost) {}
+      setData(oControlHost, oDataStore) {}
     }
-
-    // This method is where you render your React component.
-    draw(oControlHost) {
-      // You can pass any props your React component needs.
-      ReactDOM.render(React.createElement(MyReactComponent, { someProp: "value" }), oControlHost.container);
-    }
-
-    // Always unmount your React component during cleanup.
-    destroy(oControlHost) {
-      ReactDOM.unmountComponentAtNode(oControlHost.container);
-    }
-
-    // You can implement the remaining methods (show, hide, etc.) as needed.
-    show(oControlHost) {}
-    hide(oControlHost) {}
-    isInValidState(oControlHost) {}
-    getParameters(oControlHost) {}
-    setData(oControlHost, oDataStore) {}
-  }
-
-  return AdvancedControl;
-});
+  
+    return AdvancedControl;
+  });
+  
