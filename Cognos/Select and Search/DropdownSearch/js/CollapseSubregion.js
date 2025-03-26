@@ -139,7 +139,7 @@ define(function () {
             }
           } else {
             // No session storage, use configuration value
-            const initiallyExpanded = this.getConfigurationValue("Initially Expanded", true);
+            const initiallyExpanded = this.getConfigurationValue("  ", true);
             const currentDisplay = control.getDisplay();
             
             // Only toggle if needed
