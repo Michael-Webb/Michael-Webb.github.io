@@ -24,6 +24,10 @@ define([], function () {
   
       // Render a React component that displays a dropdown select.
       draw(oControlHost) {
+        // Capture React and ReactDOM in local variables
+        const React = this.React;
+        const ReactDOM = this.ReactDOM;
+  
         // Define an inline React component for the dropdown select
         const Dropdown = (props) => {
           const { options, onChange, value } = props;
@@ -40,7 +44,7 @@ define([], function () {
         };
   
         // Container component to handle state and selection changes.
-        class DropdownContainer extends this.React.Component {
+        class DropdownContainer extends React.Component {
           constructor(props) {
             super(props);
             // Initialize state with the first option selected by default.
@@ -59,7 +63,7 @@ define([], function () {
           }
   
           render() {
-            return this.React.createElement(
+            return React.createElement(
               "div",
               null,
               React.createElement(Dropdown, {
@@ -79,8 +83,8 @@ define([], function () {
         ];
   
         // Render the DropdownContainer component into the provided container.
-        this.ReactDOM.render(
-          this.React.createElement(DropdownContainer, { options: options }),
+        ReactDOM.render(
+          React.createElement(DropdownContainer, { options: options }),
           oControlHost.container
         );
       }
