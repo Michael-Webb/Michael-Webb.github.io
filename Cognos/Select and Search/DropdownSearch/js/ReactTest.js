@@ -1,44 +1,45 @@
 define([], function () {
   "use strict";
-  // 1. Configure RequireJS paths at the top of your module file
+
+  // Configure RequireJS to load React and ReactDOM from the CDN
   require.config({
     paths: {
-      react: "https://unpkg.com/react@18/umd/react.production.min.js",
-      "react-dom": "https://unpkg.com/react-dom@18/umd/react-dom.production.min.js",
-    },
-    shim: {
-      react: { exports: "React" },
-      "react-dom": { exports: "ReactDOM" },
-    },
+      react: "https://unpkg.com/react@18/umd/react.production.min",
+      "react-dom": "https://unpkg.com/react-dom@18/umd/react-dom.production.min",
+    }
   });
-  class AdvancedControl {
-    initialize(oControlHost, fnDoneInitializing) {
-      // 2. Now that require.config is set, you can dynamically load react & react-dom
-      require(["react", "react-dom"], (React, ReactDOM) => {
-        // Store on 'this' so we can use them in draw/destroy
-        this.React = React;
-        this.ReactDOM = ReactDOM;
 
-        // Finish initialization
-        fnDoneInitializing();
-      });
+  class AdvancedControl {
+    // Load dependencies when the control initializes.
+    initialize(oControlHost, fnDoneInitializing) {
+      require(["react", "react-dom"], this.dependenciesLoaded.bind(this, fnDoneInitializing));
     }
 
-    // Render the inline React component with a text prop
+    dependenciesLoaded(fnDoneInitializing, React, ReactDOM) {
+      // Store the loaded dependencies for later use
+      this.React = React;
+      this.ReactDOM = ReactDOM;
+      fnDoneInitializing();
+    }
+
+    // Render a React component that displays some text.
     draw(oControlHost) {
-      const MyReactComponent = (props) => this.React.createElement("div", null, props.text);
+      // Define an inline React component
+      const MyComponent = (props) => this.React.createElement("div", null, props.text);
+
+      // Render the component into the provided container
       this.ReactDOM.render(
-        this.React.createElement(MyReactComponent, { text: "Hello from React!" }),
+        this.React.createElement(MyComponent, { text: "Hello from React!" }),
         oControlHost.container
       );
     }
 
-    // Unmount the component when the control is destroyed
+    // Cleanup when the control is destroyed.
     destroy(oControlHost) {
       this.ReactDOM.unmountComponentAtNode(oControlHost.container);
     }
 
-    // Other lifecycle methods as needed
+    // Optional additional methods
     show(oControlHost) {}
     hide(oControlHost) {}
     isInValidState(oControlHost) {}
