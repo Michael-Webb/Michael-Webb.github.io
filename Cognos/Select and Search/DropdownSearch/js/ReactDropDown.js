@@ -10,6 +10,11 @@ define([], function () {
     });
   
     class AdvancedControl {
+      // Store React references
+      React = null;
+      ReactDOM = null;
+      DropdownSelectComponent = null; // To store our component class
+  
       // Load dependencies when the control initializes.
       initialize(oControlHost, fnDoneInitializing) {
         require(["react", "react-dom"], this.dependenciesLoaded.bind(this, fnDoneInitializing));
@@ -19,82 +24,118 @@ define([], function () {
         // Store the loaded dependencies for later use
         this.React = React;
         this.ReactDOM = ReactDOM;
-        fnDoneInitializing();
-      }
   
-      // Render a React component that displays a dropdown select.
-      draw(oControlHost) {
-        // Capture React and ReactDOM in local variables
-        const React = this.React;
-        const ReactDOM = this.ReactDOM;
-  
-        // Define an inline React component for the dropdown select
-        const Dropdown = (props) => {
-          const { options, onChange, value } = props;
-          return React.createElement(
-            "select",
-            {
-              value: value,
-              onChange: onChange
-            },
-            options.map((option, index) =>
-              React.createElement("option", { key: index, value: option.value }, option.label)
-            )
-          );
-        };
-  
-        // Container component to handle state and selection changes.
-        class DropdownContainer extends React.Component {
+        // --- Define the Dropdown React Component ---
+        // Using React.createElement syntax as JSX is not available here
+        class DropdownSelect extends this.React.Component {
           constructor(props) {
             super(props);
-            // Initialize state with the first option selected by default.
+            // Initialize state with the first option's value or an empty string
+            const initialValue = props.options && props.options.length > 0 ? props.options[0].value : "";
             this.state = {
-              selected: props.options[0].value
+              selectedValue: props.initialValue !== undefined ? props.initialValue : initialValue
             };
+            // Bind the event handler
             this.handleChange = this.handleChange.bind(this);
           }
   
-          handleChange(e) {
-            this.setState({ selected: e.target.value });
-            // Optional: Pass the selected value to a callback if provided.
-            if (this.props.onSelect) {
-              this.props.onSelect(e.target.value);
+          handleChange(event) {
+            const newValue = event.target.value;
+            this.setState({ selectedValue: newValue });
+            // Call the onChange prop if provided
+            if (this.props.onChange) {
+              this.props.onChange(newValue);
             }
           }
   
           render() {
-            return React.createElement(
-              "div",
-              null,
-              React.createElement(Dropdown, {
-                options: this.props.options,
-                value: this.state.selected,
-                onChange: this.handleChange
-              })
+            const { options, placeholder } = this.props;
+            const { selectedValue } = this.state;
+  
+            // Create option elements
+            const optionElements = (options || []).map(option =>
+              this.React.createElement(
+                "option",
+                { key: option.value, value: option.value },
+                option.label
+              )
+            );
+  
+            // Add a placeholder option if specified
+            if (placeholder) {
+                optionElements.unshift(
+                    this.React.createElement(
+                        "option",
+                        { key: "placeholder", value: "", disabled: true },
+                        placeholder
+                    )
+                );
+            }
+  
+            // Create the select element
+            return this.React.createElement(
+              "select",
+              { value: selectedValue, onChange: this.handleChange },
+              optionElements // Pass the array of option elements as children
             );
           }
         }
+        // --- End of Dropdown React Component Definition ---
   
-        // Define options for the dropdown select.
-        const options = [
-          { value: "option1", label: "Option 1" },
-          { value: "option2", label: "Option 2" },
-          { value: "option3", label: "Option 3" }
-        ];
+        this.DropdownSelectComponent = DropdownSelect; // Store the component class
   
-        // Render the DropdownContainer component into the provided container.
-        ReactDOM.render(
-          React.createElement(DropdownContainer, { options: options }),
-          oControlHost.container
-        );
+        console.log("React and ReactDOM loaded successfully.");
+        fnDoneInitializing();
+      }
+  
+      // Render the React dropdown component.
+      draw(oControlHost) {
+          if (!this.React || !this.ReactDOM || !this.DropdownSelectComponent) {
+              console.error("React dependencies not loaded yet.");
+              // Optionally render a loading message or wait
+              oControlHost.container.textContent = "Loading dependencies...";
+              return;
+          }
+  
+          // --- Define options and handler for the dropdown ---
+          const dropdownOptions = [
+              { value: "apple", label: "Apple" },
+              { value: "banana", label: "Banana" },
+              { value: "cherry", label: "Cherry" },
+              { value: "date", label: "Date" }
+          ];
+  
+          // Example handler within AdvancedControl to react to changes
+          const handleDropdownChange = (selectedValue) => {
+              console.log("Dropdown selection changed to:", selectedValue);
+              // You could potentially store this value or trigger other actions
+              // Maybe update oControlHost properties or interact with Cognos Analytics APIs
+              // For example: oControlHost.valueChanged(selectedValue); // If applicable
+          };
+  
+          // --- Render the component ---
+          this.ReactDOM.render(
+              this.React.createElement(this.DropdownSelectComponent, {
+                  options: dropdownOptions,
+                  onChange: handleDropdownChange,
+                  // Optional: Add a placeholder
+                  placeholder: "Select a fruit...",
+                  // Optional: Set an initial value (must match one of the option values)
+                  // initialValue: "banana"
+              }),
+              oControlHost.container
+          );
       }
   
       // Cleanup when the control is destroyed.
       destroy(oControlHost) {
-        this.ReactDOM.unmountComponentAtNode(oControlHost.container);
+        if (this.ReactDOM && oControlHost.container) {
+          this.ReactDOM.unmountComponentAtNode(oControlHost.container);
+          console.log("React component unmounted.");
+        }
       }
   
-      // Optional additional methods
+      // Optional additional methods (keep as is)
       show(oControlHost) {}
       hide(oControlHost) {}
       isInValidState(oControlHost) {}
@@ -104,4 +145,3 @@ define([], function () {
   
     return AdvancedControl;
   });
-  
