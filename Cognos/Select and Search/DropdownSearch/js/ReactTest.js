@@ -1,24 +1,11 @@
-define([], function () {
+define(["react", "react-dom"], function (React, ReactDOM) {
   "use strict";
-
-  // Configure RequireJS to load React and ReactDOM from the CDN
-  require.config({
-    paths: {
-      react: "https://unpkg.com/react@18/umd/react.production.min",
-      "react-dom": "https://unpkg.com/react-dom@18/umd/react-dom.production.min",
-    }
-  });
 
   class AdvancedControl {
     // Load dependencies when the control initializes.
     initialize(oControlHost, fnDoneInitializing) {
-      require(["react", "react-dom"], this.dependenciesLoaded.bind(this, fnDoneInitializing));
-    }
-
-    dependenciesLoaded(fnDoneInitializing, React, ReactDOM) {
-      // Store the loaded dependencies for later use
-      this.React = React;
-      this.ReactDOM = ReactDOM;
+        this.React = React
+        this.ReactDOM = ReactDOM
       fnDoneInitializing();
     }
 
