@@ -228,8 +228,11 @@
   }
 
   // 3. Process spans for attachments only after authentication is complete
+  // 3. Process spans for attachments only after authentication is complete
   const spans = document.querySelectorAll(`span[id^="documentOnline-"]`);
-  spans.forEach((span) => {
+
+  // Create an array of promises for each span
+  const fetchPromises = Array.from(spans).map((span) => {
     const assetID = span.getAttribute("data-ref");
     console.log("Processing asset ID:", assetID);
 
@@ -246,33 +249,78 @@
     // Insert clock SVG as a loading placeholder
     container.innerHTML = clockSVG;
 
-    fetch(`${appBaseURL}Production-UI/api/finance/legacy/documents/FAIdnt/attachments/`, {
-      method: "POST",
-      headers: {
-        accept: "application/json, text/plain, */*",
-        "accept-language": "en-US,en;q=0.9",
-        "content-type": "application/json",
-        glledger: "GL",
-        jlledger: "--",
-        mask: "FAUPAS",
-        runtimemask: "FAUPAS",
-        "sec-fetch-dest": "empty",
-        "sec-fetch-mode": "cors",
-        "sec-fetch-site": "same-origin",
-      },
-      body: JSON.stringify({ Faid: assetID }),
-      mode: "cors",
-      credentials: "include",
-      "Access-Control-Allow-Credentials": "*",
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`Failed to fetch attachment for asset ID ${assetID}: ${response.status}`);
+    // Return a promise for this spans processing
+    return fetch(
+      `${appBaseURL}Production-UI/data/finance/legacy/FAIdnt?$filter=(Faid%20eq%20%27${assetID}%27%20and%20Ledger%20eq%20%27GL%27)&$orderby=Ledger,Faid&$skip=0&$top=20`,
+      {
+        headers: {
+          accept: "application/json, text/plain, */*",
+          "accept-language": "en-US,en;q=0.9",
+          "cache-control": "no-cache",
+          "content-type": "application/json",
+          glledger: "GL",
+          jlledger: "JL",
+          mask: "FAUPAS",
+          pragma: "no-cache",
+          priority: "u=1, i",
+          runtimemask: "FAUPAS",
+          "sec-fetch-mode": "cors",
+          "sec-fetch-site": "same-origin",
+        },
+        referrer: `${appBaseURL}Production-UI/ui/uiscreens/fixedassets/FAUPAS`,
+        referrerPolicy: "strict-origin-when-cross-origin",
+        body: null,
+        method: "GET",
+        mode: "cors",
+        credentials: "include",
+      }
+    )
+      .then((assetResponse) => {
+        if (!assetResponse.ok) {
+          throw new Error(`Failed to fetch asset details for ID ${assetID}: ${assetResponse.status}`);
         }
-        return response.json();
+        return assetResponse.json();
+      })
+      .then((assetData) => {
+        console.log(`Asset data for ID ${assetID}:`, assetData);
+
+        if (!assetData || !assetData.items || assetData.items.length === 0) {
+          throw new Error(`No asset data found for ID ${assetID}`);
+        }
+
+        // Use the asset data item as the body for the attachments fetch
+        const assetItem = assetData.items[0];
+
+        // Now fetch attachments with the asset item as the body
+        return fetch(`${appBaseURL}Production-UI/api/finance/legacy/documents/FAIdnt/attachments/`, {
+          method: "POST",
+          headers: {
+            accept: "application/json, text/plain, */*",
+            "accept-language": "en-US,en;q=0.9",
+            "content-type": "application/json",
+            glledger: "GL",
+            jlledger: "--",
+            mask: "FAUPAS",
+            runtimemask: "FAUPAS",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin",
+          },
+          body: JSON.stringify(assetItem),
+          mode: "cors",
+          credentials: "include",
+          "Access-Control-Allow-Credentials": "*",
+        });
+      })
+      .then((attachmentResponse) => {
+        if (!attachmentResponse.ok) {
+          throw new Error(`Failed to fetch attachment for asset ID ${assetID}: ${attachmentResponse.status}`);
+        }
+        return attachmentResponse.json();
       })
       .then((data) => {
         console.log(`Attachment data for asset ID ${assetID}:`, data);
+
         // Remove the clock SVG placeholder
         container.innerHTML = "";
         if (data && data.length > 0) {
@@ -309,9 +357,14 @@
         }
       })
       .catch((error) => {
-        console.error("Error fetching attachment for asset ID", assetID, error);
+        console.error("Error processing asset ID", assetID, error);
         // On error, remove the clock SVG
         container.innerHTML = "";
       });
   });
+
+  // Execute all promises simultaneously (non-blocking)
+  Promise.all(fetchPromises)
+    .then(() => console.log("All asset document fetches complete"))
+    .catch((error) => console.error("Error in batch processing:", error));
 })();

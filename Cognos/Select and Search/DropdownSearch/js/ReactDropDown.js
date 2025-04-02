@@ -17,6 +17,12 @@ define([], function () {
 
     // Load dependencies when the control initializes.
     initialize(oControlHost, fnDoneInitializing) {
+      let { isMultiSelect, isRequired, ParameterName } = oControlHost.configuration;
+
+      this.isMultiSelect = isMultiSelect;
+      this.isRequired = isRequired;
+      this.parameterName = ParameterName
+
       require(["react", "react-dom"], this.dependenciesLoaded.bind(this, fnDoneInitializing));
     }
 
@@ -170,9 +176,30 @@ define([], function () {
     // Optional additional methods (keep as is)
     show(oControlHost) {}
     hide(oControlHost) {}
-    isInValidState(oControlHost) {}
-    getParameters(oControlHost) {}
-    setData(oControlHost, oDataStore) {}
+    isInValidState(oControlHost) {
+      if (!this.isRequired) {
+        return true;
+      }
+    }
+    getParameters(oControlHost) {
+      if (this.m_sel.selectedIndex < 1) {
+        return null;
+      }
+      const { value } = this.m_sel.options[this.m_sel.selectedIndex];
+      console.log([{
+        parameter: this.parameterName,
+        values: [{ use: value }],
+      }])
+      return [
+        {
+          parameter: this.parameterName,
+          values: [{ use: value }],
+        },
+      ];
+    }
+    setData(oControlhost, oDataStore) {
+      this.m_oDataStore = oDataStore;
+    }
   }
 
   return AdvancedControl;
