@@ -547,70 +547,70 @@
 // let appBaseURL = "https://cppfosapp.fdn.cpp.edu/";
 // let jobBaseURL = "https://cppfosjob.fdn.cpp.edu/";
 
-async function getBTModels(appURL, jobURL) {
-  try {
-    const response = await fetch(`${appURL}Production-UI/api/finance/legacy/workflow/GetBT20Models`, {
-      headers: {
-        accept: "application/json, text/plain, */*",
-        "accept-language": "en-US,en;q=0.9",
-        "cache-control": "no-cache",
-        "content-type": "application/json",
-        pragma: "no-cache",
-        priority: "u=1, i",
-        "sec-fetch-mode": "cors",
-        "sec-fetch-site": "same-origin",
-      },
-      referrer: `${jobURL}`,
-      referrerPolicy: "strict-origin-when-cross-origin",
-      body: "{}",
-      method: "POST",
-      mode: "cors",
-      credentials: "include",
-    });
+// async function getBTModels(appURL, jobURL) {
+//   try {
+//     const response = await fetch(`${appURL}Production-UI/api/finance/legacy/workflow/GetBT20Models`, {
+//       headers: {
+//         accept: "application/json, text/plain, */*",
+//         "accept-language": "en-US,en;q=0.9",
+//         "cache-control": "no-cache",
+//         "content-type": "application/json",
+//         pragma: "no-cache",
+//         priority: "u=1, i",
+//         "sec-fetch-mode": "cors",
+//         "sec-fetch-site": "same-origin",
+//       },
+//       referrer: `${jobURL}`,
+//       referrerPolicy: "strict-origin-when-cross-origin",
+//       body: "{}",
+//       method: "POST",
+//       mode: "cors",
+//       credentials: "include",
+//     });
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch BTModels`);
-    }
+//     if (!response.ok) {
+//       throw new Error(`Failed to fetch BTModels`);
+//     }
 
-    const data = await response.json();
-    const dataJson = typeof data === "string" ? JSON.parse(data) : data;
-    let btArray = dataJson.Response.workflow_models.model_info.map((item) => item["@object"]);
-    let uniqueBtArray = [...new Set(btArray)].sort();
-    return uniqueBtArray;
-  } catch (error) {
-    console.error("Error fetching BT models:", error);
-    return [];
-  }
-}
+//     const data = await response.json();
+//     const dataJson = typeof data === "string" ? JSON.parse(data) : data;
+//     let btArray = dataJson.Response.workflow_models.model_info.map((item) => item["@object"]);
+//     let uniqueBtArray = [...new Set(btArray)].sort();
+//     return uniqueBtArray;
+//   } catch (error) {
+//     console.error("Error fetching BT models:", error);
+//     return [];
+//   }
+// }
 
-async function main() {
-  let arrayOfDefs = await getBTModels(appBaseURL, jobBaseURL);
-  console.log(arrayOfDefs);
+// async function main() {
+//   let arrayOfDefs = await getBTModels(appBaseURL, jobBaseURL);
+//   console.log(arrayOfDefs);
 
-  if (arrayOfDefs && arrayOfDefs.length > 0) {
-    AttachDef(arrayOfDefs);
-  }
-}
-let extraDefs = ["BT20.PENameMaster", "BT20.OHZRepeatMaster", "BT20.PEAddrDetail", "BT20.PEVendorDetail"];
-function AttachDef(defArray) {
-  // Fixed: toString() is not a function, need to use join()
-  let attachDefParams = defArray.join(",");
+//   if (arrayOfDefs && arrayOfDefs.length > 0) {
+//     AttachDef(arrayOfDefs);
+//   }
+// }
+// let extraDefs = ["BT20.PENameMaster", "BT20.OHZRepeatMaster", "BT20.PEAddrDetail", "BT20.PEVendorDetail"];
+// function AttachDef(defArray) {
+//   // Fixed: toString() is not a function, need to use join()
+//   let attachDefParams = defArray.join(",");
 
-  fetch(`${appBaseURL}Production-UI/api/finance/legacy/documents/attachDefinitions?progIds=${attachDefParams}`, {
-    headers: {
-      accept: "application/json, text/plain, */*",
-      "accept-language": "en-US,en;q=0.9",
-      "cache-control": "no-cache",
-      "content-type": "application/json",
-      pragma: "no-cache",
-    },
-    referrer: `${appBaseURL}`,
-    referrerPolicy: "strict-origin-when-cross-origin",
-    body: null,
-    method: "GET",
-    mode: "cors",
-    credentials: "include",
-  });
-}
+//   fetch(`${appBaseURL}Production-UI/api/finance/legacy/documents/attachDefinitions?progIds=${attachDefParams}`, {
+//     headers: {
+//       accept: "application/json, text/plain, */*",
+//       "accept-language": "en-US,en;q=0.9",
+//       "cache-control": "no-cache",
+//       "content-type": "application/json",
+//       pragma: "no-cache",
+//     },
+//     referrer: `${appBaseURL}`,
+//     referrerPolicy: "strict-origin-when-cross-origin",
+//     body: null,
+//     method: "GET",
+//     mode: "cors",
+//     credentials: "include",
+//   });
+// }
 
-main();
+// main();
