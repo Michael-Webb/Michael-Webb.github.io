@@ -206,18 +206,11 @@ define(() => {
 
       try {
         const assetItem = await this.fetchAssetDetails(assetID);
-
-        // First check if there are any attachments
-        const attachmentCount = await this.fetchAttachmentCount(assetItem);
+        const data = await this.fetchAttachments(assetItem);
 
         container.innerHTML = "";
-
-        if (attachmentCount > 0) {
-          // Only fetch full attachment details if count > 0
-          const data = await this.fetchAttachments(assetItem);
-          if (data && data.length > 0) {
-            this.createDocumentButton(container, data, assetID);
-          }
+        if (data && data.length > 0) {
+          this.createDocumentButton(container, data, assetID);
         }
       } catch (error) {
         console.error("Error processing asset ID", assetID, error);
@@ -879,21 +872,24 @@ define(() => {
           {
             method: "POST",
             headers: {
-              accept: "application/json, text/plain, */*",
+              "accept": "application/json, text/plain, */*",
               "accept-language": "en-US,en;q=0.9",
               "cache-control": "no-cache",
               "content-type": "application/json",
+              "glledger": "GL",
+              "jlledger": "--",
+              "mask": this.MASK_NAME,
             },
             body: JSON.stringify(assetItem),
             mode: "cors",
-            credentials: "include",
+            credentials: "include"
           }
         );
-
+    
         if (!countResponse.ok) {
           throw new Error(`Failed to fetch attachment count: ${countResponse.status}`);
         }
-
+    
         // Based on your response, this endpoint returns the count directly as a number
         const count = await countResponse.json();
         return count || 0;
