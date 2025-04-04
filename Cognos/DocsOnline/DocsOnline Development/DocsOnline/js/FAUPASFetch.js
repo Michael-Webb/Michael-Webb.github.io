@@ -17,7 +17,7 @@ define(() => {
         ["Modal Label"]: ModalLabel,
         ["Icon Dimenions"]: ICON_DIMENSIONS,
         ["Mask Name"]: MASK_NAME,
-      } = oControl.configuration;
+      } = this.oControl.configuration;
 
       this.AppUrl = AppUrl;
       this.JobUrl = JobUrl;
