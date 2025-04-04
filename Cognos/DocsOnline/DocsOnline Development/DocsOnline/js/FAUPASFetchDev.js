@@ -22,6 +22,7 @@ define(() => {
           ["Lazy Loading"]: IS_LAZY_LOADED,
           ["scrolltimeout"]: SCROLL_TIMEOUT,
           ["Max Request Batch Size"]: MAX_BATCH_SIZE,
+          ["Direct Url"]: URL_TYPE,
         } = this.oControl.configuration;
 
         // Check each configuration parameter and collect the missing ones
@@ -49,7 +50,7 @@ define(() => {
         this.FONT_SIZE = FONT_SIZE || "1em";
         this.SCROLL_TIMEOUT = SCROLL_TIMEOUT || 200;
         this.MAX_BATCH_SIZE = MAX_BATCH_SIZE || 20;
-
+        this.URL_TYPE = URL_TYPE
         // Initialize cache with version tracking
         const cacheVersion = "1.0"; // Update this when making breaking changes to cached data format
         const storedVersion = sessionStorage.getItem("cache_version");
@@ -364,7 +365,19 @@ define(() => {
           return `<svg xmlns="http://www.w3.org/2000/svg" height="${height}" width="${width}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-icon lucide-file"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>`;
       }
     }
+    getViewerUrl(docToken, directUrl, urlType) {
+      let url = `${this.AppUrl}/Production/ui/Documents/viewer?docToken=${docToken}`;
 
+      if (
+        urlType == false &&
+        directUrl.toLowerCase().indexOf("documents/viewer.aspx?") < 0 &&
+        directUrl.toLowerCase().indexOf("documents/viewer?") < 0
+      ) {
+        url = directUrl;
+      }
+
+      return url;
+    }
     getDocumentContent(documentData, RefId) {
       try {
         // Create just the content container
@@ -442,10 +455,11 @@ define(() => {
             this.style.backgroundColor = "";
           };
 
+          let linkUrl = getViewerUrl(doc.docToken, doc.url, this.URL_TYPE)
           // Add click handler to open document
-          if (doc.url) {
+          if (linkUrl) {
             row.onclick = function () {
-              window.open(doc.url, "_blank");
+              window.open(linkUrl, "_blank");
             };
           }
 
@@ -459,10 +473,10 @@ define(() => {
             td.style.textOverflow = "ellipsis"; // Show ellipsis for overflow
             td.title = content;
 
-            if (isFilename && doc.url) {
+            if (isFilename && linkUrl) {
               // Create a hyperlink for the filename
               const link = document.createElement("a");
-              link.href = doc.url;
+              link.href = linkUrl;
               link.target = "_blank";
               link.textContent = content || "";
               link.style.textDecoration = "underline";
@@ -606,7 +620,9 @@ define(() => {
 
         // Add rows for each document
         documentData.forEach((doc) => {
-          const safeUrl = escapeURL(doc.url);
+  
+          let linkUrl = getViewerUrl(doc.docToken, doc.url, this.URL_TYPE)
+          const safeUrl = escapeURL(linkUrl);
 
           tableHtml += `<tr style="cursor:pointer;" 
                             onmouseover="this.style.backgroundColor='#f5f5f5';" 
@@ -619,7 +635,7 @@ define(() => {
           tableHtml += `<td style="padding:8px;border-bottom:1px solid #ddd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${
             doc.description || ""
           }">`;
-          if (doc.url) {
+          if (linkUrl) {
             tableHtml += `<a href="${safeUrl}" target="_blank" style="text-decoration:underline;color:#0066cc;">${
               doc.description || ""
             }</a>`;
