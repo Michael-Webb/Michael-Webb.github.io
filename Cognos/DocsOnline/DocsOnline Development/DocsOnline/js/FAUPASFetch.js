@@ -10,7 +10,7 @@ define(() => {
      */
 
     initialize(oControlHost, fnDoneInitializing) {
-      console.log("Initializing Started - FAUPAS CC");
+    //   console.log("Initializing Started - FAUPAS CC");
       this.oControl = oControlHost;
       const {
         ["App Server URL"]: AppUrl,
@@ -26,8 +26,8 @@ define(() => {
       this.MASK_NAME = MASK_NAME;
       this.ICON_DIMENSIONS = ICON_DIMENSIONS;
 
-      console.log(oControlHost.page.application);
-      console.log("Initializing Complete - FAUPAS CC");
+    //   console.log(oControlHost.page.application);
+    //   console.log("Initializing Complete - FAUPAS CC");
       fnDoneInitializing();
     }
 
@@ -35,7 +35,7 @@ define(() => {
      *Draw the control. This method is optional if the control has no UI.
      */
     draw(oControlHost) {
-      console.log("Drawing Started - FAUPAS CC");
+    //   console.log("Drawing Started - FAUPAS CC");
       this.oControl = oControlHost;
 
       // Extract credentials from the DOM
@@ -56,17 +56,17 @@ define(() => {
           const assetSpans = document.querySelectorAll("span[data-ref]");
 
           if (assetSpans.length > 0) {
-            console.log(`Found ${assetSpans.length} asset reference spans to process`);
+            // console.log(`Found ${assetSpans.length} asset reference spans to process`);
             // Process the spans to add document buttons
             return this.processAssetDocuments(assetSpans);
           } else {
-            console.log("No asset reference spans found on page");
+            // console.log("No asset reference spans found on page");
           }
         })
         .catch((error) => {
           console.error("Authentication failed, cannot process assets:", error);
         });
-      console.log("Drawing Complete - FAUPAS CC");
+    //   console.log("Drawing Complete - FAUPAS CC");
     }
 
     // Method to extract credentials from the DOM
@@ -77,23 +77,12 @@ define(() => {
           const sessionID = firstSpan.getAttribute("data-sessionId") || "";
           const token = firstSpan.getAttribute("data-token") || "";
 
-          const appURLFromSpan = firstSpan.getAttribute("data-appURL");
-          const jobURLFromSpan = firstSpan.getAttribute("data-jobURL");
-
-          if (appURLFromSpan && !this.AppUrl) {
-            this.AppUrl = decodeURIComponent(appURLFromSpan);
-          }
-
-          if (jobURLFromSpan && !this.JobUrl) {
-            this.JobUrl = decodeURIComponent(jobURLFromSpan);
-          }
-
-          console.log("Extracted values:", {
-            sessionID,
-            token,
-            appBaseURL: this.AppUrl,
-            jobBaseURL: this.JobUrl,
-          });
+        //   console.log("Extracted values:", {
+        //     sessionID,
+        //     token,
+        //     appBaseURL: this.AppUrl,
+        //     jobBaseURL: this.JobUrl,
+        //   });
 
           return { sessionID, token };
         } else {
@@ -443,7 +432,7 @@ define(() => {
           },
           callbackScope: { ok: this, cancel: this },
         };
-        console.log(dialogObject.message);
+        //console.log(dialogObject.message);
 
         // Create a simpler dialog first to test
         this.oControl.page.application.GlassContext.getCoreSvc(".Dialog").createDialog(dialogObject);
@@ -472,7 +461,7 @@ define(() => {
           mode: "no-cors",
           credentials: "include",
         });
-        console.log("FAUPAS fetch complete:", faupasResponse);
+        // console.log("FAUPAS fetch complete:", faupasResponse);
         return faupasResponse;
       } catch (error) {
         console.error("Error during FAUPAS fetch:", error);
@@ -606,7 +595,7 @@ define(() => {
       }
 
       const assetData = await assetResponse.json();
-      console.log(`Asset data for ID ${assetID}:`, assetData);
+    //   console.log(`Asset data for ID ${assetID}:`, assetData);
 
       if (!assetData || !assetData.items || assetData.items.length === 0) {
         throw new Error(`No asset data found for ID ${assetID}`);
@@ -675,7 +664,7 @@ define(() => {
       };
 
       container.appendChild(button);
-      console.log("Button added for asset ID:", assetID);
+    //   console.log("Button added for asset ID:", assetID);
     }
 
     // Function to process asset spans and fetch document attachments
@@ -683,7 +672,7 @@ define(() => {
       // Create an array of promises for each span
       const fetchPromises = Array.from(spans).map((span) => {
         const assetID = span.getAttribute("data-ref");
-        console.log("Processing asset ID:", assetID);
+        // console.log("Processing asset ID:", assetID);
 
         // Create or retrieve a container span to display the icon
         let container = document.getElementById(assetID);
