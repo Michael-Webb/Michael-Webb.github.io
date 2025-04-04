@@ -232,69 +232,46 @@ define(() => {
       );
     }
 
-    // Process assets that are currently visible on screen with debug logs
-    // Process assets that are currently visible on screen with dynamic batching and max batch size
-    // Process assets that are currently visible on screen with consistent max batch size
+    // Process assets as they become visible, with per-asset tracking
     async processVisibleAssets() {
-      // Set flag to prevent concurrent processing
-      if (this.processingInProgress) {
-        console.log("Processing already in progress, skipping");
-        return;
-      }
-
-      this.processingInProgress = true;
-      console.log("Starting to process visible assets");
-
       try {
         // Get all asset spans
         const allSpans = document.querySelectorAll("span[data-ref]");
-        console.log(`Found ${allSpans.length} total asset spans`);
 
-        if (allSpans.length === 0) {
-          this.processingInProgress = false;
-          return;
-        }
-
-        // Filter only visible spans that haven't been processed yet
+        // Filter for visible spans that aren't processed or currently being processed
         const visibleSpans = Array.from(allSpans).filter((span) => {
           const assetID = span.getAttribute("data-ref");
           const isVisible = this.isElementVisible(span);
           const isProcessed = this.processedSpanIds.has(assetID);
+          const isProcessing = span.hasAttribute("data-processing");
 
-          if (isVisible && !isProcessed) {
-            console.log(`Asset ${assetID} is visible and not processed`);
-          }
-
-          return !isProcessed && isVisible;
+          return isVisible && !isProcessed && !isProcessing;
         });
 
-        console.log(`Found ${visibleSpans.length} visible unprocessed spans`);
-
         if (visibleSpans.length === 0) {
-          this.processingInProgress = false;
           return;
         }
 
-        // Only process up to MAX_BATCH_SIZE spans at a time
-        const batchToProcess = visibleSpans.slice(0, this.MAX_BATCH_SIZE);
-        console.log(`Processing batch of ${batchToProcess.length} assets (limiting to max ${this.MAX_BATCH_SIZE})`);
+        console.log(`Processing ${visibleSpans.length} newly visible assets`);
 
-        // Process the batch
-        const promises = batchToProcess.map((span) => this.processAssetSpan(span));
-        await Promise.all(promises);
+        // Process each visible span independently
+        visibleSpans.forEach(async (span) => {
+          const assetID = span.getAttribute("data-ref");
 
-        console.log(`Completed loading batch of ${batchToProcess.length} assets`);
+          // Mark this span as currently being processed
+          span.setAttribute("data-processing", "true");
 
-        // If there are more visible spans that weren't processed, log it
-        if (visibleSpans.length > this.MAX_BATCH_SIZE) {
-          console.log(
-            `${visibleSpans.length - this.MAX_BATCH_SIZE} more visible assets will be processed on next scroll/interval`
-          );
-        }
+          try {
+            await this.processAssetSpan(span);
+          } catch (error) {
+            console.error(`Error processing asset ${assetID}:`, error);
+          } finally {
+            // Remove the processing flag when done
+            span.removeAttribute("data-processing");
+          }
+        });
       } catch (error) {
-        console.error("Error processing visible assets:", error);
-      } finally {
-        this.processingInProgress = false;
+        console.error("Error in processVisibleAssets:", error);
       }
     }
 
