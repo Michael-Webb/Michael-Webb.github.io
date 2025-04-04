@@ -48,11 +48,16 @@ define(() => {
       } catch (error) {
         // Handle the error by displaying it appropriately
         console.error("Error during control initialization:", error);
-
+        
         // Re-throw the error so the Cognos framework can handle it
         // throw error;
         // Always call fnDoneInitializing to prevent the control from hanging
         fnDoneInitializing();
+        throw new scriptableReportError(
+            "AdvancedControl",
+            "initialize",
+            error
+          );
       }
     }
 
