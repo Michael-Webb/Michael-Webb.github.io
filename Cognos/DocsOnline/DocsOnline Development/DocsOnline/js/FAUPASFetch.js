@@ -437,8 +437,7 @@ define(() => {
             </div>
           </div>`;
 
-      // Create the dialog with the table HTML directly in the message
-      this.oControl.page.application.GlassContext.getCoreSvc(".Dialog").createDialog({
+      let dialogObject = {
         title: this.ModalLabel ? `${this.ModalLabel} ${assetID}` : `Asset ID: ${assetID}`,
         message: tableHtml,
         className: "info",
@@ -457,7 +456,11 @@ define(() => {
         },
         callbackScope: { ok: this, cancel: this },
         payload: { url: this.oControl.page.application.GlassContext.getUrl() },
-      });
+      };
+      console.log(dialogObject)
+
+      // Create the dialog with the table HTML directly in the message
+      this.oControl.page.application.GlassContext.getCoreSvc(".Dialog").createDialog(dialogObject);
     }
 
     // Function to fetch the FAUPAS screen to capture cookies
