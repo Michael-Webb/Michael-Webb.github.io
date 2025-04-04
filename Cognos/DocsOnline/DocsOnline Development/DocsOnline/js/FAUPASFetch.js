@@ -50,7 +50,7 @@ define(() => {
         console.error("Error during control initialization:", error);
 
         // Re-throw the error so the Cognos framework can handle it
-        throw error;
+        // throw error;
         // Always call fnDoneInitializing to prevent the control from hanging
         fnDoneInitializing();
       }
