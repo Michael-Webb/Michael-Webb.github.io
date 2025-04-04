@@ -1,5 +1,6 @@
 define(() => {
   "use strict";
+  let oControl
   class AdvancedControl {
     /*
      * Initialize the control. This method is optional. If this method is implemented, fnDoneInitializing must be called when done initializing, or a Promise must be returned.
