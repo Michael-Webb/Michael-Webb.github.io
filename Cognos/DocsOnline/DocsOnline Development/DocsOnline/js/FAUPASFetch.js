@@ -49,11 +49,10 @@ define(() => {
         // Handle the error by displaying it appropriately
         console.error("Error during control initialization:", error);
 
-        // Always call fnDoneInitializing to prevent the control from hanging
-        fnDoneInitializing();
-
         // Re-throw the error so the Cognos framework can handle it
         throw error;
+        // Always call fnDoneInitializing to prevent the control from hanging
+        fnDoneInitializing();
       }
     }
 
@@ -110,7 +109,7 @@ define(() => {
         console.error("Error during control drawing:", error);
 
         // Re-throw the error so the Cognos framework can handle it
-        throw error;
+        // throw error;
       }
       //   console.log("Drawing Complete - FAUPAS CC");
     }
