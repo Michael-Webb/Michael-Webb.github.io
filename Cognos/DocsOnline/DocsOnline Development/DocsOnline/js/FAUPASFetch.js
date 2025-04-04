@@ -29,11 +29,8 @@ define(() => {
 
       // If any parameters are missing, log specific error and return
       if (missingParams.length > 0) {
-        throw new scriptableReportError(
-          "AdvancedControl",
-          "initialize",
-          `Missing required configuration parameters: ${missingParams.join(", ")}`
-        );
+        let description = `Missing required configuration parameters: ${missingParams.join(", ")}`;
+        throw new scriptableReportError("AdvancedControl", "draw", description);
       }
 
       this.AppUrl = AppUrl;
