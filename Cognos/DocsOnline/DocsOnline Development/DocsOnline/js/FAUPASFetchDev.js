@@ -206,11 +206,18 @@ define(() => {
 
       try {
         const assetItem = await this.fetchAssetDetails(assetID);
-        const data = await this.fetchAttachments(assetItem);
+
+        // First check if there are any attachments
+        const attachmentCount = await this.fetchAttachmentCount(assetItem);
 
         container.innerHTML = "";
-        if (data && data.length > 0) {
-          this.createDocumentButton(container, data, assetID);
+
+        if (attachmentCount > 0) {
+          // Only fetch full attachment details if count > 0
+          const data = await this.fetchAttachments(assetItem);
+          if (data && data.length > 0) {
+            this.createDocumentButton(container, data, assetID);
+          }
         }
       } catch (error) {
         console.error("Error processing asset ID", assetID, error);
@@ -863,6 +870,37 @@ define(() => {
       }
 
       return attachmentResponse.json();
+    }
+
+    async fetchAttachmentCount(assetItem) {
+      try {
+        const countResponse = await fetch(
+          `${this.AppUrl}Production-UI/api/finance/legacy/documents/FAIdnt/getattachmentcount/`,
+          {
+            method: "POST",
+            headers: {
+              accept: "application/json, text/plain, */*",
+              "accept-language": "en-US,en;q=0.9",
+              "cache-control": "no-cache",
+              "content-type": "application/json",
+            },
+            body: JSON.stringify(assetItem),
+            mode: "cors",
+            credentials: "include",
+          }
+        );
+
+        if (!countResponse.ok) {
+          throw new Error(`Failed to fetch attachment count: ${countResponse.status}`);
+        }
+
+        // Based on your response, this endpoint returns the count directly as a number
+        const count = await countResponse.json();
+        return count || 0;
+      } catch (error) {
+        console.error("Error fetching attachment count:", error);
+        return 0;
+      }
     }
 
     // Function to create document button
