@@ -50,7 +50,7 @@ define(() => {
         this.FONT_SIZE = FONT_SIZE || "1em";
         this.SCROLL_TIMEOUT = SCROLL_TIMEOUT || 200;
         this.MAX_BATCH_SIZE = MAX_BATCH_SIZE || 20;
-        this.URL_TYPE = URL_TYPE
+        this.URL_TYPE = URL_TYPE;
         // Initialize cache with version tracking
         const cacheVersion = "1.0"; // Update this when making breaking changes to cached data format
         const storedVersion = sessionStorage.getItem("cache_version");
@@ -366,13 +366,9 @@ define(() => {
       }
     }
     getViewerUrl(docToken, directUrl, urlType) {
-      let url = `${this.AppUrl}/Production/ui/Documents/viewer?docToken=${docToken}`;
+      let url = `${this.AppUrl}Production/ui/Documents/viewer?docToken=${docToken}`;
 
-      if (
-        urlType == false &&
-        directUrl.toLowerCase().indexOf("documents/viewer.aspx?") < 0 &&
-        directUrl.toLowerCase().indexOf("documents/viewer?") < 0
-      ) {
+      if (!urlType) {
         url = directUrl;
       }
 
@@ -455,7 +451,7 @@ define(() => {
             this.style.backgroundColor = "";
           };
 
-          let linkUrl = this.getViewerUrl(doc.docToken, doc.url, this.URL_TYPE)
+          let linkUrl = this.getViewerUrl(doc.docToken, doc.url, this.URL_TYPE);
           // Add click handler to open document
           if (linkUrl) {
             row.onclick = function () {
@@ -620,8 +616,7 @@ define(() => {
 
         // Add rows for each document
         documentData.forEach((doc) => {
-  
-          let linkUrl = this.getViewerUrl(doc.docToken, doc.url, this.URL_TYPE)
+          let linkUrl = this.getViewerUrl(doc.docToken, doc.url, this.URL_TYPE);
           const safeUrl = escapeURL(linkUrl);
 
           tableHtml += `<tr style="cursor:pointer;" 
