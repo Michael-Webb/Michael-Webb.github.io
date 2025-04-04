@@ -50,6 +50,17 @@ define(() => {
         this.SCROLL_TIMEOUT = SCROLL_TIMEOUT || 200;
         this.MAX_BATCH_SIZE = MAX_BATCH_SIZE || 20;
 
+        // Initialize cache with version tracking
+        const cacheVersion = "1.0"; // Update this when making breaking changes to cached data format
+        const storedVersion = sessionStorage.getItem("cache_version");
+
+        if (storedVersion !== cacheVersion) {
+          // If versions don't match, clear any existing cache
+          this.clearCache();
+          // Update stored version
+          sessionStorage.setItem("cache_version", cacheVersion);
+        }
+
         fnDoneInitializing();
       } catch (error) {
         // Handle the error by displaying it appropriately
@@ -295,6 +306,10 @@ define(() => {
       }
 
       window.removeEventListener("resize", this.throttledScrollHandler);
+
+      // Clear the cache when control is destroyed
+      // This keeps memory usage efficient and ensures fresh data on next load
+      this.clearCache();
     }
 
     // Method to extract credentials from the DOM
@@ -791,7 +806,18 @@ define(() => {
     }
 
     // Function to fetch asset details
+    // Updated fetchAssetDetails function with caching
     async fetchAssetDetails(assetID) {
+      // Check cache first
+      const cacheKey = `asset_${assetID}`;
+      const cachedAsset = this.getCachedValue(cacheKey);
+
+      if (cachedAsset) {
+        console.log(`Using cached asset details for ID ${assetID}`);
+        return cachedAsset;
+      }
+
+      // If not in cache, fetch from server
       const assetResponse = await fetch(
         `${this.AppUrl}Production-UI/data/finance/legacy/FAIdnt?$filter=(Faid%20eq%20%27${assetID}%27%20and%20Ledger%20eq%20%27GL%27)&$orderby=Ledger,Faid&$skip=0&$top=20`,
         {
@@ -823,18 +849,29 @@ define(() => {
       }
 
       const assetData = await assetResponse.json();
-      //   console.log(`Asset data for ID ${assetID}:`, assetData);
 
       if (!assetData || !assetData.items || assetData.items.length === 0) {
         throw new Error(`No asset data found for ID ${assetID}`);
       }
 
+      // Cache the result before returning
+      this.setCachedValue(cacheKey, assetData.items[0]);
+
       // Return the first asset item
       return assetData.items[0];
     }
 
-    // Function to fetch attachments for an asset
+    // Updated fetchAttachments function with caching
     async fetchAttachments(assetItem) {
+      // Create a cache key based on a stable identifier from the asset
+      const cacheKey = `attach_${assetItem.Faid}_${assetItem.Ledger}`;
+      const cachedAttachments = this.getCachedValue(cacheKey);
+
+      if (cachedAttachments) {
+        console.log(`Using cached attachments for asset ${assetItem.Faid}`);
+        return cachedAttachments;
+      }
+
       const attachmentResponse = await fetch(
         `${this.AppUrl}Production-UI/api/finance/legacy/documents/FAIdnt/attachments/`,
         {
@@ -862,40 +899,131 @@ define(() => {
         throw new Error(`Failed to fetch attachment for asset: ${attachmentResponse.status}`);
       }
 
-      return attachmentResponse.json();
+      const attachments = await attachmentResponse.json();
+
+      // Cache the results before returning
+      this.setCachedValue(cacheKey, attachments);
+
+      return attachments;
     }
 
+    // Also update fetchAttachmentCount with caching if needed
     async fetchAttachmentCount(assetItem) {
       try {
+        // Create a cache key for the count
+        const cacheKey = `count_${assetItem.Faid}_${assetItem.Ledger}`;
+        const cachedCount = this.getCachedValue(cacheKey);
+
+        if (cachedCount !== null) {
+          console.log(`Using cached attachment count for asset ${assetItem.Faid}`);
+          return cachedCount;
+        }
+
         const countResponse = await fetch(
           `${this.AppUrl}Production-UI/api/finance/legacy/documents/FAIdnt/getattachmentcount/`,
           {
             method: "POST",
             headers: {
-              "accept": "application/json, text/plain, */*",
+              accept: "application/json, text/plain, */*",
               "accept-language": "en-US,en;q=0.9",
               "cache-control": "no-cache",
               "content-type": "application/json",
-              "glledger": "GL",
-              "jlledger": "--",
-              "mask": this.MASK_NAME,
+              glledger: "GL",
+              jlledger: "--",
+              mask: this.MASK_NAME,
             },
             body: JSON.stringify(assetItem),
             mode: "cors",
-            credentials: "include"
+            credentials: "include",
           }
         );
-    
+
         if (!countResponse.ok) {
           throw new Error(`Failed to fetch attachment count: ${countResponse.status}`);
         }
-    
-        // Based on your response, this endpoint returns the count directly as a number
+
         const count = await countResponse.json();
+
+        // Cache the count
+        this.setCachedValue(cacheKey, count || 0);
+
         return count || 0;
       } catch (error) {
         console.error("Error fetching attachment count:", error);
         return 0;
+      }
+    }
+
+    // Add these methods to your AdvancedControl class
+
+    // Method to get a cached value from sessionStorage
+    getCachedValue(key) {
+      try {
+        const cachedData = sessionStorage.getItem(key);
+        if (cachedData) {
+          return JSON.parse(cachedData);
+        }
+        return null;
+      } catch (error) {
+        console.error("Error retrieving cached value:", error);
+        return null;
+      }
+    }
+
+    // Method to set a value in sessionStorage cache
+    setCachedValue(key, value) {
+      try {
+        sessionStorage.setItem(key, JSON.stringify(value));
+      } catch (error) {
+        console.error("Error setting cached value:", error);
+        // Handle quota exceeded or other storage errors
+        try {
+          // If storage is full, clear older items
+          this.clearOldestCacheItems(5);
+          // Try again
+          sessionStorage.setItem(key, JSON.stringify(value));
+        } catch (e) {
+          console.error("Failed to store in cache even after cleanup:", e);
+        }
+      }
+    }
+
+    // Helper method to clear oldest cache items if storage is full
+    clearOldestCacheItems(count = 5) {
+      try {
+        // Get all keys that match our cache pattern
+        const cacheKeys = [];
+        for (let i = 0; i < sessionStorage.length; i++) {
+          const key = sessionStorage.key(i);
+          if (key.startsWith("asset_") || key.startsWith("attach_")) {
+            cacheKeys.push(key);
+          }
+        }
+
+        // Sort by timestamp if we store timestamps, or just take first few
+        cacheKeys.sort();
+
+        // Remove the oldest entries
+        for (let i = 0; i < Math.min(count, cacheKeys.length); i++) {
+          sessionStorage.removeItem(cacheKeys[i]);
+        }
+      } catch (error) {
+        console.error("Error clearing cache items:", error);
+      }
+    }
+    // Method to clear all cached data
+    clearCache() {
+      try {
+        // Remove only our specific cache items to avoid clearing other app data
+        for (let i = sessionStorage.length - 1; i >= 0; i--) {
+          const key = sessionStorage.key(i);
+          if (key.startsWith("asset_") || key.startsWith("attach_") || key.startsWith("count_")) {
+            sessionStorage.removeItem(key);
+          }
+        }
+        console.log("Cache cleared successfully");
+      } catch (error) {
+        console.error("Error clearing cache:", error);
       }
     }
 
