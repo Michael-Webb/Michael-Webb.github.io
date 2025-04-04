@@ -428,11 +428,11 @@ define(() => {
               </div>
             </div>`;
         let dialogObject = {
-          title: `this.ModalLabel ? ${this.ModalLabel} ${assetID} : Asset ID: ${assetID}`,
+          title: `${this.ModalLabel} ${assetID}`,
           message: tableHtml,
           className: "info",
           buttons: ["ok", "cancel"],
-          width: "90%",
+          width: "60%",
           type: "info",
           size: "default",
           htmlContent: true,
