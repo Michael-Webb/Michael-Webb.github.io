@@ -48,7 +48,7 @@ define(() => {
       } catch (error) {
         // Handle the error by displaying it appropriately
         console.error("Error during control initialization:", error);
-        
+
         // Always call fnDoneInitializing to prevent the control from hanging
         fnDoneInitializing();
       }
@@ -93,8 +93,11 @@ define(() => {
 
             if (assetSpans.length > 0) {
               // console.log(`Found ${assetSpans.length} asset reference spans to process`);
+
               // Process the spans to add document buttons
-              return this.processAssetDocuments(assetSpans);
+              // Initialize the lazy loading system
+              return this.initializeVisibleAssetLoading();
+              // return this.processAssetDocuments(assetSpans);
             } else {
               // console.log("No asset reference spans found on page");
             }
@@ -105,11 +108,142 @@ define(() => {
       } catch (error) {
         // Log the error for debugging
         console.error("Error during control drawing:", error);
-
-        // Re-throw the error so the Cognos framework can handle it
-        // throw error;
+        //   console.log("Drawing Complete - FAUPAS CC");
       }
-      //   console.log("Drawing Complete - FAUPAS CC");
+    }
+
+    // Add these methods to your AdvancedControl class
+    initializeVisibleAssetLoading() {
+      // Keep track of processed spans
+      this.processedSpanIds = new Set();
+
+      // Add scroll event listener for lazy loading
+      this.scrollHandler = () => {
+        if (this.apiToken) {
+          this.processVisibleAssets();
+        }
+      };
+
+      // Throttle the scroll handler to prevent too many calls
+      this.throttledScrollHandler = this.throttle(this.scrollHandler, 300);
+      window.addEventListener("scroll", this.throttledScrollHandler);
+
+      // Also check on window resize
+      this.resizeHandler = this.throttle(() => {
+        if (this.apiToken) {
+          this.processVisibleAssets();
+        }
+      }, 300);
+      window.addEventListener("resize", this.resizeHandler);
+
+      // Initial processing of visible assets
+      this.processVisibleAssets();
+    }
+
+    // Throttle utility to prevent too frequent function calls
+    throttle(func, limit) {
+      let inThrottle;
+      return function () {
+        const args = arguments;
+        const context = this;
+        if (!inThrottle) {
+          func.apply(context, args);
+          inThrottle = true;
+          setTimeout(() => (inThrottle = false), limit);
+        }
+      };
+    }
+
+    // Check if an element is visible in the viewport
+    isElementVisible(element) {
+      if (!element) return false;
+
+      const rect = element.getBoundingClientRect();
+      // Add some buffer (100px) to load assets just before they come into view
+      return (
+        rect.top >= -100 &&
+        rect.left >= 0 &&
+        rect.bottom <= (window.innerHeight + 100 || document.documentElement.clientHeight + 100) &&
+        rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+      );
+    }
+
+    // Process assets that are currently visible on screen
+    async processVisibleAssets() {
+      // Get all asset spans
+      const allSpans = document.querySelectorAll("span[data-ref]");
+      if (allSpans.length === 0) return;
+
+      // Filter only visible spans that haven't been processed yet
+      const visibleSpans = Array.from(allSpans).filter((span) => {
+        const assetID = span.getAttribute("data-ref");
+        return !this.processedSpanIds.has(assetID) && this.isElementVisible(span);
+      });
+
+      if (visibleSpans.length === 0) return;
+
+      console.log(`Loading ${visibleSpans.length} newly visible assets`);
+
+      // Process visible spans (max 5 at a time to prevent overwhelming the server)
+      const batchSize = 5;
+      for (let i = 0; i < visibleSpans.length; i += batchSize) {
+        const batch = visibleSpans.slice(i, i + batchSize);
+        const promises = batch.map((span) => this.processAssetSpan(span));
+
+        await Promise.all(promises);
+
+        // Small delay between batches
+        if (i + batchSize < visibleSpans.length) {
+          await new Promise((resolve) => setTimeout(resolve, 200));
+        }
+      }
+    }
+
+    // Process a single asset span
+    async processAssetSpan(span) {
+      const assetID = span.getAttribute("data-ref");
+
+      // Mark as processed immediately to prevent duplicate processing
+      this.processedSpanIds.add(assetID);
+
+      // Create container
+      let container = document.getElementById(`doc-container-${assetID}`);
+      if (!container) {
+        container = document.createElement("span");
+        container.id = `doc-container-${assetID}`;
+        span.parentNode.insertBefore(container, span.nextSibling);
+      } else {
+        container.innerHTML = "";
+      }
+
+      // Show loading indicator
+      container.innerHTML = this.getSvgForType("clock", this.ICON_DIMENSIONS);
+
+      try {
+        const assetItem = await this.fetchAssetDetails(assetID);
+        const data = await this.fetchAttachments(assetItem);
+
+        container.innerHTML = "";
+        if (data && data.length > 0) {
+          this.createDocumentButton(container, data, assetID);
+        }
+      } catch (error) {
+        console.error("Error processing asset ID", assetID, error);
+        container.innerHTML = "";
+      }
+    }
+
+    // Clean up in the destroy method
+    destroy(oControlHost) {
+      this.oControl = oControlHost;
+
+      // Remove event listeners
+      if (this.throttledScrollHandler) {
+        window.removeEventListener("scroll", this.throttledScrollHandler);
+      }
+      if (this.resizeHandler) {
+        window.removeEventListener("resize", this.resizeHandler);
+      }
     }
 
     // Method to extract credentials from the DOM
@@ -762,9 +896,9 @@ define(() => {
     /*
      * The control is being destroyed so do any necessary cleanup. This method is optional.
      */
-    destroy(oControlHost) {
-      this.oControl = oControlHost;
-    }
+    // destroy(oControlHost) {
+    //   this.oControl = oControlHost;
+    // }
   }
 
   return AdvancedControl;
