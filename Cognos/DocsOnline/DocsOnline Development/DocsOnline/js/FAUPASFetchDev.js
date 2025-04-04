@@ -19,6 +19,7 @@ define(() => {
           ["Icon Dimenions"]: ICON_DIMENSIONS,
           ["Mask Name"]: MASK_NAME,
           ["Font Size"]: FONT_SIZE,
+          ["Lazy Loading"]: IS_LAZY_LOADED
         } = this.oControl.configuration;
 
         // Check each configuration parameter and collect the missing ones
@@ -40,6 +41,7 @@ define(() => {
         this.AppUrl = AppUrl;
         this.JobUrl = JobUrl;
         this.ModalLabel = ModalLabel || "Asset Documents:";
+        this.IS_LAZY_LOADED = IS_LAZY_LOADED || true;
         this.MASK_NAME = MASK_NAME;
         this.ICON_DIMENSIONS = ICON_DIMENSIONS || "16px";
         this.FONT_SIZE = FONT_SIZE || "1em";
@@ -95,9 +97,11 @@ define(() => {
               // console.log(`Found ${assetSpans.length} asset reference spans to process`);
 
               // Process the spans to add document buttons
-              // Initialize the lazy loading system
+              if(!this.IS_LAZY_LOADED) {
+                return this.processAssetDocuments(assetSpans);
+              }
               return this.initializeVisibleAssetLoading();
-              // return this.processAssetDocuments(assetSpans);
+
             } else {
               // console.log("No asset reference spans found on page");
             }
