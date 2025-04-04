@@ -154,10 +154,10 @@ define(() => {
       // Force a check periodically in case scroll events are missing
       this.intervalCheck = setInterval(() => {
         if (this.apiToken && !this.processingInProgress) {
-          console.log("Interval check triggered");
+          // console.log("Interval check triggered");
           this.processVisibleAssets();
         }
-      }, 10000);
+      }, 2000);
 
       // Initial processing of visible assets
       setTimeout(() => this.processVisibleAssets(), 500);
