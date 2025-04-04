@@ -327,140 +327,134 @@ define(() => {
       }
     }
     openMessage(documentData, assetID) {
-      // Sample document data - replace with your actual data source
-      /* const documentData = [
-          // Example data - replace with your real data
-          {
-            docId: "1001",
-            description: "Annual Report",
-            clsid: ".pdf",
-            pages: "1-10",
-            pageCount: "10",
-            createDt: "2025-01-15",
-            attachID: "ATT-001",
-            url: "https://example.com/doc1"
-          },
-          {
-            docId: "1002",
-            description: "Financial Statement",
-            clsid: ".xlsx",
-            pages: "1-5",
-            pageCount: "5",
-            createDt: "2025-02-20",
-            attachID: "ATT-002",
-            url: "https://example.com/doc2"
-          }
+      try {
+        // Define headers and column widths
+        const headers = [
+          "Document ID",
+          "FileName",
+          "File Type",
+          "Pages",
+          "Page Count",
+          "Create Date",
+          "Attachment Definition",
         ];
-        */
 
-      // Create HTML for the table
-      let tableHtml = `
-          <div style="background-color:white;border-radius:5px;width:100%;position:relative;font-size:.875em;">
-            <div style="padding:0;overflow-y:auto;max-height:400px;">
-              <table style="width:100%;border-collapse:collapse;margin-top:10px;margin-bottom:10px;table-layout:fixed;">
-                <thead>
-                  <tr>`;
+        const columnWidths = [15, 30, 10, 8, 8, 15, 14];
 
-      // Define headers
-      const headers = [
-        "Document ID",
-        "FileName",
-        "File Type",
-        "Pages",
-        "Page Count",
-        "Create Date",
-        "Attachment Definition",
-      ];
+        // Sort the data
+        documentData.sort((a, b) => {
+          const idA = parseInt(a.docId) || 0;
+          const idB = parseInt(b.docId) || 0;
+          return idA - idB;
+        });
 
-      // Define column widths (percentages)
-      const columnWidths = [15, 30, 10, 8, 8, 15, 14];
+        // Function to safely escape URLs
+        const escapeURL = (url) => {
+          if (!url) return "";
+          // First encode the URL to handle special characters
+          return url.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+        };
 
-      // Add header cells
-      headers.forEach((headerText, index) => {
-        tableHtml += `<th style="padding:8px;text-align:left;border-bottom:1px solid #ddd;background-color:#f2f2f2;width:${columnWidths[index]}%;">${headerText}</th>`;
-      });
+        // Build the table HTML
+        let tableHtml = `
+            <div style="background-color:white;width:100%;font-size:.875em;">
+              <div style="overflow-y:auto;max-height:400px;">
+                <table style="width:100%;border-collapse:collapse;margin:10px 0;table-layout:fixed;">
+                  <thead>
+                    <tr>`;
 
-      tableHtml += `</tr>
-                </thead>
-                <tbody>`;
+        // Add header cells
+        headers.forEach((headerText, index) => {
+          tableHtml += `<th style="padding:8px;text-align:left;border-bottom:1px solid #ddd;background-color:#f2f2f2;width:${columnWidths[index]}%;">${headerText}</th>`;
+        });
 
-      // Sort document data
-      documentData.sort((a, b) => {
-        const idA = parseInt(a.docId) || 0;
-        const idB = parseInt(b.docId) || 0;
-        return idA - idB;
-      });
+        tableHtml += `</tr>
+                  </thead>
+                  <tbody>`;
 
-      // Add rows for each document
-      documentData.forEach((doc) => {
-        tableHtml += `<tr style="cursor:pointer;" 
-                      onmouseover="this.style.backgroundColor='#f5f5f5';" 
-                      onmouseout="this.style.backgroundColor='';"
-                      ${doc.url ? `onclick="window.open('${doc.url}', '_blank');"` : ""}>`;
+        // Add rows for each document
+        documentData.forEach((doc) => {
+          const safeUrl = escapeURL(doc.url);
 
-        // Document ID
-        tableHtml += `<td style="padding:8px;border-bottom:1px solid #ddd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${doc.docId}">${doc.docId}</td>`;
+          tableHtml += `<tr style="cursor:pointer;" 
+                            onmouseover="this.style.backgroundColor='#f5f5f5';" 
+                            onmouseout="this.style.backgroundColor='';">`;
 
-        // Filename with link
-        tableHtml += `<td style="padding:8px;border-bottom:1px solid #ddd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${doc.description}">`;
-        if (doc.url) {
-          tableHtml += `<a href="${
-            doc.url
-          }" target="_blank" style="text-decoration:underline;color:#0066cc;" onclick="event.stopPropagation();">${
+          // Document ID
+          tableHtml += `<td style="padding:8px;border-bottom:1px solid #ddd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${doc.docId}">${doc.docId}</td>`;
+
+          // Filename with link
+          tableHtml += `<td style="padding:8px;border-bottom:1px solid #ddd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${
             doc.description || ""
-          }</a>`;
-        } else {
-          tableHtml += doc.description || "";
-        }
-        tableHtml += `</td>`;
+          }">`;
+          if (doc.url) {
+            tableHtml += `<a href="${safeUrl}" target="_blank" style="text-decoration:underline;color:#0066cc;">${
+              doc.description || ""
+            }</a>`;
+          } else {
+            tableHtml += doc.description || "";
+          }
+          tableHtml += `</td>`;
 
-        // File Type
-        tableHtml += `<td style="padding:8px;border-bottom:1px solid #ddd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${doc.clsid.toLowerCase()}">${doc.clsid.toLowerCase()}</td>`;
+          // File Type
+          const safeClsid = doc.clsid ? doc.clsid.toLowerCase() : "";
+          tableHtml += `<td style="padding:8px;border-bottom:1px solid #ddd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${safeClsid}">${safeClsid}</td>`;
 
-        // Pages
-        tableHtml += `<td style="padding:8px;border-bottom:1px solid #ddd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${doc.pages}">${doc.pages}</td>`;
+          // Pages
+          tableHtml += `<td style="padding:8px;border-bottom:1px solid #ddd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${
+            doc.pages || ""
+          }">${doc.pages || ""}</td>`;
 
-        // Page Count
-        tableHtml += `<td style="padding:8px;border-bottom:1px solid #ddd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${doc.pageCount}">${doc.pageCount}</td>`;
+          // Page Count
+          tableHtml += `<td style="padding:8px;border-bottom:1px solid #ddd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${
+            doc.pageCount || ""
+          }">${doc.pageCount || ""}</td>`;
 
-        // Create Date
-        tableHtml += `<td style="padding:8px;border-bottom:1px solid #ddd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${doc.createDt}">${doc.createDt}</td>`;
+          // Create Date
+          tableHtml += `<td style="padding:8px;border-bottom:1px solid #ddd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${
+            doc.createDt || ""
+          }">${doc.createDt || ""}</td>`;
 
-        // Attachment Definition
-        tableHtml += `<td style="padding:8px;border-bottom:1px solid #ddd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${doc.attachID}">${doc.attachID}</td>`;
+          // Attachment Definition
+          tableHtml += `<td style="padding:8px;border-bottom:1px solid #ddd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${
+            doc.attachID || ""
+          }">${doc.attachID || ""}</td>`;
 
-        tableHtml += `</tr>`;
-      });
+          tableHtml += `</tr>`;
+        });
 
-      tableHtml += `</tbody>
-              </table>
-            </div>
-          </div>`;
-
-      let dialogObject = {
-        title: this.ModalLabel ? `${this.ModalLabel} ${assetID}` : `Asset ID: ${assetID}`,
-        message: tableHtml,
-        className: "info",
-        buttons: ["ok", "cancel"],
-        width: "90%",
-        type: "info",
-        size: "default",
-        htmlContent: true,
-        callback: {
-          ok: async () => {
-            console.log("ok");
+        tableHtml += `</tbody>
+                </table>
+              </div>
+            </div>`;
+        let dialogObject = {
+          title: `this.ModalLabel ? ${this.ModalLabel} ${assetID} : Asset ID: ${assetID}`,
+          message: tableHtml,
+          className: "info",
+          buttons: ["ok", "cancel"],
+          width: "90%",
+          type: "info",
+          size: "default",
+          htmlContent: true,
+          callback: {
+            ok: async () => {
+              console.log("ok");
+            },
+            cancel: async () => {
+              console.log("cancel");
+            },
           },
-          cancel: async () => {
-            console.log("cancel");
-          },
-        },
-        callbackScope: { ok: this, cancel: this },
-        payload: { url: this.oControl.page.application.GlassContext.getUrl() },
-      };
-      console.log(dialogObject)
+          callbackScope: { ok: this, cancel: this },
+          payload: { url: this.oControl.page.application.GlassContext.getUrl() },
+        };
+        console.log(dialogObject.message);
 
-      // Create the dialog with the table HTML directly in the message
-      this.oControl.page.application.GlassContext.getCoreSvc(".Dialog").createDialog(dialogObject);
+        // Create a simpler dialog first to test
+        this.oControl.page.application.GlassContext.getCoreSvc(".Dialog").createDialog();
+      } catch (error) {
+        console.error("Error showing dialog:", error);
+        alert(`Error showing document dialog: ${error.message}`);
+      }
     }
 
     // Function to fetch the FAUPAS screen to capture cookies
