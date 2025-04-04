@@ -116,10 +116,11 @@ define(() => {
     initializeVisibleAssetLoading() {
       // Keep track of processed spans
       this.processedSpanIds = new Set();
+      this.processingInProgress = false;
 
       // Add scroll event listener for lazy loading
       this.scrollHandler = () => {
-        if (this.apiToken) {
+        if (this.apiToken && !this.processingInProgress) {
           this.processVisibleAssets();
         }
       };
@@ -130,7 +131,7 @@ define(() => {
 
       // Also check on window resize
       this.resizeHandler = this.throttle(() => {
-        if (this.apiToken) {
+        if (this.apiToken && !this.processingInProgress) {
           this.processVisibleAssets();
         }
       }, 300);
@@ -159,43 +160,51 @@ define(() => {
       if (!element) return false;
 
       const rect = element.getBoundingClientRect();
-      // Add some buffer (100px) to load assets just before they come into view
+      // Add some buffer (200px) to load assets just before they come into view
       return (
-        rect.top >= -100 &&
+        rect.top >= -200 &&
         rect.left >= 0 &&
-        rect.bottom <= (window.innerHeight + 100 || document.documentElement.clientHeight + 100) &&
+        rect.bottom <= (window.innerHeight + 200 || document.documentElement.clientHeight + 200) &&
         rect.right <= (window.innerWidth || document.documentElement.clientWidth)
       );
     }
 
     // Process assets that are currently visible on screen
     async processVisibleAssets() {
-      // Get all asset spans
-      const allSpans = document.querySelectorAll("span[data-ref]");
-      if (allSpans.length === 0) return;
+      // Set flag to prevent concurrent processing
+      if (this.processingInProgress) return;
+      this.processingInProgress = true;
 
-      // Filter only visible spans that haven't been processed yet
-      const visibleSpans = Array.from(allSpans).filter((span) => {
-        const assetID = span.getAttribute("data-ref");
-        return !this.processedSpanIds.has(assetID) && this.isElementVisible(span);
-      });
+      try {
+        // Get all asset spans
+        const allSpans = document.querySelectorAll("span[data-ref]");
+        if (allSpans.length === 0) {
+          this.processingInProgress = false;
+          return;
+        }
 
-      if (visibleSpans.length === 0) return;
+        // Filter only visible spans that haven't been processed yet
+        const visibleSpans = Array.from(allSpans).filter((span) => {
+          const assetID = span.getAttribute("data-ref");
+          return !this.processedSpanIds.has(assetID) && this.isElementVisible(span);
+        });
 
-      console.log(`Loading ${visibleSpans.length} newly visible assets`);
+        if (visibleSpans.length === 0) {
+          this.processingInProgress = false;
+          return;
+        }
 
-      // Process visible spans (max 5 at a time to prevent overwhelming the server)
-      const batchSize = 5;
-      for (let i = 0; i < visibleSpans.length; i += batchSize) {
-        const batch = visibleSpans.slice(i, i + batchSize);
-        const promises = batch.map((span) => this.processAssetSpan(span));
+        console.log(`Loading ${visibleSpans.length} newly visible assets`);
 
+        // Process all visible spans in parallel
+        const promises = visibleSpans.map((span) => this.processAssetSpan(span));
         await Promise.all(promises);
 
-        // Small delay between batches
-        if (i + batchSize < visibleSpans.length) {
-          await new Promise((resolve) => setTimeout(resolve, 200));
-        }
+        console.log(`Completed loading ${visibleSpans.length} visible assets`);
+      } catch (error) {
+        console.error("Error processing visible assets:", error);
+      } finally {
+        this.processingInProgress = false;
       }
     }
 
