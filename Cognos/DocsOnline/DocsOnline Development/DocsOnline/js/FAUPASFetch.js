@@ -18,6 +18,7 @@ define(() => {
         ["Modal Label"]: ModalLabel,
         ["Icon Dimenions"]: ICON_DIMENSIONS,
         ["Mask Name"]: MASK_NAME,
+        ["Font Size"]:FONT_SIZE
       } = this.oControl.configuration;
 
       this.AppUrl = AppUrl;
@@ -25,6 +26,7 @@ define(() => {
       this.ModalLabel = ModalLabel;
       this.MASK_NAME = MASK_NAME;
       this.ICON_DIMENSIONS = ICON_DIMENSIONS;
+      this.FONT_SIZE = FONT_SIZE
 
     //   console.log(oControlHost.page.application);
     //   console.log("Initializing Complete - FAUPAS CC");
@@ -132,7 +134,7 @@ define(() => {
         modalContent.style.display = "flex";
         modalContent.style.flexDirection = "column";
         modalContent.style.position = "relative";
-        modalContent.style.fontSize = ".875em";
+        modalContent.style.fontSize =  this.FONT_SiZE;
 
         const modalBody = document.createElement("div");
         modalBody.style.padding = "0";
@@ -346,7 +348,7 @@ define(() => {
 
         // Build the table HTML
         let tableHtml = `
-            <div style="background-color:white;width:100%;font-size:.875em;">
+            <div style="background-color:white;width:100%;font-size:${this.FONT_SIZE};">
               <div style="overflow-y:auto;max-height:400px;">
                 <table style="width:100%;border-collapse:collapse;margin:10px 0;table-layout:fixed;">
                   <thead>
