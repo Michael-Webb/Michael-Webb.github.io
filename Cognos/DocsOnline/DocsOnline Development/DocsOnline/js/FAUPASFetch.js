@@ -1,6 +1,6 @@
 define(() => {
   "use strict";
-  let oControl
+  let oControl;
   class AdvancedControl {
     /*
      * Initialize the control. This method is optional. If this method is implemented, fnDoneInitializing must be called when done initializing, or a Promise must be returned.
@@ -10,6 +10,7 @@ define(() => {
      */
 
     initialize(oControlHost, fnDoneInitializing) {
+      console.log("Initializing Started - FAUPAS CC");
       this.oControl = oControlHost;
       const {
         ["App Server URL"]: AppUrl,
@@ -26,15 +27,15 @@ define(() => {
       this.ICON_DIMENSIONS = ICON_DIMENSIONS;
 
       console.log(oControlHost.page.application);
+      console.log("Initializing Complete - FAUPAS CC");
       fnDoneInitializing();
     }
-
-    
 
     /*
      *Draw the control. This method is optional if the control has no UI.
      */
     draw(oControlHost) {
+      console.log("Drawing Started - FAUPAS CC");
       this.oControl = oControlHost;
 
       // Extract credentials from the DOM
@@ -65,44 +66,45 @@ define(() => {
         .catch((error) => {
           console.error("Authentication failed, cannot process assets:", error);
         });
+      console.log("Drawing Complete - FAUPAS CC");
     }
 
     // Method to extract credentials from the DOM
     extractCredentials() {
-        try {
-          const firstSpan = document.querySelector(`span[id^="documentOnline-"]`);
-          if (firstSpan) {
-            const sessionID = firstSpan.getAttribute("data-sessionId") || "";
-            const token = firstSpan.getAttribute("data-token") || "";
-  
-            const appURLFromSpan = firstSpan.getAttribute("data-appURL");
-            const jobURLFromSpan = firstSpan.getAttribute("data-jobURL");
-  
-            if (appURLFromSpan && !this.AppUrl) {
-              this.AppUrl = decodeURIComponent(appURLFromSpan);
-            }
-  
-            if (jobURLFromSpan && !this.JobUrl) {
-              this.JobUrl = decodeURIComponent(jobURLFromSpan);
-            }
-  
-            console.log("Extracted values:", {
-              sessionID,
-              token,
-              appBaseURL: this.AppUrl,
-              jobBaseURL: this.JobUrl,
-            });
-  
-            return { sessionID, token };
-          } else {
-            console.error("No span found with id starting with documentOnline- to extract data.");
-            return { sessionID: "", token: "" };
+      try {
+        const firstSpan = document.querySelector(`span[data-id^="documentOnline-"]`);
+        if (firstSpan) {
+          const sessionID = firstSpan.getAttribute("data-sessionId") || "";
+          const token = firstSpan.getAttribute("data-token") || "";
+
+          const appURLFromSpan = firstSpan.getAttribute("data-appURL");
+          const jobURLFromSpan = firstSpan.getAttribute("data-jobURL");
+
+          if (appURLFromSpan && !this.AppUrl) {
+            this.AppUrl = decodeURIComponent(appURLFromSpan);
           }
-        } catch (error) {
-          console.error("Error extracting credentials:", error);
+
+          if (jobURLFromSpan && !this.JobUrl) {
+            this.JobUrl = decodeURIComponent(jobURLFromSpan);
+          }
+
+          console.log("Extracted values:", {
+            sessionID,
+            token,
+            appBaseURL: this.AppUrl,
+            jobBaseURL: this.JobUrl,
+          });
+
+          return { sessionID, token };
+        } else {
+          console.error("No span found with id starting with documentOnline- to extract data.");
           return { sessionID: "", token: "" };
         }
+      } catch (error) {
+        console.error("Error extracting credentials:", error);
+        return { sessionID: "", token: "" };
       }
+    }
 
     // Function to generate SVG for specific file type and size
     getSvgForType(fileType, size) {
