@@ -455,7 +455,7 @@ define(() => {
             this.style.backgroundColor = "";
           };
 
-          let linkUrl = getViewerUrl(doc.docToken, doc.url, this.URL_TYPE)
+          let linkUrl = this.getViewerUrl(doc.docToken, doc.url, this.URL_TYPE)
           // Add click handler to open document
           if (linkUrl) {
             row.onclick = function () {
@@ -621,7 +621,7 @@ define(() => {
         // Add rows for each document
         documentData.forEach((doc) => {
   
-          let linkUrl = getViewerUrl(doc.docToken, doc.url, this.URL_TYPE)
+          let linkUrl = this.getViewerUrl(doc.docToken, doc.url, this.URL_TYPE)
           const safeUrl = escapeURL(linkUrl);
 
           tableHtml += `<tr style="cursor:pointer;" 
