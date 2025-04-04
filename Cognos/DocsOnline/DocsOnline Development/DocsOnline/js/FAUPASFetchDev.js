@@ -21,7 +21,7 @@ define(() => {
           ["Font Size"]: FONT_SIZE,
           ["Lazy Loading"]: IS_LAZY_LOADED,
           ["scrolltimeout"]: SCROLL_TIMEOUT,
-          ["Max Request Batch Size"]: MAX_BATCH_SIZE
+          ["Max Request Batch Size"]: MAX_BATCH_SIZE,
         } = this.oControl.configuration;
 
         // Check each configuration parameter and collect the missing ones
@@ -157,7 +157,7 @@ define(() => {
           console.log("Interval check triggered");
           this.processVisibleAssets();
         }
-      }, 2000);
+      }, 10000);
 
       // Initial processing of visible assets
       setTimeout(() => this.processVisibleAssets(), 500);
@@ -234,6 +234,7 @@ define(() => {
 
     // Process assets that are currently visible on screen with debug logs
     // Process assets that are currently visible on screen with dynamic batching and max batch size
+    // Process assets that are currently visible on screen with consistent max batch size
     async processVisibleAssets() {
       // Set flag to prevent concurrent processing
       if (this.processingInProgress) {
@@ -274,25 +275,22 @@ define(() => {
           return;
         }
 
-        console.log(`Processing ${visibleSpans.length} newly visible assets`);
+        // Only process up to MAX_BATCH_SIZE spans at a time
+        const batchToProcess = visibleSpans.slice(0, this.MAX_BATCH_SIZE);
+        console.log(`Processing batch of ${batchToProcess.length} assets (limiting to max ${this.MAX_BATCH_SIZE})`);
 
+        // Process the batch
+        const promises = batchToProcess.map((span) => this.processAssetSpan(span));
+        await Promise.all(promises);
 
+        console.log(`Completed loading batch of ${batchToProcess.length} assets`);
 
-        // Process in batches to prevent overwhelming the network
-        for (let i = 0; i < visibleSpans.length; i += this.MAX_BATCH_SIZE) {
-          const batch = visibleSpans.slice(i, i + this.MAX_BATCH_SIZE);
-          console.log(`Processing batch ${Math.floor(i / this.MAX_BATCH_SIZE) + 1} with ${batch.length} assets`);
-
-          const promises = batch.map((span) => this.processAssetSpan(span));
-          await Promise.all(promises);
-
-          // Small delay between batches if more to process
-          if (i + this.MAX_BATCH_SIZE < visibleSpans.length) {
-            await new Promise((resolve) => setTimeout(resolve, 300));
-          }
+        // If there are more visible spans that weren't processed, log it
+        if (visibleSpans.length > this.MAX_BATCH_SIZE) {
+          console.log(
+            `${visibleSpans.length - this.MAX_BATCH_SIZE} more visible assets will be processed on next scroll/interval`
+          );
         }
-
-        console.log(`Completed loading ${visibleSpans.length} visible assets`);
       } catch (error) {
         console.error("Error processing visible assets:", error);
       } finally {
