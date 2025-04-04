@@ -456,7 +456,7 @@ define(() => {
           },
         },
         callbackScope: { ok: this, cancel: this },
-        payload: { url: __glassAppController.Glass.getUrl() },
+        payload: { url: this.oControl.page.application.GlassContext.getUrl() },
       });
     }
 
