@@ -366,7 +366,7 @@ define(() => {
       }
     }
     getViewerUrl(docToken, directUrl, urlType) {
-      let url = `${this.AppUrl}Production/ui/Documents/viewer?docToken=${docToken}`;
+      let url = `${this.AppUrl}Production-UI/ui/Documents/viewer?docToken=${docToken}`;
 
       if (!urlType) {
         url = directUrl;
