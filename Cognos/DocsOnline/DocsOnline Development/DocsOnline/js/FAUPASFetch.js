@@ -10,26 +10,41 @@ define(() => {
      */
 
     initialize(oControlHost, fnDoneInitializing) {
-    //   console.log("Initializing Started - FAUPAS CC");
+      //   console.log("Initializing Started - FAUPAS CC");
       this.oControl = oControlHost;
       const {
-        ["App Server URL"]: AppUrl,
+        ["App Server Url"]: AppUrl,
         ["Job Server Url"]: JobUrl,
         ["Modal Label"]: ModalLabel,
         ["Icon Dimenions"]: ICON_DIMENSIONS,
         ["Mask Name"]: MASK_NAME,
-        ["Font Size"]:FONT_SIZE
+        ["Font Size"]: FONT_SIZE,
       } = this.oControl.configuration;
+
+      // Check each configuration parameter and collect the missing ones
+      const missingParams = [];
+      if (!AppUrl) missingParams.push("App Server Url");
+      if (!JobUrl) missingParams.push("Job Server Url");
+      if (!MASK_NAME) missingParams.push("Mask Name");
+
+      // If any parameters are missing, log specific error and return
+      if (missingParams.length > 0) {
+        console.error(
+          `Advanced Control initialization failed: Missing required configuration parameters: ${missingParams.join(
+            ", "
+          )}`
+        );
+        fnDoneInitializing();
+        return;
+      }
 
       this.AppUrl = AppUrl;
       this.JobUrl = JobUrl;
-      this.ModalLabel = ModalLabel;
+      this.ModalLabel = ModalLabel || "Asset Documents:"; // Provide default if blank
       this.MASK_NAME = MASK_NAME;
-      this.ICON_DIMENSIONS = ICON_DIMENSIONS;
-      this.FONT_SIZE = FONT_SIZE
-
-    //   console.log(oControlHost.page.application);
-    //   console.log("Initializing Complete - FAUPAS CC");
+      this.ICON_DIMENSIONS = ICON_DIMENSIONS || "16px"; // Default value of 16px
+      this.FONT_SIZE = FONT_SIZE || "1em"; // Default value of 1em
+      
       fnDoneInitializing();
     }
 
@@ -37,8 +52,16 @@ define(() => {
      *Draw the control. This method is optional if the control has no UI.
      */
     draw(oControlHost) {
-    //   console.log("Drawing Started - FAUPAS CC");
+      //   console.log("Drawing Started - FAUPAS CC");
       this.oControl = oControlHost;
+
+      // If any parameters are missing, log specific error and return
+      if (missingParams.length > 0) {
+        console.error(
+          `Advanced Control cannot draw: Missing required configuration parameters: ${missingParams.join(", ")}`
+        );
+        return;
+      }
 
       // Extract credentials from the DOM
       const { sessionID, token } = this.extractCredentials();
@@ -68,7 +91,7 @@ define(() => {
         .catch((error) => {
           console.error("Authentication failed, cannot process assets:", error);
         });
-    //   console.log("Drawing Complete - FAUPAS CC");
+      //   console.log("Drawing Complete - FAUPAS CC");
     }
 
     // Method to extract credentials from the DOM
@@ -79,12 +102,12 @@ define(() => {
           const sessionID = firstSpan.getAttribute("data-sessionId") || "";
           const token = firstSpan.getAttribute("data-token") || "";
 
-        //   console.log("Extracted values:", {
-        //     sessionID,
-        //     token,
-        //     appBaseURL: this.AppUrl,
-        //     jobBaseURL: this.JobUrl,
-        //   });
+          //   console.log("Extracted values:", {
+          //     sessionID,
+          //     token,
+          //     appBaseURL: this.AppUrl,
+          //     jobBaseURL: this.JobUrl,
+          //   });
 
           return { sessionID, token };
         } else {
@@ -134,7 +157,7 @@ define(() => {
         modalContent.style.display = "flex";
         modalContent.style.flexDirection = "column";
         modalContent.style.position = "relative";
-        modalContent.style.fontSize =  this.FONT_SiZE;
+        modalContent.style.fontSize = this.FONT_SiZE;
 
         const modalBody = document.createElement("div");
         modalBody.style.padding = "0";
@@ -597,7 +620,7 @@ define(() => {
       }
 
       const assetData = await assetResponse.json();
-    //   console.log(`Asset data for ID ${assetID}:`, assetData);
+      //   console.log(`Asset data for ID ${assetID}:`, assetData);
 
       if (!assetData || !assetData.items || assetData.items.length === 0) {
         throw new Error(`No asset data found for ID ${assetID}`);
@@ -666,7 +689,7 @@ define(() => {
       };
 
       container.appendChild(button);
-    //   console.log("Button added for asset ID:", assetID);
+      //   console.log("Button added for asset ID:", assetID);
     }
 
     // Function to process asset spans and fetch document attachments
