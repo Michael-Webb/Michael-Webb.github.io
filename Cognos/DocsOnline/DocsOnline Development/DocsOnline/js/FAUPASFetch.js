@@ -29,11 +29,13 @@ define(() => {
 
       // If any parameters are missing, log specific error and return
       if (missingParams.length > 0) {
-        console.error(
-          `Advanced Control initialization failed: Missing required configuration parameters: ${missingParams.join(
-            ", "
-          )}`
-        );
+        // console.error(
+        //   `Advanced Control initialization failed: Missing required configuration parameters: ${missingParams.join(
+        //     ", "
+        //   )}`
+        // );
+        throw new scriptableReportError(`Advanced Control cannot draw: Missing required configuration parameters: ${missingParams.join(', ')}`)
+
         fnDoneInitializing();
         return;
       }
@@ -57,10 +59,10 @@ define(() => {
 
       // If any parameters are missing, log specific error and return
       if (missingParams.length > 0) {
-        console.error(
-          `Advanced Control cannot draw: Missing required configuration parameters: ${missingParams.join(", ")}`
-        );
-        return;
+        // console.error(
+        //   `Advanced Control cannot draw: Missing required configuration parameters: ${missingParams.join(", ")}`
+        // );
+        throw new scriptableReportError(`Advanced Control cannot draw: Missing required configuration parameters: ${missingParams.join(', ')}`)
       }
 
       // Extract credentials from the DOM
