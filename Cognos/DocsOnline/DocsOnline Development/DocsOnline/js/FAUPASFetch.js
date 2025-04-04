@@ -258,7 +258,7 @@ define(() => {
                 }
 
                 const iconSpan = document.createElement("span");
-                iconSpan.innerHTML = this.getSvgForType(iconType, ICON_DIMENSIONS);
+                iconSpan.innerHTML = this.getSvgForType(iconType, this.ICON_DIMENSIONS);
                 iconSpan.style.marginRight = "5px";
                 td.appendChild(iconSpan);
               }
@@ -659,7 +659,7 @@ define(() => {
     createDocumentButton(container, documents, assetID) {
       const self = this;
       const button = document.createElement("button");
-      button.innerHTML = this.getSvgForType("paperclip", ICON_DIMENSIONS);
+      button.innerHTML = this.getSvgForType("paperclip", this.ICON_DIMENSIONS);
       button.style.border = "none";
       button.style.background = "none";
       button.style.cursor = "pointer";
@@ -703,7 +703,7 @@ define(() => {
         }
 
         // Insert clock SVG as a loading placeholder
-        container.innerHTML = this.getSvgForType("clock", ICON_DIMENSIONS);
+        container.innerHTML = this.getSvgForType("clock", this.ICON_DIMENSIONS);
 
         // Return a promise for this spans processing
         return this.fetchAssetDetails(assetID)
