@@ -445,7 +445,6 @@ define(() => {
             },
           },
           callbackScope: { ok: this, cancel: this },
-          payload: { url: this.oControl.page.application.GlassContext.getUrl() },
         };
         console.log(dialogObject.message);
 
