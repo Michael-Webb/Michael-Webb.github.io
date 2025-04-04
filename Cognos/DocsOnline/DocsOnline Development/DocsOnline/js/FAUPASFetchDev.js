@@ -180,7 +180,40 @@ define(() => {
         }
       };
     }
-    
+    // Process a single asset span
+    async processAssetSpan(span) {
+      const assetID = span.getAttribute("data-ref");
+
+      // Mark as processed immediately to prevent duplicate processing
+      this.processedSpanIds.add(assetID);
+
+      // Create container
+      let container = document.getElementById(`doc-container-${assetID}`);
+      if (!container) {
+        container = document.createElement("span");
+        container.id = `doc-container-${assetID}`;
+        span.parentNode.insertBefore(container, span.nextSibling);
+      } else {
+        container.innerHTML = "";
+      }
+
+      // Show loading indicator
+      container.innerHTML = this.getSvgForType("clock", this.ICON_DIMENSIONS);
+
+      try {
+        const assetItem = await this.fetchAssetDetails(assetID);
+        const data = await this.fetchAttachments(assetItem);
+
+        container.innerHTML = "";
+        if (data && data.length > 0) {
+          this.createDocumentButton(container, data, assetID);
+        }
+      } catch (error) {
+        console.error("Error processing asset ID", assetID, error);
+        container.innerHTML = "";
+      }
+    }
+
     // Improved visibility check with more tolerance
     isElementVisible(element) {
       if (!element) return false;
