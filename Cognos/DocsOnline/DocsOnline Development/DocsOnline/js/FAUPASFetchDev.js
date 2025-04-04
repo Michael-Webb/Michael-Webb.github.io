@@ -20,6 +20,7 @@ define(() => {
           ["Mask Name"]: MASK_NAME,
           ["Font Size"]: FONT_SIZE,
           ["Lazy Loading"]: IS_LAZY_LOADED,
+          ["scrolltimeout"]:SCROLL_TIMEOUT
         } = this.oControl.configuration;
 
         // Check each configuration parameter and collect the missing ones
@@ -41,10 +42,11 @@ define(() => {
         this.AppUrl = AppUrl;
         this.JobUrl = JobUrl;
         this.ModalLabel = ModalLabel || "Asset Documents:";
-        this.IS_LAZY_LOADED = IS_LAZY_LOADED || true;
+        this.IS_LAZY_LOADED = IS_LAZY_LOADED !== false
         this.MASK_NAME = MASK_NAME;
         this.ICON_DIMENSIONS = ICON_DIMENSIONS || "16px";
         this.FONT_SIZE = FONT_SIZE || "1em";
+        this.SCROLL_TIMEOUT = SCROLL_TIMEOUT || 200
 
         fnDoneInitializing();
       } catch (error) {
@@ -131,7 +133,7 @@ define(() => {
       };
 
       // Throttle the scroll handler with a shorter delay
-      this.throttledScrollHandler = this.throttle(this.scrollHandler, 200);
+      this.throttledScrollHandler = this.throttle(this.scrollHandler, this.SCROLL_TIMEOUT);
 
       // Add event listeners to multiple elements to catch all scroll events
       document.addEventListener("scroll", this.throttledScrollHandler, { passive: true });
