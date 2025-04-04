@@ -10,86 +10,108 @@ define(() => {
      */
 
     initialize(oControlHost, fnDoneInitializing) {
-      //   console.log("Initializing Started - FAUPAS CC");
-      this.oControl = oControlHost;
-      const {
-        ["App Server Url"]: AppUrl,
-        ["Job Server Url"]: JobUrl,
-        ["Modal Label"]: ModalLabel,
-        ["Icon Dimenions"]: ICON_DIMENSIONS,
-        ["Mask Name"]: MASK_NAME,
-        ["Font Size"]: FONT_SIZE,
-      } = this.oControl.configuration;
+      try {
+        this.oControl = oControlHost;
+        const {
+          ["App Server Url"]: AppUrl,
+          ["Job Server Url"]: JobUrl,
+          ["Modal Label"]: ModalLabel,
+          ["Icon Dimenions"]: ICON_DIMENSIONS,
+          ["Mask Name"]: MASK_NAME,
+          ["Font Size"]: FONT_SIZE,
+        } = this.oControl.configuration;
 
-      // Check each configuration parameter and collect the missing ones
-      const missingParams = [];
-      if (!AppUrl) missingParams.push("App Server Url");
-      if (!JobUrl) missingParams.push("Job Server Url");
-      if (!MASK_NAME) missingParams.push("Mask Name");
+        // Check each configuration parameter and collect the missing ones
+        const missingParams = [];
+        if (!AppUrl) missingParams.push("App Server Url");
+        if (!JobUrl) missingParams.push("Job Server Url");
+        if (!MASK_NAME) missingParams.push("Mask Name");
 
-      // If any parameters are missing, log specific error and return
-      if (missingParams.length > 0) {
-        let description = `Missing required configuration parameters: ${missingParams.join(", ")}`;
-        throw new scriptableReportError("AdvancedControl", "draw", description);
+        // If any parameters are missing, throw scriptableReportError
+        if (missingParams.length > 0) {
+          throw new scriptableReportError(
+            "AdvancedControl",
+            "initialize",
+            `Missing required configuration parameters: ${missingParams.join(", ")}`
+          );
+        }
+
+        // Continue with normal initialization if no errors
+        this.AppUrl = AppUrl;
+        this.JobUrl = JobUrl;
+        this.ModalLabel = ModalLabel || "Asset Documents:";
+        this.MASK_NAME = MASK_NAME;
+        this.ICON_DIMENSIONS = ICON_DIMENSIONS || "16px";
+        this.FONT_SIZE = FONT_SIZE || "1em";
+
+        fnDoneInitializing();
+      } catch (error) {
+        // Handle the error by displaying it appropriately
+        console.error("Error during control initialization:", error);
+
+        // Always call fnDoneInitializing to prevent the control from hanging
+        fnDoneInitializing();
+
+        // Re-throw the error so the Cognos framework can handle it
+        throw error;
       }
-
-      this.AppUrl = AppUrl;
-      this.JobUrl = JobUrl;
-      this.ModalLabel = ModalLabel || "Asset Documents:"; // Provide default if blank
-      this.MASK_NAME = MASK_NAME;
-      this.ICON_DIMENSIONS = ICON_DIMENSIONS || "16px"; // Default value of 16px
-      this.FONT_SIZE = FONT_SIZE || "1em"; // Default value of 1em
-
-      fnDoneInitializing();
     }
 
     /*
      *Draw the control. This method is optional if the control has no UI.
      */
     draw(oControlHost) {
-      //   console.log("Drawing Started - FAUPAS CC");
-      this.oControl = oControlHost;
+      try {
+        //   console.log("Drawing Started - FAUPAS CC");
+        this.oControl = oControlHost;
 
-      // Check each configuration parameter and collect the missing ones
-      const missingParams = [];
-      if (!this.AppUrl) missingParams.push("App Server Url");
-      if (!this.JobUrl) missingParams.push("Job Server Url");
-      if (!this.MASK_NAME) missingParams.push("Mask Name");
+        // Check each configuration parameter and collect the missing ones
+        const missingParams = [];
+        if (!this.AppUrl) missingParams.push("App Server Url");
+        if (!this.JobUrl) missingParams.push("Job Server Url");
+        if (!this.MASK_NAME) missingParams.push("Mask Name");
 
-      // If any parameters are missing, log specific error and return
-      if (missingParams.length > 0) {
-        let description = `Missing required configuration parameters: ${missingParams.join(", ")}`;
-        throw new scriptableReportError("AdvancedControl", "draw", description);
+        // If any parameters are missing, log specific error and return
+        if (missingParams.length > 0) {
+          let description = `Missing required configuration parameters: ${missingParams.join(", ")}`;
+          throw new scriptableReportError("AdvancedControl", "draw", description);
+        }
+
+        // Extract credentials from the DOM
+        const { sessionID, token } = this.extractCredentials();
+
+        if (!sessionID || !token) {
+          console.error("Failed to extract sessionID or token, cannot authenticate");
+          return;
+        }
+
+        // First authenticate
+        this.authenticate(sessionID, token)
+          .then((apiToken) => {
+            // Store the token if needed for later use
+            this.apiToken = apiToken;
+
+            // Find all spans with data-ref attribute
+            const assetSpans = document.querySelectorAll("span[data-ref]");
+
+            if (assetSpans.length > 0) {
+              // console.log(`Found ${assetSpans.length} asset reference spans to process`);
+              // Process the spans to add document buttons
+              return this.processAssetDocuments(assetSpans);
+            } else {
+              // console.log("No asset reference spans found on page");
+            }
+          })
+          .catch((error) => {
+            console.error("Authentication failed, cannot process assets:", error);
+          });
+      } catch (error) {
+        // Log the error for debugging
+        console.error("Error during control drawing:", error);
+
+        // Re-throw the error so the Cognos framework can handle it
+        throw error;
       }
-
-      // Extract credentials from the DOM
-      const { sessionID, token } = this.extractCredentials();
-
-      if (!sessionID || !token) {
-        console.error("Failed to extract sessionID or token, cannot authenticate");
-        return;
-      }
-
-      // First authenticate
-      this.authenticate(sessionID, token)
-        .then((apiToken) => {
-          // Store the token if needed for later use
-          this.apiToken = apiToken;
-
-          // Find all spans with data-ref attribute
-          const assetSpans = document.querySelectorAll("span[data-ref]");
-
-          if (assetSpans.length > 0) {
-            // console.log(`Found ${assetSpans.length} asset reference spans to process`);
-            // Process the spans to add document buttons
-            return this.processAssetDocuments(assetSpans);
-          } else {
-            // console.log("No asset reference spans found on page");
-          }
-        })
-        .catch((error) => {
-          console.error("Authentication failed, cannot process assets:", error);
-        });
       //   console.log("Drawing Complete - FAUPAS CC");
     }
 
