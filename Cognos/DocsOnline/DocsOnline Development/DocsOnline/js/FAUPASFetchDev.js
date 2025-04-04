@@ -19,7 +19,7 @@ define(() => {
           ["Icon Dimenions"]: ICON_DIMENSIONS,
           ["Mask Name"]: MASK_NAME,
           ["Font Size"]: FONT_SIZE,
-          ["Lazy Loading"]: IS_LAZY_LOADED
+          ["Lazy Loading"]: IS_LAZY_LOADED,
         } = this.oControl.configuration;
 
         // Check each configuration parameter and collect the missing ones
@@ -97,11 +97,10 @@ define(() => {
               // console.log(`Found ${assetSpans.length} asset reference spans to process`);
 
               // Process the spans to add document buttons
-              if(!this.IS_LAZY_LOADED) {
+              if (!this.IS_LAZY_LOADED) {
                 return this.processAssetDocuments(assetSpans);
               }
               return this.initializeVisibleAssetLoading();
-
             } else {
               // console.log("No asset reference spans found on page");
             }
@@ -117,71 +116,79 @@ define(() => {
     }
 
     // Add these methods to your AdvancedControl class
+    // Update these methods in your AdvancedControl class
     initializeVisibleAssetLoading() {
       // Keep track of processed spans
       this.processedSpanIds = new Set();
       this.processingInProgress = false;
 
-      // Add scroll event listener for lazy loading
+      // Add scroll event listener for lazy loading - listen on document, not window
       this.scrollHandler = () => {
+        console.log("Scroll event detected"); // Debug log
         if (this.apiToken && !this.processingInProgress) {
           this.processVisibleAssets();
         }
       };
 
-      // Throttle the scroll handler to prevent too many calls
-      this.throttledScrollHandler = this.throttle(this.scrollHandler, 300);
-      window.addEventListener("scroll", this.throttledScrollHandler);
+      // Throttle the scroll handler with a shorter delay
+      this.throttledScrollHandler = this.throttle(this.scrollHandler, 200);
 
-      // Also check on window resize
-      this.resizeHandler = this.throttle(() => {
+      // Add event listeners to multiple elements to catch all scroll events
+      document.addEventListener("scroll", this.throttledScrollHandler, { passive: true });
+      window.addEventListener("scroll", this.throttledScrollHandler, { passive: true });
+
+      // Try to find the main Cognos content container and add listener
+      const cognosContent = document.querySelector(".clsViewerPage, .viewerPage, #mainViewerContainer");
+      if (cognosContent) {
+        cognosContent.addEventListener("scroll", this.throttledScrollHandler, { passive: true });
+        console.log("Added scroll listener to Cognos container");
+      }
+
+      // Also check on other events that might change visibility
+      window.addEventListener("resize", this.throttledScrollHandler, { passive: true });
+
+      // Force a check periodically in case scroll events are missing
+      this.intervalCheck = setInterval(() => {
         if (this.apiToken && !this.processingInProgress) {
+          console.log("Interval check triggered");
           this.processVisibleAssets();
         }
-      }, 300);
-      window.addEventListener("resize", this.resizeHandler);
+      }, 2000);
 
       // Initial processing of visible assets
-      this.processVisibleAssets();
+      setTimeout(() => this.processVisibleAssets(), 500);
     }
 
-    // Throttle utility to prevent too frequent function calls
-    throttle(func, limit) {
-      let inThrottle;
-      return function () {
-        const args = arguments;
-        const context = this;
-        if (!inThrottle) {
-          func.apply(context, args);
-          inThrottle = true;
-          setTimeout(() => (inThrottle = false), limit);
-        }
-      };
-    }
-
-    // Check if an element is visible in the viewport
+    // Improved visibility check with more tolerance
     isElementVisible(element) {
       if (!element) return false;
 
       const rect = element.getBoundingClientRect();
-      // Add some buffer (200px) to load assets just before they come into view
+      const windowHeight = window.innerHeight || document.documentElement.clientHeight;
+      const windowWidth = window.innerWidth || document.documentElement.clientWidth;
+
+      // More generous buffer (500px) to ensure we catch elements
       return (
-        rect.top >= -200 &&
-        rect.left >= 0 &&
-        rect.bottom <= (window.innerHeight + 200 || document.documentElement.clientHeight + 200) &&
-        rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+        rect.top >= -500 && rect.bottom <= windowHeight + 500 && rect.left >= -100 && rect.right <= windowWidth + 100
       );
     }
 
-    // Process assets that are currently visible on screen
+    // Process assets that are currently visible on screen with debug logs
     async processVisibleAssets() {
       // Set flag to prevent concurrent processing
-      if (this.processingInProgress) return;
+      if (this.processingInProgress) {
+        console.log("Processing already in progress, skipping");
+        return;
+      }
+
       this.processingInProgress = true;
+      console.log("Starting to process visible assets");
 
       try {
         // Get all asset spans
         const allSpans = document.querySelectorAll("span[data-ref]");
+        console.log(`Found ${allSpans.length} total asset spans`);
+
         if (allSpans.length === 0) {
           this.processingInProgress = false;
           return;
@@ -190,19 +197,39 @@ define(() => {
         // Filter only visible spans that haven't been processed yet
         const visibleSpans = Array.from(allSpans).filter((span) => {
           const assetID = span.getAttribute("data-ref");
-          return !this.processedSpanIds.has(assetID) && this.isElementVisible(span);
+          const isVisible = this.isElementVisible(span);
+          const isProcessed = this.processedSpanIds.has(assetID);
+
+          if (isVisible && !isProcessed) {
+            console.log(`Asset ${assetID} is visible and not processed`);
+          }
+
+          return !isProcessed && isVisible;
         });
+
+        console.log(`Found ${visibleSpans.length} visible unprocessed spans`);
 
         if (visibleSpans.length === 0) {
           this.processingInProgress = false;
           return;
         }
 
-        console.log(`Loading ${visibleSpans.length} newly visible assets`);
+        console.log(`Processing ${visibleSpans.length} newly visible assets`);
 
-        // Process all visible spans in parallel
-        const promises = visibleSpans.map((span) => this.processAssetSpan(span));
-        await Promise.all(promises);
+        // Process in smaller batches to ensure network doesn't get overwhelmed
+        const batchSize = 10; // Process 10 at a time
+        for (let i = 0; i < visibleSpans.length; i += batchSize) {
+          const batch = visibleSpans.slice(i, i + batchSize);
+          console.log(`Processing batch ${i / batchSize + 1} with ${batch.length} assets`);
+
+          const promises = batch.map((span) => this.processAssetSpan(span));
+          await Promise.all(promises);
+
+          // Small delay between batches
+          if (i + batchSize < visibleSpans.length) {
+            await new Promise((resolve) => setTimeout(resolve, 300));
+          }
+        }
 
         console.log(`Completed loading ${visibleSpans.length} visible assets`);
       } catch (error) {
@@ -212,51 +239,26 @@ define(() => {
       }
     }
 
-    // Process a single asset span
-    async processAssetSpan(span) {
-      const assetID = span.getAttribute("data-ref");
-
-      // Mark as processed immediately to prevent duplicate processing
-      this.processedSpanIds.add(assetID);
-
-      // Create container
-      let container = document.getElementById(`doc-container-${assetID}`);
-      if (!container) {
-        container = document.createElement("span");
-        container.id = `doc-container-${assetID}`;
-        span.parentNode.insertBefore(container, span.nextSibling);
-      } else {
-        container.innerHTML = "";
-      }
-
-      // Show loading indicator
-      container.innerHTML = this.getSvgForType("clock", this.ICON_DIMENSIONS);
-
-      try {
-        const assetItem = await this.fetchAssetDetails(assetID);
-        const data = await this.fetchAttachments(assetItem);
-
-        container.innerHTML = "";
-        if (data && data.length > 0) {
-          this.createDocumentButton(container, data, assetID);
-        }
-      } catch (error) {
-        console.error("Error processing asset ID", assetID, error);
-        container.innerHTML = "";
-      }
-    }
-
-    // Clean up in the destroy method
+    // Clean up in the destroy method - must clean up all listeners
     destroy(oControlHost) {
       this.oControl = oControlHost;
 
       // Remove event listeners
       if (this.throttledScrollHandler) {
+        document.removeEventListener("scroll", this.throttledScrollHandler);
         window.removeEventListener("scroll", this.throttledScrollHandler);
+
+        const cognosContent = document.querySelector(".clsViewerPage, .viewerPage, #mainViewerContainer");
+        if (cognosContent) {
+          cognosContent.removeEventListener("scroll", this.throttledScrollHandler);
+        }
       }
-      if (this.resizeHandler) {
-        window.removeEventListener("resize", this.resizeHandler);
+
+      if (this.intervalCheck) {
+        clearInterval(this.intervalCheck);
       }
+
+      window.removeEventListener("resize", this.throttledScrollHandler);
     }
 
     // Method to extract credentials from the DOM
