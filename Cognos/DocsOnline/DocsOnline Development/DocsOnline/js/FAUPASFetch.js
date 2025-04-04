@@ -72,7 +72,7 @@ define(() => {
     // Method to extract credentials from the DOM
     extractCredentials() {
       try {
-        const firstSpan = document.querySelector(`span[data-id^="documentOnline-"]`);
+        const firstSpan = document.querySelector(`span[data-id^="documentsOnline-"]`);
         if (firstSpan) {
           const sessionID = firstSpan.getAttribute("data-sessionId") || "";
           const token = firstSpan.getAttribute("data-token") || "";
@@ -86,7 +86,7 @@ define(() => {
 
           return { sessionID, token };
         } else {
-          console.error("No span found with id starting with documentOnline- to extract data.");
+          console.error("No span found with id starting with documentsOnline- to extract data.");
           return { sessionID: "", token: "" };
         }
       } catch (error) {
