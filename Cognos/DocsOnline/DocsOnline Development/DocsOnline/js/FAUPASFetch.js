@@ -450,7 +450,7 @@ define(() => {
         console.log(dialogObject.message);
 
         // Create a simpler dialog first to test
-        this.oControl.page.application.GlassContext.getCoreSvc(".Dialog").createDialog();
+        this.oControl.page.application.GlassContext.getCoreSvc(".Dialog").createDialog(dialogObject);
       } catch (error) {
         console.error("Error showing dialog:", error);
         alert(`Error showing document dialog: ${error.message}`);
