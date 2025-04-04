@@ -431,7 +431,7 @@ define(() => {
           title: `${this.ModalLabel} ${assetID}`,
           message: tableHtml,
           className: "info",
-          buttons: ["ok", "cancel"],
+          buttons: ["ok"],
           width: "60%",
           type: "info",
           size: "default",
@@ -439,9 +439,6 @@ define(() => {
           callback: {
             ok: async () => {
               console.log("ok");
-            },
-            cancel: async () => {
-              console.log("cancel");
             },
           },
           callbackScope: { ok: this, cancel: this },
