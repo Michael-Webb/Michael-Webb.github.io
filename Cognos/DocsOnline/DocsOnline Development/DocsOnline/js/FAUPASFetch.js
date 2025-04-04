@@ -29,15 +29,11 @@ define(() => {
 
       // If any parameters are missing, log specific error and return
       if (missingParams.length > 0) {
-        // console.error(
-        //   `Advanced Control initialization failed: Missing required configuration parameters: ${missingParams.join(
-        //     ", "
-        //   )}`
-        // );
-        throw new scriptableReportError(`Advanced Control cannot draw: Missing required configuration parameters: ${missingParams.join(', ')}`)
-
-        fnDoneInitializing();
-        return;
+        throw new scriptableReportError(
+            "AdvancedControl", 
+            "initialize", 
+            `Missing required configuration parameters: ${missingParams.join(', ')}`
+          );
       }
 
       this.AppUrl = AppUrl;
@@ -46,7 +42,7 @@ define(() => {
       this.MASK_NAME = MASK_NAME;
       this.ICON_DIMENSIONS = ICON_DIMENSIONS || "16px"; // Default value of 16px
       this.FONT_SIZE = FONT_SIZE || "1em"; // Default value of 1em
-      
+
       fnDoneInitializing();
     }
 
@@ -57,12 +53,19 @@ define(() => {
       //   console.log("Drawing Started - FAUPAS CC");
       this.oControl = oControlHost;
 
+      // Check each configuration parameter and collect the missing ones
+      const missingParams = [];
+      if (!this.AppUrl) missingParams.push("App Server Url");
+      if (!this.JobUrl) missingParams.push("Job Server Url");
+      if (!this.MASK_NAME) missingParams.push("Mask Name");
+
       // If any parameters are missing, log specific error and return
       if (missingParams.length > 0) {
-        // console.error(
-        //   `Advanced Control cannot draw: Missing required configuration parameters: ${missingParams.join(", ")}`
-        // );
-        throw new scriptableReportError(`Advanced Control cannot draw: Missing required configuration parameters: ${missingParams.join(', ')}`)
+        throw new scriptableReportError(
+            "AdvancedControl", 
+            "draw", 
+            `Missing required configuration parameters: ${missingParams.join(', ')}`
+          );
       }
 
       // Extract credentials from the DOM
