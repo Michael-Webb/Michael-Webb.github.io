@@ -92,6 +92,7 @@ define(() => {
 
         // Extract credentials from the DOM
         const { sessionID, token, authObj } = this.extractCredentials();
+        this.authObj = authObj; // Add this line
 
         if (!sessionID || !token) {
           console.error("Failed to extract sessionID or token, cannot authenticate");
@@ -369,7 +370,7 @@ define(() => {
       }
     }
     getViewerUrl(docToken, directUrl, urlType) {
-      let url = `${this.AppUrl}/${authObj.environment}-UI/ui/Documents/viewer?docToken=${docToken}`;
+      let url = `${this.AppUrl}/${this.authObj.environment}-UI/ui/Documents/viewer?docToken=${docToken}`;
 
       if (!urlType) {
         url = directUrl;
@@ -700,24 +701,27 @@ define(() => {
     }
 
     // Function to fetch the FAUPAS screen to capture cookies
-    async fetchFaupasScreen(authObj) {
+    async fetchFaupasScreen() {
       try {
-        const faupasResponse = await fetch(`${this.AppUrl}/${authObj.environment}-UI/ui/uiscreens/fixedassets/FAUPAS`, {
-          headers: {
-            priority: "u=0, i",
-            "sec-fetch-dest": "document",
-            "sec-fetch-mode": "navigate",
-            "sec-fetch-site": "same-site",
-            "sec-fetch-user": "?1",
-            "upgrade-insecure-requests": "1",
-          },
-          referrer: this.JobUrl,
-          referrerPolicy: "strict-origin-when-cross-origin",
-          body: null,
-          method: "GET",
-          mode: "no-cors",
-          credentials: "include",
-        });
+        const faupasResponse = await fetch(
+          `${this.AppUrl}/${this.authObj.environment}-UI/ui/uiscreens/fixedassets/FAUPAS`,
+          {
+            headers: {
+              priority: "u=0, i",
+              "sec-fetch-dest": "document",
+              "sec-fetch-mode": "navigate",
+              "sec-fetch-site": "same-site",
+              "sec-fetch-user": "?1",
+              "upgrade-insecure-requests": "1",
+            },
+            referrer: this.JobUrl,
+            referrerPolicy: "strict-origin-when-cross-origin",
+            body: null,
+            method: "GET",
+            mode: "no-cors",
+            credentials: "include",
+          }
+        );
         // console.log("FAUPAS fetch complete:", faupasResponse);
         return faupasResponse;
       } catch (error) {
@@ -727,10 +731,10 @@ define(() => {
     }
 
     // Function to fetch API token
-    async fetchApiToken(authObj) {
+    async fetchApiToken() {
       try {
         const tokenResponse = await fetch(
-          `${this.JobUrl}/${authObj.environment}/api/user/apiToken?sessionId=${authObj.sessionId}&authToken=${authObj.token}`,
+          `${this.JobUrl}/${this.authObj.environment}/api/user/apiToken?sessionId=${this.authObj.sessionId}&authToken=${this.authObj.token}`,
           {
             headers: {
               accept: "*/*",
@@ -766,46 +770,49 @@ define(() => {
       }
     }
     // Function to validate security token
-    async validateSecurityToken(authObj) {
+    async validateSecurityToken() {
       try {
-        const validationResponse = await fetch(`${this.JobUrl}/${authObj.environment}/api/User/ValidateSecurityToken`, {
-          headers: {
-            accept: "*/*",
-            "accept-language": "en-US,en;q=0.9",
-            "content-type": "application/x-www-form-urlencoded",
-            Authorization: "Bearer " + authObj.apiToken,
-          },
-          referrer: this.AppUrl,
-          referrerPolicy: "strict-origin-when-cross-origin",
-          body:
-            "sessionId=" +
-            authObj.sessionId +
-            "&authToken=" +
-            authObj.token +
-            "&claims=NameIdentifier&claims=Name&claims=GivenName&claims=Surname",
-          method: "POST",
-          mode: "cors",
-          credentials: "omit",
-        });
+        const validationResponse = await fetch(
+          `${this.JobUrl}/${this.authObj.environment}/api/User/ValidateSecurityToken`,
+          {
+            headers: {
+              accept: "*/*",
+              "accept-language": "en-US,en;q=0.9",
+              "content-type": "application/x-www-form-urlencoded",
+              Authorization: "Bearer " + this.authObj.apiToken,
+            },
+            referrer: this.AppUrl,
+            referrerPolicy: "strict-origin-when-cross-origin",
+            body:
+              "sessionId=" +
+              this.authObj.sessionId +
+              "&authToken=" +
+              this.authObj.token +
+              "&claims=NameIdentifier&claims=Name&claims=GivenName&claims=Surname",
+            method: "POST",
+            mode: "cors",
+            credentials: "omit",
+          }
+        );
 
         if (!validationResponse.ok) {
           throw new Error("Token validation failed: " + validationResponse.status);
         }
 
-        console.log("Token validated for sessionID:", authObj.sessionId);
+        console.log("Token validated for sessionID:", this.authObj.sessionId);
         return validationResponse;
       } catch (error) {
         console.error("Error validating token:", error);
         throw error;
       }
     }
-    async getSessionExpiration(authObj) {
+    async getSessionExpiration() {
       try {
-        const response = await fetch(`${this.JobUrl}/${authObj.environment}/api/user/getsessionexpiration`, {
+        const response = await fetch(`${this.JobUrl}/${this.authObj.environment}/api/user/getsessionexpiration`, {
           headers: {
             accept: "application/json, text/plain, */*",
             "accept-language": "en-US,en;q=0.9",
-            Authorization: "FEBearer " + authObj.apiToken,
+            Authorization: "FEBearer " + this.authObj.apiToken,
             "cache-control": "no-cache",
           },
           body: null,
@@ -830,18 +837,20 @@ define(() => {
     // Main authentication function that calls the above functions in sequence
     async authenticate(authObj) {
       try {
+        const auth = this.authObj || authObj;
+
         // Step 1: Fetch FAUPAS screen to capture cookies
-        await this.fetchFaupasScreen(authObj);
+        await this.fetchFaupasScreen();
 
         // Step 2: Fetch API token
-        const apiToken = await this.fetchApiToken(authObj);
-        authObj.apiToken = apiToken;
+        const apiToken = await this.fetchApiToken();
+        this.authObj.apiToken = apiToken;
         // Step 3: Validate security token
-        await this.validateSecurityToken(authObj);
+        await this.validateSecurityToken(auth);
         // Step 4: Get Session Expiration and log it
         // await this.getSessionExpiration(authObj);
 
-        return authObj; // Return the API token for future use
+        return this.authObj; // Return the API token for future use
       } catch (error) {
         console.error("Authentication failed:", error);
         throw error;
@@ -862,7 +871,7 @@ define(() => {
 
       // If not in cache, fetch from server
       const assetResponse = await fetch(
-        `${this.AppUrl}/${authObj.environment}-UI/data/finance/legacy/FAIdnt?$filter=(Faid%20eq%20%27${assetID}%27%20and%20Ledger%20eq%20%27GL%27)&$orderby=Ledger,Faid&$skip=0&$top=20`,
+        `${this.AppUrl}/${this.authObj.environment}-UI/data/finance/legacy/FAIdnt?$filter=(Faid%20eq%20%27${assetID}%27%20and%20Ledger%20eq%20%27GL%27)&$orderby=Ledger,Faid&$skip=0&$top=20`,
         {
           headers: {
             accept: "application/json, text/plain, */*",
@@ -878,7 +887,7 @@ define(() => {
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "same-origin",
           },
-          referrer: `${this.AppUrl}/${authObj.environment}-UI/ui/uiscreens/fixedassets/FAUPAS`,
+          referrer: `${this.AppUrl}/${this.authObj.environment}-UI/ui/uiscreens/fixedassets/FAUPAS`,
           referrerPolicy: "strict-origin-when-cross-origin",
           body: null,
           method: "GET",
@@ -916,7 +925,7 @@ define(() => {
       }
 
       const attachmentResponse = await fetch(
-        `${this.AppUrl}/${authObj.environment}-UI/api/finance/legacy/documents/FAIdnt/attachments/`,
+        `${this.AppUrl}/${this.authObj.environment}-UI/api/finance/legacy/documents/FAIdnt/attachments/`,
         {
           method: "POST",
           headers: {
@@ -963,7 +972,7 @@ define(() => {
         }
 
         const countResponse = await fetch(
-          `${this.AppUrl}/${authObj.environment}-UI/api/finance/legacy/documents/FAIdnt/getattachmentcount/`,
+          `${this.AppUrl}/${this.authObj.environment}-UI/api/finance/legacy/documents/FAIdnt/getattachmentcount/`,
           {
             method: "POST",
             headers: {
