@@ -700,7 +700,7 @@ define(() => {
     }
 
     // Function to fetch the FAUPAS screen to capture cookies
-    async fetchFaupasScreen() {
+    async fetchFaupasScreen(authObj) {
       try {
         const faupasResponse = await fetch(`${this.AppUrl}/${authObj.environment}-UI/ui/uiscreens/fixedassets/FAUPAS`, {
           headers: {
@@ -831,7 +831,7 @@ define(() => {
     async authenticate(authObj) {
       try {
         // Step 1: Fetch FAUPAS screen to capture cookies
-        await this.fetchFaupasScreen();
+        await this.fetchFaupasScreen(authObj);
 
         // Step 2: Fetch API token
         const apiToken = await this.fetchApiToken(authObj);
