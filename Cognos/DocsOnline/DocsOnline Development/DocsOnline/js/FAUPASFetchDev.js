@@ -21,7 +21,6 @@ define(() => {
           ["Font Size"]: FONT_SIZE,
           ["Lazy Loading"]: IS_LAZY_LOADED,
           ["scrolltimeout"]: SCROLL_TIMEOUT,
-          ["Max Request Batch Size"]: MAX_BATCH_SIZE,
           ["Direct Url"]: URL_TYPE,
         } = this.oControl.configuration;
 
@@ -49,7 +48,6 @@ define(() => {
         this.ICON_DIMENSIONS = ICON_DIMENSIONS || "16px";
         this.FONT_SIZE = FONT_SIZE || "1em";
         this.SCROLL_TIMEOUT = SCROLL_TIMEOUT || 200;
-        this.MAX_BATCH_SIZE = MAX_BATCH_SIZE || 20;
         this.URL_TYPE = URL_TYPE;
         // Initialize cache with version tracking
         const cacheVersion = "1.0"; // Update this when making breaking changes to cached data format
@@ -93,7 +91,7 @@ define(() => {
         }
 
         // Extract credentials from the DOM
-        const { sessionID, token } = this.extractCredentials();
+        const { sessionID, token, authObj } = this.extractCredentials();
 
         if (!sessionID || !token) {
           console.error("Failed to extract sessionID or token, cannot authenticate");
@@ -101,10 +99,10 @@ define(() => {
         }
 
         // First authenticate
-        this.authenticate(sessionID, token)
-          .then((apiToken) => {
+        this.authenticate(authObj)
+          .then((authObj) => {
             // Store the token if needed for later use
-            this.apiToken = apiToken;
+            this.apiToken = authObj.apiToken;
 
             // Find all spans with data-ref attribute
             const assetSpans = document.querySelectorAll("span[data-ref]");
@@ -172,7 +170,7 @@ define(() => {
       }, 2000);
 
       // Initial processing of visible assets
-      setTimeout(() => this.processVisibleAssets(), 500);
+      setTimeout(() => this.processVisibleAssets(), 100);
     }
 
     // Add this throttle method to your AdvancedControl class
@@ -320,15 +318,20 @@ define(() => {
         if (firstSpan) {
           const sessionID = firstSpan.getAttribute("data-sessionId") || "";
           const token = firstSpan.getAttribute("data-token") || "";
+          const environment = firstSpan.getAttribute("data-environment") || "";
+          const user = firstSpan.getAttribute("data-user") || "";
 
-          //   console.log("Extracted values:", {
-          //     sessionID,
-          //     token,
-          //     appBaseURL: this.AppUrl,
-          //     jobBaseURL: this.JobUrl,
-          //   });
+          const authObj = {
+            sessionId: firstSpan.getAttribute("data-sessionId") || "",
+            token: firstSpan.getAttribute("data-token") || "",
+            environment: firstSpan.getAttribute("data-environment") || "",
+            user: firstSpan.getAttribute("data-user") || "",
+            appBaseURL: this.AppUrl,
+            jobBaseURL: this.JobUrl,
+          };
+          console.log("Extracted values:", authObj);
 
-          return { sessionID, token };
+          return { sessionID, token, authObj };
         } else {
           console.error("No span found with id starting with documentsOnline- to extract data.");
           return { sessionID: "", token: "" };
@@ -366,7 +369,7 @@ define(() => {
       }
     }
     getViewerUrl(docToken, directUrl, urlType) {
-      let url = `${this.AppUrl}Production-UI/ui/Documents/viewer?docToken=${docToken}`;
+      let url = `${this.AppUrl}/${authObj.environment}-UI/ui/Documents/viewer?docToken=${docToken}`;
 
       if (!urlType) {
         url = directUrl;
@@ -384,7 +387,7 @@ define(() => {
         modalContent.style.display = "flex";
         modalContent.style.flexDirection = "column";
         modalContent.style.position = "relative";
-        modalContent.style.fontSize = this.FONT_SiZE;
+        modalContent.style.fontSize = this.FONT_SIZE;
 
         const modalBody = document.createElement("div");
         modalBody.style.padding = "0";
@@ -699,7 +702,7 @@ define(() => {
     // Function to fetch the FAUPAS screen to capture cookies
     async fetchFaupasScreen() {
       try {
-        const faupasResponse = await fetch(this.AppUrl + "Production-UI/ui/uiscreens/fixedassets/FAUPAS", {
+        const faupasResponse = await fetch(`${this.AppUrl}/${authObj.environment}-UI/ui/uiscreens/fixedassets/FAUPAS`, {
           headers: {
             priority: "u=0, i",
             "sec-fetch-dest": "document",
@@ -724,10 +727,10 @@ define(() => {
     }
 
     // Function to fetch API token
-    async fetchApiToken(sessionID, token) {
+    async fetchApiToken(authObj) {
       try {
         const tokenResponse = await fetch(
-          `${this.JobUrl}Production/api/user/apiToken?sessionId=${sessionID}&authToken=${token}`,
+          `${this.JobUrl}/${authObj.environment}/api/user/apiToken?sessionId=${authObj.sessionId}&authToken=${authObj.token}`,
           {
             headers: {
               accept: "*/*",
@@ -763,22 +766,22 @@ define(() => {
       }
     }
     // Function to validate security token
-    async validateSecurityToken(sessionID, token, apiToken) {
+    async validateSecurityToken(authObj) {
       try {
-        const validationResponse = await fetch(`${this.JobUrl}Production/api/User/ValidateSecurityToken`, {
+        const validationResponse = await fetch(`${this.JobUrl}/${authObj.environment}/api/User/ValidateSecurityToken`, {
           headers: {
             accept: "*/*",
             "accept-language": "en-US,en;q=0.9",
             "content-type": "application/x-www-form-urlencoded",
-            Authorization: "Bearer " + apiToken,
+            Authorization: "Bearer " + authObj.apiToken,
           },
           referrer: this.AppUrl,
           referrerPolicy: "strict-origin-when-cross-origin",
           body:
             "sessionId=" +
-            sessionID +
+            authObj.sessionId +
             "&authToken=" +
-            token +
+            authObj.token +
             "&claims=NameIdentifier&claims=Name&claims=GivenName&claims=Surname",
           method: "POST",
           mode: "cors",
@@ -789,27 +792,56 @@ define(() => {
           throw new Error("Token validation failed: " + validationResponse.status);
         }
 
-        console.log("Token validated for sessionID:", sessionID);
+        console.log("Token validated for sessionID:", authObj.sessionId);
         return validationResponse;
       } catch (error) {
         console.error("Error validating token:", error);
         throw error;
       }
     }
+    async getSessionExpiration(authObj) {
+      try {
+        const response = await fetch(`${this.JobUrl}/${authObj.environment}/api/user/getsessionexpiration`, {
+          headers: {
+            accept: "application/json, text/plain, */*",
+            "accept-language": "en-US,en;q=0.9",
+            Authorization: "FEBearer " + authObj.apiToken,
+            "cache-control": "no-cache",
+          },
+          body: null,
+          method: "GET",
+          mode: "cors",
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to get session expiration: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("Session expiration data:", data);
+        return data;
+      } catch (error) {
+        console.error("Error getting session expiration:", error);
+        throw error;
+      }
+    }
 
     // Main authentication function that calls the above functions in sequence
-    async authenticate(sessionID, token) {
+    async authenticate(authObj) {
       try {
         // Step 1: Fetch FAUPAS screen to capture cookies
         await this.fetchFaupasScreen();
 
         // Step 2: Fetch API token
-        const apiToken = await this.fetchApiToken(sessionID, token);
-
+        const apiToken = await this.fetchApiToken(authObj);
+        authObj.apiToken = apiToken;
         // Step 3: Validate security token
-        await this.validateSecurityToken(sessionID, token, apiToken);
+        await this.validateSecurityToken(authObj);
+        // Step 4: Get Session Expiration and log it
+        // await this.getSessionExpiration(authObj);
 
-        return apiToken; // Return the API token for future use
+        return authObj; // Return the API token for future use
       } catch (error) {
         console.error("Authentication failed:", error);
         throw error;
@@ -830,7 +862,7 @@ define(() => {
 
       // If not in cache, fetch from server
       const assetResponse = await fetch(
-        `${this.AppUrl}Production-UI/data/finance/legacy/FAIdnt?$filter=(Faid%20eq%20%27${assetID}%27%20and%20Ledger%20eq%20%27GL%27)&$orderby=Ledger,Faid&$skip=0&$top=20`,
+        `${this.AppUrl}/${authObj.environment}-UI/data/finance/legacy/FAIdnt?$filter=(Faid%20eq%20%27${assetID}%27%20and%20Ledger%20eq%20%27GL%27)&$orderby=Ledger,Faid&$skip=0&$top=20`,
         {
           headers: {
             accept: "application/json, text/plain, */*",
@@ -846,7 +878,7 @@ define(() => {
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "same-origin",
           },
-          referrer: `${this.AppUrl}Production-UI/ui/uiscreens/fixedassets/FAUPAS`,
+          referrer: `${this.AppUrl}/${authObj.environment}-UI/ui/uiscreens/fixedassets/FAUPAS`,
           referrerPolicy: "strict-origin-when-cross-origin",
           body: null,
           method: "GET",
@@ -884,7 +916,7 @@ define(() => {
       }
 
       const attachmentResponse = await fetch(
-        `${this.AppUrl}Production-UI/api/finance/legacy/documents/FAIdnt/attachments/`,
+        `${this.AppUrl}/${authObj.environment}-UI/api/finance/legacy/documents/FAIdnt/attachments/`,
         {
           method: "POST",
           headers: {
@@ -931,7 +963,7 @@ define(() => {
         }
 
         const countResponse = await fetch(
-          `${this.AppUrl}Production-UI/api/finance/legacy/documents/FAIdnt/getattachmentcount/`,
+          `${this.AppUrl}/${authObj.environment}-UI/api/finance/legacy/documents/FAIdnt/getattachmentcount/`,
           {
             method: "POST",
             headers: {
