@@ -101,52 +101,70 @@ define(() => {
     /*
      *Draw the control. This method is optional if the control has no UI.
      */
+    /*
+     * Draw the control. This method is optional if the control has no UI.
+     */
     draw(oControlHost) {
       try {
         this.oControl = oControlHost;
-        this.drawID = this.oControl.generateUniqueID(); // Get and store drawID
+        this.drawID = this.oControl.generateUniqueID(); // *** Get and store drawID ***
         console.log(`AdvancedControl Instance Drawing: ID=${this.drawID}, Mask=${this.MASK_NAME}`);
 
-        // Rest of the existing code...
+        // Check each configuration parameter and collect the missing ones
+        const missingParams = [];
+        if (!this.AppUrl) missingParams.push("App Server Url");
+        if (!this.JobUrl) missingParams.push("Job Server Url");
+        if (!this.MASK_NAME) missingParams.push("Mask Name");
+        if (!this.LIST_NAME) missingParams.push("List Name");
 
-        // After authentication, use the LIST_NAME config to target specific containers
+        // If any parameters are missing, log specific error and return
+        if (missingParams.length > 0) {
+          let description = `Missing required configuration parameters: ${missingParams.join(", ")}`;
+          throw new scriptableReportError("AdvancedControl", "draw", description);
+        }
+
+        // Extract credentials from the DOM
+        const { sessionID, token, authObj } = this.extractCredentials();
+        this.authObj = authObj; // Add this line
+
+        if (!sessionID || !token) {
+          console.error("Failed to extract sessionID or token, cannot authenticate");
+          return;
+        }
+
+        // First authenticate
         this.authenticate(authObj)
           .then((authObj) => {
             // Store the token if needed for later use
             this.apiToken = authObj.apiToken;
 
-            // Find spans with data-ref attribute within a container with lid attribute matching LIST_NAME
-            if (this.LIST_NAME && this.LIST_NAME.trim() !== "") {
-              // Find container with lid attribute matching LIST_NAME
-              const container = document.querySelector(`[lid="${this.LIST_NAME}"]`);
-              if (container) {
-                const assetSpans = container.querySelectorAll("span[data-ref]");
-                console.log(
-                  `Found ${assetSpans.length} asset reference spans in container with lid="${this.LIST_NAME}"`
-                );
+            // Find container with lid attribute matching LIST_NAME
+            const container = document.querySelector(`[lid="${this.LIST_NAME}"]`);
+            if (!container) {
+              console.warn(`Container with lid="${this.LIST_NAME}" not found. Processing stopped.`);
+              return; // Stop execution if container not found
+            }
 
-                if (assetSpans.length > 0) {
-                  // Process the spans to add document buttons
-                  if (!this.IS_LAZY_LOADED) {
-                    return this.processAssetDocuments(assetSpans);
-                  }
-                  return this.initializeVisibleAssetLoading();
-                } else {
-                  console.log(`No asset reference spans found in container with lid="${this.LIST_NAME}"`);
-                }
-              } else {
-                console.warn(`Container with lid="${this.LIST_NAME}" not found. Processing stopped.`);
-                return; // Stop execution if container not found
+            // Find all spans with data-ref attribute within the container
+            const assetSpans = container.querySelectorAll("span[data-ref]");
+
+            if (assetSpans.length > 0) {
+              console.log(`Found ${assetSpans.length} asset reference spans in container with lid="${this.LIST_NAME}"`);
+
+              // Process the spans to add document buttons
+              if (!this.IS_LAZY_LOADED) {
+                return this.processAssetDocuments(assetSpans);
               }
+              return this.initializeVisibleAssetLoading();
             } else {
-              console.warn("LIST_NAME configuration is missing or empty. Processing stopped.");
-              return; // Stop execution if LIST_NAME is not provided
+              console.log(`No asset reference spans found in container with lid="${this.LIST_NAME}"`);
             }
           })
           .catch((error) => {
             console.error("Authentication failed, cannot process assets:", error);
           });
       } catch (error) {
+        // Log the error for debugging
         console.error("Error during control drawing:", error);
       }
     }
