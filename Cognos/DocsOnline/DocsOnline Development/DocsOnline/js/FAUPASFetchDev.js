@@ -17,7 +17,7 @@ define(() => {
           idTable: "FAIdnt",
           idData: "FAIdnt",
           idColumn: "Faid",
-          orderBy:"Ledger,Faid"
+          orderBy: "Ledger,Faid",
         },
         {
           name: "PEUPPE",
@@ -25,7 +25,7 @@ define(() => {
           idTable: "PENameMaster",
           idData: "PENameMaster",
           idColumn: "PeId",
-          orderBy:"NameU,PeId"
+          orderBy: "NameU,PeId",
         },
         {
           name: "GLUPKY",
@@ -33,7 +33,7 @@ define(() => {
           idTable: "GLKKeyMaster",
           idData: "GLKKeyMaster",
           idColumn: "Key",
-          orderBy:"GR,KEY"
+          orderBy: "GR,KEY",
         },
       ],
     };
@@ -268,17 +268,24 @@ define(() => {
         .replace(/'/g, "&#039;");
     }
     // Process a single asset span
+    // Update the processAssetSpan method to check if paperclip already exists
     async processAssetSpan(span) {
       const assetID = span.getAttribute("data-ref");
 
       // Mark as processed immediately to prevent duplicate processing
       this.processedSpanIds.add(assetID);
 
-      // Create container
       // Create container with unique ID based on drawID
       const containerId = `doc-container-${this.drawID}-${assetID}`;
 
       let container = document.getElementById(containerId);
+
+      // Check if this container already has a paperclip button
+      if (container && container.querySelector("button")) {
+        console.log(`Paperclip already exists for asset ID: ${assetID}, skipping`);
+        return; // Skip this span as it already has a paperclip
+      }
+
       if (!container) {
         container = document.createElement("span");
         container.id = containerId;
@@ -1279,15 +1286,22 @@ define(() => {
     }
 
     // Function to process asset spans and fetch document attachments
+    // Function to process asset spans and fetch document attachments
     async processAssetDocuments(spans) {
       // Create an array of promises for each span
       const fetchPromises = Array.from(spans).map((span) => {
         const assetID = span.getAttribute("data-ref");
-        // console.log("Processing asset ID:", assetID);
 
         // Create or retrieve a container span with unique ID based on drawID
         const containerId = `doc-container-${this.drawID}-${assetID}`;
         let container = document.getElementById(containerId);
+
+        // Check if this container already has a paperclip button
+        if (container && container.querySelector("button")) {
+          console.log(`Paperclip already exists for asset ID: ${assetID}, skipping`);
+          return Promise.resolve(); // Skip this span as it already has a paperclip
+        }
+
         if (!container) {
           container = document.createElement("span");
           container.id = containerId;
