@@ -17,6 +17,7 @@ define(() => {
           idTable: "FAIdnt",
           idData: "FAIdnt",
           idColumn: "Faid",
+          orderBy:"Ledger,Faid"
         },
         {
           name: "PEUPPE",
@@ -24,6 +25,7 @@ define(() => {
           idTable: "PENameMaster",
           idData: "PENameMaster",
           idColumn: "PeId",
+          orderBy:"NameU,PeId"
         },
         {
           name: "GLUPKY",
@@ -31,6 +33,7 @@ define(() => {
           idTable: "GLKKeyMaster",
           idData: "GLKKeyMaster",
           idColumn: "Key",
+          orderBy:"GR,KEY"
         },
       ],
     };
@@ -1037,7 +1040,7 @@ define(() => {
       const cachedAsset = this.getCachedValue(cacheKey);
 
       const maskDetails = this._getMaskDetails(this.MASK_NAME);
-      const attachUrl = `${this.AppUrl}/${this.authObj.environment}-UI/data/finance/legacy/${maskDetails.idData}?$filter=(${maskDetails.idColumn}%20eq%20%27${objectId}%27%20)&$orderby=${maskDetails.idColumn}&$skip=0&$top=20`;
+      const attachUrl = `${this.AppUrl}/${this.authObj.environment}-UI/data/finance/legacy/${maskDetails.idData}?$filter=(${maskDetails.idColumn}%20eq%20%27${objectId}%27%20)&$${maskDetails.orderBy}=${maskDetails.idColumn}&$skip=0&$top=20`;
 
       if (cachedAsset) {
         console.log(`Using cached asset details for ID ${objectId}`);
