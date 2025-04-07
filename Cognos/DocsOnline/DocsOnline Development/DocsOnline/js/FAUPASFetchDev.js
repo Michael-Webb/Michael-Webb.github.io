@@ -195,8 +195,10 @@ define(() => {
     // Update these methods in your AdvancedControl class
     initializeVisibleAssetLoading() {
       // Keep track of processed spans
-      this.processedSpanIds = new Set();
-      this.processingInProgress = false;
+      if (!this.processedSpanIds) {
+        this.processedSpanIds = new Set();
+      }
+      this.processedSpanIds.add(assetID);
 
       // Add scroll event listener for lazy loading - listen on document, not window
       this.scrollHandler = () => {
@@ -268,21 +270,42 @@ define(() => {
     async processAssetSpan(span) {
       const assetID = span.getAttribute("data-ref");
 
-      // Mark as processed immediately to prevent duplicate processing
+      // Check if this span has already been processed
+      if (
+        span.hasAttribute(`data-processed-${this.drawID}`) ||
+        (span.nextElementSibling && span.nextElementSibling.querySelector("button"))
+      ) {
+        console.log(`Span with asset ID: ${assetID} already processed, skipping`);
+        return;
+      }
+
+      // Mark this specific span as processed using a unique data attribute
+      // This will work even if the same asset ID appears multiple times
+      span.setAttribute(`data-processed-${this.drawID}`, "true");
+
+      // Also add to our set for tracking
       this.processedSpanIds.add(assetID);
 
-      // Create container with unique ID based on drawID
-      const containerId = `doc-container-${this.drawID}-${assetID}`;
+      // Create container with unique ID that's directly tied to this specific span
+      const spanUniqueId =
+        span.id || `span-${this.drawID}-${assetID}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      if (!span.id) span.id = spanUniqueId;
+
+      const containerId = `doc-container-for-${spanUniqueId}`;
 
       let container = document.getElementById(containerId);
 
       // Check if this container already has a paperclip button
       if (container && container.querySelector("button")) {
-        console.log(`Paperclip already exists for asset ID: ${assetID}, skipping`);
+        console.log(`Paperclip already exists for span with asset ID: ${assetID}, skipping`);
         return; // Skip this span as it already has a paperclip
       }
 
       if (!container) {
+        if (!span.parentNode) {
+          console.error(`No parent node found for span with asset ID: ${assetID}`);
+          return;
+        }
         container = document.createElement("span");
         container.id = containerId;
         span.parentNode.insertBefore(container, span.nextSibling);
@@ -304,14 +327,22 @@ define(() => {
       } catch (error) {
         console.error("Error processing asset ID", assetID, error);
         container.innerHTML = "";
+        span.removeAttribute(`data-processed-${this.drawID}`);
+        this.processedSpanIds.delete(assetID);
       }
     }
 
     async processVisibleAssets() {
       try {
-        // Clear the processing flag at the start to prevent lock-ups
+        // Only process if we're not already processing
+        if (this.processingInProgress) {
+          console.log("Processing already in progress, skipping");
+          return;
+        }
+
         this.processingInProgress = true;
 
+        // Find container and spans
         if (!this.LIST_NAME || this.LIST_NAME.trim() === "") {
           console.warn("LIST_NAME configuration is missing or empty. Processing stopped.");
           this.processingInProgress = false;
@@ -325,22 +356,28 @@ define(() => {
           return;
         }
 
+        // First, check for orphaned paperclip containers and remove them
+        this.cleanupOrphanedContainers();
+
+        // Get all spans with data-ref that don't already have a processed marker
         const allSpans = container.querySelectorAll("span[data-ref]");
         console.log(`Found ${allSpans.length} total spans in container`);
 
-        // Filter for visible spans that aren't processed or currently being processed
+        // Filter for visible spans that aren't processed
         const visibleSpans = Array.from(allSpans).filter((span) => {
-          const assetID = span.getAttribute("data-ref");
           const isVisible = this.isElementVisible(span);
-          const isProcessed = this.processedSpanIds.has(assetID);
-          const isProcessing = span.hasAttribute(`data-processing-${this.drawID}`);
 
-          // Debug logging for visibility detection
-          if (isVisible && !isProcessed && !isProcessing) {
-            console.log(`Span ${assetID} is visible and not yet processed`);
+          // Check if this specific span has been processed
+          const isProcessed = span.hasAttribute(`data-processed-${this.drawID}`);
+
+          // Check if this span already has a paperclip following it
+          let hasAttachedPaperclip = false;
+          const nextElem = span.nextElementSibling;
+          if (nextElem && nextElem.id && nextElem.id.startsWith("doc-container-for-")) {
+            hasAttachedPaperclip = true;
           }
 
-          return isVisible && !isProcessed && !isProcessing;
+          return isVisible && !isProcessed && !hasAttachedPaperclip;
         });
 
         if (visibleSpans.length === 0) {
@@ -351,9 +388,11 @@ define(() => {
 
         console.log(`Processing ${visibleSpans.length} newly visible assets (Instance ${this.drawID})`);
 
-        // Process each visible span with proper promise handling
+        // Process each visible span independently
         const processingPromises = visibleSpans.map(async (span) => {
           const assetID = span.getAttribute("data-ref");
+
+          // Mark this span as being processed
           span.setAttribute(`data-processing-${this.drawID}`, "true");
 
           try {
@@ -363,6 +402,7 @@ define(() => {
             console.error(`Error processing asset ${assetID} (Instance ${this.drawID}):`, error);
             return false;
           } finally {
+            // Remove the processing flag
             span.removeAttribute(`data-processing-${this.drawID}`);
           }
         });
@@ -373,9 +413,26 @@ define(() => {
       } catch (error) {
         console.error(`Error in processVisibleAssets (Instance ${this.drawID}):`, error);
       } finally {
-        // Always reset the processing flag when done
+        // Always reset the processing flag
         this.processingInProgress = false;
       }
+    }
+
+    // 3. Add a method to clean up orphaned containers
+    cleanupOrphanedContainers() {
+      // Find all document containers we've created
+      const containers = document.querySelectorAll(`[id^="doc-container-for-"]`);
+
+      containers.forEach((container) => {
+        // Get the previous element that should be the span
+        const prevSibling = container.previousElementSibling;
+
+        // If previous element isn't a span with data-ref, or it's not visible, remove the container
+        if (!prevSibling || !prevSibling.hasAttribute("data-ref") || !this.isElementVisible(prevSibling)) {
+          console.log(`Removing orphaned container: ${container.id}`);
+          container.remove();
+        }
+      });
     }
 
     // 2. Improve visibility detection to be more sensitive to Cognos pagination
@@ -1298,11 +1355,22 @@ define(() => {
     }
 
     // Function to process asset spans and fetch document attachments
-    // Function to process asset spans and fetch document attachments
     async processAssetDocuments(spans) {
       // Create an array of promises for each span
       const fetchPromises = Array.from(spans).map((span) => {
         const assetID = span.getAttribute("data-ref");
+
+        // Check if this span has already been processed (same check as in processAssetSpan)
+        if (
+          span.hasAttribute(`data-processed-${this.drawID}`) ||
+          (span.nextElementSibling && span.nextElementSibling.querySelector("button"))
+        ) {
+          console.log(`Span with asset ID: ${assetID} already processed, skipping`);
+          return Promise.resolve(); // Skip with resolved promise so Promise.all works
+        }
+
+        // Mark as processed
+        span.setAttribute(`data-processed-${this.drawID}`, "true");
 
         // Create or retrieve a container span with unique ID based on drawID
         const containerId = `doc-container-${this.drawID}-${assetID}`;
@@ -1315,13 +1383,17 @@ define(() => {
         }
 
         if (!container) {
+          // Add parent node check
+          if (!span.parentNode) {
+            console.error(`No parent node found for span with asset ID: ${assetID}`);
+            return Promise.resolve(); // Skip with resolved promise
+          }
           container = document.createElement("span");
           container.id = containerId;
           span.parentNode.insertBefore(container, span.nextSibling);
         } else {
           container.innerHTML = "";
         }
-
         // Insert clock SVG as a loading placeholder
         container.innerHTML = this.getSvgForType("clock", this.ICON_DIMENSIONS);
 
