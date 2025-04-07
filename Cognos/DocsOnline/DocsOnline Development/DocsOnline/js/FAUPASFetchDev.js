@@ -12,7 +12,7 @@ define(() => {
     MASK_TYPES = {
       masks: [
         {
-          name: "FAUPAS",
+          maskName: "FAUPAS",
           urlPath: "fixedassets",
           idTable: "FAIdnt",
           idData: "FAIdnt",
@@ -20,7 +20,7 @@ define(() => {
           orderBy: "Ledger,Faid",
         },
         {
-          name: "PEUPPE",
+          maskName: "PEUPPE",
           urlPath: "personentity",
           idTable: "PENameMaster",
           idData: "PENameMaster",
@@ -28,7 +28,7 @@ define(() => {
           orderBy: "NameU,PeId",
         },
         {
-          name: "GLUPKY",
+          maskName: "GLUPKY",
           urlPath: "generalledger",
           idTable: "GLKKeyMaster",
           idData: "GLKKeyMaster",
@@ -176,7 +176,7 @@ define(() => {
      * @returns {object} The corresponding screen object from MASK_TYPES
      */
     _getMaskDetails(maskName) {
-      const maskConfig = this.MASK_TYPES.masks.find((mask) => mask.name === maskName);
+      const maskConfig = this.MASK_TYPES.masks.find((mask) => mask.maskName === maskName);
       if (maskConfig) {
         return maskConfig;
       } else {
@@ -845,7 +845,7 @@ define(() => {
     async fetchFromScreen() {
       // Get the dynamic URL path based on the configured MASK_NAME
       const screenDetails = this._getMaskDetails(this.MASK_NAME);
-      const screenUrl = `${this.AppUrl}/${this.authObj.environment}-UI/ui/uiscreens/${screenDetails.urlPath}/${screenDetails.name}`;
+      const screenUrl = `${this.AppUrl}/${this.authObj.environment}-UI/ui/uiscreens/${screenDetails.urlPath}/${screenDetails.maskName}`;
       // console.log(`fetchFromScreen: Fetching screen URL: ${screenUrl}`); // Debug log
 
       try {
@@ -876,7 +876,7 @@ define(() => {
     async fetchScreenDefinitions() {
       // Get the dynamic URL path based on the configured MASK_NAME
       const screenDetails = this._getMaskDetails(this.MASK_NAME);
-      const screenUrl = `${this.AppUrl}/${this.authObj.environment}-UI/ui/uiscreens/${screenDetails.urlPath}/${screenDetails.name}`;
+      const screenUrl = `${this.AppUrl}/${this.authObj.environment}-UI/ui/uiscreens/${screenDetails.urlPath}/${screenDetails.maskName}`;
       try {
         const screenDef = await fetch(screenUrl, {
           headers: {
