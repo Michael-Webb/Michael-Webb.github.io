@@ -46,7 +46,6 @@ define(() => {
           ["Mask Name"]: MASK_NAME,
           ["Font Size"]: FONT_SIZE,
           ["Lazy Loading"]: IS_LAZY_LOADED,
-          ["scrolltimeout"]: SCROLL_TIMEOUT,
           ["Direct Url"]: URL_TYPE,
           ["List Name"]: LIST_NAME,
         } = this.oControl.configuration;
@@ -74,7 +73,6 @@ define(() => {
         this.MASK_NAME = MASK_NAME;
         this.ICON_DIMENSIONS = ICON_DIMENSIONS || "16px";
         this.FONT_SIZE = FONT_SIZE || "1em";
-        this.SCROLL_TIMEOUT = SCROLL_TIMEOUT || 200;
         this.URL_TYPE = URL_TYPE;
         this.LIST_NAME = LIST_NAME || "";
         // Initialize cache with version tracking
@@ -210,7 +208,7 @@ define(() => {
       };
 
       // Throttle the scroll handler with a shorter delay
-      this.throttledScrollHandler = this.throttle(this.scrollHandler, this.SCROLL_TIMEOUT);
+      this.throttledScrollHandler = this.throttle(this.scrollHandler, 100);
 
       // Add event listeners to multiple elements to catch all scroll events
       document.addEventListener("scroll", this.throttledScrollHandler, { passive: true });
