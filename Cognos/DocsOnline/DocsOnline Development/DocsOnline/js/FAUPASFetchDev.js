@@ -1051,7 +1051,7 @@ define(() => {
       const cacheKey = `attach_${itemObj[maskDetails.idColumn]}_${itemObj.Ledger}`;
       const cachedAttachments = this.getCachedValue(cacheKey);
 
-      const attachUrl = `${this.AppUrl}/${this.authObj.environment}-UI/data/finance/legacy/documents/${maskDetails.idTable}/attachments`;
+      const attachUrl = `${this.AppUrl}/${this.authObj.environment}-UI/api/finance/legacy/documents/${maskDetails.idTable}/attachments`;
 
       if (cachedAttachments) {
         console.log(`Using cached attachments for asset ${itemObj[maskDetails.idColumn]}`);
