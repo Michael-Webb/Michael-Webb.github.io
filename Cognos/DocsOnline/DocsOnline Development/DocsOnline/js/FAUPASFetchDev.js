@@ -1019,7 +1019,7 @@ define(() => {
           "content-type": "application/json",
           mask: this.MASK_NAME,
         },
-        referrer: `${this.AppUrl}/${this.authObj.environment}-UI/ui/uiscreens/${maskDetails.urlPath}/${screenDetails.name}`,
+        referrer: `${this.AppUrl}/${this.authObj.environment}-UI/ui/uiscreens/${maskDetails.urlPath}/${maskDetails.name}`,
         referrerPolicy: "strict-origin-when-cross-origin",
         body: null,
         method: "GET",
