@@ -198,8 +198,6 @@ define(() => {
       if (!this.processedSpanIds) {
         this.processedSpanIds = new Set();
       }
-      this.processedSpanIds.add(assetID);
-
       // Add scroll event listener for lazy loading - listen on document, not window
       this.scrollHandler = () => {
         console.log("Scroll event detected"); // Debug log
@@ -215,13 +213,6 @@ define(() => {
       document.addEventListener("scroll", this.throttledScrollHandler, { passive: true });
       window.addEventListener("scroll", this.throttledScrollHandler, { passive: true });
 
-      // Try to find the main Cognos content container and add listener
-      const cognosContent = document.querySelector(".clsViewerPage, .viewerPage, #mainViewerContainer");
-      if (cognosContent) {
-        cognosContent.addEventListener("scroll", this.throttledScrollHandler, { passive: true });
-        console.log("Added scroll listener to Cognos container");
-      }
-
       // Also check on other events that might change visibility
       window.addEventListener("resize", this.throttledScrollHandler, { passive: true });
 
@@ -232,7 +223,45 @@ define(() => {
           this.processVisibleAssets();
         }
       }, 2000);
+      // --- Add MutationObserver ---
+      const container = document.querySelector(`[lid="${this.LIST_NAME}"]`);
+      if (container) {
+        const observerOptions = {
+          childList: true, // Watch for addition/removal of direct children
+          subtree: true, // Watch all descendants
+        };
 
+        this.mutationObserver = new MutationObserver((mutationsList) => {
+          let needsProcessing = false;
+          for (const mutation of mutationsList) {
+            if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
+              // Check if any added node is or contains a span[data-ref]
+              mutation.addedNodes.forEach((node) => {
+                if (node.nodeType === Node.ELEMENT_NODE) {
+                  if (node.matches("span[data-ref]") || node.querySelector("span[data-ref]")) {
+                    needsProcessing = true;
+                  }
+                }
+              });
+            }
+          }
+          // If relevant nodes were added, trigger a check
+          if (needsProcessing) {
+            console.log("MutationObserver detected relevant changes, triggering processVisibleAssets.");
+            // Optional: debounce this call if mutations happen rapidly
+            if (this.apiToken && !this.processingInProgress) {
+              // Use a small timeout to allow DOM to settle potentially
+              setTimeout(() => this.processVisibleAssets(), 100);
+            }
+          }
+        });
+
+        this.mutationObserver.observe(container, observerOptions);
+        console.log("MutationObserver started for container:", container);
+      } else {
+        console.warn(`MutationObserver: Container [lid="${this.LIST_NAME}"] not found at setup.`);
+        // Rely on interval/scroll checks
+      }
       // Initial processing of visible assets
       setTimeout(() => this.processVisibleAssets(), 100);
     }
@@ -365,7 +394,14 @@ define(() => {
 
         // Filter for visible spans that aren't processed
         const visibleSpans = Array.from(allSpans).filter((span) => {
+          // Inside the filter in processVisibleAssets
           const isVisible = this.isElementVisible(span);
+          if (!isVisible) {
+            console.log(
+              `Span ${span.getAttribute("data-ref")} considered NOT visible. Rect:`,
+              span.getBoundingClientRect()
+            );
+          }
 
           // Check if this specific span has been processed
           const isProcessed = span.hasAttribute(`data-processed-${this.drawID}`);
@@ -456,11 +492,6 @@ define(() => {
       if (this.throttledScrollHandler) {
         document.removeEventListener("scroll", this.throttledScrollHandler);
         window.removeEventListener("scroll", this.throttledScrollHandler);
-
-        const cognosContent = document.querySelector(".clsViewerPage, .viewerPage, #mainViewerContainer");
-        if (cognosContent) {
-          cognosContent.removeEventListener("scroll", this.throttledScrollHandler);
-        }
       }
 
       if (this.intervalCheck) {
@@ -468,7 +499,13 @@ define(() => {
       }
 
       window.removeEventListener("resize", this.throttledScrollHandler);
-
+      // --- Disconnect MutationObserver ---
+      if (this.mutationObserver) {
+        this.mutationObserver.disconnect();
+        this.mutationObserver = null; // Clear reference
+        console.log("MutationObserver disconnected.");
+      }
+      // --- End Disconnect ---
       // Clear the cache when control is destroyed
       // This keeps memory usage efficient and ensures fresh data on next load
       this.clearCache();
