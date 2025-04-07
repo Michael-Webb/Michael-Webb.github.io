@@ -36,7 +36,7 @@ define(() => {
           name: "GLUPKY",
           urlPath: "generalledger",
           idTable: "GLKKeyMaster",
-          idData: "GLKPeDetail",
+          idData: "GLKKeyMaster",
           idColumn: "Key",
         }
       ],
