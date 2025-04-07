@@ -111,6 +111,56 @@ define(() => {
         this.drawID = this.oControl.generateUniqueID(); // *** Get and store drawID ***
         console.log(`AdvancedControl Instance Drawing: ID=${this.drawID}, Mask=${this.MASK_NAME}`);
 
+        // Add this temporary code to your initialize or draw method
+        function monitorAllEvents() {
+          const events = [
+            "click",
+            "mousedown",
+            "mouseup",
+            "change",
+            "input",
+            "keydown",
+            "keyup",
+            "load",
+            "DOMContentLoaded",
+            "readystatechange",
+            "scroll",
+            "resize",
+            "focus",
+            "blur",
+            "submit",
+          ];
+
+          const cognos = document.querySelector('.clsViewerPage, .viewerPage, #mainViewerContainer, [id*="mainView"]');
+
+          events.forEach((event) => {
+            (cognos || document).addEventListener(event, (e) => {
+              // Look for pagination-related elements
+              if (
+                e.target.closest(
+                  '[id*="page"], [id*="pager"], .pageControl, .pagerControl, [class*="pager"], [class*="pagination"]'
+                )
+              ) {
+                console.log(`EVENT ${event} on pagination element:`, e.target);
+              }
+            });
+          });
+
+          // Also monitor custom events that Cognos might trigger
+          const originalDispatchEvent = EventTarget.prototype.dispatchEvent;
+          EventTarget.prototype.dispatchEvent = function (event) {
+            if (event.type.includes("page") || event.type.includes("render") || event.type.includes("load")) {
+              console.log("Custom event detected:", event.type, event);
+            }
+            return originalDispatchEvent.call(this, event);
+          };
+
+          console.log("Event monitoring initialized");
+        }
+
+        // Call the function
+        monitorAllEvents();
+
         // Check each configuration parameter and collect the missing ones
         const missingParams = [];
         if (!this.AppUrl) missingParams.push("App Server Url");
