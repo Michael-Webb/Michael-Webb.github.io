@@ -98,10 +98,6 @@ define(() => {
         // fnDoneInitializing();
       }
     }
-
-    /*
-     *Draw the control. This method is optional if the control has no UI.
-     */
     /*
      * Draw the control. This method is optional if the control has no UI.
      */
@@ -110,56 +106,6 @@ define(() => {
         this.oControl = oControlHost;
         this.drawID = this.oControl.generateUniqueID(); // *** Get and store drawID ***
         console.log(`AdvancedControl Instance Drawing: ID=${this.drawID}, Mask=${this.MASK_NAME}`);
-
-        // Add this temporary code to your initialize or draw method
-        function monitorAllEvents() {
-          const events = [
-            "click",
-            "mousedown",
-            "mouseup",
-            "change",
-            "input",
-            "keydown",
-            "keyup",
-            "load",
-            "DOMContentLoaded",
-            "readystatechange",
-            "scroll",
-            "resize",
-            "focus",
-            "blur",
-            "submit",
-          ];
-
-          const cognos = document.querySelector('.clsViewerPage, .viewerPage, #mainViewerContainer, [id*="mainView"]');
-
-          events.forEach((event) => {
-            (cognos || document).addEventListener(event, (e) => {
-              // Look for pagination-related elements
-              if (
-                e.target.closest(
-                  '[id*="page"], [id*="pager"], .pageControl, .pagerControl, [class*="pager"], [class*="pagination"]'
-                )
-              ) {
-                console.log(`EVENT ${event} on pagination element:`, e.target);
-              }
-            });
-          });
-
-          // Also monitor custom events that Cognos might trigger
-          const originalDispatchEvent = EventTarget.prototype.dispatchEvent;
-          EventTarget.prototype.dispatchEvent = function (event) {
-            if (event.type.includes("page") || event.type.includes("render") || event.type.includes("load")) {
-              console.log("Custom event detected:", event.type, event);
-            }
-            return originalDispatchEvent.call(this, event);
-          };
-
-          console.log("Event monitoring initialized");
-        }
-
-        // Call the function
-        monitorAllEvents();
 
         // Check each configuration parameter and collect the missing ones
         const missingParams = [];
@@ -361,36 +307,26 @@ define(() => {
       }
     }
 
-    // Improved visibility check with more tolerance
-    isElementVisible(element) {
-      if (!element) return false;
-
-      const rect = element.getBoundingClientRect();
-      const windowHeight = window.innerHeight || document.documentElement.clientHeight;
-      const windowWidth = window.innerWidth || document.documentElement.clientWidth;
-
-      // More generous buffer (500px) to ensure we catch elements
-      return (
-        rect.top >= -500 && rect.bottom <= windowHeight + 500 && rect.left >= -100 && rect.right <= windowWidth + 100
-      );
-    }
-
-    // Process assets as they become visible, with per-asset tracking
     async processVisibleAssets() {
       try {
-        // Get all asset spans, using LIST_NAME to find container with matching lid attribute
+        // Clear the processing flag at the start to prevent lock-ups
+        this.processingInProgress = true;
+
         if (!this.LIST_NAME || this.LIST_NAME.trim() === "") {
           console.warn("LIST_NAME configuration is missing or empty. Processing stopped.");
-          return; // Stop execution if LIST_NAME is not provided
+          this.processingInProgress = false;
+          return;
         }
 
         const container = document.querySelector(`[lid="${this.LIST_NAME}"]`);
         if (!container) {
           console.warn(`Container with lid="${this.LIST_NAME}" not found. Processing stopped.`);
-          return; // Stop execution if container not found
+          this.processingInProgress = false;
+          return;
         }
 
         const allSpans = container.querySelectorAll("span[data-ref]");
+        console.log(`Found ${allSpans.length} total spans in container`);
 
         // Filter for visible spans that aren't processed or currently being processed
         const visibleSpans = Array.from(allSpans).filter((span) => {
@@ -399,36 +335,62 @@ define(() => {
           const isProcessed = this.processedSpanIds.has(assetID);
           const isProcessing = span.hasAttribute(`data-processing-${this.drawID}`);
 
+          // Debug logging for visibility detection
+          if (isVisible && !isProcessed && !isProcessing) {
+            console.log(`Span ${assetID} is visible and not yet processed`);
+          }
+
           return isVisible && !isProcessed && !isProcessing;
         });
 
         if (visibleSpans.length === 0) {
+          console.log("No new visible spans to process");
+          this.processingInProgress = false;
           return;
         }
 
         console.log(`Processing ${visibleSpans.length} newly visible assets (Instance ${this.drawID})`);
 
-        // Process each visible span independently
-        visibleSpans.forEach(async (span) => {
+        // Process each visible span with proper promise handling
+        const processingPromises = visibleSpans.map(async (span) => {
           const assetID = span.getAttribute("data-ref");
-
-          // Mark this span as currently being processed
           span.setAttribute(`data-processing-${this.drawID}`, "true");
 
           try {
             await this.processAssetSpan(span);
+            return true;
           } catch (error) {
             console.error(`Error processing asset ${assetID} (Instance ${this.drawID}):`, error);
+            return false;
           } finally {
-            // Remove the processing flag when done
             span.removeAttribute(`data-processing-${this.drawID}`);
           }
         });
+
+        // Wait for all processing to complete
+        await Promise.all(processingPromises);
+        console.log(`Completed processing batch of ${visibleSpans.length} spans`);
       } catch (error) {
         console.error(`Error in processVisibleAssets (Instance ${this.drawID}):`, error);
+      } finally {
+        // Always reset the processing flag when done
+        this.processingInProgress = false;
       }
     }
 
+    // 2. Improve visibility detection to be more sensitive to Cognos pagination
+    isElementVisible(element) {
+      if (!element) return false;
+
+      const rect = element.getBoundingClientRect();
+      const windowHeight = window.innerHeight || document.documentElement.clientHeight;
+      const windowWidth = window.innerWidth || document.documentElement.clientWidth;
+
+      // Even more generous buffer (1000px) to ensure we catch elements
+      return (
+        rect.top >= -1000 && rect.bottom <= windowHeight + 1000 && rect.left >= -500 && rect.right <= windowWidth + 500
+      );
+    }
     // Clean up in the destroy method - must clean up all listeners
     destroy(oControlHost) {
       this.oControl = oControlHost;
