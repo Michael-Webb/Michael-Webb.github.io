@@ -160,7 +160,7 @@ define(() => {
             let initialAssetSpans = [];
             containers.forEach((container) => {
               // We only care about spans in VISIBLE containers initially if not lazy loading
-              if (!this.IS_LAZY_LOADED && isElementOrContainerVisible(container)) {
+              if (!this.IS_LAZY_LOADED && this.isElementOrContainerVisible(container)) {
                 const spansInContainer = container.querySelectorAll("span[data-ref]");
                 initialAssetSpans.push(...spansInContainer); // Add spans from this container
               } else if (this.IS_LAZY_LOADED) {
@@ -500,7 +500,7 @@ define(() => {
         // *** Step 2: Filter containers to find the currently VISIBLE ones ***
         // Cognos usually shows only one '.clsViewerPage' at a time.
         const visibleContainers = Array.from(allContainers).filter(
-          (container) => isElementOrContainerVisible(container) // Use the helper function
+          (container) => this.isElementOrContainerVisible(container) // Use the helper function
         );
 
         if (visibleContainers.length === 0) {
@@ -607,7 +607,7 @@ define(() => {
       if (element.offsetParent === null) {
         // This is a common way to check if an element or its parent is display:none
         // Check the Cognos page visibility explicitly as well
-        if (!isElementOrContainerVisible(element)) {
+        if (!this.isElementOrContainerVisible(element)) {
           // console.log(`Span ${element.getAttribute("data-ref")} or its page is hidden (offsetParent null or page display:none)`);
           return false;
         }
