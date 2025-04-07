@@ -23,6 +23,12 @@ define(() => {
           idTable: "PENameMaster",
           idColumn: "PeId",
         },
+        {
+          name: "ARUPTR",
+          urlPath: "accountsreceivable",
+          idTable: "ARTrnsDetail",
+          idColumn: "CustId",
+        },
       ],
     };
 
