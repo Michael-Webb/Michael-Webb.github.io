@@ -1072,7 +1072,7 @@ define(() => {
           "sec-fetch-mode": "cors",
           "sec-fetch-site": "same-origin",
         },
-        body: JSON.stringify(assetItem),
+        body: JSON.stringify(itemObj),
         mode: "cors",
         credentials: "include",
         "Access-Control-Allow-Credentials": "*",
