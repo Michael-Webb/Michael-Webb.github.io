@@ -1,6 +1,6 @@
 define(() => {
   "use strict";
-  let oControl;
+
   class AdvancedControl {
     /*
      * Initialize the control. This method is optional. If this method is implemented, fnDoneInitializing must be called when done initializing, or a Promise must be returned.
@@ -9,6 +9,23 @@ define(() => {
      *
      */
 
+    MASK_TYPES = {
+      masks: [
+        {
+          name: "FAUPAS",
+          urlPath: "fixedassets",
+          idTable: "FAIdnt",
+          idColumn: "Faid",
+        },
+        {
+          name: "PEUPPE",
+          urlPath: "personentity",
+          idTable: "PENameMaster",
+          idColumn: "PeId",
+        },
+      ],
+    };
+
     initialize(oControlHost, fnDoneInitializing) {
       try {
         this.oControl = oControlHost;
@@ -16,7 +33,7 @@ define(() => {
           ["App Server Url"]: AppUrl,
           ["Job Server Url"]: JobUrl,
           ["Modal Label"]: ModalLabel,
-          ["Icon Dimenions"]: ICON_DIMENSIONS,
+          ["Icon Dimensions"]: ICON_DIMENSIONS,
           ["Mask Name"]: MASK_NAME,
           ["Font Size"]: FONT_SIZE,
           ["Lazy Loading"]: IS_LAZY_LOADED,
@@ -40,8 +57,8 @@ define(() => {
         }
 
         // Continue with normal initialization if no errors
-        this.AppUrl = AppUrl;
-        this.JobUrl = JobUrl;
+        this.AppUrl = this.removeTrailingSlash(AppUrl);
+        this.JobUrl = this.removeTrailingSlash(JobUrl);
         this.ModalLabel = ModalLabel || "Asset Documents:";
         this.IS_LAZY_LOADED = IS_LAZY_LOADED !== false;
         this.MASK_NAME = MASK_NAME;
@@ -66,7 +83,7 @@ define(() => {
         console.error("Error during control initialization:", error);
 
         // Always call fnDoneInitializing to prevent the control from hanging
-        fnDoneInitializing();
+        // fnDoneInitializing();
       }
     }
 
@@ -130,6 +147,31 @@ define(() => {
       }
     }
 
+    /**
+     * Gets the specific URL path segment for a given mask name based on MASK_TYPES.
+     * @param {string} maskName - The mask name (e.g., "FAUPAS", "PEUPPE").
+     * @returns {object} The corresponding screen object from MASK_TYPES
+     */
+    _getMaskDetails(maskName) {
+      const maskConfig = this.MASK_TYPES.masks.find((mask) => mask.name === maskName);
+      if (maskConfig) {
+        return maskConfig;
+      } else {
+        // Fallback strategy: Log a warning and use the first mask's path or a hardcoded default.
+        const defaultPath = this.MASK_TYPES.masks[0]; // Default to FAUPAS if needed
+        console.warn(
+          `AdvancedControl:_getUrlPathForMask - Mask name "${maskName}" not found in MASK_TYPES. Using default path '${defaultPath}'.`
+        );
+        return defaultPath;
+      }
+    }
+    // Utility method to remove trailing slashes from URLs
+    removeTrailingSlash(url) {
+      if (url && typeof url === "string" && url.endsWith("/")) {
+        return url.slice(0, -1);
+      }
+      return url;
+    }
     // Add these methods to your AdvancedControl class
     // Update these methods in your AdvancedControl class
     initializeVisibleAssetLoading() {
@@ -178,22 +220,29 @@ define(() => {
     throttle(func, limit) {
       let lastFunc;
       let lastRan;
-      return function () {
-        const context = this;
-        const args = arguments;
+      return (...args) => {
         if (!lastRan) {
-          func.apply(context, args);
+          func.apply(this, args);
           lastRan = Date.now();
         } else {
           clearTimeout(lastFunc);
-          lastFunc = setTimeout(function () {
+          lastFunc = setTimeout(() => {
             if (Date.now() - lastRan >= limit) {
-              func.apply(context, args);
+              func.apply(this, args);
               lastRan = Date.now();
             }
           }, limit - (Date.now() - lastRan));
         }
       };
+    }
+
+    escapeHtml(unsafe) {
+      return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
     }
     // Process a single asset span
     async processAssetSpan(span) {
@@ -313,33 +362,81 @@ define(() => {
     }
 
     // Method to extract credentials from the DOM
+    // Method to extract credentials from the DOM
     extractCredentials() {
       try {
         const firstSpan = document.querySelector(`span[data-id^="documentsOnline-"]`);
-        if (firstSpan) {
-          const sessionID = firstSpan.getAttribute("data-sessionId") || "";
-          const token = firstSpan.getAttribute("data-token") || "";
-          const environment = firstSpan.getAttribute("data-environment") || "";
-          const user = firstSpan.getAttribute("data-user") || "";
 
-          const authObj = {
-            sessionId: firstSpan.getAttribute("data-sessionId") || "",
-            token: firstSpan.getAttribute("data-token") || "",
-            environment: firstSpan.getAttribute("data-environment") || "",
-            user: firstSpan.getAttribute("data-user") || "",
-            appBaseURL: this.AppUrl,
-            jobBaseURL: this.JobUrl,
-          };
-          console.log("Extracted values:", authObj);
-
-          return { sessionID, token, authObj };
-        } else {
-          console.error("No span found with id starting with documentsOnline- to extract data.");
-          return { sessionID: "", token: "" };
+        if (!firstSpan) {
+          // If the span itself isn't found, log and throw an error
+          const errorMsg =
+            "Authentication span [data-id^='documentsOnline-'] not found in the DOM. Cannot extract credentials.";
+          console.error(errorMsg);
+          // Throwing here will stop execution in the calling 'draw' method's try block
+          throw new Error(errorMsg);
+          // Original code returned empty strings, but throwing is better for mandatory data
+          // return { sessionID: "", token: "", authObj: null };
         }
+
+        // Extract potential values
+        const sessionID = firstSpan.getAttribute("data-sessionId");
+        const token = firstSpan.getAttribute("data-token");
+        const environment = firstSpan.getAttribute("data-environment");
+        const user = firstSpan.getAttribute("data-user");
+
+        // --- Start: Added Validation ---
+        const missingAttrs = [];
+        // Check if each essential attribute has a non-empty value
+        if (!sessionID) {
+          // Checks for null, undefined, empty string ""
+          missingAttrs.push("data-sessionId");
+        }
+        if (!token) {
+          missingAttrs.push("data-token");
+        }
+        if (!environment) {
+          missingAttrs.push("data-environment");
+        }
+        if (!user) {
+          // Assuming user is also essential for operations or logging
+          missingAttrs.push("data-user");
+        }
+
+        // If any essential attributes are missing or empty, log and throw an error
+        if (missingAttrs.length > 0) {
+          const errorMsg = `Authentication span found, but missing or empty required attributes: ${missingAttrs.join(
+            ", "
+          )}. Cannot proceed with authentication.`;
+          console.error(errorMsg);
+          // Throw an error to be caught by the 'draw' method's try...catch
+          throw new scriptableReportError("AdvancedControl", "extractCredentials", errorMsg);
+        }
+        // --- End: Added Validation ---
+
+        // If validation passed, construct the auth object
+        const authObj = {
+          sessionId: sessionID, // Use the validated non-empty values
+          token: token,
+          environment: environment,
+          user: user,
+          // These rely on 'initialize' having run successfully
+          appBaseURL: this.AppUrl,
+          jobBaseURL: this.JobUrl,
+        };
+
+        // Log successful extraction only after validation
+        console.log("Successfully extracted credentials:", authObj);
+
+        // Return the necessary values (sessionID/token are slightly redundant
+        // as they are in authObj, but kept for consistency with original call site)
+        return { sessionID, token, authObj };
       } catch (error) {
-        console.error("Error extracting credentials:", error);
-        return { sessionID: "", token: "" };
+        // Catch errors thrown above OR any unexpected errors during DOM access/attribute getting
+        console.error("Error during credential extraction:", error.message);
+        // Re-throw the error so the calling 'draw' method's catch block handles it
+        // This ensures 'draw' knows extraction failed and won't proceed.
+        throw error;
+        // We don't return here because an error occurred.
       }
     }
 
@@ -632,14 +729,14 @@ define(() => {
 
           // Filename with link
           tableHtml += `<td style="padding:8px;border-bottom:1px solid #ddd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${
-            doc.description || ""
+            this.escapeHtml(doc.description) || ""
           }">`;
           if (linkUrl) {
             tableHtml += `<a href="${safeUrl}" target="_blank" style="text-decoration:underline;color:#0066cc;">${
               doc.description || ""
             }</a>`;
           } else {
-            tableHtml += doc.description || "";
+            tableHtml += this.escapeHtml(doc.description) || "";
           }
           tableHtml += `</td>`;
 
@@ -701,31 +798,73 @@ define(() => {
     }
 
     // Function to fetch the FAUPAS screen to capture cookies
-    async fetchFaupasScreen() {
+    async fetchFromScreen() {
+      // Get the dynamic URL path based on the configured MASK_NAME
+      const screenDetails = this._getMaskDetails(this.MASK_NAME);
+      const screenUrl = `${this.AppUrl}/${this.authObj.environment}-UI/ui/uiscreens/${screenDetails.urlPath}/${screenDetails.name}`;
+      // console.log(`fetchFromScreen: Fetching screen URL: ${screenUrl}`); // Debug log
+
       try {
-        const faupasResponse = await fetch(
-          `${this.AppUrl}/${this.authObj.environment}-UI/ui/uiscreens/fixedassets/FAUPAS`,
-          {
-            headers: {
-              priority: "u=0, i",
-              "sec-fetch-dest": "document",
-              "sec-fetch-mode": "navigate",
-              "sec-fetch-site": "same-site",
-              "sec-fetch-user": "?1",
-              "upgrade-insecure-requests": "1",
-            },
-            referrer: this.JobUrl,
-            referrerPolicy: "strict-origin-when-cross-origin",
-            body: null,
-            method: "GET",
-            mode: "no-cors",
-            credentials: "include",
-          }
-        );
-        // console.log("FAUPAS fetch complete:", faupasResponse);
-        return faupasResponse;
+        const response = await fetch(screenUrl, {
+          headers: {
+            priority: "u=0, i",
+            "sec-fetch-dest": "document",
+            "sec-fetch-mode": "navigate",
+            "sec-fetch-site": "same-site",
+            "sec-fetch-user": "?1",
+            "upgrade-insecure-requests": "1",
+          },
+          referrer: this.JobUrl,
+          referrerPolicy: "strict-origin-when-cross-origin",
+          body: null,
+          method: "GET",
+          mode: "no-cors",
+          credentials: "include",
+        });
+        // console.log("FAUPAS fetch complete:", response);
+        return response;
       } catch (error) {
         console.error("Error during FAUPAS fetch:", error);
+        throw error;
+      }
+    }
+    // Function to fetch API token
+    async fetchScreenDefinitions() {
+      // Get the dynamic URL path based on the configured MASK_NAME
+      const screenDetails = this._getMaskDetails(this.MASK_NAME);
+      const screenUrl = `${this.AppUrl}/${this.authObj.environment}-UI/ui/uiscreens/${screenDetails.urlPath}/${screenDetails.name}`;
+      try {
+        const screenDef = await fetch(screenUrl, {
+          headers: {
+            accept: "application/json, text/plain, */*",
+            "accept-language": "en-US,en;q=0.9",
+            "cache-control": "no-cache",
+            "content-type": "application/json",
+            glledger: "--",
+            jlledger: "--",
+            mask: "FAUPAS",
+            runtimemask: "FAUPAS",
+          },
+          referrerPolicy: "strict-origin-when-cross-origin",
+          body: null,
+          method: "GET",
+          mode: "cors",
+          credentials: "include",
+        });
+
+        if (!screenDef.ok) {
+          throw new Error("Screen Definition fetch failed: " + screenDef.status);
+        }
+
+        const screenDefData = await screenDef.json();
+        if (!screenDef) {
+          throw new Error("No screen definition in response");
+        }
+
+        console.log("Screen definition obtained:", screenDefData);
+        return screenDefData.apiToken;
+      } catch (error) {
+        console.error("Error fetching screen definition:", error);
         throw error;
       }
     }
@@ -840,13 +979,13 @@ define(() => {
         const auth = this.authObj || authObj;
 
         // Step 1: Fetch FAUPAS screen to capture cookies
-        await this.fetchFaupasScreen();
+        await this.fetchFromScreen();
 
         // Step 2: Fetch API token
         const apiToken = await this.fetchApiToken();
         this.authObj.apiToken = apiToken;
         // Step 3: Validate security token
-        await this.validateSecurityToken(auth);
+        await this.validateSecurityToken();
         // Step 4: Get Session Expiration and log it
         // await this.getSessionExpiration(authObj);
 
@@ -858,52 +997,43 @@ define(() => {
     }
 
     // Function to fetch asset details
-    // Updated fetchAssetDetails function with caching
-    async fetchAssetDetails(assetID) {
+    async fetchAssetDetails(objectId) {
       // Check cache first
-      const cacheKey = `asset_${assetID}`;
+      const cacheKey = `asset_${this.MASK_NAME}_${objectId}`; // Include MASK_NAME in key
       const cachedAsset = this.getCachedValue(cacheKey);
 
+      const maskDetails = this._getMaskDetails(this.MASK_NAME);
+      const attachUrl = `${this.AppUrl}/${this.authObj.environment}-UI/data/finance/legacy/${maskDetails.idTable}?$filter=(${maskDetails.idColumn}%20eq%20%27${objectId}%27%20)&$orderby=Ledger,${maskDetails.idColumn}&$skip=0&$top=20`;
+
       if (cachedAsset) {
-        console.log(`Using cached asset details for ID ${assetID}`);
+        console.log(`Using cached asset details for ID ${objectId}`);
         return cachedAsset;
       }
 
       // If not in cache, fetch from server
-      const assetResponse = await fetch(
-        `${this.AppUrl}/${this.authObj.environment}-UI/data/finance/legacy/FAIdnt?$filter=(Faid%20eq%20%27${assetID}%27%20and%20Ledger%20eq%20%27GL%27)&$orderby=Ledger,Faid&$skip=0&$top=20`,
-        {
-          headers: {
-            accept: "application/json, text/plain, */*",
-            "accept-language": "en-US,en;q=0.9",
-            "cache-control": "no-cache",
-            "content-type": "application/json",
-            glledger: "GL",
-            jlledger: "JL",
-            mask: this.MASK_NAME,
-            pragma: "no-cache",
-            priority: "u=1, i",
-            runtimemask: this.MASK_NAME,
-            "sec-fetch-mode": "cors",
-            "sec-fetch-site": "same-origin",
-          },
-          referrer: `${this.AppUrl}/${this.authObj.environment}-UI/ui/uiscreens/fixedassets/FAUPAS`,
-          referrerPolicy: "strict-origin-when-cross-origin",
-          body: null,
-          method: "GET",
-          mode: "cors",
-          credentials: "include",
-        }
-      );
+      const assetResponse = await fetch(attachUrl, {
+        headers: {
+          accept: "application/json, text/plain, */*",
+          "accept-language": "en-US,en;q=0.9",
+          "cache-control": "no-cache",
+          "content-type": "application/json",
+          mask: this.MASK_NAME,
+        },
+        referrer: `${this.AppUrl}/${this.authObj.environment}-UI/ui/uiscreens/${maskDetails.urlPath}/${screenDetails.name}`,
+        referrerPolicy: "strict-origin-when-cross-origin",
+        body: null,
+        method: "GET",
+        credentials: "include",
+      });
 
       if (!assetResponse.ok) {
-        throw new Error(`Failed to fetch asset details for ID ${assetID}: ${assetResponse.status}`);
+        throw new Error(`Failed to fetch asset details for ID ${objectId}: ${assetResponse.status}`);
       }
 
       const assetData = await assetResponse.json();
 
       if (!assetData || !assetData.items || assetData.items.length === 0) {
-        throw new Error(`No asset data found for ID ${assetID}`);
+        throw new Error(`No asset data found for ID ${objectId}`);
       }
 
       // Cache the result before returning
@@ -914,38 +1044,39 @@ define(() => {
     }
 
     // Updated fetchAttachments function with caching
-    async fetchAttachments(assetItem) {
+    async fetchAttachments(itemObj) {
+      const maskDetails = this._getMaskDetails(this.MASK_NAME);
+
       // Create a cache key based on a stable identifier from the asset
-      const cacheKey = `attach_${assetItem.Faid}_${assetItem.Ledger}`;
+      const cacheKey = `attach_${itemObj[maskDetails.idColumn]}_${itemObj.Ledger}`;
       const cachedAttachments = this.getCachedValue(cacheKey);
 
+      const attachUrl = `${this.AppUrl}/${this.authObj.environment}-UI/data/finance/legacy/documents/${maskDetails.idTable}/attachments`;
+
       if (cachedAttachments) {
-        console.log(`Using cached attachments for asset ${assetItem.Faid}`);
+        console.log(`Using cached attachments for asset ${itemObj[maskDetails.idColumn]}`);
         return cachedAttachments;
       }
 
-      const attachmentResponse = await fetch(
-        `${this.AppUrl}/${this.authObj.environment}-UI/api/finance/legacy/documents/FAIdnt/attachments/`,
-        {
-          method: "POST",
-          headers: {
-            accept: "application/json, text/plain, */*",
-            "accept-language": "en-US,en;q=0.9",
-            "content-type": "application/json",
-            glledger: "GL",
-            jlledger: "--",
-            mask: this.MASK_NAME,
-            runtimemask: this.MASK_NAME,
-            "sec-fetch-dest": "empty",
-            "sec-fetch-mode": "cors",
-            "sec-fetch-site": "same-origin",
-          },
-          body: JSON.stringify(assetItem),
-          mode: "cors",
-          credentials: "include",
-          "Access-Control-Allow-Credentials": "*",
-        }
-      );
+      const attachmentResponse = await fetch(attachUrl, {
+        method: "POST",
+        headers: {
+          accept: "application/json, text/plain, */*",
+          "accept-language": "en-US,en;q=0.9",
+          "content-type": "application/json",
+          glledger: "GL",
+          jlledger: "--",
+          mask: this.MASK_NAME,
+          runtimemask: this.MASK_NAME,
+          "sec-fetch-dest": "empty",
+          "sec-fetch-mode": "cors",
+          "sec-fetch-site": "same-origin",
+        },
+        body: JSON.stringify(assetItem),
+        mode: "cors",
+        credentials: "include",
+        "Access-Control-Allow-Credentials": "*",
+      });
 
       if (!attachmentResponse.ok) {
         throw new Error(`Failed to fetch attachment for asset: ${attachmentResponse.status}`);
@@ -966,13 +1097,15 @@ define(() => {
         const cacheKey = `count_${assetItem.Faid}_${assetItem.Ledger}`;
         const cachedCount = this.getCachedValue(cacheKey);
 
+        const maskDetails = this._getMaskDetails(this.MASK_NAME);
+
         if (cachedCount !== null) {
           console.log(`Using cached attachment count for asset ${assetItem.Faid}`);
           return cachedCount;
         }
 
         const countResponse = await fetch(
-          `${this.AppUrl}/${this.authObj.environment}-UI/api/finance/legacy/documents/FAIdnt/getattachmentcount/`,
+          `${this.AppUrl}/${this.authObj.environment}-UI/api/finance/legacy/documents/${maskDetails.idTable}/getattachmentcount/`,
           {
             method: "POST",
             headers: {
