@@ -15,20 +15,30 @@ define(() => {
           name: "FAUPAS",
           urlPath: "fixedassets",
           idTable: "FAIdnt",
+          idData: "FAIdnt",
           idColumn: "Faid",
         },
         {
           name: "PEUPPE",
           urlPath: "personentity",
           idTable: "PENameMaster",
+          idData: "PENameMaster",
           idColumn: "PeId",
         },
         {
           name: "ARUPTR",
           urlPath: "accountsreceivable",
           idTable: "ARTrnsDetail",
+          idData: "ARTrnsDetail",
           idColumn: "CustId",
         },
+        {
+          name: "GLUPKY",
+          urlPath: "generalledger",
+          idTable: "GLKKeyMaster",
+          idData: "GLKPeDetail",
+          idColumn: "Key",
+        }
       ],
     };
 
@@ -1009,7 +1019,7 @@ define(() => {
       const cachedAsset = this.getCachedValue(cacheKey);
 
       const maskDetails = this._getMaskDetails(this.MASK_NAME);
-      const attachUrl = `${this.AppUrl}/${this.authObj.environment}-UI/data/finance/legacy/${maskDetails.idTable}?$filter=(${maskDetails.idColumn}%20eq%20%27${objectId}%27%20)&$orderby=Ledger,${maskDetails.idColumn}&$skip=0&$top=20`;
+      const attachUrl = `${this.AppUrl}/${this.authObj.environment}-UI/data/finance/legacy/${maskDetails.idData}?$filter=(${maskDetails.idColumn}%20eq%20%27${objectId}%27%20)&$orderby=${maskDetails.idColumn}&$skip=0&$top=20`;
 
       if (cachedAsset) {
         console.log(`Using cached asset details for ID ${objectId}`);
