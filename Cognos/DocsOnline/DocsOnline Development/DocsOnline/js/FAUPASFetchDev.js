@@ -390,7 +390,7 @@ define(() => {
 
         // Get all spans with data-ref that don't already have a processed marker
         const allSpans = container.querySelectorAll("span[data-ref]");
-        console.log(`Found ${allSpans.length} total spans in container`,allSpans);
+        // console.log(`Found ${allSpans.length} total spans in container`);
 
         // Filter for visible spans that aren't processed
         const visibleSpans = Array.from(allSpans).filter((span) => {
@@ -417,7 +417,7 @@ define(() => {
         });
 
         if (visibleSpans.length === 0) {
-          console.log("No new visible spans to process");
+          // console.log("No new visible spans to process");
           this.processingInProgress = false;
           return;
         }
