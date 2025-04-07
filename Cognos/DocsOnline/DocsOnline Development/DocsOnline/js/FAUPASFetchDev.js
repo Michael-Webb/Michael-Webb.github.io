@@ -79,7 +79,7 @@ define(() => {
         this.URL_TYPE = URL_TYPE;
         this.LIST_NAME = LIST_NAME || "";
         // Initialize cache with version tracking
-        const cacheVersion = "1.0"; // Update this when making breaking changes to cached data format
+        const cacheVersion = "1.1"; // Update this when making breaking changes to cached data format
         const storedVersion = sessionStorage.getItem("cache_version");
 
         if (storedVersion !== cacheVersion) {
@@ -88,6 +88,9 @@ define(() => {
           // Update stored version
           sessionStorage.setItem("cache_version", cacheVersion);
         }
+
+        this.processedSpanIds = new Set(); // Initialize here for clarity
+        this.processingInProgress = false; // Initialize state flag
 
         fnDoneInitializing();
       } catch (error) {
@@ -131,38 +134,73 @@ define(() => {
 
         // First authenticate
         this.authenticate(authObj)
-          .then((authObj) => {
-            // Store the token if needed for later use
-            this.apiToken = authObj.apiToken;
+          .then((authenticatedAuthObj) => {
+            this.apiToken = authenticatedAuthObj.apiToken; // Store for later use
+            console.log(`Authentication successful for Draw ID: ${this.drawID}`);
 
-            // Find container with lid attribute matching LIST_NAME
-            const container = document.querySelector(`[lid="${this.LIST_NAME}"]`);
-            if (!container) {
-              console.warn(`Container with lid="${this.LIST_NAME}" not found. Processing stopped.`);
-              return; // Stop execution if container not found
+            // *** CHANGE: Use querySelectorAll to find all potential containers ***
+            const containers = document.querySelectorAll(`[lid="${this.LIST_NAME}"]`);
+
+            if (containers.length === 0) {
+              console.warn(
+                `Draw ID: ${this.drawID} - No containers with lid="${this.LIST_NAME}" found initially. Waiting for dynamic load or MutationObserver.`
+              );
+              // Setup lazy loading anyway, it will pick up containers when they appear
+              if (this.IS_LAZY_LOADED) {
+                this.initializeVisibleAssetLoading();
+              }
+              return;
             }
 
-            // Find all spans with data-ref attribute within the container
-            const assetSpans = container.querySelectorAll("span[data-ref]");
+            console.log(
+              `Draw ID: ${this.drawID} - Found ${containers.length} container(s) with lid="${this.LIST_NAME}" initially.`
+            );
 
-            if (assetSpans.length > 0) {
-              console.log(`Found ${assetSpans.length} asset reference spans in container with lid="${this.LIST_NAME}"`);
-
-              // Process the spans to add document buttons
-              if (!this.IS_LAZY_LOADED) {
-                return this.processAssetDocuments(assetSpans);
+            // Collect spans from ALL initially found containers
+            let initialAssetSpans = [];
+            containers.forEach((container) => {
+              // We only care about spans in VISIBLE containers initially if not lazy loading
+              if (!this.IS_LAZY_LOADED && isElementOrContainerVisible(container)) {
+                const spansInContainer = container.querySelectorAll("span[data-ref]");
+                initialAssetSpans.push(...spansInContainer); // Add spans from this container
+              } else if (this.IS_LAZY_LOADED) {
+                // For lazy loading, we don't process spans here, initializeVisibleAssetLoading will handle it
               }
-              return this.initializeVisibleAssetLoading();
+            });
+
+            if (this.IS_LAZY_LOADED) {
+              console.log(`Draw ID: ${this.drawID} - Initializing lazy loading.`);
+              this.initializeVisibleAssetLoading();
+              // Trigger initial check shortly after setup
+              setTimeout(() => this.processVisibleAssets(), 200);
             } else {
-              console.log(`No asset reference spans found in container with lid="${this.LIST_NAME}"`);
+              // Non-Lazy Loading: Process all spans found in visible containers immediately
+              if (initialAssetSpans.length > 0) {
+                console.log(
+                  `Draw ID: ${this.drawID} - Processing ${initialAssetSpans.length} initial asset reference spans (Non-Lazy).`
+                );
+                this.processAssetDocuments(initialAssetSpans);
+              } else {
+                console.log(
+                  `Draw ID: ${this.drawID} - No initial asset reference spans found in VISIBLE containers (Non-Lazy).`
+                );
+              }
             }
           })
           .catch((error) => {
-            console.error("Authentication failed, cannot process assets:", error);
+            console.error(`Draw ID: ${this.drawID} - Authentication or initial processing failed:`, error);
+            this.oControl.element.innerHTML = `<div style="color: red; font-size: 10px;">Auth/Init Error. Check console.</div>`;
           });
       } catch (error) {
-        // Log the error for debugging
-        console.error("Error during control drawing:", error);
+        console.error(`Error during control drawing (Draw ID: ${this.drawID}):`, error);
+        // Display error in control placeholder if possible
+        try {
+          this.oControl.element.innerHTML = `<div style="color: red; font-size: 10px;">Draw Error: ${
+            error.message || "Unknown"
+          }. Check console.</div>`;
+        } catch (displayError) {
+          console.error("Could not display error in control element:", displayError);
+        }
       }
     }
 
@@ -194,76 +232,100 @@ define(() => {
     // Add these methods to your AdvancedControl class
     // Update these methods in your AdvancedControl class
     initializeVisibleAssetLoading() {
-      // Keep track of processed spans
-      if (!this.processedSpanIds) {
-        this.processedSpanIds = new Set();
+      // Ensure only one set of listeners/observers per instance
+      if (this.scrollHandler) {
+        console.log(`Draw ID: ${this.drawID} - Listeners already initialized, skipping.`);
+        return;
       }
-      // Add scroll event listener for lazy loading - listen on document, not window
+      console.log(`Draw ID: ${this.drawID} - Initializing scroll/interval/mutation listeners.`);
+
+      // Use a flag to track processed spans specific to this instance
+      // this.processedSpanIds = new Set(); // Already initialized in initialize()
+
       this.scrollHandler = () => {
-        console.log("Scroll event detected"); // Debug log
+        // console.log("Scroll event detected"); // Debug log - can be noisy
         if (this.apiToken && !this.processingInProgress) {
           this.processVisibleAssets();
         }
       };
 
-      // Throttle the scroll handler with a shorter delay
-      this.throttledScrollHandler = this.throttle(this.scrollHandler, 100);
+      this.throttledScrollHandler = this.throttle(this.scrollHandler, 150); // Slightly longer throttle
 
-      // Add event listeners to multiple elements to catch all scroll events
-      document.addEventListener("scroll", this.throttledScrollHandler, { passive: true });
+      // Listen on common scroll containers
+      document.addEventListener("scroll", this.throttledScrollHandler, { capture: true, passive: true }); // Capture phase might catch internal Cognos scroll containers
       window.addEventListener("scroll", this.throttledScrollHandler, { passive: true });
+      // Potentially add listener to Cognos specific scroll container if identifiable e.g. document.querySelector('#cognosViewerBody')?
 
-      // Also check on other events that might change visibility
       window.addEventListener("resize", this.throttledScrollHandler, { passive: true });
 
-      // Force a check periodically in case scroll events are missing
       this.intervalCheck = setInterval(() => {
         if (this.apiToken && !this.processingInProgress) {
-          // console.log("Interval check triggered");
+          // console.log("Interval check triggered"); // Debug log - can be noisy
           this.processVisibleAssets();
         }
-      }, 2000);
-      // --- Add MutationObserver ---
-      const container = document.querySelector(`[lid="${this.LIST_NAME}"]`);
-      if (container) {
-        const observerOptions = {
-          childList: true, // Watch for addition/removal of direct children
-          subtree: true, // Watch all descendants
-        };
+      }, 1500); // Slightly less frequent interval
 
-        this.mutationObserver = new MutationObserver((mutationsList) => {
-          let needsProcessing = false;
-          for (const mutation of mutationsList) {
-            if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
-              // Check if any added node is or contains a span[data-ref]
-              mutation.addedNodes.forEach((node) => {
-                if (node.nodeType === Node.ELEMENT_NODE) {
-                  if (node.matches("span[data-ref]") || node.querySelector("span[data-ref]")) {
-                    needsProcessing = true;
-                  }
+      // --- MutationObserver Setup ---
+      // **Strategy**: Observe a higher-level container that includes all pages, or fallback to body.
+      let observerTarget =
+        document.querySelector(".clsViewerContainer") || document.getElementById("cognosViewerBody") || document.body; // Try common Cognos containers first
+      console.log(`Draw ID: ${this.drawID} - MutationObserver targeting:`, observerTarget);
+
+      const observerOptions = {
+        childList: true, // Watch for addition/removal of nodes (like new page divs)
+        subtree: true, // Watch all descendants (including spans within new lists)
+      };
+
+      this.mutationObserver = new MutationObserver((mutationsList) => {
+        let needsProcessing = false;
+        for (const mutation of mutationsList) {
+          // Check if nodes were added
+          if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
+            for (const node of mutation.addedNodes) {
+              if (node.nodeType === Node.ELEMENT_NODE) {
+                // Check if the added node *is* a target list container OR *contains* one OR *contains* relevant spans directly
+                const targetSelector = `[lid="${this.LIST_NAME}"] span[data-ref]`;
+                const listSelector = `[lid="${this.LIST_NAME}"]`;
+
+                // Check if the added node itself contains a relevant span, or if it contains a target list which in turn contains spans
+                if (
+                  node.querySelector(targetSelector) ||
+                  (node.matches(listSelector) && node.querySelector("span[data-ref]")) ||
+                  node.matches(targetSelector)
+                ) {
+                  needsProcessing = true;
+                  break; // Found a relevant change in this mutation's added nodes
                 }
-              });
+              }
             }
           }
-          // If relevant nodes were added, trigger a check
-          if (needsProcessing) {
-            console.log("MutationObserver detected relevant changes, triggering processVisibleAssets.");
-            // Optional: debounce this call if mutations happen rapidly
-            if (this.apiToken && !this.processingInProgress) {
-              // Use a small timeout to allow DOM to settle potentially
-              setTimeout(() => this.processVisibleAssets(), 100);
-            }
-          }
-        });
+          // Optional: Could also check for attribute changes on .clsViewerPage (like display style) if needed
+          // if (mutation.type === 'attributes' && mutation.attributeName === 'style' && mutation.target.matches('.clsViewerPage')) {
+          //    needsProcessing = true;
+          // }
 
-        this.mutationObserver.observe(container, observerOptions);
-        console.log("MutationObserver started for container:", container);
-      } else {
-        console.warn(`MutationObserver: Container [lid="${this.LIST_NAME}"] not found at setup.`);
-        // Rely on interval/scroll checks
-      }
-      // Initial processing of visible assets
-      setTimeout(() => this.processVisibleAssets(), 100);
+          if (needsProcessing) break; // Found a relevant change in the overall list of mutations
+        }
+
+        if (needsProcessing) {
+          console.log(
+            `Draw ID: ${this.drawID} - MutationObserver detected relevant changes, queueing processVisibleAssets.`
+          );
+          // Debounce or throttle this call if mutations fire very rapidly
+          clearTimeout(this.mutationProcessTimeout);
+          this.mutationProcessTimeout = setTimeout(() => {
+            if (this.apiToken && !this.processingInProgress) {
+              this.processVisibleAssets();
+            }
+          }, 250); // Short delay to allow DOM to settle
+        }
+      });
+
+      this.mutationObserver.observe(observerTarget, observerOptions);
+      console.log(`Draw ID: ${this.drawID} - MutationObserver started.`);
+
+      // Initial processing check (already called in draw method)
+      // setTimeout(() => this.processVisibleAssets(), 100);
     }
 
     // Add this throttle method to your AdvancedControl class
@@ -297,48 +359,69 @@ define(() => {
     // Process a single asset span
     // Update the processAssetSpan method to check if paperclip already exists
     async processAssetSpan(span) {
-      const assetID = span.getAttribute("data-ref");
-
-      // Check if this span has already been processed
-      if (
-        span.hasAttribute(`data-processed-${this.drawID}`) ||
-        (span.nextElementSibling && span.nextElementSibling.querySelector("button"))
-      ) {
-        console.log(`Span with asset ID: ${assetID} already processed, skipping`);
+      // Make sure span is still in the DOM and valid
+      if (!span || !document.body.contains(span)) {
+        console.warn(`Draw ID: ${this.drawID} - Span no longer in DOM, skipping processing.`);
         return;
       }
 
-      // Mark this specific span as processed using a unique data attribute
-      // This will work even if the same asset ID appears multiple times
-      span.setAttribute(`data-processed-${this.drawID}`, "true");
+      const assetID = span.getAttribute("data-ref");
+      if (!assetID) {
+        console.warn(`Draw ID: ${this.drawID} - Span missing data-ref attribute, skipping.`);
+        return;
+      }
 
-      // Also add to our set for tracking
-      this.processedSpanIds.add(assetID);
+      // Use a unique attribute per instance to mark processing
+      const processedAttr = `data-processed-${this.drawID}`;
+      const processingAttr = `data-processing-${this.drawID}`;
 
-      // Create container with unique ID that's directly tied to this specific span
+      // Check if already processed or currently being processed by this instance
+      if (span.hasAttribute(processedAttr) || span.hasAttribute(processingAttr)) {
+        // console.log(`Span ${assetID} already handled by instance ${this.drawID}, skipping.`);
+        return;
+      }
+
+      // Check if a button container already exists *immediately* after this span
+      // This is a fallback check in case the attribute marking failed or was cleared
+      const nextElem = span.nextElementSibling;
+      const expectedContainerIdPrefix = `doc-container-for-${this.drawID}-${assetID}`; // More specific prefix
+      if (
+        nextElem &&
+        nextElem.id &&
+        nextElem.id.startsWith(expectedContainerIdPrefix) &&
+        nextElem.querySelector("button")
+      ) {
+        console.log(
+          `Draw ID: ${this.drawID} - Paperclip button container already exists for span ${assetID}, marking as processed and skipping.`
+        );
+        span.setAttribute(processedAttr, "true"); // Ensure it's marked
+        return;
+      }
+
+      // Mark this span as currently being processed by this instance
+      span.setAttribute(processingAttr, "true");
+
+      // Generate a unique container ID tied to this specific span instance and drawID
       const spanUniqueId =
         span.id || `span-${this.drawID}-${assetID}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       if (!span.id) span.id = spanUniqueId;
-
-      const containerId = `doc-container-for-${spanUniqueId}`;
+      const containerId = `doc-container-for-${spanUniqueId}`; // Use span's unique ID
 
       let container = document.getElementById(containerId);
 
-      // Check if this container already has a paperclip button
-      if (container && container.querySelector("button")) {
-        console.log(`Paperclip already exists for span with asset ID: ${assetID}, skipping`);
-        return; // Skip this span as it already has a paperclip
-      }
-
       if (!container) {
         if (!span.parentNode) {
-          console.error(`No parent node found for span with asset ID: ${assetID}`);
+          console.error(`Draw ID: ${this.drawID} - No parent node found for span ${assetID}. Cannot add button.`);
+          span.removeAttribute(processingAttr); // Clean up processing flag
           return;
         }
-        container = document.createElement("span");
+        container = document.createElement("span"); // Use span for inline behaviour
         container.id = containerId;
+        container.style.marginLeft = "4px"; // Add a little space
+        // Insert after the span
         span.parentNode.insertBefore(container, span.nextSibling);
       } else {
+        // Clear previous content (like old error messages or spinners)
         container.innerHTML = "";
       }
 
@@ -347,168 +430,277 @@ define(() => {
 
       try {
         const assetItem = await this.fetchAssetDetails(assetID);
+        // Check again if span/container still exists after async operation
+        if (!document.body.contains(span) || !document.body.contains(container)) {
+          console.warn(
+            `Draw ID: ${this.drawID} - Span or container removed from DOM during fetch for ${assetID}, aborting.`
+          );
+          if (container && container.parentNode) container.remove(); // Clean up container if it exists
+          span.removeAttribute(processingAttr);
+          return;
+        }
+
         const data = await this.fetchAttachments(assetItem);
 
-        container.innerHTML = "";
+        container.innerHTML = ""; // Clear spinner
         if (data && data.length > 0) {
           this.createDocumentButton(container, data, assetID);
+          span.setAttribute(processedAttr, "true"); // Mark as successfully processed
+        } else {
+          // No documents found, optionally leave container empty or remove it
+          // container.innerHTML = ' <span title="No documents" style="font-size: 0.8em; color: grey;">(-)</span>'; // Example: Indicate no docs
+          container.remove(); // Or just remove the container if nothing found
+          span.setAttribute(processedAttr, "true"); // Still mark as processed (checked, but no docs)
         }
       } catch (error) {
-        console.error("Error processing asset ID", assetID, error);
-        container.innerHTML = "";
-        span.removeAttribute(`data-processed-${this.drawID}`);
-        this.processedSpanIds.delete(assetID);
+        console.error(`Error processing asset ID ${assetID} (Instance ${this.drawID}):`, error);
+        // Check if container still exists before modifying
+        if (document.body.contains(container)) {
+          container.innerHTML = ""; // Clear spinner on error
+          // Optionally add an error indicator? Be careful not to clutter the UI.
+          // container.innerHTML = `<span title="Error loading documents: ${error.message}" style="color: red; cursor: help;">!</span>`;
+          container.remove(); // Clean up container on error
+        }
+        // Do NOT mark as processed on error, allow retry on next visibility check
+        // span.setAttribute(processedAttr, "true"); // <-- REMOVE THIS LINE
+      } finally {
+        // Always remove the 'processing' flag
+        if (span) {
+          // Check if span still exists
+          span.removeAttribute(processingAttr);
+        }
       }
     }
 
     async processVisibleAssets() {
+      // Ensure API token is available
+      if (!this.apiToken) {
+        console.log(`Draw ID: ${this.drawID} - API token not yet available, skipping processVisibleAssets.`);
+        return;
+      }
+
+      // Prevent concurrent execution
+      if (this.processingInProgress) {
+        // console.log(`Draw ID: ${this.drawID} - Processing already in progress, skipping.`);
+        return;
+      }
+      this.processingInProgress = true;
+      // console.log(`Draw ID: ${this.drawID} - Starting processVisibleAssets cycle.`);
+
       try {
-        // Only process if we're not already processing
-        if (this.processingInProgress) {
-          console.log("Processing already in progress, skipping");
-          return;
-        }
+        // *** Step 1: Find ALL potential list containers ***
+        const allContainers = document.querySelectorAll(`[lid="${this.LIST_NAME}"]`);
 
-        this.processingInProgress = true;
-
-        // Find container and spans
-        if (!this.LIST_NAME || this.LIST_NAME.trim() === "") {
-          console.warn("LIST_NAME configuration is missing or empty. Processing stopped.");
+        if (allContainers.length === 0) {
+          // console.log(`Draw ID: ${this.drawID} - No containers with lid="${this.LIST_NAME}" found.`);
           this.processingInProgress = false;
           return;
         }
 
-        const container = document.querySelector(`[lid="${this.LIST_NAME}"]`);
-        if (!container) {
-          console.warn(`Container with lid="${this.LIST_NAME}" not found. Processing stopped.`);
+        // *** Step 2: Filter containers to find the currently VISIBLE ones ***
+        // Cognos usually shows only one '.clsViewerPage' at a time.
+        const visibleContainers = Array.from(allContainers).filter(
+          (container) => isElementOrContainerVisible(container) // Use the helper function
+        );
+
+        if (visibleContainers.length === 0) {
+          // console.log(`Draw ID: ${this.drawID} - No VISIBLE containers with lid="${this.LIST_NAME}" found.`);
           this.processingInProgress = false;
           return;
         }
+        // It's possible (though maybe unlikely in standard Cognos) to have multiple visible lists with the same name.
+        // This code will process spans in ALL visible containers found.
 
-        // First, check for orphaned paperclip containers and remove them
-        this.cleanupOrphanedContainers();
+        // *** Step 3: Collect all relevant spans from WITHIN the visible containers ***
+        let allSpansInVisibleContainers = [];
+        visibleContainers.forEach((container) => {
+          const spans = container.querySelectorAll("span[data-ref]");
+          allSpansInVisibleContainers.push(...spans);
+        });
 
-        // Get all spans with data-ref that don't already have a processed marker
-        const allSpans = container.querySelectorAll("span[data-ref]");
-        // console.log(`Found ${allSpans.length} total spans in container`);
+        // Optional: Cleanup orphaned containers (buttons whose span disappeared)
+        // This might be less critical now that containers are tied to span IDs, but can help.
+        // this.cleanupOrphanedContainers(); // Consider if needed
 
-        // Filter for visible spans that aren't processed
-        const visibleSpans = Array.from(allSpans).filter((span) => {
-          // Inside the filter in processVisibleAssets
-          const isVisible = this.isElementVisible(span);
-          if (!isVisible) {
-            console.log(
-              `Span ${span.getAttribute("data-ref")} considered NOT visible. Rect:`,
-              span.getBoundingClientRect()
-            );
-          }
+        // *** Step 4: Filter these spans for actual viewport visibility and processing status ***
+        const processedAttr = `data-processed-${this.drawID}`;
+        const processingAttr = `data-processing-${this.drawID}`;
 
-          // Check if this specific span has been processed
-          const isProcessed = span.hasAttribute(`data-processed-${this.drawID}`);
-
-          // Check if this span already has a paperclip following it
-          let hasAttachedPaperclip = false;
+        const spansToProcess = allSpansInVisibleContainers.filter((span) => {
+          const isVisible = this.isElementInViewport(span); // Check if span itself is in viewport
+          const isProcessed = span.hasAttribute(processedAttr);
+          const isProcessing = span.hasAttribute(processingAttr);
+          // Also check if a button container already exists right after it (defensive check)
           const nextElem = span.nextElementSibling;
-          if (nextElem && nextElem.id && nextElem.id.startsWith("doc-container-for-")) {
-            hasAttachedPaperclip = true;
-          }
+          const hasExistingButton =
+            nextElem &&
+            nextElem.id &&
+            nextElem.id.startsWith(`doc-container-for-${this.drawID}-${span.getAttribute("data-ref")}`);
 
-          return isVisible && !isProcessed && !hasAttachedPaperclip;
+          return isVisible && !isProcessed && !isProcessing && !hasExistingButton;
         });
 
-        if (visibleSpans.length === 0) {
-          // console.log("No new visible spans to process");
+        if (spansToProcess.length === 0) {
+          // console.log(`Draw ID: ${this.drawID} - No new, visible, unprocessed spans found in visible containers.`);
           this.processingInProgress = false;
           return;
         }
 
-        console.log(`Processing ${visibleSpans.length} newly visible assets (Instance ${this.drawID})`);
+        console.log(`Draw ID: ${this.drawID} - Found ${spansToProcess.length} new spans to process.`);
 
-        // Process each visible span independently
-        const processingPromises = visibleSpans.map(async (span) => {
-          const assetID = span.getAttribute("data-ref");
+        // *** Step 5: Process the filtered spans ***
+        // Process in batches or individually. Individual processing is simpler.
+        const processingPromises = spansToProcess.map((span) => this.processAssetSpan(span));
 
-          // Mark this span as being processed
-          span.setAttribute(`data-processing-${this.drawID}`, "true");
+        // Wait for all processing in this batch to settle (errors handled within processAssetSpan)
+        await Promise.allSettled(processingPromises);
 
-          try {
-            await this.processAssetSpan(span);
-            return true;
-          } catch (error) {
-            console.error(`Error processing asset ${assetID} (Instance ${this.drawID}):`, error);
-            return false;
-          } finally {
-            // Remove the processing flag
-            span.removeAttribute(`data-processing-${this.drawID}`);
-          }
-        });
-
-        // Wait for all processing to complete
-        await Promise.all(processingPromises);
-        console.log(`Completed processing batch of ${visibleSpans.length} spans`);
+        console.log(`Draw ID: ${this.drawID} - Completed processing batch of ${spansToProcess.length} spans.`);
       } catch (error) {
         console.error(`Error in processVisibleAssets (Instance ${this.drawID}):`, error);
       } finally {
-        // Always reset the processing flag
-        this.processingInProgress = false;
+        this.processingInProgress = false; // Release the lock
+        // console.log(`Draw ID: ${this.drawID} - Finished processVisibleAssets cycle.`);
       }
     }
 
-    // 3. Add a method to clean up orphaned containers
-    cleanupOrphanedContainers() {
-      // Find all document containers we've created
-      const containers = document.querySelectorAll(`[id^="doc-container-for-"]`);
+    // Add this method to the AdvancedControl class
+    isElementOrContainerVisible(element) {
+      if (!element) return false;
 
-      containers.forEach((container) => {
-        // Get the previous element that should be the span
-        const prevSibling = container.previousElementSibling;
+      // Check if element itself is hidden
+      if (element.offsetParent === null) return false;
 
-        // If previous element isn't a span with data-ref, or it's not visible, remove the container
-        if (!prevSibling || !prevSibling.hasAttribute("data-ref") || !this.isElementVisible(prevSibling)) {
-          console.log(`Removing orphaned container: ${container.id}`);
-          container.remove();
+      // Check if element has zero dimensions
+      const rect = element.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return false;
+
+      // Check if any parent container is hidden
+      // This handles Cognos page visibility where pages might be in the DOM but hidden
+      let parent = element.parentElement;
+      while (parent) {
+        // Check for display:none, visibility:hidden or zero dimensions
+        const style = window.getComputedStyle(parent);
+        if (style.display === "none" || style.visibility === "hidden") {
+          return false;
         }
-      });
+
+        // Check for specific Cognos page classes that might be hidden
+        if (parent.classList && parent.classList.contains("clsViewerPage")) {
+          // If this is a Cognos page, check if it's the active one
+          if (style.display === "none" || !parent.classList.contains("active")) {
+            return false;
+          }
+        }
+
+        parent = parent.parentElement;
+      }
+
+      return true;
     }
 
-    // 2. Improve visibility detection to be more sensitive to Cognos pagination
-    isElementVisible(element) {
+    // Renamed from isElementVisible for clarity - checks if element is in viewport
+    isElementInViewport(element) {
       if (!element) return false;
+
+      // Check if the element or its container page is hidden via style
+      if (element.offsetParent === null) {
+        // This is a common way to check if an element or its parent is display:none
+        // Check the Cognos page visibility explicitly as well
+        if (!isElementOrContainerVisible(element)) {
+          // console.log(`Span ${element.getAttribute("data-ref")} or its page is hidden (offsetParent null or page display:none)`);
+          return false;
+        }
+      }
 
       const rect = element.getBoundingClientRect();
       const windowHeight = window.innerHeight || document.documentElement.clientHeight;
       const windowWidth = window.innerWidth || document.documentElement.clientWidth;
 
-      // Even more generous buffer (1000px) to ensure we catch elements
-      return (
-        rect.top >= -1000 && rect.bottom <= windowHeight + 1000 && rect.left >= -500 && rect.right <= windowWidth + 500
-      );
+      // Check for zero dimensions, which often means hidden/collapsed
+      if (rect.width === 0 || rect.height === 0) {
+        // console.log(`Span ${element.getAttribute("data-ref")} has zero dimensions.`);
+        return false;
+      }
+
+      // Generous buffer (e.g., 100px beyond viewport) to preload slightly off-screen elements
+      const verticalBuffer = 100;
+      const horizontalBuffer = 50;
+
+      const isInVerticalViewport = rect.top < windowHeight + verticalBuffer && rect.bottom > 0 - verticalBuffer;
+      const isInHorizontalViewport = rect.left < windowWidth + horizontalBuffer && rect.right > 0 - horizontalBuffer;
+
+      // Debugging logs (use sparingly)
+      // if (isInVerticalViewport && isInHorizontalViewport) {
+      //     console.log(`Span ${element.getAttribute("data-ref")} IS visible. Rect:`, rect);
+      // } else {
+      //     console.log(`Span ${element.getAttribute("data-ref")} considered NOT visible. Rect:`, rect, `vVis: ${isInVerticalViewport}, hVis: ${isInHorizontalViewport}`);
+      // }
+
+      return isInVerticalViewport && isInHorizontalViewport;
+    }
+
+    // Cleanup orphaned containers (optional, might not be strictly needed with new ID scheme)
+    cleanupOrphanedContainers() {
+      // Find containers created by *this specific instance*
+      const containers = document.querySelectorAll(`[id^="doc-container-for-span-${this.drawID}-"]`);
+      let removedCount = 0;
+
+      containers.forEach((container) => {
+        // Extract the original span ID from the container ID
+        const idParts = container.id.split("-");
+        // Example ID: doc-container-for-span-DRAWID-ASSETID-TIMESTAMP-RANDOM
+        // We need the part starting from 'span-' up to the end
+        if (idParts.length > 4 && idParts[2] === "span") {
+          const spanId = idParts.slice(2).join("-"); // Reconstruct the span ID
+          const originalSpan = document.getElementById(spanId);
+
+          // If the original span doesn't exist anymore OR if it's no longer visible
+          if (!originalSpan || !document.body.contains(originalSpan) || !this.isElementInViewport(originalSpan)) {
+            // console.log(`Removing orphaned container: ${container.id} (Span ${spanId} missing or not visible)`);
+            container.remove();
+            removedCount++;
+          }
+        } else {
+          // console.warn(`Could not parse span ID from container ID: ${container.id}`);
+        }
+      });
+      // if (removedCount > 0) {
+      //     console.log(`Draw ID: ${this.drawID} - Removed ${removedCount} orphaned containers.`);
+      // }
     }
     // Clean up in the destroy method - must clean up all listeners
     destroy(oControlHost) {
+      console.log(`Destroying AdvancedControl Instance: ID=${this.drawID}`);
       this.oControl = oControlHost;
 
       // Remove event listeners
       if (this.throttledScrollHandler) {
-        document.removeEventListener("scroll", this.throttledScrollHandler);
+        document.removeEventListener("scroll", this.throttledScrollHandler, { capture: true });
         window.removeEventListener("scroll", this.throttledScrollHandler);
+        window.removeEventListener("resize", this.throttledScrollHandler);
+        this.throttledScrollHandler = null; // Clear reference
       }
 
       if (this.intervalCheck) {
         clearInterval(this.intervalCheck);
+        this.intervalCheck = null;
       }
 
-      window.removeEventListener("resize", this.throttledScrollHandler);
       // --- Disconnect MutationObserver ---
       if (this.mutationObserver) {
         this.mutationObserver.disconnect();
         this.mutationObserver = null; // Clear reference
-        console.log("MutationObserver disconnected.");
+        console.log(`Draw ID: ${this.drawID} - MutationObserver disconnected.`);
       }
-      // --- End Disconnect ---
-      // Clear the cache when control is destroyed
-      // This keeps memory usage efficient and ensures fresh data on next load
-      this.clearCache();
+      if (this.mutationProcessTimeout) {
+        clearTimeout(this.mutationProcessTimeout);
+      }
+
+      // Clear references
+      this.oControl = null;
+      this.authObj = null;
+      this.processedSpanIds = null; // Allow garbage collection
     }
 
     // Method to extract credentials from the DOM
@@ -1148,96 +1340,148 @@ define(() => {
 
     // Function to fetch asset details
     async fetchAssetDetails(objectId) {
-      // Check cache first
-      const cacheKey = `asset_${this.MASK_NAME}_${objectId}`; // Include MASK_NAME in key
-      const cachedAsset = this.getCachedValue(cacheKey);
-
+      if (!objectId) throw new Error("Asset objectId is required.");
       const maskDetails = this._getMaskDetails(this.MASK_NAME);
-      const attachUrl = `${this.AppUrl}/${this.authObj.environment}-UI/data/finance/legacy/${maskDetails.idData}?$filter=(${maskDetails.idColumn}%20eq%20%27${objectId}%27%20)&$orderby=${maskDetails.orderBy}&$skip=0&$top=20`;
+      if (!maskDetails.idColumn || !maskDetails.orderBy || !maskDetails.idData) {
+        throw new Error(`Invalid mask details for ${this.MASK_NAME}: Missing idColumn, orderBy, or idData.`);
+      }
 
+      const cacheKey = `asset_${this.MASK_NAME}_${objectId}`;
+      const cachedAsset = this.getCachedValue(cacheKey);
       if (cachedAsset) {
-        console.log(`Using cached asset details for ID ${objectId}`);
+        // console.log(`Using cached asset details for ID ${objectId}`);
         return cachedAsset;
       }
 
-      // If not in cache, fetch from server
-      const assetResponse = await fetch(attachUrl, {
-        headers: {
-          accept: "application/json, text/plain, */*",
-          "accept-language": "en-US,en;q=0.9",
-          "cache-control": "no-cache",
-          "content-type": "application/json",
-          mask: this.MASK_NAME,
-        },
-        referrer: `${this.AppUrl}/${this.authObj.environment}-UI/ui/uiscreens/${maskDetails.urlPath}/${maskDetails.name}`,
-        referrerPolicy: "strict-origin-when-cross-origin",
-        body: null,
-        method: "GET",
-        credentials: "include",
-      });
-
-      if (!assetResponse.ok) {
-        throw new Error(`Failed to fetch asset details for ID ${objectId}: ${assetResponse.status}`);
+      // Construct URL safely
+      if (!this.AppUrl || !this.authObj || !this.authObj.environment) {
+        throw new Error("Cannot fetch asset details: Missing AppUrl or environment info.");
       }
+      const filter = encodeURIComponent(`${maskDetails.idColumn} eq '${objectId}'`);
+      const orderBy = encodeURIComponent(maskDetails.orderBy);
+      // Ensure no double slashes
+      const appBase = this.AppUrl.endsWith("/") ? this.AppUrl : this.AppUrl + "/";
+      const dataPath = `${this.authObj.environment}-UI/data/finance/legacy/${maskDetails.idData}`;
+      const assetUrl = `${appBase}${dataPath}?$filter=${filter}&$orderby=${orderBy}&$skip=0&$top=1`; // Only need top=1
 
-      const assetData = await assetResponse.json();
+      // console.log(`Fetching asset details from: ${assetUrl}`);
 
-      if (!assetData || !assetData.items || assetData.items.length === 0) {
-        throw new Error(`No asset data found for ID ${objectId}`);
+      try {
+        const assetResponse = await fetch(assetUrl, {
+          method: "GET",
+          credentials: "include", // Send cookies
+          body: null,
+          headers: {
+            Accept: "application/json, text/plain, */*",
+            "Content-Type": "application/json", // Usually not needed for GET, but doesn't hurt
+            "Cache-Control": "no-cache", // Ensure fresh data unless caching is intended server-side
+            mask: this.MASK_NAME, // Custom header if required by API
+            // Add other required headers like 'glledger', 'jlledger' if needed
+          },
+          // Referrer might be important
+          referrer: `${this.AppUrl}/${this.authObj.environment}-UI/ui/uiscreens/${maskDetails.urlPath}/${maskDetails.maskName}`,
+          referrerPolicy: "strict-origin-when-cross-origin",
+        });
+
+        if (!assetResponse.ok) {
+          throw new Error(
+            `Failed to fetch asset details for ID ${objectId}: ${assetResponse.status} ${assetResponse.statusText}`
+          );
+        }
+
+        const assetData = await assetResponse.json();
+        if (!assetData || !assetData.items || assetData.items.length === 0) {
+          // It's possible an ID exists but has no details; treat as non-critical error or warning
+          console.warn(`No asset data found for ID ${objectId}. Returning null.`);
+          this.setCachedValue(cacheKey, null); // Cache the null result to avoid refetching
+          return null; // Return null instead of throwing error? Depends on requirement.
+          // throw new Error(`No asset data found for ID ${objectId}`);
+        }
+
+        const assetItem = assetData.items[0];
+        this.setCachedValue(cacheKey, assetItem);
+        return assetItem;
+      } catch (error) {
+        console.error(`Error fetching asset details for ${objectId}:`, error);
+        throw error; // Re-throw
       }
-
-      // Cache the result before returning
-      this.setCachedValue(cacheKey, assetData.items[0]);
-
-      // Return the first asset item
-      return assetData.items[0];
     }
 
     // Updated fetchAttachments function with caching
     async fetchAttachments(itemObj) {
+      if (!itemObj) {
+        console.warn("fetchAttachments called with null itemObj. Skipping.");
+        return []; // Return empty array if no item provided
+      }
+
       const maskDetails = this._getMaskDetails(this.MASK_NAME);
+      const assetId = itemObj[maskDetails.idColumn]; // Get the ID from the object
+      const ledger = itemObj.Ledger || "--"; // Use Ledger if available, default otherwise
 
-      // Create a cache key based on a stable identifier from the asset
-      const cacheKey = `attach_${itemObj[maskDetails.idColumn]}_${itemObj.Ledger}`;
+      if (!assetId) {
+        console.warn("Cannot fetch attachments: Asset ID missing in itemObj.", itemObj);
+        return [];
+      }
+      if (!maskDetails.idTable) {
+        throw new Error(`Invalid mask details for ${this.MASK_NAME}: Missing idTable.`);
+      }
+
+      // Use a more robust cache key
+      const cacheKey = `attach_${this.MASK_NAME}_${assetId}_${ledger}`;
       const cachedAttachments = this.getCachedValue(cacheKey);
-
-      const attachUrl = `${this.AppUrl}/${this.authObj.environment}-UI/api/finance/legacy/documents/${maskDetails.idTable}/attachments`;
-
       if (cachedAttachments) {
-        console.log(`Using cached attachments for asset ${itemObj[maskDetails.idColumn]}`);
+        // console.log(`Using cached attachments for asset ${assetId}`);
         return cachedAttachments;
       }
 
-      const attachmentResponse = await fetch(attachUrl, {
-        method: "POST",
-        headers: {
-          accept: "application/json, text/plain, */*",
-          "accept-language": "en-US,en;q=0.9",
-          "content-type": "application/json",
-          glledger: "GL",
-          jlledger: "--",
-          mask: this.MASK_NAME,
-          runtimemask: this.MASK_NAME,
-          "sec-fetch-dest": "empty",
-          "sec-fetch-mode": "cors",
-          "sec-fetch-site": "same-origin",
-        },
-        body: JSON.stringify(itemObj),
-        mode: "cors",
-        credentials: "include",
-        "Access-Control-Allow-Credentials": "*",
-      });
-
-      if (!attachmentResponse.ok) {
-        throw new Error(`Failed to fetch attachment for asset: ${attachmentResponse.status}`);
+      if (!this.AppUrl || !this.authObj || !this.authObj.environment) {
+        throw new Error("Cannot fetch attachments: Missing AppUrl or environment info.");
       }
+      const appBase = this.AppUrl.endsWith("/") ? this.AppUrl : this.AppUrl + "/";
+      const attachPath = `${this.authObj.environment}-UI/api/finance/legacy/documents/${maskDetails.idTable}/attachments`;
+      const attachUrl = `${appBase}${attachPath}`;
 
-      const attachments = await attachmentResponse.json();
+      // console.log(`Fetching attachments for asset ${assetId} from: ${attachUrl}`);
 
-      // Cache the results before returning
-      this.setCachedValue(cacheKey, attachments);
+      try {
+        const attachmentResponse = await fetch(attachUrl, {
+          method: "POST",
+          headers: {
+            accept: "application/json, text/plain, */*",
+            "accept-language": "en-US,en;q=0.9",
+            "content-type": "application/json",
+            glledger: "GL",
+            jlledger: "--",
+            mask: this.MASK_NAME,
+            runtimemask: this.MASK_NAME,
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin",
+          },
+          body: JSON.stringify(itemObj),
+          mode: "cors",
+          credentials: "include",
+          "Access-Control-Allow-Credentials": "*",
+        });
+        if (!attachmentResponse.ok) {
+          // Provide more context in error
+          throw new Error(
+            `Failed to fetch attachments for asset ${assetId}: ${attachmentResponse.status} ${attachmentResponse.statusText}`
+          );
+        }
 
-      return attachments;
+        const attachments = await attachmentResponse.json();
+
+        // Cache the results (even if empty array)
+        this.setCachedValue(cacheKey, attachments || []);
+
+        return attachments || []; // Ensure return is always an array
+      } catch (error) {
+        console.error(`Error fetching attachments for asset ${assetId}:`, error);
+        // Decide whether to re-throw or return empty array on error
+        // throw error; // Re-throw to indicate failure in processAssetSpan
+        return []; // Or return empty array to prevent breaking the UI loop
+      }
     }
 
     // Also update fetchAttachmentCount with caching if needed
@@ -1292,70 +1536,97 @@ define(() => {
     // Update cache keys to include drawID to prevent conflicts
     getCachedValue(key) {
       try {
+        // No need to add drawID here if sessionStorage is used, as it's per-tab/window anyway.
+        // If localStorage were used, drawID would be essential. Let's keep it simple for sessionStorage.
         const instanceKey = `${this.drawID}_${key}`;
-        const cachedData = sessionStorage.getItem(instanceKey);
+        const cachedData = sessionStorage.getItem(key); // Use base key
         if (cachedData) {
-          return JSON.parse(cachedData);
+          const parsedData = JSON.parse(cachedData);
+          //  Optional: Add timestamp check for expiry if needed
+          // if (parsedData.timestamp && Date.now() > parsedData.timestamp + CACHE_DURATION) {
+          //   sessionStorage.removeItem(key);
+          //   return null;
+          // }
+          return parsedData.value !== undefined ? parsedData.value : parsedData; // Handle potential structure differences if wrapped with timestamp later
         }
         return null;
       } catch (error) {
-        console.error("Error retrieving cached value:", error);
+        console.error(`Error retrieving cached value for key ${key}:`, error);
         return null;
       }
     }
 
     setCachedValue(key, value) {
       try {
-        const instanceKey = `${this.drawID}_${key}`;
-        sessionStorage.setItem(instanceKey, JSON.stringify(value));
+        // const instanceKey = `${this.drawID}_${key}`;
+        // Optional: Wrap value with timestamp for expiry?
+        const dataToStore = { value: value /*, timestamp: Date.now() */ };
+        sessionStorage.setItem(key, JSON.stringify(dataToStore)); // Use base key
       } catch (error) {
-        console.error("Error setting cached value:", error);
-        // Handle quota exceeded or other storage errors
-        try {
-          // If storage is full, clear older items
-          this.clearOldestCacheItems(5);
-          // Try again
-          sessionStorage.setItem(instanceKey, JSON.stringify(value));
-        } catch (e) {
-          console.error("Failed to store in cache even after cleanup:", e);
+        console.error(`Error setting cached value for key ${key}:`, error);
+        // Basic Cache Full Handling: remove oldest N items and retry
+        if (error.name === "QuotaExceededError") {
+          console.warn("SessionStorage quota exceeded. Clearing oldest cache entries.");
+          this.clearOldestCacheItems(10); // Clear 10 oldest items
+          try {
+            // Retry storing
+            const dataToStore = { value: value };
+            sessionStorage.setItem(key, JSON.stringify(dataToStore));
+          } catch (retryError) {
+            console.error("Failed to set cache value even after cleanup:", retryError);
+          }
         }
       }
     }
 
     // Helper method to clear oldest cache items if storage is full
-    clearOldestCacheItems(count = 5) {
+    clearOldestCacheItems(count = 10) {
       try {
-        // Get all keys that match our cache pattern
-        const cacheKeys = [];
+        const keys = [];
         for (let i = 0; i < sessionStorage.length; i++) {
           const key = sessionStorage.key(i);
-          if (key.startsWith("asset_") || key.startsWith("attach_")) {
-            cacheKeys.push(key);
+          // Target keys used by this control (adjust patterns if needed)
+          if (key.startsWith("asset_") || key.startsWith("attach_") || key.startsWith("count_")) {
+            // Simple approach: just collect matching keys
+            keys.push(key);
+            // More complex: If items had timestamps, fetch, parse, sort by time
           }
         }
 
-        // Sort by timestamp if we store timestamps, or just take first few
-        cacheKeys.sort();
+        // Simple strategy: remove the first 'count' found keys matching the pattern
+        // (Assumes older items were added earlier, not guaranteed but often true)
+        keys.sort(); // Alphabetical sort might approximate insertion order sometimes
+        const keysToRemove = keys.slice(0, count);
 
-        // Remove the oldest entries
-        for (let i = 0; i < Math.min(count, cacheKeys.length); i++) {
-          sessionStorage.removeItem(cacheKeys[i]);
-        }
+        console.log(`Attempting to remove ${keysToRemove.length} cache items...`);
+        keysToRemove.forEach((key) => {
+          // console.log(`Removing ${key}`);
+          sessionStorage.removeItem(key);
+        });
       } catch (error) {
-        console.error("Error clearing cache items:", error);
+        console.error("Error clearing oldest cache items:", error);
       }
     }
-    // Method to clear all cached data
+
     clearCache() {
+      // Clears ALL cache entries set by this control pattern
       try {
-        // Remove only our specific cache items to avoid clearing other app data
+        let removedCount = 0;
         for (let i = sessionStorage.length - 1; i >= 0; i--) {
+          // Iterate backwards when removing
           const key = sessionStorage.key(i);
-          if (key.startsWith("asset_") || key.startsWith("attach_") || key.startsWith("count_")) {
+          if (
+            key &&
+            (key.startsWith("asset_") ||
+              key.startsWith("attach_") ||
+              key.startsWith("count_") ||
+              key === "cache_version")
+          ) {
             sessionStorage.removeItem(key);
+            removedCount++;
           }
         }
-        console.log("Cache cleared successfully");
+        console.log(`Cleared ${removedCount} cache entries.`);
       } catch (error) {
         console.error("Error clearing cache:", error);
       }
@@ -1392,84 +1663,43 @@ define(() => {
     }
 
     // Function to process asset spans and fetch document attachments
+    // Processes spans immediately (used when IS_LAZY_LOADED is false)
     async processAssetDocuments(spans) {
-      // Create an array of promises for each span
-      const fetchPromises = Array.from(spans).map((span) => {
-        const assetID = span.getAttribute("data-ref");
+      console.log(`Draw ID: ${this.drawID} - Starting immediate processing for ${spans.length} spans.`);
+      if (!spans || spans.length === 0) {
+        return; // Nothing to process
+      }
+      if (!this.apiToken) {
+        console.error(`Draw ID: ${this.drawID} - Cannot process asset documents: API token not available.`);
+        return;
+      }
 
-        // Check if this span has already been processed (same check as in processAssetSpan)
-        if (
-          span.hasAttribute(`data-processed-${this.drawID}`) ||
-          (span.nextElementSibling && span.nextElementSibling.querySelector("button"))
-        ) {
-          console.log(`Span with asset ID: ${assetID} already processed, skipping`);
-          return Promise.resolve(); // Skip with resolved promise so Promise.all works
-        }
-
-        // Mark as processed
-        span.setAttribute(`data-processed-${this.drawID}`, "true");
-
-        // Create or retrieve a container span with unique ID based on drawID
-        const containerId = `doc-container-${this.drawID}-${assetID}`;
-        let container = document.getElementById(containerId);
-
-        // Check if this container already has a paperclip button
-        if (container && container.querySelector("button")) {
-          console.log(`Paperclip already exists for asset ID: ${assetID}, skipping`);
-          return Promise.resolve(); // Skip this span as it already has a paperclip
-        }
-
-        if (!container) {
-          // Add parent node check
-          if (!span.parentNode) {
-            console.error(`No parent node found for span with asset ID: ${assetID}`);
-            return Promise.resolve(); // Skip with resolved promise
+      // Use Promise.allSettled to process all spans concurrently and handle individual errors
+      const processingPromises = Array.from(spans).map((span) => {
+        // Wrap the processing logic in a try/catch for each span
+        return (async () => {
+          try {
+            await this.processAssetSpan(span); // Reuse the single-span processing logic
+          } catch (error) {
+            const assetID = span ? span.getAttribute("data-ref") : "unknown";
+            console.error(
+              `Error during immediate processing of asset span ${assetID} (Instance ${this.drawID}):`,
+              error
+            );
+            // Don't let one error stop others
           }
-          container = document.createElement("span");
-          container.id = containerId;
-          span.parentNode.insertBefore(container, span.nextSibling);
-        } else {
-          container.innerHTML = "";
-        }
-        // Insert clock SVG as a loading placeholder
-        container.innerHTML = this.getSvgForType("clock", this.ICON_DIMENSIONS);
-
-        // Return a promise for this spans processing
-        return this.fetchAssetDetails(assetID)
-          .then((assetItem) => this.fetchAttachments(assetItem))
-          .then((data) => {
-            // Remove the clock SVG placeholder
-            container.innerHTML = "";
-            if (data && data.length > 0) {
-              console.log(`Found ${data.length} documents for asset ID: ${assetID} (Instance ${this.drawID})`);
-              this.createDocumentButton(container, data, assetID);
-            } else {
-              console.log(`No documents found for asset ID: ${assetID} (Instance ${this.drawID})`);
-            }
-          })
-          .catch((error) => {
-            console.error(`Error processing asset ID ${assetID} (Instance ${this.drawID}):`, error);
-            // On error, remove the clock SVG
-            container.innerHTML = "";
-          });
+        })();
       });
 
-      // Execute all promises simultaneously (non-blocking)
       try {
-        await Promise.all(fetchPromises);
-        console.log(`All asset document fetches complete for instance ${this.drawID}`);
+        await Promise.allSettled(processingPromises);
+        console.log(`Draw ID: ${this.drawID} - Finished immediate processing batch.`);
       } catch (error) {
-        console.error(`Error in batch processing for instance ${this.drawID}:`, error);
+        // This catch is unlikely to be hit with Promise.allSettled unless there's a setup error
+        console.error(`Unexpected error during batch processing (Instance ${this.drawID}):`, error);
       }
     }
-
-    /*
-     * The control is being destroyed so do any necessary cleanup. This method is optional.
-     */
-    // destroy(oControlHost) {
-    //   this.oControl = oControlHost;
-    // }
-  }
+  } // End class AdvancedControl
 
   return AdvancedControl;
 });
