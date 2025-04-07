@@ -26,19 +26,12 @@ define(() => {
           idColumn: "PeId",
         },
         {
-          name: "ARUPTR",
-          urlPath: "accountsreceivable",
-          idTable: "ARTrnsDetail",
-          idData: "ARTrnsDetail",
-          idColumn: "CustId",
-        },
-        {
           name: "GLUPKY",
           urlPath: "generalledger",
           idTable: "GLKKeyMaster",
           idData: "GLKKeyMaster",
           idColumn: "Key",
-        }
+        },
       ],
     };
 
@@ -55,6 +48,7 @@ define(() => {
           ["Lazy Loading"]: IS_LAZY_LOADED,
           ["scrolltimeout"]: SCROLL_TIMEOUT,
           ["Direct Url"]: URL_TYPE,
+          ["List Name"]: LIST_NAME,
         } = this.oControl.configuration;
 
         // Check each configuration parameter and collect the missing ones
@@ -82,6 +76,7 @@ define(() => {
         this.FONT_SIZE = FONT_SIZE || "1em";
         this.SCROLL_TIMEOUT = SCROLL_TIMEOUT || 200;
         this.URL_TYPE = URL_TYPE;
+        this.LIST_NAME = LIST_NAME || "";
         // Initialize cache with version tracking
         const cacheVersion = "1.0"; // Update this when making breaking changes to cached data format
         const storedVersion = sessionStorage.getItem("cache_version");
@@ -108,58 +103,51 @@ define(() => {
      */
     draw(oControlHost) {
       try {
-        //   console.log("Drawing Started - FAUPAS CC");
         this.oControl = oControlHost;
+        this.drawID = this.oControl.generateUniqueID(); // Get and store drawID
+        console.log(`AdvancedControl Instance Drawing: ID=${this.drawID}, Mask=${this.MASK_NAME}`);
 
-        // Check each configuration parameter and collect the missing ones
-        const missingParams = [];
-        if (!this.AppUrl) missingParams.push("App Server Url");
-        if (!this.JobUrl) missingParams.push("Job Server Url");
-        if (!this.MASK_NAME) missingParams.push("Mask Name");
+        // Rest of the existing code...
 
-        // If any parameters are missing, log specific error and return
-        if (missingParams.length > 0) {
-          let description = `Missing required configuration parameters: ${missingParams.join(", ")}`;
-          throw new scriptableReportError("AdvancedControl", "draw", description);
-        }
-
-        // Extract credentials from the DOM
-        const { sessionID, token, authObj } = this.extractCredentials();
-        this.authObj = authObj; // Add this line
-
-        if (!sessionID || !token) {
-          console.error("Failed to extract sessionID or token, cannot authenticate");
-          return;
-        }
-
-        // First authenticate
+        // After authentication, use the LIST_NAME config to target specific containers
         this.authenticate(authObj)
           .then((authObj) => {
             // Store the token if needed for later use
             this.apiToken = authObj.apiToken;
 
-            // Find all spans with data-ref attribute
-            const assetSpans = document.querySelectorAll("span[data-ref]");
+            // Find spans with data-ref attribute within a container with lid attribute matching LIST_NAME
+            if (this.LIST_NAME && this.LIST_NAME.trim() !== "") {
+              // Find container with lid attribute matching LIST_NAME
+              const container = document.querySelector(`[lid="${this.LIST_NAME}"]`);
+              if (container) {
+                const assetSpans = container.querySelectorAll("span[data-ref]");
+                console.log(
+                  `Found ${assetSpans.length} asset reference spans in container with lid="${this.LIST_NAME}"`
+                );
 
-            if (assetSpans.length > 0) {
-              // console.log(`Found ${assetSpans.length} asset reference spans to process`);
-
-              // Process the spans to add document buttons
-              if (!this.IS_LAZY_LOADED) {
-                return this.processAssetDocuments(assetSpans);
+                if (assetSpans.length > 0) {
+                  // Process the spans to add document buttons
+                  if (!this.IS_LAZY_LOADED) {
+                    return this.processAssetDocuments(assetSpans);
+                  }
+                  return this.initializeVisibleAssetLoading();
+                } else {
+                  console.log(`No asset reference spans found in container with lid="${this.LIST_NAME}"`);
+                }
+              } else {
+                console.warn(`Container with lid="${this.LIST_NAME}" not found. Processing stopped.`);
+                return; // Stop execution if container not found
               }
-              return this.initializeVisibleAssetLoading();
             } else {
-              // console.log("No asset reference spans found on page");
+              console.warn("LIST_NAME configuration is missing or empty. Processing stopped.");
+              return; // Stop execution if LIST_NAME is not provided
             }
           })
           .catch((error) => {
             console.error("Authentication failed, cannot process assets:", error);
           });
       } catch (error) {
-        // Log the error for debugging
         console.error("Error during control drawing:", error);
-        //   console.log("Drawing Complete - FAUPAS CC");
       }
     }
 
@@ -268,10 +256,13 @@ define(() => {
       this.processedSpanIds.add(assetID);
 
       // Create container
-      let container = document.getElementById(`doc-container-${assetID}`);
+      // Create container with unique ID based on drawID
+      const containerId = `doc-container-${this.drawID}-${assetID}`;
+
+      let container = document.getElementById(containerId);
       if (!container) {
         container = document.createElement("span");
-        container.id = `doc-container-${assetID}`;
+        container.id = containerId;
         span.parentNode.insertBefore(container, span.nextSibling);
       } else {
         container.innerHTML = "";
@@ -311,15 +302,26 @@ define(() => {
     // Process assets as they become visible, with per-asset tracking
     async processVisibleAssets() {
       try {
-        // Get all asset spans
-        const allSpans = document.querySelectorAll("span[data-ref]");
+        // Get all asset spans, using LIST_NAME to find container with matching lid attribute
+        if (!this.LIST_NAME || this.LIST_NAME.trim() === "") {
+          console.warn("LIST_NAME configuration is missing or empty. Processing stopped.");
+          return; // Stop execution if LIST_NAME is not provided
+        }
+
+        const container = document.querySelector(`[lid="${this.LIST_NAME}"]`);
+        if (!container) {
+          console.warn(`Container with lid="${this.LIST_NAME}" not found. Processing stopped.`);
+          return; // Stop execution if container not found
+        }
+
+        const allSpans = container.querySelectorAll("span[data-ref]");
 
         // Filter for visible spans that aren't processed or currently being processed
         const visibleSpans = Array.from(allSpans).filter((span) => {
           const assetID = span.getAttribute("data-ref");
           const isVisible = this.isElementVisible(span);
           const isProcessed = this.processedSpanIds.has(assetID);
-          const isProcessing = span.hasAttribute("data-processing");
+          const isProcessing = span.hasAttribute(`data-processing-${this.drawID}`);
 
           return isVisible && !isProcessed && !isProcessing;
         });
@@ -328,26 +330,26 @@ define(() => {
           return;
         }
 
-        console.log(`Processing ${visibleSpans.length} newly visible assets`);
+        console.log(`Processing ${visibleSpans.length} newly visible assets (Instance ${this.drawID})`);
 
         // Process each visible span independently
         visibleSpans.forEach(async (span) => {
           const assetID = span.getAttribute("data-ref");
 
           // Mark this span as currently being processed
-          span.setAttribute("data-processing", "true");
+          span.setAttribute(`data-processing-${this.drawID}`, "true");
 
           try {
             await this.processAssetSpan(span);
           } catch (error) {
-            console.error(`Error processing asset ${assetID}:`, error);
+            console.error(`Error processing asset ${assetID} (Instance ${this.drawID}):`, error);
           } finally {
             // Remove the processing flag when done
-            span.removeAttribute("data-processing");
+            span.removeAttribute(`data-processing-${this.drawID}`);
           }
         });
       } catch (error) {
-        console.error("Error in processVisibleAssets:", error);
+        console.error(`Error in processVisibleAssets (Instance ${this.drawID}):`, error);
       }
     }
 
@@ -1155,12 +1157,11 @@ define(() => {
       }
     }
 
-    // Add these methods to your AdvancedControl class
-
-    // Method to get a cached value from sessionStorage
+    // Update cache keys to include drawID to prevent conflicts
     getCachedValue(key) {
       try {
-        const cachedData = sessionStorage.getItem(key);
+        const instanceKey = `${this.drawID}_${key}`;
+        const cachedData = sessionStorage.getItem(instanceKey);
         if (cachedData) {
           return JSON.parse(cachedData);
         }
@@ -1171,10 +1172,10 @@ define(() => {
       }
     }
 
-    // Method to set a value in sessionStorage cache
     setCachedValue(key, value) {
       try {
-        sessionStorage.setItem(key, JSON.stringify(value));
+        const instanceKey = `${this.drawID}_${key}`;
+        sessionStorage.setItem(instanceKey, JSON.stringify(value));
       } catch (error) {
         console.error("Error setting cached value:", error);
         // Handle quota exceeded or other storage errors
@@ -1182,7 +1183,7 @@ define(() => {
           // If storage is full, clear older items
           this.clearOldestCacheItems(5);
           // Try again
-          sessionStorage.setItem(key, JSON.stringify(value));
+          sessionStorage.setItem(instanceKey, JSON.stringify(value));
         } catch (e) {
           console.error("Failed to store in cache even after cleanup:", e);
         }
@@ -1265,11 +1266,12 @@ define(() => {
         const assetID = span.getAttribute("data-ref");
         // console.log("Processing asset ID:", assetID);
 
-        // Create or retrieve a container span to display the icon
-        let container = document.getElementById(assetID);
+        // Create or retrieve a container span with unique ID based on drawID
+        const containerId = `doc-container-${this.drawID}-${assetID}`;
+        let container = document.getElementById(containerId);
         if (!container) {
           container = document.createElement("span");
-          container.id = assetID;
+          container.id = containerId;
           span.parentNode.insertBefore(container, span.nextSibling);
         } else {
           container.innerHTML = "";
@@ -1285,14 +1287,14 @@ define(() => {
             // Remove the clock SVG placeholder
             container.innerHTML = "";
             if (data && data.length > 0) {
-              console.log("Found", data.length, "documents for asset ID:", assetID);
+              console.log(`Found ${data.length} documents for asset ID: ${assetID} (Instance ${this.drawID})`);
               this.createDocumentButton(container, data, assetID);
             } else {
-              console.log("No documents found for asset ID:", assetID);
+              console.log(`No documents found for asset ID: ${assetID} (Instance ${this.drawID})`);
             }
           })
           .catch((error) => {
-            console.error("Error processing asset ID", assetID, error);
+            console.error(`Error processing asset ID ${assetID} (Instance ${this.drawID}):`, error);
             // On error, remove the clock SVG
             container.innerHTML = "";
           });
@@ -1301,9 +1303,9 @@ define(() => {
       // Execute all promises simultaneously (non-blocking)
       try {
         await Promise.all(fetchPromises);
-        console.log("All asset document fetches complete");
+        console.log(`All asset document fetches complete for instance ${this.drawID}`);
       } catch (error) {
-        console.error("Error in batch processing:", error);
+        console.error(`Error in batch processing for instance ${this.drawID}:`, error);
       }
     }
 
