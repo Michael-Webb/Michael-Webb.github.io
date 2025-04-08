@@ -85,8 +85,9 @@ define(() => {
         this.LIST_NAME = LIST_NAME || "";
         this.DEBUG_MODE = DEBUG_MODE || false;
 
+        let containerName = oControlHost.container.name || oControlHost.container.id
         if (this.DEBUG_MODE) {
-          console.log("DEBUG MODE",this.DEBUG_MODE);
+          console.log(`DEBUG MODE for ${this.LIST_NAME} AND ${containerName}`,this.DEBUG_MODE);
         }
         // Initialize cache with version tracking
         const cacheVersion = "1.0"; // Update this when making breaking changes to cached data format
