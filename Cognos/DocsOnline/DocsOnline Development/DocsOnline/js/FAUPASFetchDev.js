@@ -85,7 +85,7 @@ define(() => {
         this.LIST_NAME = LIST_NAME || "";
         this.DEBUG_MODE = DEBUG_MODE || false;
 
-        this.containerName = oControlHost.container.name || oControlHost.container.id;
+        this.containerName = oControlHost.container.id;
         if (this.DEBUG_MODE) {
           console.log(`DEBUG MODE for ${this.LIST_NAME} AND ${containerName}`, this.DEBUG_MODE);
         }
@@ -1382,7 +1382,7 @@ define(() => {
       try {
         // Create a unique key for the authentication data.
         // You could adjust this key if you have multiple environments/sessions.
-        const authCacheKey = `authData-${this.containerName}`;
+        const authCacheKey = `authData-`;
 
         // Check the cache for existing auth data.
         const cachedAuth = this.getCachedValue(authCacheKey);
@@ -1969,4 +1969,4 @@ define(() => {
   return AdvancedControl;
 });
 
-//v1150
+//v1157
