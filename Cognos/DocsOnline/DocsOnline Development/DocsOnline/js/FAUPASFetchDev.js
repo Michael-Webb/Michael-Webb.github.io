@@ -1225,7 +1225,7 @@ define(() => {
           body: null,
           method: "GET",
           mode: "cors",
-          credentials: "include",
+          credentials: "omit",
         });
 
         if (!response.ok) {
@@ -1759,4 +1759,4 @@ define(() => {
 
   return AdvancedControl;
 });
-//v1017
+//v1021
