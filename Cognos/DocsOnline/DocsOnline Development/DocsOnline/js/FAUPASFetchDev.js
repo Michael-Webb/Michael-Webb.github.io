@@ -1288,7 +1288,7 @@ define(() => {
         // Step 3: Validate security token
         await this.validateSecurityToken();
         // Step 4: Get Session Expiration and log it
-        // await this.getSessionExpiration(authObj);
+        await this.getSessionExpiration(authObj);
 
         return this.authObj; // Return the API token for future use
       } catch (error) {
@@ -1758,4 +1758,4 @@ define(() => {
 
   return AdvancedControl;
 });
-//v1009
+//v1017
