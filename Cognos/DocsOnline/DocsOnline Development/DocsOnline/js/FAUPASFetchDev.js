@@ -90,7 +90,7 @@ define(() => {
           console.log(`DEBUG MODE for ${this.LIST_NAME} AND ${containerName}`, this.DEBUG_MODE);
         }
         // Initialize cache with version tracking
-        const cacheVersion = "1.0"; // Update this when making breaking changes to cached data format
+        const cacheVersion = "1.2"; // Update this when making breaking changes to cached data format
         const storedVersion = sessionStorage.getItem("cache_version");
 
         if (storedVersion !== cacheVersion) {
@@ -1382,7 +1382,7 @@ define(() => {
       try {
         // Create a unique key for the authentication data.
         // You could adjust this key if you have multiple environments/sessions.
-        const authCacheKey = `authData-`;
+        const authCacheKey = `authData-${this.MASK_NAME}`;
 
         // Check the cache for existing auth data.
         const cachedAuth = this.getCachedValue(authCacheKey);
@@ -1969,4 +1969,4 @@ define(() => {
   return AdvancedControl;
 });
 
-//v1159
+//v1201
