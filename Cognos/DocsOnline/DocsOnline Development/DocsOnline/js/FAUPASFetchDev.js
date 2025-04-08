@@ -85,9 +85,9 @@ define(() => {
         this.LIST_NAME = LIST_NAME || "";
         this.DEBUG_MODE = DEBUG_MODE || false;
 
-        let containerName = oControlHost.container.name || oControlHost.container.id
+        this.containerName = oControlHost.container.name || oControlHost.container.id;
         if (this.DEBUG_MODE) {
-          console.log(`DEBUG MODE for ${this.LIST_NAME} AND ${containerName}`,this.DEBUG_MODE);
+          console.log(`DEBUG MODE for ${this.LIST_NAME} AND ${containerName}`, this.DEBUG_MODE);
         }
         // Initialize cache with version tracking
         const cacheVersion = "1.0"; // Update this when making breaking changes to cached data format
@@ -120,7 +120,7 @@ define(() => {
       try {
         this.oControl = oControlHost;
         this.drawID = this.oControl.generateUniqueID(); // *** Get and store drawID ***
-        
+
         if (this.DEBUG_MODE) {
           console.log(`AdvancedControl Instance Drawing: ID=${this.drawID}, Mask=${this.MASK_NAME}`);
         }
@@ -354,15 +354,12 @@ define(() => {
           lastRan = Date.now();
         } else {
           clearTimeout(lastFunc);
-          lastFunc = setTimeout(
-            () => {
-              if (Date.now() - lastRan >= limit) {
-                func.apply(this, args);
-                lastRan = Date.now();
-              }
-            },
-            limit - (Date.now() - lastRan)
-          );
+          lastFunc = setTimeout(() => {
+            if (Date.now() - lastRan >= limit) {
+              func.apply(this, args);
+              lastRan = Date.now();
+            }
+          }, limit - (Date.now() - lastRan));
         }
       };
     }
@@ -1383,23 +1380,45 @@ define(() => {
      */
     async authenticate(authObj) {
       try {
-        const auth = this.authObj || authObj;
+        // Create a unique key for the authentication data.
+        // You could adjust this key if you have multiple environments/sessions.
+        const authCacheKey = `authData-${this.containerName}`;
 
-        // Step 1: Fetch FAUPAS screen to capture cookies
+        // Check the cache for existing auth data.
+        const cachedAuth = this.getCachedValue(authCacheKey);
+        if (cachedAuth && cachedAuth.apiToken) {
+          // Found cached data; assign it to authObj and return immediately.
+          console.log("Using cached authentication data.");
+          this.authObj.apiToken = cachedAuth.apiToken;
+          // Optionally set other values if they may change.
+          this.authObj.sessionId = cachedAuth.sessionId;
+          this.authObj.token = cachedAuth.token;
+          return this.authObj;
+        }
+
+        // Step 1: Fetch FAUPAS screen to capture cookies.
         await this.fetchFromScreen();
 
-        // Step 2: Fetch API token
+        // Step 2: Fetch API token.
         const apiToken = await this.fetchApiToken();
         this.authObj.apiToken = apiToken;
-        // Step 3: Validate security token
+
+        // Step 3: Validate security token.
         await this.validateSecurityToken();
 
-        // Step 4: Get Session Expiration and log it
+        // Step 4: Get Session Expiration and log it.
         const sessionExpData = await this.getSessionExpiration();
-        // Calculate an absolute expiration timestamp (milliseconds since epoch)
-        // For example, if expirationIntervalInMinutes is provided:
+        // Calculate an absolute expiration timestamp based on the provided interval.
         this.cacheExpirationTimestamp = Date.now() + sessionExpData.expirationIntervalInMinutes * 60000;
         console.log("Cache expiration timestamp set to:", new Date(this.cacheExpirationTimestamp));
+
+        // Cache the authentication data for future use.
+        const authDataToCache = {
+          sessionId: this.authObj.sessionId,
+          token: this.authObj.token,
+          apiToken: apiToken,
+        };
+        this.setCachedValue(authCacheKey, authDataToCache);
 
         return this.authObj; // Return the API token for future use
       } catch (error) {
@@ -1884,7 +1903,9 @@ define(() => {
           return;
         }
 
-        if (this.DEBUG_MODE) {console.log(`Draw ID: ${this.drawID} - Found ${spansToProcess.length} visible spans to process.`);}
+        if (this.DEBUG_MODE) {
+          console.log(`Draw ID: ${this.drawID} - Found ${spansToProcess.length} visible spans to process.`);
+        }
         const processingPromises = spansToProcess.map((span) => this.processAssetSpan(span));
         await Promise.allSettled(processingPromises);
         console.log(`Draw ID: ${this.drawID} - Completed processing batch of ${spansToProcess.length} spans.`);
@@ -1895,7 +1916,9 @@ define(() => {
         this.processingInProgress = false;
         // If new items came in during processing, pendingProcessing will be true.
         if (this.pendingProcessing) {
-          if (this.DEBUG_MODE) { console.log(`Draw ID: ${this.drawID} - Pending work detected; processing new visible spans.`);}
+          if (this.DEBUG_MODE) {
+            console.log(`Draw ID: ${this.drawID} - Pending work detected; processing new visible spans.`);
+          }
           // Reset the flag and call the method again (optionally wrap in setTimeout for a new tick).
           this.pendingProcessing = false;
           setTimeout(() => this.processVisibleAssetSpans(), 0);
@@ -1946,4 +1969,4 @@ define(() => {
   return AdvancedControl;
 });
 
-//v1127
+//v1150
