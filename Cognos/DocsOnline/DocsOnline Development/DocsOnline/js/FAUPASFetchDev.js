@@ -81,7 +81,7 @@ define(() => {
         this.LIST_NAME = LIST_NAME || "";
         this.USE_CACHE = USE_CACHE || false;
         // Initialize cache with version tracking
-        const cacheVersion = "1.1"; // Update this when making breaking changes to cached data format
+        const cacheVersion = "1.0"; // Update this when making breaking changes to cached data format
         const storedVersion = sessionStorage.getItem("cache_version");
 
         if (storedVersion !== cacheVersion) {
@@ -1234,6 +1234,12 @@ define(() => {
 
         const data = await response.json();
         console.log("Session expiration data:", data);
+
+        // Update the cache expiration timestamp every time getSessionExpiration is called.
+        // expirationIntervalInMinutes is multiplied by 60000 (ms in a minute) to get the expiration time in milliseconds.
+        this.cacheExpirationTimestamp = Date.now() + data.expirationIntervalInMinutes * 60000;
+        console.log("Updated cache expiration timestamp:", new Date(this.cacheExpirationTimestamp));
+
         return data;
       } catch (error) {
         console.error("Error getting session expiration:", error);
@@ -1254,8 +1260,13 @@ define(() => {
         this.authObj.apiToken = apiToken;
         // Step 3: Validate security token
         await this.validateSecurityToken();
+
         // Step 4: Get Session Expiration and log it
-        await this.getSessionExpiration(authObj);
+        const sessionExpData = await this.getSessionExpiration();
+        // Calculate an absolute expiration timestamp (milliseconds since epoch)
+        // For example, if expirationIntervalInMinutes is provided:
+        this.cacheExpirationTimestamp = Date.now() + sessionExpData.expirationIntervalInMinutes * 60000;
+        console.log("Cache expiration timestamp set to:", new Date(this.cacheExpirationTimestamp));
 
         return this.authObj; // Return the API token for future use
       } catch (error) {
@@ -1462,18 +1473,17 @@ define(() => {
     // Update cache keys to include drawID to prevent conflicts
     getCachedValue(key) {
       try {
-        // No need to add drawID here if sessionStorage is used, as it's per-tab/window anyway.
-        // If localStorage were used, drawID would be essential. Let's keep it simple for sessionStorage.
-        const instanceKey = `${this.drawID}_${key}`;
-        const cachedData = sessionStorage.getItem(key); // Use base key
+        const cachedData = sessionStorage.getItem(key);
         if (cachedData) {
           const parsedData = JSON.parse(cachedData);
-          //  Optional: Add timestamp check for expiry if needed
-          // if (parsedData.timestamp && Date.now() > parsedData.timestamp + CACHE_DURATION) {
-          //   sessionStorage.removeItem(key);
-          //   return null;
-          // }
-          return parsedData.value !== undefined ? parsedData.value : parsedData; // Handle potential structure differences if wrapped with timestamp later
+          // Check if we have an expiry and whether it has passed
+          if (parsedData.expiry && Date.now() > parsedData.expiry) {
+            // Cache entry has expired; remove it and return null
+            sessionStorage.removeItem(key);
+            return null;
+          }
+          // Otherwise, return the cached value
+          return parsedData.value !== undefined ? parsedData.value : parsedData;
         }
         return null;
       } catch (error) {
@@ -1484,53 +1494,16 @@ define(() => {
 
     setCachedValue(key, value) {
       try {
-        // const instanceKey = `${this.drawID}_${key}`;
-        // Optional: Wrap value with timestamp for expiry?
-        const dataToStore = { value: value /*, timestamp: Date.now() */ };
-        sessionStorage.setItem(key, JSON.stringify(dataToStore)); // Use base key
+        // Use the updated cacheExpirationTimestamp if available,
+        // Otherwise, fall back to a default expiration (e.g., 30 minutes)
+        const defaultExpirationMs = 30 * 60000;
+        const expiry = this.cacheExpirationTimestamp || Date.now() + defaultExpirationMs;
+
+        // Store the value with its expiry timestamp
+        const dataToStore = { value: value, expiry: expiry };
+        sessionStorage.setItem(key, JSON.stringify(dataToStore));
       } catch (error) {
         console.error(`Error setting cached value for key ${key}:`, error);
-        // Basic Cache Full Handling: remove oldest N items and retry
-        if (error.name === "QuotaExceededError") {
-          console.warn("SessionStorage quota exceeded. Clearing oldest cache entries.");
-          this.clearOldestCacheItems(10); // Clear 10 oldest items
-          try {
-            // Retry storing
-            const dataToStore = { value: value };
-            sessionStorage.setItem(key, JSON.stringify(dataToStore));
-          } catch (retryError) {
-            console.error("Failed to set cache value even after cleanup:", retryError);
-          }
-        }
-      }
-    }
-
-    // Helper method to clear oldest cache items if storage is full
-    clearOldestCacheItems(count = 10) {
-      try {
-        const keys = [];
-        for (let i = 0; i < sessionStorage.length; i++) {
-          const key = sessionStorage.key(i);
-          // Target keys used by this control (adjust patterns if needed)
-          if (key.startsWith("asset_") || key.startsWith("attach_") || key.startsWith("count_")) {
-            // Simple approach: just collect matching keys
-            keys.push(key);
-            // More complex: If items had timestamps, fetch, parse, sort by time
-          }
-        }
-
-        // Simple strategy: remove the first 'count' found keys matching the pattern
-        // (Assumes older items were added earlier, not guaranteed but often true)
-        keys.sort(); // Alphabetical sort might approximate insertion order sometimes
-        const keysToRemove = keys.slice(0, count);
-
-        console.log(`Attempting to remove ${keysToRemove.length} cache items...`);
-        keysToRemove.forEach((key) => {
-          // console.log(`Removing ${key}`);
-          sessionStorage.removeItem(key);
-        });
-      } catch (error) {
-        console.error("Error clearing oldest cache items:", error);
       }
     }
 
@@ -1749,6 +1722,8 @@ define(() => {
       if (this.mutationProcessTimeout) {
         clearTimeout(this.mutationProcessTimeout);
       }
+      // Clear cache if desired
+      this.clearCache(); // Add this call to remove cache entries
 
       // Clear references
       this.oControl = null;
@@ -1759,4 +1734,4 @@ define(() => {
 
   return AdvancedControl;
 });
-//v1021
+//v1035
