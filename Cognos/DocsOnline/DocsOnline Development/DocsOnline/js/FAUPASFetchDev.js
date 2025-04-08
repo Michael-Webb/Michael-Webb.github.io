@@ -1708,52 +1708,52 @@ define(() => {
     }
 
     async processVisibleAssetSpans() {
-      if (!this.apiToken) {
-        console.log(`Draw ID: ${this.drawID} - API token not yet available, skipping processVisibleAssetSpans.`);
-        return;
-      }
-
+      // If a batch is already in progress, mark that new work is pending and exit.
       if (this.processingInProgress) {
+        this.pendingProcessing = true;
+        console.log(`Draw ID: ${this.drawID} - Batch in progress; marking pendingProcessing for new visible items.`);
         return;
       }
-      this.processingInProgress = true;
 
+      this.processingInProgress = true;
+      this.pendingProcessing = false; // reset the pending flag
       try {
         const allSpans = this.getAllAssetSpans();
-        console.log(`Draw ID: ${this.drawID} - getAllAssetSpans() returned ${allSpans.length} elements.`);
-
         const processedAttr = `data-processed-${this.drawID}`;
         const processingAttr = `data-processing-${this.drawID}`;
 
-        // Filter using your viewport check
+        // Filter spans to those in the viewport and not already processed or being processed.
         const spansToProcess = Array.from(allSpans).filter((span) => {
-          const inViewport = this.isElementInViewport(span);
-          if (!inViewport) {
-            // Log coordinates for debugging
-            const rect = span.getBoundingClientRect();
-            console.log(`Span with data-ref=${span.getAttribute("data-ref")} is out of viewport. Rect:`, rect);
-          }
-          return inViewport && !span.hasAttribute(processedAttr) && !span.hasAttribute(processingAttr);
+          return (
+            this.isElementInViewport(span) && !span.hasAttribute(processedAttr) && !span.hasAttribute(processingAttr)
+          );
         });
 
         if (spansToProcess.length === 0) {
           console.log(`Draw ID: ${this.drawID} - No new, visible, unprocessed spans found.`);
-          this.processingInProgress = false;
           return;
         }
 
-        console.log(`Draw ID: ${this.drawID} - Found ${spansToProcess.length} new visible spans to process.`);
+        console.log(`Draw ID: ${this.drawID} - Found ${spansToProcess.length} visible spans to process.`);
         const processingPromises = spansToProcess.map((span) => this.processAssetSpan(span));
         await Promise.allSettled(processingPromises);
         console.log(`Draw ID: ${this.drawID} - Completed processing batch of ${spansToProcess.length} spans.`);
       } catch (error) {
         console.error(`Error in processVisibleAssetSpans (Instance ${this.drawID}):`, error);
       } finally {
+        // Release the current batch lock.
         this.processingInProgress = false;
+        // If new items came in during processing, pendingProcessing will be true.
+        if (this.pendingProcessing) {
+          console.log(`Draw ID: ${this.drawID} - Pending work detected; processing new visible spans.`);
+          // Reset the flag and call the method again (optionally wrap in setTimeout for a new tick).
+          this.pendingProcessing = false;
+          setTimeout(() => this.processVisibleAssetSpans(), 0);
+        }
       }
     }
   } // End class AdvancedControl
 
   return AdvancedControl;
 });
-//v959
+//v1004
