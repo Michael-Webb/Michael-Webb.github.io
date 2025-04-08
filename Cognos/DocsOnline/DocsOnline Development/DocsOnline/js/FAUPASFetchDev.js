@@ -272,6 +272,8 @@ define(() => {
       console.log(`Draw ID: ${this.drawID} - MutationObserver targeting:`, observerTarget);
 
       const observerOptions = {
+        attributes: true, // Enable attribute changes
+        attributeFilter: ["style"],
         childList: true, // Watch for addition/removal of nodes (like new page divs)
         subtree: true, // Watch all descendants (including spans within new lists)
       };
@@ -587,8 +589,7 @@ define(() => {
 
         // Check for specific Cognos page classes that might be hidden
         if (parent.classList && parent.classList.contains("clsViewerPage")) {
-          // If this is a Cognos page, check if it's the active one
-          if (style.display === "none" || !parent.classList.contains("active")) {
+          if (style.display === "none") {
             return false;
           }
         }
