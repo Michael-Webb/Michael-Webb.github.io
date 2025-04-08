@@ -55,7 +55,7 @@ define(() => {
           ["Lazy Loading"]: IS_LAZY_LOADED,
           ["Direct Url"]: URL_TYPE,
           ["List Name"]: LIST_NAME,
-          ["Use Caching"]: USE_CACHE,
+          ["Debug"]: DEBUG_MODE,
         } = this.oControl.configuration;
 
         // Check each configuration parameter and collect the missing ones
@@ -83,7 +83,7 @@ define(() => {
         this.FONT_SIZE = FONT_SIZE || "1em";
         this.URL_TYPE = URL_TYPE;
         this.LIST_NAME = LIST_NAME || "";
-        this.USE_CACHE = USE_CACHE || false;
+        this.DEBUG_MODE = DEBUG_MODE || false;
         // Initialize cache with version tracking
         const cacheVersion = "1.0"; // Update this when making breaking changes to cached data format
         const storedVersion = sessionStorage.getItem("cache_version");
@@ -115,7 +115,9 @@ define(() => {
       try {
         this.oControl = oControlHost;
         this.drawID = this.oControl.generateUniqueID(); // *** Get and store drawID ***
-        console.log(`AdvancedControl Instance Drawing: ID=${this.drawID}, Mask=${this.MASK_NAME}`);
+        if (this.DEBUG_MODE) {
+          console.log(`AdvancedControl Instance Drawing: ID=${this.drawID}, Mask=${this.MASK_NAME}`);
+        }
 
         // Check each configuration parameter and collect the missing ones
         const missingParams = [];
@@ -143,10 +145,14 @@ define(() => {
         this.authenticate(authObj)
           .then((authenticatedAuthObj) => {
             this.apiToken = authenticatedAuthObj.apiToken; // Store for later use
-            console.log(`Authentication successful for Draw ID: ${this.drawID}`);
+            if (this.DEBUG_MODE) {
+              console.log(`Authentication successful for Draw ID: ${this.drawID}`);
+            }
 
             if (this.IS_LAZY_LOADED) {
-              console.log(`Draw ID: ${this.drawID} - Initializing lazy loading.`);
+              if (this.DEBUG_MODE) {
+                console.log(`Draw ID: ${this.drawID} - Initializing lazy loading.`);
+              }
               this.initializeVisibleAssetLoading();
               // In lazy mode, process only the spans visible in the viewport.
               setTimeout(() => this.processVisibleAssetSpans(), 200);
@@ -154,10 +160,14 @@ define(() => {
               // Non-Lazy Loading: Process all spans from all pages (ignoring viewport)
               const allSpans = this.getAllAssetSpans();
               if (allSpans.length > 0) {
-                console.log(`Draw ID: ${this.drawID} - Processing ${allSpans.length} asset spans (Non-Lazy).`);
+                if (this.DEBUG_MODE) {
+                  console.log(`Draw ID: ${this.drawID} - Processing ${allSpans.length} asset spans (Non-Lazy).`);
+                }
                 this.processAssetDocuments(allSpans);
               } else {
-                console.log(`Draw ID: ${this.drawID} - No asset spans found (Non-Lazy).`);
+                if (this.DEBUG_MODE) {
+                  console.log(`Draw ID: ${this.drawID} - No asset spans found (Non-Lazy).`);
+                }
               }
             }
           })
@@ -218,10 +228,15 @@ define(() => {
     initializeVisibleAssetLoading() {
       // Ensure only one set of listeners/observers per instance
       if (this.scrollHandler) {
-        console.log(`Draw ID: ${this.drawID} - Listeners already initialized, skipping.`);
+        if (this.DEBUG_MODE) {
+          console.log(`Draw ID: ${this.drawID} - Listeners already initialized, skipping.`);
+        }
+
         return;
       }
-      console.log(`Draw ID: ${this.drawID} - Initializing scroll/interval/mutation listeners.`);
+      if (this.DEBUG_MODE) {
+        console.log(`Draw ID: ${this.drawID} - Initializing scroll/interval/mutation listeners.`);
+      }
 
       this.scrollHandler = () => {
         // console.log("Scroll event detected"); // Debug log - can be noisy
@@ -249,7 +264,9 @@ define(() => {
       // --- MutationObserver Setup ---
       // **Strategy**: Observe a higher-level container that includes all pages, or fallback to body.
       let observerTarget = document.querySelector(".idViewer") || document.body; // Try common Cognos containers first
-      console.log(`Draw ID: ${this.drawID} - MutationObserver targeting:`, observerTarget);
+      if (this.DEBUG_MODE) {
+        console.log(`Draw ID: ${this.drawID} - MutationObserver targeting:`, observerTarget);
+      }
 
       const observerOptions = {
         attributes: true, // Enable attribute changes
@@ -290,9 +307,12 @@ define(() => {
         }
 
         if (needsProcessing) {
-          console.log(
-            `Draw ID: ${this.drawID} - MutationObserver detected relevant changes, queueing processVisibleAssets.`
-          );
+          if (this.DEBUG_MODE) {
+            console.log(
+              `Draw ID: ${this.drawID} - MutationObserver detected relevant changes, queueing processVisibleAssets.`
+            );
+          }
+
           // Debounce or throttle this call if mutations fire very rapidly
           clearTimeout(this.mutationProcessTimeout);
           this.mutationProcessTimeout = setTimeout(() => {
@@ -304,7 +324,9 @@ define(() => {
       });
 
       this.mutationObserver.observe(observerTarget, observerOptions);
-      console.log(`Draw ID: ${this.drawID} - MutationObserver started.`);
+      if (this.DEBUG_MODE) {
+        console.log(`Draw ID: ${this.drawID} - MutationObserver started.`);
+      }
 
       // Initial processing check (already called in draw method)
       // setTimeout(() => this.processVisibleAssets(), 100);
@@ -326,12 +348,15 @@ define(() => {
           lastRan = Date.now();
         } else {
           clearTimeout(lastFunc);
-          lastFunc = setTimeout(() => {
-            if (Date.now() - lastRan >= limit) {
-              func.apply(this, args);
-              lastRan = Date.now();
-            }
-          }, limit - (Date.now() - lastRan));
+          lastFunc = setTimeout(
+            () => {
+              if (Date.now() - lastRan >= limit) {
+                func.apply(this, args);
+                lastRan = Date.now();
+              }
+            },
+            limit - (Date.now() - lastRan)
+          );
         }
       };
     }
@@ -390,9 +415,11 @@ define(() => {
         nextElem.id.startsWith(expectedContainerIdPrefix) &&
         nextElem.querySelector("button")
       ) {
-        console.log(
-          `Draw ID: ${this.drawID} - Paperclip button container already exists for span ${assetID}, marking as processed and skipping.`
-        );
+        if (this.DEBUG_MODE) {
+          console.log(
+            `Draw ID: ${this.drawID} - Paperclip button container already exists for span ${assetID}, marking as processed and skipping.`
+          );
+        }
         span.setAttribute(processedAttr, "true"); // Ensure it's marked
         return;
       }
@@ -483,18 +510,25 @@ define(() => {
 
       // Prevent concurrent execution
       if (this.processingInProgress) {
-        // console.log(`Draw ID: ${this.drawID} - Processing already in progress, skipping.`);
+        if (this.DEBUG_MODE) {
+          console.log(`Draw ID: ${this.drawID} - Processing already in progress, skipping.`);
+        }
+
         return;
       }
       this.processingInProgress = true;
-      // console.log(`Draw ID: ${this.drawID} - Starting processVisibleAssets cycle.`);
+      if (this.DEBUG_MODE) {
+        console.log(`Draw ID: ${this.drawID} - Starting processVisibleAssets cycle.`);
+      }
 
       try {
         // *** Step 1: Find ALL potential list containers ***
         const allContainers = document.querySelectorAll(`[lid="${this.LIST_NAME}"]`);
 
         if (allContainers.length === 0) {
-          // console.log(`Draw ID: ${this.drawID} - No containers with lid="${this.LIST_NAME}" found.`);
+          if (this.DEBUG_MODE) {
+            console.log(`Draw ID: ${this.drawID} - No containers with lid="${this.LIST_NAME}" found.`);
+          }
           this.processingInProgress = false;
           return;
         }
@@ -506,12 +540,13 @@ define(() => {
         );
 
         if (visibleContainers.length === 0) {
-          // console.log(`Draw ID: ${this.drawID} - No VISIBLE containers with lid="${this.LIST_NAME}" found.`);
+          if (this.DEBUG_MODE) {
+            console.log(`Draw ID: ${this.drawID} - No VISIBLE containers with lid="${this.LIST_NAME}" found.`);
+          }
+
           this.processingInProgress = false;
           return;
         }
-        // It's possible (though maybe unlikely in standard Cognos) to have multiple visible lists with the same name.
-        // This code will process spans in ALL visible containers found.
 
         // *** Step 3: Collect all relevant spans from WITHIN the visible containers ***
         let allSpansInVisibleContainers = [];
@@ -539,13 +574,15 @@ define(() => {
         });
 
         if (spansToProcess.length === 0) {
-          // console.log(`Draw ID: ${this.drawID} - No new, visible, unprocessed spans found in visible containers.`);
+          if (this.DEBUG_MODE) {
+            console.log(`Draw ID: ${this.drawID} - No new, visible, unprocessed spans found in visible containers.`);
+          }
           this.processingInProgress = false;
           return;
         }
-
-        console.log(`Draw ID: ${this.drawID} - Found ${spansToProcess.length} new spans to process.`);
-
+        if (this.DEBUG_MODE) {
+          console.log(`Draw ID: ${this.drawID} - Found ${spansToProcess.length} new spans to process.`);
+        }
         // *** Step 5: Process the filtered spans ***
         // Process in batches or individually. Individual processing is simpler.
         const processingPromises = spansToProcess.map((span) => this.processAssetSpan(span));
@@ -558,7 +595,9 @@ define(() => {
         console.error(`Error in processVisibleAssets (Instance ${this.drawID}):`, error);
       } finally {
         this.processingInProgress = false; // Release the lock
-        // console.log(`Draw ID: ${this.drawID} - Finished processVisibleAssets cycle.`);
+        if (this.DEBUG_MODE) {
+          console.log(`Draw ID: ${this.drawID} - Finished processVisibleAssets cycle.`);
+        }
       }
     }
 
@@ -1102,12 +1141,13 @@ define(() => {
           htmlContent: true,
           callback: {
             ok: async () => {
-              console.log("ok");
+              if (this.DEBUG_MODE) {
+                console.log("ok");
+              }
             },
           },
-          callbackScope: { ok: this, cancel: this },
+          callbackScope: { ok: this },
         };
-        //console.log(dialogObject.message);
 
         // Create a simpler dialog first to test
         this.oControl.page.application.GlassContext.getCoreSvc(".Dialog").createDialog(dialogObject);
@@ -1126,8 +1166,9 @@ define(() => {
       // Get the dynamic URL path based on the configured MASK_NAME
       const screenDetails = this._getMaskDetails(this.MASK_NAME);
       const screenUrl = `${this.AppUrl}/${this.authObj.environment}-UI/ui/uiscreens/${screenDetails.urlPath}/${screenDetails.maskName}`;
-      // console.log(`fetchFromScreen: Fetching screen URL: ${screenUrl}`); // Debug log
-
+      if (this.DEBUG_MODE) {
+        console.log(`fetchFromScreen: Fetching screen URL: ${screenUrl}`); // Debug log
+      }
       try {
         const response = await fetch(screenUrl, {
           headers: {
@@ -1145,7 +1186,9 @@ define(() => {
           mode: "no-cors",
           credentials: "include",
         });
-        // console.log("FAUPAS fetch complete:", response);
+        if (this.DEBUG_MODE) {
+          console.log("FAUPAS fetch complete:", response);
+        }
         return response;
       } catch (error) {
         console.error("Error during FAUPAS fetch:", error);
@@ -1309,7 +1352,9 @@ define(() => {
         }
 
         const data = await response.json();
-        console.log("Session expiration data:", data);
+        if (this.DEBUG_MODE) {
+          console.log("Session expiration data:", data);
+        }
 
         // Update the cache expiration timestamp every time getSessionExpiration is called.
         // expirationIntervalInMinutes is multiplied by 60000 (ms in a minute) to get the expiration time in milliseconds.
@@ -1374,7 +1419,9 @@ define(() => {
       const cacheKey = `asset_${this.MASK_NAME}_${objectId}`;
       const cachedAsset = this.getCachedValue(cacheKey);
       if (cachedAsset) {
-        // console.log(`Using cached asset details for ID ${objectId}`);
+        if (this.DEBUG_MODE) {
+          console.log(`Using cached asset details for ID ${objectId}`);
+        }
         return cachedAsset;
       }
 
@@ -1389,7 +1436,9 @@ define(() => {
       const dataPath = `${this.authObj.environment}-UI/data/finance/legacy/${maskDetails.idData}`;
       const assetUrl = `${appBase}${dataPath}?$filter=${filter}&$orderby=${orderBy}&$skip=0&$top=1`; // Only need top=1
 
-      // console.log(`Fetching asset details from: ${assetUrl}`);
+      if (this.DEBUG_MODE) {
+        console.log(`Fetching asset details from: ${assetUrl}`);
+      }
 
       try {
         const assetResponse = await fetch(assetUrl, {
@@ -1460,7 +1509,9 @@ define(() => {
       const cacheKey = `attach_${this.MASK_NAME}_${assetId}_${ledger}`;
       const cachedAttachments = this.getCachedValue(cacheKey);
       if (cachedAttachments) {
-        // console.log(`Using cached attachments for asset ${assetId}`);
+        if (this.DEBUG_MODE) {
+          console.log(`Using cached attachments for asset ${assetId}`);
+        }
         return cachedAttachments;
       }
 
@@ -1471,7 +1522,9 @@ define(() => {
       const attachPath = `${this.authObj.environment}-UI/api/finance/legacy/documents/${maskDetails.idTable}/attachments`;
       const attachUrl = `${appBase}${attachPath}`;
 
-      // console.log(`Fetching attachments for asset ${assetId} from: ${attachUrl}`);
+      if (this.DEBUG_MODE) {
+        console.log(`Fetching attachments for asset ${assetId} from: ${attachUrl}`);
+      }
 
       try {
         const attachmentResponse = await fetch(attachUrl, {
@@ -1529,7 +1582,9 @@ define(() => {
         const maskDetails = this._getMaskDetails(this.MASK_NAME);
 
         if (cachedCount !== null) {
-          console.log(`Using cached attachment count for asset ${assetItem.Faid}`);
+          if (this.DEBUG_MODE) {
+            console.log(`Using cached attachment count for asset ${assetItem.Faid}`);
+          }
           return cachedCount;
         }
 
@@ -1676,7 +1731,9 @@ define(() => {
       };
 
       container.appendChild(button);
-      //   console.log("Button added for asset ID:", assetID);
+      if (this.DEBUG_MODE) {
+        console.log("Button added for asset ID:", assetID);
+      }
     }
 
     /**
@@ -1686,7 +1743,9 @@ define(() => {
      * @returns {Promise<void>}
      */
     async processAssetDocuments(spans) {
-      console.log(`Draw ID: ${this.drawID} - Starting immediate processing for ${spans.length} spans.`);
+      if (this.DEBUG_MODE) {
+        console.log(`Draw ID: ${this.drawID} - Starting immediate processing for ${spans.length} spans.`);
+      }
       if (!spans || spans.length === 0) {
         return; // Nothing to process
       }
@@ -1763,12 +1822,16 @@ define(() => {
         });
 
         if (spansToProcess.length === 0) {
-          console.log(`Draw ID: ${this.drawID} - No new, unprocessed spans found across all pages.`);
+          if (this.DEBUG_MODE) {
+            console.log(`Draw ID: ${this.drawID} - No new, unprocessed spans found across all pages.`);
+          }
           this.processingInProgress = false;
           return;
         }
 
-        console.log(`Draw ID: ${this.drawID} - Found ${spansToProcess.length} new spans to process.`);
+        if (this.DEBUG_MODE) {
+          console.log(`Draw ID: ${this.drawID} - Found ${spansToProcess.length} new spans to process.`);
+        }
 
         // Process the spans (each via processAssetSpan)
         const processingPromises = spansToProcess.map((span) => this.processAssetSpan(span));
@@ -1790,7 +1853,9 @@ define(() => {
       // If a batch is already in progress, mark that new work is pending and exit.
       if (this.processingInProgress) {
         this.pendingProcessing = true;
-        console.log(`Draw ID: ${this.drawID} - Batch in progress; marking pendingProcessing for new visible items.`);
+        if (this.DEBUG_MODE) {
+          console.log(`Draw ID: ${this.drawID} - Batch in progress; marking pendingProcessing for new visible items.`);
+        }
         return;
       }
 
@@ -1813,7 +1878,7 @@ define(() => {
           return;
         }
 
-        console.log(`Draw ID: ${this.drawID} - Found ${spansToProcess.length} visible spans to process.`);
+        if (this.DEBUG_MODE) {console.log(`Draw ID: ${this.drawID} - Found ${spansToProcess.length} visible spans to process.`);}
         const processingPromises = spansToProcess.map((span) => this.processAssetSpan(span));
         await Promise.allSettled(processingPromises);
         console.log(`Draw ID: ${this.drawID} - Completed processing batch of ${spansToProcess.length} spans.`);
@@ -1824,7 +1889,7 @@ define(() => {
         this.processingInProgress = false;
         // If new items came in during processing, pendingProcessing will be true.
         if (this.pendingProcessing) {
-          console.log(`Draw ID: ${this.drawID} - Pending work detected; processing new visible spans.`);
+          if (this.DEBUG_MODE) { console.log(`Draw ID: ${this.drawID} - Pending work detected; processing new visible spans.`);}
           // Reset the flag and call the method again (optionally wrap in setTimeout for a new tick).
           this.pendingProcessing = false;
           setTimeout(() => this.processVisibleAssetSpans(), 0);
@@ -1870,8 +1935,9 @@ define(() => {
       this.oControl = null;
       this.authObj = null;
     }
-  } // End class AdvancedControl
+  }
 
   return AdvancedControl;
 });
-//v1111
+
+//v1127
