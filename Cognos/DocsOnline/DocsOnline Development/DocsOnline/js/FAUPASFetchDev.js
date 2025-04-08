@@ -51,6 +51,7 @@ define(() => {
           ["Lazy Loading"]: IS_LAZY_LOADED,
           ["Direct Url"]: URL_TYPE,
           ["List Name"]: LIST_NAME,
+          ["Use Caching"]:USE_CACHE
         } = this.oControl.configuration;
 
         // Check each configuration parameter and collect the missing ones
@@ -78,6 +79,7 @@ define(() => {
         this.FONT_SIZE = FONT_SIZE || "1em";
         this.URL_TYPE = URL_TYPE;
         this.LIST_NAME = LIST_NAME || "";
+        this.USE_CACHE = USE_CACHE || false;
         // Initialize cache with version tracking
         const cacheVersion = "1.1"; // Update this when making breaking changes to cached data format
         const storedVersion = sessionStorage.getItem("cache_version");
@@ -1756,4 +1758,4 @@ define(() => {
 
   return AdvancedControl;
 });
-//v1004
+//v1009
