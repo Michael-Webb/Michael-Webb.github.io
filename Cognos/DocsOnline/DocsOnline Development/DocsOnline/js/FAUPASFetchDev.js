@@ -268,7 +268,7 @@ define(() => {
       // --- MutationObserver Setup ---
       // **Strategy**: Observe a higher-level container that includes all pages, or fallback to body.
       let observerTarget =
-        document.querySelectorAll(".clsViewerPage") || document.body; // Try common Cognos containers first
+        document.querySelector(".idViewer") || document.body; // Try common Cognos containers first
       console.log(`Draw ID: ${this.drawID} - MutationObserver targeting:`, observerTarget);
 
       const observerOptions = {
@@ -1704,4 +1704,4 @@ define(() => {
 
   return AdvancedControl;
 });
-//v723
+//v727
