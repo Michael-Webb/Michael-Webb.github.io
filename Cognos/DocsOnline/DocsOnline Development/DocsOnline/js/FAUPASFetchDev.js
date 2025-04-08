@@ -569,39 +569,30 @@ define(() => {
     isElementInViewport(element) {
       if (!element) return false;
 
-      // Check if the element or its container page is hidden via style
-      if (element.offsetParent === null) {
-        // This is a common way to check if an element or its parent is display:none
-        // Check the Cognos page visibility explicitly as well
-        if (!this.isElementOrContainerVisible(element)) {
-          // console.log(`Span ${element.getAttribute("data-ref")} or its page is hidden (offsetParent null or page display:none)`);
-          return false;
+      // Get the element's bounding rectangle.
+      let rect = element.getBoundingClientRect();
+
+      // If the element has no size, try to use its parent.
+      if (rect.width === 0 || rect.height === 0) {
+        if (element.parentElement) {
+          rect = element.parentElement.getBoundingClientRect();
         }
       }
 
-      const rect = element.getBoundingClientRect();
-      const windowHeight = window.innerHeight || document.documentElement.clientHeight;
-      const windowWidth = window.innerWidth || document.documentElement.clientWidth;
-
-      // Check for zero dimensions, which often means hidden/collapsed
+      // If after the fallback, the dimensions are still zero, consider it not visible.
       if (rect.width === 0 || rect.height === 0) {
-        // console.log(`Span ${element.getAttribute("data-ref")} has zero dimensions.`);
         return false;
       }
 
-      // Generous buffer (e.g., 100px beyond viewport) to preload slightly off-screen elements
+      const windowHeight = window.innerHeight || document.documentElement.clientHeight;
+      const windowWidth = window.innerWidth || document.documentElement.clientWidth;
+
+      // Generous buffers allow you to trigger processing slightly off-screen.
       const verticalBuffer = 100;
       const horizontalBuffer = 50;
 
       const isInVerticalViewport = rect.top < windowHeight + verticalBuffer && rect.bottom > 0 - verticalBuffer;
       const isInHorizontalViewport = rect.left < windowWidth + horizontalBuffer && rect.right > 0 - horizontalBuffer;
-
-      // Debugging logs (use sparingly)
-      // if (isInVerticalViewport && isInHorizontalViewport) {
-      //     console.log(`Span ${element.getAttribute("data-ref")} IS visible. Rect:`, rect);
-      // } else {
-      //     console.log(`Span ${element.getAttribute("data-ref")} considered NOT visible. Rect:`, rect, `vVis: ${isInVerticalViewport}, hVis: ${isInHorizontalViewport}`);
-      // }
 
       return isInVerticalViewport && isInHorizontalViewport;
     }
