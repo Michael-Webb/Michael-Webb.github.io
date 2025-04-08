@@ -84,6 +84,10 @@ define(() => {
         this.URL_TYPE = URL_TYPE;
         this.LIST_NAME = LIST_NAME || "";
         this.DEBUG_MODE = DEBUG_MODE || false;
+
+        if (this.DEBUG_MODE) {
+          console.log("DEBUG MODE",this.DEBUG_MODE);
+        }
         // Initialize cache with version tracking
         const cacheVersion = "1.0"; // Update this when making breaking changes to cached data format
         const storedVersion = sessionStorage.getItem("cache_version");
@@ -115,6 +119,7 @@ define(() => {
       try {
         this.oControl = oControlHost;
         this.drawID = this.oControl.generateUniqueID(); // *** Get and store drawID ***
+        
         if (this.DEBUG_MODE) {
           console.log(`AdvancedControl Instance Drawing: ID=${this.drawID}, Mask=${this.MASK_NAME}`);
         }
