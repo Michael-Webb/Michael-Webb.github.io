@@ -1,14 +1,11 @@
 define(() => {
   "use strict";
 
+  /**
+   * AdvancedControl class is responsible for fetching and processing asset details,
+   * handling authentication, and updating the UI based on asset spans.
+   */
   class AdvancedControl {
-    /*
-     * Initialize the control. This method is optional. If this method is implemented, fnDoneInitializing must be called when done initializing, or a Promise must be returned.
-     * Parameters: oControlHost, fnDoneInitializing
-     * Returns: (Type: Promise) An optional promise that will be waited on instead fo calling fnDoneInitializing(). Since Version 6
-     *
-     */
-
     MASK_TYPES = {
       masks: [
         {
@@ -38,6 +35,13 @@ define(() => {
       ],
     };
 
+    /**
+     * Initialize the control.
+     *
+     * @param {object} oControlHost - The host control configuration object.
+     * @param {Function} fnDoneInitializing - Callback function that must be called when initialization is complete.
+     * @returns {Promise|undefined} Optionally returns a Promise that the system will wait on.
+     */
     initialize(oControlHost, fnDoneInitializing) {
       try {
         this.oControl = oControlHost;
@@ -102,8 +106,10 @@ define(() => {
         fnDoneInitializing();
       }
     }
-    /*
-     * Draw the control. This method is optional if the control has no UI.
+    /**
+     * Draw the control UI.
+     *
+     * @param {object} oControlHost - The host control with configuration and element information.
      */
     draw(oControlHost) {
       try {
@@ -172,10 +178,12 @@ define(() => {
     }
 
     /**
-     * Gets the specific URL path segment for a given mask name based on MASK_TYPES.
+     * Retrieves mask details for a given mask name.
+     *
      * @param {string} maskName - The mask name (e.g., "FAUPAS", "PEUPPE").
-     * @returns {object} The corresponding screen object from MASK_TYPES
+     * @returns {object} The corresponding mask configuration object from MASK_TYPES.
      */
+
     _getMaskDetails(maskName) {
       const maskConfig = this.MASK_TYPES.masks.find((mask) => mask.maskName === maskName);
       if (maskConfig) {
@@ -189,6 +197,13 @@ define(() => {
         return defaultPath;
       }
     }
+
+    /**
+     * Removes a trailing slash from a URL if present.
+     *
+     * @param {string} url - The URL string to be cleaned.
+     * @returns {string} The URL without a trailing slash.
+     */
     // Utility method to remove trailing slashes from URLs
     removeTrailingSlash(url) {
       if (url && typeof url === "string" && url.endsWith("/")) {
@@ -196,8 +211,10 @@ define(() => {
       }
       return url;
     }
-    // Add these methods to your AdvancedControl class
-    // Update these methods in your AdvancedControl class
+
+    /**
+     * Initializes lazy loading of asset spans by adding scroll, resize, and mutation listeners.
+     */
     initializeVisibleAssetLoading() {
       // Ensure only one set of listeners/observers per instance
       if (this.scrollHandler) {
@@ -293,7 +310,13 @@ define(() => {
       // setTimeout(() => this.processVisibleAssets(), 100);
     }
 
-    // Add this throttle method to your AdvancedControl class
+    /**
+     * Creates and returns a throttled version of the given function.
+     *
+     * @param {Function} func - The function to throttle.
+     * @param {number} limit - The minimum time in milliseconds between invocations.
+     * @returns {Function} The throttled function.
+     */
     throttle(func, limit) {
       let lastFunc;
       let lastRan;
@@ -313,6 +336,12 @@ define(() => {
       };
     }
 
+    /**
+     * Escapes HTML special characters to prevent XSS vulnerabilities.
+     *
+     * @param {string} unsafe - The string that may contain unsafe HTML.
+     * @returns {string} The escaped string.
+     */
     escapeHtml(unsafe) {
       return unsafe
         .replace(/&/g, "&amp;")
@@ -321,8 +350,13 @@ define(() => {
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
     }
-    // Process a single asset span
-    // Update the processAssetSpan method to check if paperclip already exists
+
+    /**
+     * Processes a single asset span element by fetching its attachments and creating a document button.
+     *
+     * @param {HTMLElement} span - The span element representing an asset.
+     * @returns {Promise<void>}
+     */
     async processAssetSpan(span) {
       // Make sure span is still in the DOM and valid
       if (!span || !document.body.contains(span)) {
@@ -435,6 +469,11 @@ define(() => {
       }
     }
 
+    /**
+     * Processes visible asset spans within the configured container.
+     *
+     * @returns {Promise<void>}
+     */
     async processVisibleAssets() {
       // Ensure API token is available
       if (!this.apiToken) {
@@ -523,7 +562,12 @@ define(() => {
       }
     }
 
-    // Add this method to the AdvancedControl class
+    /**
+     * Determines if the given element or its container is visible.
+     *
+     * @param {HTMLElement} element - The element to check for visibility.
+     * @returns {boolean} True if the element and its container are visible; otherwise, false.
+     */
     isElementOrContainerVisible(element) {
       if (!element) return false;
 
@@ -557,7 +601,12 @@ define(() => {
       return true;
     }
 
-    // Renamed from isElementVisible for clarity - checks if element is in viewport
+    /**
+     * Determines if an element is in the viewport.
+     *
+     * @param {HTMLElement} element - The element to check.
+     * @returns {boolean} True if the element is in the viewport; otherwise, false.
+     */
     isElementInViewport(element) {
       if (!element) return false;
 
@@ -589,8 +638,12 @@ define(() => {
       return isInVerticalViewport && isInHorizontalViewport;
     }
 
-    // Method to extract credentials from the DOM
-    // Method to extract credentials from the DOM
+    /**
+     * Extracts authentication credentials from the DOM.
+     *
+     * @returns {object} An object containing sessionID, token, and authObj.
+     * @throws Will throw an error if required credentials are missing.
+     */
     extractCredentials() {
       try {
         const firstSpan = document.querySelector(`span[data-id^="documentsOnline-"]`);
@@ -667,8 +720,22 @@ define(() => {
         // We don't return here because an error occurred.
       }
     }
-    // Function to generate SVG for specific file type and size
+
+    /**
+     * Generates an SVG string for the specified file type and size.
+     *
+     * @param {string} fileType - The file type (e.g., "pdf", "csv", "image").
+     * @param {string} size - The desired size (e.g., "16px").
+     * @returns {string} The SVG markup.
+     */
     getSvgForType(fileType, size) {
+      /*
+       ** Lucide License
+       ** ISC License
+       ** Copyright (c) for portions of Lucide are held by Cole Bemis 2013-2022 as part of Feather (MIT). All other copyright (c) for Lucide are held by Lucide Contributors 2022.
+       ** Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby granted, provided that the above copyright notice and this permission notice appear in all copies.
+       ** THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+       */
       const height = size;
       const width = size;
 
@@ -690,11 +757,20 @@ define(() => {
         case "clock":
           return `<svg xmlns="http://www.w3.org/2000/svg" height="${height}" width="${width}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
         case "error":
-          return `<svg xmlns="http://www.w3.org/2000/svg" height="${height}" width="${width}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-x-icon lucide-circle-x"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>`
+          return `<svg xmlns="http://www.w3.org/2000/svg" height="${height}" width="${width}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-x-icon lucide-circle-x"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>`;
         default:
           return `<svg xmlns="http://www.w3.org/2000/svg" height="${height}" width="${width}" viewBox="0 0 24 24" fill="none" stroke="#FF0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-icon lucide-file"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>`;
       }
     }
+
+    /**
+     * Constructs the viewer URL to open a document.
+     *
+     * @param {string} docToken - Document token.
+     * @param {string} directUrl - Direct URL override, if applicable.
+     * @param {string} urlType - URL type to determine which URL to use.
+     * @returns {string} The constructed viewer URL.
+     */
     getViewerUrl(docToken, directUrl, urlType) {
       let url = `${this.AppUrl}/${this.authObj.environment}-UI/ui/Documents/viewer?docToken=${docToken}`;
 
@@ -704,6 +780,14 @@ define(() => {
 
       return url;
     }
+
+    /**
+     * Builds and returns a DOM element containing a table of document details.
+     *
+     * @param {Array} documentData - Array of document objects.
+     * @param {string} RefId - Reference ID used in the modal title.
+     * @returns {HTMLElement|null} The constructed content container element or null on error.
+     */
     getDocumentContent(documentData, RefId) {
       try {
         // Create just the content container
@@ -898,6 +982,13 @@ define(() => {
         return null;
       }
     }
+
+    /**
+     * Opens a dialog message displaying document details in a table format.
+     *
+     * @param {Array} documentData - Array of document objects.
+     * @param {string} assetID - The asset ID used in the dialog title.
+     */
     openMessage(documentData, assetID) {
       try {
         // Define headers and column widths
@@ -1026,7 +1117,11 @@ define(() => {
       }
     }
 
-    // Function to fetch the FAUPAS screen to capture cookies
+    /**
+     * Fetches the FAUPAS screen in order to capture cookies.
+     *
+     * @returns {Promise<Response>} The fetch response.
+     */
     async fetchFromScreen() {
       // Get the dynamic URL path based on the configured MASK_NAME
       const screenDetails = this._getMaskDetails(this.MASK_NAME);
@@ -1057,7 +1152,12 @@ define(() => {
         throw error;
       }
     }
-    // Function to fetch API token
+
+    /**
+     * Fetches screen definitions from the configured screen URL.
+     *
+     * @returns {Promise<string>} A Promise that resolves to an API token.
+     */
     async fetchScreenDefinitions() {
       // Get the dynamic URL path based on the configured MASK_NAME
       const screenDetails = this._getMaskDetails(this.MASK_NAME);
@@ -1098,7 +1198,11 @@ define(() => {
       }
     }
 
-    // Function to fetch API token
+    /**
+     * Fetches the API token using the job URL and authentication object.
+     *
+     * @returns {Promise<string>} A Promise that resolves to the API token string.
+     */
     async fetchApiToken() {
       try {
         const tokenResponse = await fetch(
@@ -1137,7 +1241,12 @@ define(() => {
         throw error;
       }
     }
-    // Function to validate security token
+
+    /**
+     * Validates the security token via a POST request.
+     *
+     * @returns {Promise<Response>} A Promise that resolves to the response of the validation.
+     */
     async validateSecurityToken() {
       try {
         const validationResponse = await fetch(
@@ -1174,6 +1283,12 @@ define(() => {
         throw error;
       }
     }
+
+    /**
+     * Fetches session expiration data from the API.
+     *
+     * @returns {Promise<object>} A Promise that resolves to the session expiration data.
+     */
     async getSessionExpiration() {
       try {
         const response = await fetch(`${this.JobUrl}/${this.authObj.environment}/api/user/getsessionexpiration`, {
@@ -1208,7 +1323,13 @@ define(() => {
       }
     }
 
-    // Main authentication function that calls the above functions in sequence
+    /**
+     * Main authentication sequence that fetches the FAUPAS screen, API token, validates the token,
+     * and fetches session expiration.
+     *
+     * @param {object} authObj - The authentication object extracted from the DOM.
+     * @returns {Promise<object>} A Promise that resolves to the authentication object (including API token).
+     */
     async authenticate(authObj) {
       try {
         const auth = this.authObj || authObj;
@@ -1236,7 +1357,13 @@ define(() => {
       }
     }
 
-    // Function to fetch asset details
+    /**
+     * Fetches the asset details for a given objectId.
+     *
+     * @param {string} objectId - The ID of the asset.
+     * @returns {Promise<object|null>} A Promise that resolves to the asset details object or null.
+     * @throws Will throw an error if the required parameters or fetched data are invalid.
+     */
     async fetchAssetDetails(objectId) {
       if (!objectId) throw new Error("Asset objectId is required.");
       const maskDetails = this._getMaskDetails(this.MASK_NAME);
@@ -1305,7 +1432,12 @@ define(() => {
       }
     }
 
-    // Updated fetchAttachments function with caching
+    /**
+     * Fetches attachments for the given asset item with caching.
+     *
+     * @param {object} itemObj - The asset item object.
+     * @returns {Promise<Array>} A Promise that resolves to an array of attachments.
+     */
     async fetchAttachments(itemObj) {
       if (!itemObj) {
         console.warn("fetchAttachments called with null itemObj. Skipping.");
@@ -1382,7 +1514,12 @@ define(() => {
       }
     }
 
-    // Also update fetchAttachmentCount with caching if needed
+    /**
+     * Fetches the attachment count for a given asset item with caching.
+     *
+     * @param {object} assetItem - The asset item object.
+     * @returns {Promise<number>} A Promise that resolves to the attachment count.
+     */
     async fetchAttachmentCount(assetItem) {
       try {
         // Create a cache key for the count
@@ -1431,7 +1568,12 @@ define(() => {
       }
     }
 
-    // Update cache keys to include drawID to prevent conflicts
+    /**
+     * Retrieves a cached value from sessionStorage if it hasn't expired.
+     *
+     * @param {string} key - The cache key.
+     * @returns {any|null} The cached value or null if missing/expired.
+     */
     getCachedValue(key) {
       try {
         const cachedData = sessionStorage.getItem(key);
@@ -1453,6 +1595,12 @@ define(() => {
       }
     }
 
+    /**
+     * Caches a value in sessionStorage with an expiry timestamp.
+     *
+     * @param {string} key - The cache key.
+     * @param {any} value - The value to be cached.
+     */
     setCachedValue(key, value) {
       try {
         // Use the updated cacheExpirationTimestamp if available,
@@ -1468,6 +1616,9 @@ define(() => {
       }
     }
 
+    /**
+     * Clears all cache entries set by this control.
+     */
     clearCache() {
       // Clears ALL cache entries set by this control pattern
       try {
@@ -1492,7 +1643,13 @@ define(() => {
       }
     }
 
-    // Function to create document button
+    /**
+     * Creates a document button within the provided container element.
+     *
+     * @param {HTMLElement} container - The container element where the button will be added.
+     * @param {Array} documents - Array of document objects.
+     * @param {string} assetID - The asset ID associated with the documents.
+     */
     createDocumentButton(container, documents, assetID) {
       const self = this;
       const button = document.createElement("button");
@@ -1522,8 +1679,12 @@ define(() => {
       //   console.log("Button added for asset ID:", assetID);
     }
 
-    // Function to process asset spans and fetch document attachments
-    // Processes spans immediately (used when IS_LAZY_LOADED is false)
+    /**
+     * Processes an array of asset spans immediately, used when IS_LAZY_LOADED is false.
+     *
+     * @param {NodeList} spans - A NodeList of span elements.
+     * @returns {Promise<void>}
+     */
     async processAssetDocuments(spans) {
       console.log(`Draw ID: ${this.drawID} - Starting immediate processing for ${spans.length} spans.`);
       if (!spans || spans.length === 0) {
@@ -1560,12 +1721,22 @@ define(() => {
       }
     }
 
+    /**
+     * Returns a NodeList of asset span elements based on the configured list name.
+     *
+     * @returns {NodeList} All asset span elements.
+     */
     getAllAssetSpans() {
       // This selector finds any <span> with a data-ref attribute that is inside an element with
       // the desired lid attribute, itself a descendant of any element with the "clsViewerPage" class.
       return document.querySelectorAll(`.clsViewerPage [lid="${this.LIST_NAME}"] span[data-ref]`);
     }
 
+    /**
+     * Processes all asset spans (ignores visibility) across all pages.
+     *
+     * @returns {Promise<void>}
+     */
     async processAllAssetSpans() {
       // Ensure API token is available
       if (!this.apiToken) {
@@ -1610,6 +1781,11 @@ define(() => {
       }
     }
 
+    /**
+     * Processes asset spans that are visible in the viewport.
+     *
+     * @returns {Promise<void>}
+     */
     async processVisibleAssetSpans() {
       // If a batch is already in progress, mark that new work is pending and exit.
       if (this.processingInProgress) {
@@ -1656,7 +1832,11 @@ define(() => {
       }
     }
 
-    // Clean up in the destroy method - must clean up all listeners
+    /**
+     * Cleans up the control by removing event listeners, disconnecting observers, clearing cache, and releasing references.
+     *
+     * @param {object} oControlHost - The host control object.
+     */
     destroy(oControlHost) {
       console.log(`Destroying AdvancedControl Instance: ID=${this.drawID}`);
       this.oControl = oControlHost;
@@ -1694,4 +1874,4 @@ define(() => {
 
   return AdvancedControl;
 });
-//v1048
+//v1111
