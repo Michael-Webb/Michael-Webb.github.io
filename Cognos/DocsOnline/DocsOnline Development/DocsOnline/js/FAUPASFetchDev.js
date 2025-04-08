@@ -91,7 +91,6 @@ define(() => {
           sessionStorage.setItem("cache_version", cacheVersion);
         }
 
-        this.processedSpanIds = new Set(); // Initialize here for clarity
         this.processingInProgress = false; // Initialize state flag
 
         fnDoneInitializing();
@@ -100,7 +99,7 @@ define(() => {
         console.error("Error during control initialization:", error);
 
         // Always call fnDoneInitializing to prevent the control from hanging
-        // fnDoneInitializing();
+        fnDoneInitializing();
       }
     }
     /*
@@ -206,9 +205,6 @@ define(() => {
         return;
       }
       console.log(`Draw ID: ${this.drawID} - Initializing scroll/interval/mutation listeners.`);
-
-      // Use a flag to track processed spans specific to this instance
-      // this.processedSpanIds = new Set(); // Already initialized in initialize()
 
       this.scrollHandler = () => {
         // console.log("Scroll event detected"); // Debug log - can be noisy
@@ -425,10 +421,8 @@ define(() => {
         console.error(`Error processing asset ID ${assetID} (Instance ${this.drawID}):`, error);
         // Check if container still exists before modifying
         if (document.body.contains(container)) {
-          container.innerHTML = ""; // Clear spinner on error
-          // Optionally add an error indicator? Be careful not to clutter the UI.
-          // container.innerHTML = `<span title="Error loading documents: ${error.message}" style="color: red; cursor: help;">!</span>`;
-          container.remove(); // Clean up container on error
+          container.innerHTML = this.getSvgForType("error"); // Clear spinner on error
+          // container.remove(); // Clean up container on error
         }
         // Do NOT mark as processed on error, allow retry on next visibility check
         // span.setAttribute(processedAttr, "true"); // <-- REMOVE THIS LINE
@@ -486,10 +480,6 @@ define(() => {
           const spans = container.querySelectorAll("span[data-ref]");
           allSpansInVisibleContainers.push(...spans);
         });
-
-        // Optional: Cleanup orphaned containers (buttons whose span disappeared)
-        // This might be less critical now that containers are tied to span IDs, but can help.
-        // this.cleanupOrphanedContainers(); // Consider if needed
 
         // *** Step 4: Filter these spans for actual viewport visibility and processing status ***
         const processedAttr = `data-processed-${this.drawID}`;
@@ -599,36 +589,6 @@ define(() => {
       return isInVerticalViewport && isInHorizontalViewport;
     }
 
-    // Cleanup orphaned containers (optional, might not be strictly needed with new ID scheme)
-    cleanupOrphanedContainers() {
-      // Find containers created by *this specific instance*
-      const containers = document.querySelectorAll(`[id^="doc-container-for-span-${this.drawID}-"]`);
-      let removedCount = 0;
-
-      containers.forEach((container) => {
-        // Extract the original span ID from the container ID
-        const idParts = container.id.split("-");
-        // Example ID: doc-container-for-span-DRAWID-ASSETID-TIMESTAMP-RANDOM
-        // We need the part starting from 'span-' up to the end
-        if (idParts.length > 4 && idParts[2] === "span") {
-          const spanId = idParts.slice(2).join("-"); // Reconstruct the span ID
-          const originalSpan = document.getElementById(spanId);
-
-          // If the original span doesn't exist anymore OR if it's no longer visible
-          if (!originalSpan || !document.body.contains(originalSpan) || !this.isElementInViewport(originalSpan)) {
-            // console.log(`Removing orphaned container: ${container.id} (Span ${spanId} missing or not visible)`);
-            container.remove();
-            removedCount++;
-          }
-        } else {
-          // console.warn(`Could not parse span ID from container ID: ${container.id}`);
-        }
-      });
-      // if (removedCount > 0) {
-      //     console.log(`Draw ID: ${this.drawID} - Removed ${removedCount} orphaned containers.`);
-      // }
-    }
-
     // Method to extract credentials from the DOM
     // Method to extract credentials from the DOM
     extractCredentials() {
@@ -707,7 +667,6 @@ define(() => {
         // We don't return here because an error occurred.
       }
     }
-
     // Function to generate SVG for specific file type and size
     getSvgForType(fileType, size) {
       const height = size;
@@ -730,8 +689,10 @@ define(() => {
           return `<svg xmlns="http://www.w3.org/2000/svg" height="${height}" width="${width}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-paperclip"><path d="M13.234 20.252 21 12.3"/><path d="m16 6-8.414 8.586a2 2 0 0 0 0 2.828 2 2 0 0 0 2.828 0l8.414-8.586a4 4 0 0 0 0-5.656 4 4 0 0 0-5.656 0l-8.415 8.585a6 6 0 1 0 8.486 8.486"/></svg>`;
         case "clock":
           return `<svg xmlns="http://www.w3.org/2000/svg" height="${height}" width="${width}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
+        case "error":
+          return `<svg xmlns="http://www.w3.org/2000/svg" height="${height}" width="${width}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-x-icon lucide-circle-x"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>`
         default:
-          return `<svg xmlns="http://www.w3.org/2000/svg" height="${height}" width="${width}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-icon lucide-file"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>`;
+          return `<svg xmlns="http://www.w3.org/2000/svg" height="${height}" width="${width}" viewBox="0 0 24 24" fill="none" stroke="#FF0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-icon lucide-file"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>`;
       }
     }
     getViewerUrl(docToken, directUrl, urlType) {
@@ -1728,10 +1689,9 @@ define(() => {
       // Clear references
       this.oControl = null;
       this.authObj = null;
-      this.processedSpanIds = null; // Allow garbage collection
     }
   } // End class AdvancedControl
 
   return AdvancedControl;
 });
-//v1035
+//v1048
