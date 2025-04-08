@@ -138,52 +138,20 @@ define(() => {
             this.apiToken = authenticatedAuthObj.apiToken; // Store for later use
             console.log(`Authentication successful for Draw ID: ${this.drawID}`);
 
-            // *** CHANGE: Use querySelectorAll to find all potential containers ***
-            const containers = document.querySelectorAll(`[lid="${this.LIST_NAME}"]`);
-
-            if (containers.length === 0) {
-              console.warn(
-                `Draw ID: ${this.drawID} - No containers with lid="${this.LIST_NAME}" found initially. Waiting for dynamic load or MutationObserver.`
-              );
-              // Setup lazy loading anyway, it will pick up containers when they appear
-              if (this.IS_LAZY_LOADED) {
-                this.initializeVisibleAssetLoading();
-              }
-              return;
-            }
-
-            console.log(
-              `Draw ID: ${this.drawID} - Found ${containers.length} container(s) with lid="${this.LIST_NAME}" initially.`
-            );
-
-            // Collect spans from ALL initially found containers
-            let initialAssetSpans = [];
-            containers.forEach((container) => {
-              // We only care about spans in VISIBLE containers initially if not lazy loading
-              if (!this.IS_LAZY_LOADED && this.isElementOrContainerVisible(container)) {
-                const spansInContainer = container.querySelectorAll("span[data-ref]");
-                initialAssetSpans.push(...spansInContainer); // Add spans from this container
-              } else if (this.IS_LAZY_LOADED) {
-                // For lazy loading, we don't process spans here, initializeVisibleAssetLoading will handle it
-              }
-            });
-
+            // If lazy loading is enabled, initialize the MutationObserver and interval/scroll listeners.
             if (this.IS_LAZY_LOADED) {
               console.log(`Draw ID: ${this.drawID} - Initializing lazy loading.`);
               this.initializeVisibleAssetLoading();
-              // Trigger initial check shortly after setup
-              setTimeout(() => this.processVisibleAssets(), 200);
+              // Trigger an initial check shortly after setup. Here we call the new method that processes all asset spans.
+              setTimeout(() => this.processAllAssetSpans(), 200);
             } else {
-              // Non-Lazy Loading: Process all spans found in visible containers immediately
-              if (initialAssetSpans.length > 0) {
-                console.log(
-                  `Draw ID: ${this.drawID} - Processing ${initialAssetSpans.length} initial asset reference spans (Non-Lazy).`
-                );
-                this.processAssetDocuments(initialAssetSpans);
+              // Non-lazy loading: Process all spans from all pages, ignoring computed style.
+              const allSpans = this.getAllAssetSpans();
+              if (allSpans.length > 0) {
+                console.log(`Draw ID: ${this.drawID} - Processing ${allSpans.length} asset spans (Non-Lazy).`);
+                this.processAssetDocuments(allSpans);
               } else {
-                console.log(
-                  `Draw ID: ${this.drawID} - No initial asset reference spans found in VISIBLE containers (Non-Lazy).`
-                );
+                console.log(`Draw ID: ${this.drawID} - No asset spans found (Non-Lazy).`);
               }
             }
           })
@@ -193,7 +161,6 @@ define(() => {
           });
       } catch (error) {
         console.error(`Error during control drawing (Draw ID: ${this.drawID}):`, error);
-        // Display error in control placeholder if possible
         try {
           this.oControl.element.innerHTML = `<div style="color: red; font-size: 10px;">Draw Error: ${
             error.message || "Unknown"
@@ -267,8 +234,7 @@ define(() => {
 
       // --- MutationObserver Setup ---
       // **Strategy**: Observe a higher-level container that includes all pages, or fallback to body.
-      let observerTarget =
-        document.querySelector(".idViewer") || document.body; // Try common Cognos containers first
+      let observerTarget = document.querySelector(".idViewer") || document.body; // Try common Cognos containers first
       console.log(`Draw ID: ${this.drawID} - MutationObserver targeting:`, observerTarget);
 
       const observerOptions = {
@@ -1700,8 +1666,58 @@ define(() => {
         console.error(`Unexpected error during batch processing (Instance ${this.drawID}):`, error);
       }
     }
+
+    getAllAssetSpans() {
+      // This selector finds any <span> with a data-ref attribute that is inside an element with
+      // the desired lid attribute, itself a descendant of any element with the "clsViewerPage" class.
+      return document.querySelectorAll(`.clsViewerPage [lid="${this.LIST_NAME}"] span[data-ref]`);
+    }
+
+    async processAllAssetSpans() {
+      // Ensure API token is available
+      if (!this.apiToken) {
+        console.log(`Draw ID: ${this.drawID} - API token not yet available, skipping processAllAssetSpans.`);
+        return;
+      }
+
+      // Prevent concurrent execution
+      if (this.processingInProgress) {
+        return;
+      }
+      this.processingInProgress = true;
+
+      try {
+        // Get all spans using the new helper method
+        const allSpans = this.getAllAssetSpans();
+
+        // Filter out spans that are already processed or in processing.
+        const processedAttr = `data-processed-${this.drawID}`;
+        const processingAttr = `data-processing-${this.drawID}`;
+        const spansToProcess = Array.from(allSpans).filter((span) => {
+          // (We no longer check visibility here)
+          return !span.hasAttribute(processedAttr) && !span.hasAttribute(processingAttr);
+        });
+
+        if (spansToProcess.length === 0) {
+          console.log(`Draw ID: ${this.drawID} - No new, unprocessed spans found across all pages.`);
+          this.processingInProgress = false;
+          return;
+        }
+
+        console.log(`Draw ID: ${this.drawID} - Found ${spansToProcess.length} new spans to process.`);
+
+        // Process the spans (each via processAssetSpan)
+        const processingPromises = spansToProcess.map((span) => this.processAssetSpan(span));
+        await Promise.allSettled(processingPromises);
+        console.log(`Draw ID: ${this.drawID} - Completed processing batch of ${spansToProcess.length} spans.`);
+      } catch (error) {
+        console.error(`Error in processAllAssetSpans (Instance ${this.drawID}):`, error);
+      } finally {
+        this.processingInProgress = false; // Release the lock
+      }
+    }
   } // End class AdvancedControl
 
   return AdvancedControl;
 });
-//v727
+//v740
