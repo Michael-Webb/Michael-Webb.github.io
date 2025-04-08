@@ -1717,13 +1717,11 @@ define(() => {
     }
 
     async processVisibleAssetSpans() {
-      // Ensure API token is available
       if (!this.apiToken) {
         console.log(`Draw ID: ${this.drawID} - API token not yet available, skipping processVisibleAssetSpans.`);
         return;
       }
 
-      // Prevent concurrent execution
       if (this.processingInProgress) {
         return;
       }
@@ -1731,13 +1729,20 @@ define(() => {
 
       try {
         const allSpans = this.getAllAssetSpans();
+        console.log(`Draw ID: ${this.drawID} - getAllAssetSpans() returned ${allSpans.length} elements.`);
+
         const processedAttr = `data-processed-${this.drawID}`;
         const processingAttr = `data-processing-${this.drawID}`;
 
+        // Filter using your viewport check
         const spansToProcess = Array.from(allSpans).filter((span) => {
-          return (
-            this.isElementInViewport(span) && !span.hasAttribute(processedAttr) && !span.hasAttribute(processingAttr)
-          );
+          const inViewport = this.isElementInViewport(span);
+          if (!inViewport) {
+            // Log coordinates for debugging
+            const rect = span.getBoundingClientRect();
+            console.log(`Span with data-ref=${span.getAttribute("data-ref")} is out of viewport. Rect:`, rect);
+          }
+          return inViewport && !span.hasAttribute(processedAttr) && !span.hasAttribute(processingAttr);
         });
 
         if (spansToProcess.length === 0) {
@@ -1760,4 +1765,4 @@ define(() => {
 
   return AdvancedControl;
 });
-//v951
+//v954
