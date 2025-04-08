@@ -125,7 +125,7 @@ define(() => {
 
         // Extract credentials from the DOM
         const { sessionID, token, authObj } = this.extractCredentials();
-        this.authObj = authObj; // Add this line
+        this.authObj = authObj; // Store the auth object
 
         if (!sessionID || !token) {
           console.error("Failed to extract sessionID or token, cannot authenticate");
@@ -138,14 +138,13 @@ define(() => {
             this.apiToken = authenticatedAuthObj.apiToken; // Store for later use
             console.log(`Authentication successful for Draw ID: ${this.drawID}`);
 
-            // If lazy loading is enabled, initialize the MutationObserver and interval/scroll listeners.
             if (this.IS_LAZY_LOADED) {
               console.log(`Draw ID: ${this.drawID} - Initializing lazy loading.`);
               this.initializeVisibleAssetLoading();
-              // Trigger an initial check shortly after setup. Here we call the new method that processes all asset spans.
-              setTimeout(() => this.processAllAssetSpans(), 200);
+              // In lazy mode, process only the spans visible in the viewport.
+              setTimeout(() => this.processVisibleAssetSpans(), 200);
             } else {
-              // Non-lazy loading: Process all spans from all pages, ignoring computed style.
+              // Non-Lazy Loading: Process all spans from all pages (ignoring viewport)
               const allSpans = this.getAllAssetSpans();
               if (allSpans.length > 0) {
                 console.log(`Draw ID: ${this.drawID} - Processing ${allSpans.length} asset spans (Non-Lazy).`);
@@ -1714,6 +1713,47 @@ define(() => {
         console.error(`Error in processAllAssetSpans (Instance ${this.drawID}):`, error);
       } finally {
         this.processingInProgress = false; // Release the lock
+      }
+    }
+
+    async processVisibleAssetSpans() {
+      // Ensure API token is available
+      if (!this.apiToken) {
+        console.log(`Draw ID: ${this.drawID} - API token not yet available, skipping processVisibleAssetSpans.`);
+        return;
+      }
+
+      // Prevent concurrent execution
+      if (this.processingInProgress) {
+        return;
+      }
+      this.processingInProgress = true;
+
+      try {
+        const allSpans = this.getAllAssetSpans();
+        const processedAttr = `data-processed-${this.drawID}`;
+        const processingAttr = `data-processing-${this.drawID}`;
+
+        const spansToProcess = Array.from(allSpans).filter((span) => {
+          return (
+            this.isElementInViewport(span) && !span.hasAttribute(processedAttr) && !span.hasAttribute(processingAttr)
+          );
+        });
+
+        if (spansToProcess.length === 0) {
+          console.log(`Draw ID: ${this.drawID} - No new, visible, unprocessed spans found.`);
+          this.processingInProgress = false;
+          return;
+        }
+
+        console.log(`Draw ID: ${this.drawID} - Found ${spansToProcess.length} new visible spans to process.`);
+        const processingPromises = spansToProcess.map((span) => this.processAssetSpan(span));
+        await Promise.allSettled(processingPromises);
+        console.log(`Draw ID: ${this.drawID} - Completed processing batch of ${spansToProcess.length} spans.`);
+      } catch (error) {
+        console.error(`Error in processVisibleAssetSpans (Instance ${this.drawID}):`, error);
+      } finally {
+        this.processingInProgress = false;
       }
     }
   } // End class AdvancedControl
