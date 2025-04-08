@@ -521,7 +521,7 @@ define(() => {
       }
       this.processingInProgress = true;
       if (this.DEBUG_MODE) {
-        console.log(`Draw ID: ${this.drawID} - Starting processVisibleAssets cycle.`);
+        //console.log(`Draw ID: ${this.drawID} - Starting processVisibleAssets cycle.`);
       }
 
       try {
@@ -530,7 +530,7 @@ define(() => {
 
         if (allContainers.length === 0) {
           if (this.DEBUG_MODE) {
-            console.log(`Draw ID: ${this.drawID} - No containers with lid="${this.LIST_NAME}" found.`);
+            //console.log(`Draw ID: ${this.drawID} - No containers with lid="${this.LIST_NAME}" found.`);
           }
           this.processingInProgress = false;
           return;
@@ -544,7 +544,7 @@ define(() => {
 
         if (visibleContainers.length === 0) {
           if (this.DEBUG_MODE) {
-            console.log(`Draw ID: ${this.drawID} - No VISIBLE containers with lid="${this.LIST_NAME}" found.`);
+            //console.log(`Draw ID: ${this.drawID} - No VISIBLE containers with lid="${this.LIST_NAME}" found.`);
           }
 
           this.processingInProgress = false;
@@ -578,13 +578,13 @@ define(() => {
 
         if (spansToProcess.length === 0) {
           if (this.DEBUG_MODE) {
-            console.log(`Draw ID: ${this.drawID} - No new, visible, unprocessed spans found in visible containers.`);
+            //console.log(`Draw ID: ${this.drawID} - No new, visible, unprocessed spans found in visible containers.`);
           }
           this.processingInProgress = false;
           return;
         }
         if (this.DEBUG_MODE) {
-          console.log(`Draw ID: ${this.drawID} - Found ${spansToProcess.length} new spans to process.`);
+          //console.log(`Draw ID: ${this.drawID} - Found ${spansToProcess.length} new spans to process.`);
         }
         // *** Step 5: Process the filtered spans ***
         // Process in batches or individually. Individual processing is simpler.
@@ -593,13 +593,13 @@ define(() => {
         // Wait for all processing in this batch to settle (errors handled within processAssetSpan)
         await Promise.allSettled(processingPromises);
 
-        console.log(`Draw ID: ${this.drawID} - Completed processing batch of ${spansToProcess.length} spans.`);
+        //console.log(`Draw ID: ${this.drawID} - Completed processing batch of ${spansToProcess.length} spans.`);
       } catch (error) {
         console.error(`Error in processVisibleAssets (Instance ${this.drawID}):`, error);
       } finally {
         this.processingInProgress = false; // Release the lock
         if (this.DEBUG_MODE) {
-          console.log(`Draw ID: ${this.drawID} - Finished processVisibleAssets cycle.`);
+          //console.log(`Draw ID: ${this.drawID} - Finished processVisibleAssets cycle.`);
         }
       }
     }
@@ -1969,4 +1969,4 @@ define(() => {
   return AdvancedControl;
 });
 
-//v1157
+//v1159
