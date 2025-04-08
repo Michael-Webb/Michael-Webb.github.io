@@ -51,7 +51,7 @@ define(() => {
           ["Lazy Loading"]: IS_LAZY_LOADED,
           ["Direct Url"]: URL_TYPE,
           ["List Name"]: LIST_NAME,
-          ["Use Caching"]:USE_CACHE
+          ["Use Caching"]: USE_CACHE,
         } = this.oControl.configuration;
 
         // Check each configuration parameter and collect the missing ones
@@ -627,39 +627,6 @@ define(() => {
       // if (removedCount > 0) {
       //     console.log(`Draw ID: ${this.drawID} - Removed ${removedCount} orphaned containers.`);
       // }
-    }
-    // Clean up in the destroy method - must clean up all listeners
-    destroy(oControlHost) {
-      console.log(`Destroying AdvancedControl Instance: ID=${this.drawID}`);
-      this.oControl = oControlHost;
-
-      // Remove event listeners
-      if (this.throttledScrollHandler) {
-        document.removeEventListener("scroll", this.throttledScrollHandler, { capture: true });
-        window.removeEventListener("scroll", this.throttledScrollHandler);
-        window.removeEventListener("resize", this.throttledScrollHandler);
-        this.throttledScrollHandler = null; // Clear reference
-      }
-
-      if (this.intervalCheck) {
-        clearInterval(this.intervalCheck);
-        this.intervalCheck = null;
-      }
-
-      // --- Disconnect MutationObserver ---
-      if (this.mutationObserver) {
-        this.mutationObserver.disconnect();
-        this.mutationObserver = null; // Clear reference
-        console.log(`Draw ID: ${this.drawID} - MutationObserver disconnected.`);
-      }
-      if (this.mutationProcessTimeout) {
-        clearTimeout(this.mutationProcessTimeout);
-      }
-
-      // Clear references
-      this.oControl = null;
-      this.authObj = null;
-      this.processedSpanIds = null; // Allow garbage collection
     }
 
     // Method to extract credentials from the DOM
@@ -1753,6 +1720,40 @@ define(() => {
           setTimeout(() => this.processVisibleAssetSpans(), 0);
         }
       }
+    }
+
+    // Clean up in the destroy method - must clean up all listeners
+    destroy(oControlHost) {
+      console.log(`Destroying AdvancedControl Instance: ID=${this.drawID}`);
+      this.oControl = oControlHost;
+
+      // Remove event listeners
+      if (this.throttledScrollHandler) {
+        document.removeEventListener("scroll", this.throttledScrollHandler, { capture: true });
+        window.removeEventListener("scroll", this.throttledScrollHandler);
+        window.removeEventListener("resize", this.throttledScrollHandler);
+        this.throttledScrollHandler = null; // Clear reference
+      }
+
+      if (this.intervalCheck) {
+        clearInterval(this.intervalCheck);
+        this.intervalCheck = null;
+      }
+
+      // --- Disconnect MutationObserver ---
+      if (this.mutationObserver) {
+        this.mutationObserver.disconnect();
+        this.mutationObserver = null; // Clear reference
+        console.log(`Draw ID: ${this.drawID} - MutationObserver disconnected.`);
+      }
+      if (this.mutationProcessTimeout) {
+        clearTimeout(this.mutationProcessTimeout);
+      }
+
+      // Clear references
+      this.oControl = null;
+      this.authObj = null;
+      this.processedSpanIds = null; // Allow garbage collection
     }
   } // End class AdvancedControl
 
