@@ -27,10 +27,18 @@ define(() => {
         {
           maskName: "GLUPKY",
           urlPath: "generalledger",
-          idTable: "GLKKeyMaster",
+          idTable: "POPPvDetail",
           idData: "GLKKeyMaster",
           idColumn: "Key",
           orderBy: "GR,KEY",
+        },
+        {
+          maskName: "PEUPPR",
+          urlPath: "purchasing",
+          idTable: "POPPvDetail",
+          idData: "POPPvDetail",
+          idColumn: "PrNo",
+          orderBy: "PrPrefix,PrNo",
         },
       ],
     };
@@ -1969,4 +1977,4 @@ define(() => {
   return AdvancedControl;
 });
 
-//v1201
+//v20250408 1257 added PEUPPR
