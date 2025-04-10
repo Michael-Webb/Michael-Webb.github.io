@@ -1345,164 +1345,217 @@ define(() => {
     /**
      * Process spans in visible rows of tables with LIST_NAME
      */
-    async processVisibleSpans() {
-      // Ensure API token is available
-      if (!this.apiToken) {
-        console.log(`Draw ID: ${this.drawID} - API token not yet available, skipping processVisibleSpans.`);
-        return;
-      }
-
-      // Prevent concurrent execution
-      if (this.processingInProgress) {
-        console.log(`Draw ID: ${this.drawID} - Processing already in progress, skipping.`);
-        return;
-      }
-
-      this.processingInProgress = true;
-
-      try {
-        // Add this debugging call
-        this.debugVisibilityIssues();
-
-        // Find all spans with our data-name
-        const allSpans = document.querySelectorAll(`span[data-name=${this.SPAN_NAME}]`);
-        console.log(`Draw ID: ${this.drawID} - Found ${allSpans.length} total spans`);
-
-        if (allSpans.length === 0) {
-          console.log(`Draw ID: ${this.drawID} - No spans found`);
-          this.processingInProgress = false;
-          return;
-        }
-
-        // Filter to only spans in VISIBLE Cognos pages
-        const visibleSpans = Array.from(allSpans).filter((span) => this.isElementVisibleInCognosPage(span));
-
-        console.log(`Draw ID: ${this.drawID} - Found ${visibleSpans.length} visible spans`);
-
-        if (visibleSpans.length === 0) {
-          console.log(`Draw ID: ${this.drawID} - No visible spans found.`);
-          this.processingInProgress = false;
-          return;
-        }
-
-        // Process only spans that don't have an existing container
-        const spansToProcess = visibleSpans.filter((span) => {
-          const mask = span.getAttribute("data-mask");
-          const ref = span.getAttribute("data-ref");
-          if (!mask || !ref) return false;
-
-          // Check if this span already has a container
-          const spanUniqueId = `${mask}-${ref}`;
-          const existingContainer = document.getElementById(`doc-container-${spanUniqueId}`);
-          return !existingContainer;
-        });
-
-        console.log(`Draw ID: ${this.drawID} - Found ${spansToProcess.length} spans to process`);
-
-        if (spansToProcess.length === 0) {
-          console.log(`Draw ID: ${this.drawID} - No spans to process found.`);
-          this.processingInProgress = false;
-          return;
-        }
-
-        // Get unique masks from the spans to process
-        const masks = [...new Set(spansToProcess.map((span) => span.getAttribute("data-mask")).filter(Boolean))];
-
-        console.log(`Draw ID: ${this.drawID} - Found ${masks.length} unique masks: ${masks.join(", ")}`);
-
-        // Process spans with these masks
-        await this.processSpansByMask(spansToProcess, masks, this.authObj);
-      } catch (error) {
-        console.error(`Error in processVisibleSpans (Instance ${this.drawID}):`, error);
-      } finally {
-        this.processingInProgress = false;
-      }
-    }
-
     /**
-     * Process spans by mask - fetching definitions once per mask
-     */
-    async processSpansByMask(spansToProcess, masks, authObj) {
-      // Fetch screen definitions, BT20 models, and attachment definitions once per mask
-      const definitionsMap = new Map();
-
-      for (const mask of masks) {
-        try {
-          if (!mask) {
-            console.warn(`Draw ID: ${this.drawID} - Skipping null/empty mask`);
+ * Process spans in visible rows of tables with LIST_NAME
+ */
+async processVisibleSpans() {
+    // Ensure API token is available
+    if (!this.apiToken) {
+      console.log(`Draw ID: ${this.drawID} - API token not yet available, skipping processVisibleSpans.`);
+      return;
+    }
+  
+    // Prevent concurrent execution
+    if (this.processingInProgress) {
+      console.log(`Draw ID: ${this.drawID} - Processing already in progress, skipping.`);
+      return;
+    }
+  
+    this.processingInProgress = true;
+  
+    try {
+      // Add this debugging call
+    //   this.debugVisibilityIssues();
+  
+      // Find all spans with our data-name
+      const allSpans = document.querySelectorAll(`span[data-name=${this.SPAN_NAME}]`);
+      console.log(`Draw ID: ${this.drawID} - Found ${allSpans.length} total spans`);
+  
+      if (allSpans.length === 0) {
+        console.log(`Draw ID: ${this.drawID} - No spans found`);
+        this.processingInProgress = false;
+        return;
+      }
+  
+      // Filter to only spans in VISIBLE Cognos pages
+      const visibleSpans = Array.from(allSpans).filter((span) => this.isElementVisibleInCognosPage(span));
+  
+      console.log(`Draw ID: ${this.drawID} - Found ${visibleSpans.length} visible spans`);
+  
+      if (visibleSpans.length === 0) {
+        console.log(`Draw ID: ${this.drawID} - No visible spans found.`);
+        this.processingInProgress = false;
+        return;
+      }
+  
+      // Process only spans that don't have an existing container
+      const spansToProcess = visibleSpans.filter((span) => {
+        const mask = span.getAttribute("data-mask");
+        const ref = span.getAttribute("data-ref");
+        if (!mask || !ref) return false;
+  
+        // Check if this span already has a container
+        const spanUniqueId = `${mask}-${ref}`;
+        const existingContainer = document.getElementById(`doc-container-${spanUniqueId}`);
+        return !existingContainer;
+      });
+  
+      console.log(`Draw ID: ${this.drawID} - Found ${spansToProcess.length} spans to process`);
+  
+      if (spansToProcess.length === 0) {
+        console.log(`Draw ID: ${this.drawID} - No spans to process found.`);
+        this.processingInProgress = false;
+        return;
+      }
+  
+      // Get unique masks from the spans to process
+      const masks = [...new Set(spansToProcess.map((span) => span.getAttribute("data-mask")).filter(Boolean))];
+  
+      console.log(`Draw ID: ${this.drawID} - Found ${masks.length} unique masks: ${masks.join(", ")}`);
+  
+      // Process spans with these masks
+      await this.processSpansByMask(spansToProcess, masks, this.authObj);
+    } catch (error) {
+      console.error(`Error in processVisibleSpans (Instance ${this.drawID}):`, error);
+    } finally {
+      this.processingInProgress = false;
+    }
+  }
+  
+  /**
+   * Process spans by mask - fetching definitions once per mask
+   */
+  async processSpansByMask(spansToProcess, masks, authObj) {
+    // Fetch screen definitions, BT20 models, and attachment definitions once per mask
+    const definitionsMap = new Map();
+  
+    for (const mask of masks) {
+      try {
+        if (!mask) {
+          console.warn(`Draw ID: ${this.drawID} - Skipping null/empty mask`);
+          continue;
+        }
+  
+        // Check if we already have cached definitions for this mask
+        const cacheKey = this.generateCacheKey(`screen_defs_${mask}`, authObj);
+        let definitions = this.getFromSessionStorage(cacheKey, true);
+  
+        if (!definitions) {
+          console.log(`Draw ID: ${this.drawID} - Fetching definitions for mask ${mask}.`);
+  
+          // Fetch screen definition
+          const screenDef = await this.fetchScreenDef(mask, authObj);
+          if (!screenDef) {
+            console.error(`Draw ID: ${this.drawID} - Failed to get screen definition for mask ${mask}.`);
             continue;
           }
-
-          // Check if we already have cached definitions for this mask
-          const cacheKey = this.generateCacheKey(`screen_defs_${mask}`, authObj);
-          let definitions = this.getFromSessionStorage(cacheKey, true);
-
-          if (!definitions) {
-            console.log(`Draw ID: ${this.drawID} - Fetching definitions for mask ${mask}.`);
-
-            // Fetch screen definition
-            const screenDef = await this.fetchScreenDef(mask, authObj);
-            if (!screenDef) {
-              console.error(`Draw ID: ${this.drawID} - Failed to get screen definition for mask ${mask}.`);
-              continue;
-            }
-
-            // Extract entity types
-            const entityTypes = this.extractEntityTypes(screenDef);
-
-            // Fetch BT20 models and attachment definitions
-            const btModels = await this.getBT20Models(mask, entityTypes.btString, authObj);
-            const attachDefs = await this.getAttachDef(mask, entityTypes.btString, authObj);
-
-            // Transform the screen definition
-            const transformedDef = this.transformDefintion(screenDef, attachDefs);
-
-            // Store all definitions together
-            definitions = {
-              screenDef,
-              entityTypes,
-              btModels,
-              attachDefs,
-              transformedDef,
-            };
-
-            // Cache the definitions
-            this.saveToSessionStorage(cacheKey, definitions, true);
-          } else {
-            console.log(`Draw ID: ${this.drawID} - Using cached definitions for mask ${mask}.`);
-          }
-
-          // Add to our map
-          definitionsMap.set(mask, definitions);
-        } catch (error) {
-          console.error(`Error fetching definitions for mask ${mask}:`, error);
+  
+          // Extract entity types
+          const entityTypes = this.extractEntityTypes(screenDef);
+  
+          // Fetch BT20 models and attachment definitions
+          const btModels = await this.getBT20Models(mask, entityTypes.btString, authObj);
+          const attachDefs = await this.getAttachDef(mask, entityTypes.btString, authObj);
+  
+          // Transform the screen definition
+          const transformedDef = this.transformDefintion(screenDef, attachDefs);
+  
+          // Store all definitions together
+          definitions = {
+            screenDef,
+            entityTypes,
+            btModels,
+            attachDefs,
+            transformedDef,
+          };
+  
+          // Cache the definitions
+          this.saveToSessionStorage(cacheKey, definitions, true);
+        } else {
+          console.log(`Draw ID: ${this.drawID} - Using cached definitions for mask ${mask}.`);
         }
+  
+        // Add to our map
+        definitionsMap.set(mask, definitions);
+      } catch (error) {
+        console.error(`Error fetching definitions for mask ${mask}:`, error);
       }
-
-      // Now process each span using the pre-fetched definitions
-      const processingPromises = spansToProcess.map((span) => {
-        const mask = span.getAttribute("data-mask");
-        if (!mask) {
-          console.warn(`Draw ID: ${this.drawID} - Span has no mask attribute, skipping.`);
-          return Promise.resolve();
-        }
-
-        const definitions = definitionsMap.get(mask);
-
-        // Skip if we couldn't get definitions for this mask
-        if (!definitions) {
-          console.warn(`Draw ID: ${this.drawID} - No definitions available for mask ${mask}, skipping span.`);
-          return Promise.resolve();
-        }
-
-        return this.processSpanWithDefinitions(span, definitions);
-      });
-
-      // Wait for all processing to complete
-      await Promise.allSettled(processingPromises);
-
-      console.log(`Draw ID: ${this.drawID} - Completed processing batch of ${spansToProcess.length} spans.`);
     }
+  
+    // Group spans by mask and ref to avoid duplicate processing
+    const spansByMaskAndRef = new Map();
+    
+    for (const span of spansToProcess) {
+      const mask = span.getAttribute("data-mask");
+      const ref = span.getAttribute("data-ref");
+      
+      if (!mask || !ref) continue;
+      
+      const key = `${mask}-${ref}`;
+      if (!spansByMaskAndRef.has(key)) {
+        spansByMaskAndRef.set(key, { mask, ref, spans: [] });
+      }
+      spansByMaskAndRef.get(key).spans.push(span);
+    }
+  
+    // Process each unique mask-ref combination
+    for (const [key, { mask, ref, spans }] of spansByMaskAndRef.entries()) {
+      try {
+        const definitions = definitionsMap.get(mask);
+        
+        if (!definitions || !definitions.transformedDef) {
+          console.warn(`No definitions available for mask ${mask}, skipping spans.`);
+          continue;
+        }
+        
+        // Check if we already have cached attachment data
+        const attachmentCacheKey = this.generateCacheKey(`attachments_${mask}_${ref}`, this.authObj);
+        let attachmentResults = this.getFromSessionStorage(attachmentCacheKey, true);
+        
+        if (!attachmentResults) {
+          // Create a mask object with the ref as the itemID
+          const maskObj = { 
+            mask: mask, 
+            itemID: ref 
+          };
+          
+          console.log(`Fetching attachments for mask=${mask}, ref=${ref}`);
+          
+          // Call getAttachments to fetch the attachment data
+          attachmentResults = await this.getAttachments(
+            definitions.transformedDef, 
+            mask, 
+            maskObj
+          );
+          
+          // Log attachment results
+          if (attachmentResults) {
+            const totalAttachments = attachmentResults.reduce((count, result) => {
+              return count + (result.attachments && result.attachments.items ? result.attachments.items.length : 0);
+            }, 0);
+            
+            console.log(`Retrieved ${totalAttachments} attachments for ${mask}-${ref}`);
+            
+            // Cache the attachment results
+            this.saveToSessionStorage(attachmentCacheKey, attachmentResults, true);
+          } else {
+            console.log(`No attachment results for ${mask}-${ref}`);
+          }
+        } else {
+          console.log(`Using cached attachment data for ${mask}-${ref}`);
+        }
+        
+        // Process each span normally (without attachment UI)
+        for (const span of spans) {
+          await this.processSpan(span);
+        }
+      } catch (error) {
+        console.error(`Error processing attachments for ${mask}-${ref}:`, error);
+      }
+    }
+  
+    console.log(`Draw ID: ${this.drawID} - Completed processing batch of ${spansToProcess.length} spans.`);
+  }
 
     /**
      * Process a single span with pre-fetched definitions
@@ -1755,8 +1808,425 @@ define(() => {
       - Fully visible: ${fullyVisible}
     `);
     }
+    /**
+     * Gets root detail data for a specific entity
+     */
+    async getRootDetailData(entityTransform, maskString, itemIDInput) {
+      // Find the root entity data source from the transformed data
+      const dataSourceObj = entityTransform.dataSources.find((ds) => ds.isRootEntity === true);
+
+      if (!dataSourceObj) {
+        console.error("No root entity data source found in the transform");
+        return null;
+      }
+
+      // Get the appropriate fetch configuration
+      const fetchObj = this.findMaskObject(maskString);
+      if (!fetchObj) {
+        console.error("Invalid mask:", maskString);
+        return null;
+      }
+
+      // For the URL, we need to use the entity type
+      const entityType = dataSourceObj.entityType;
+
+      // Determine which filter field to use
+      const filterField = fetchObj.name;
+
+      // Extract the actual item ID value
+      let itemIDValue;
+
+      // Handle different input formats
+      if (typeof itemIDInput === "string") {
+        // If it's directly a string
+        itemIDValue = itemIDInput;
+      } else if (itemIDInput && typeof itemIDInput === "object") {
+        // If it's an object, check for itemID property
+        if (itemIDInput.itemID) {
+          itemIDValue = itemIDInput.itemID;
+        } else if (Object.prototype.hasOwnProperty.call(itemIDInput, "mask")) {
+          // It might be a mask object from ALL_MASKS
+          const maskObj = this.ALL_MASKS.masks.find((mask) => mask.mask === maskString);
+          if (maskObj && maskObj.itemID) {
+            itemIDValue = maskObj.itemID;
+          }
+        }
+      }
+
+      // Ensure we have a valid item ID
+      if (!itemIDValue) {
+        console.error("Could not extract a valid itemID from input:", itemIDInput);
+        return null;
+      }
+
+      console.log("Using itemID value:", itemIDValue);
+
+      // Build the filter text
+      const filterText = `(${filterField} eq '${itemIDValue}')`;
+
+      // Prepare named filter parameter if available
+      let namedFilterParam = "";
+      if (dataSourceObj.namedFilter) {
+        namedFilterParam = `$namedfilters=${encodeURIComponent(dataSourceObj.namedFilter)}&`;
+      }
+
+      // Construct filter parameter
+      const filterParam = `${namedFilterParam}$filter=${encodeURIComponent(filterText)}`;
+
+      // Use sort parameter from dataSource or default
+      const orderByParam = dataSourceObj.sortbyParam
+        ? `&$orderby=${encodeURIComponent(dataSourceObj.sortbyParam)}`
+        : `&$orderby=CreateDate desc,BatchId`;
+
+      // Build the complete URL
+      const url = `${this.AppUrl}/${this.authObj.environment}${this.URL_LOOKUP.detailUrls.mainUrl}${entityType}?${filterParam}${orderByParam}&$skip=0&$top=20`;
+
+      // Construct referrer URL
+      const refUrl = `${this.AppUrl}/${this.authObj.environment}${this.URL_LOOKUP.detailUrls.referrerUrl}${fetchObj.path}`;
+
+      console.log("Making request to:", url);
+      console.log("Filter text:", filterText);
+
+      try {
+        const response = await fetch(url, {
+          headers: {
+            accept: "application/json, text/plain, */*",
+            "accept-language": "en-US,en;q=0.9",
+            "cache-control": "no-cache",
+            "content-type": "application/json",
+            glledger: "GL",
+            jlledger: "--",
+            mask: maskString,
+            pragma: "no-cache",
+            priority: "u=1, i",
+            runtimemask: maskString,
+          },
+          referrer: refUrl,
+          referrerPolicy: "strict-origin-when-cross-origin",
+          body: null,
+          method: "GET",
+          mode: "cors",
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          console.error(`HTTP error ${response.status}:`, await response.text());
+          return null;
+        }
+
+        return await response.json();
+      } catch (error) {
+        console.error("Fetch error:", error);
+        throw error;
+      }
+    }
+
+    /**
+     * Gets child detail data related to the parent results
+     */
+    async getChildrenInfo(entityTransform, maskString, parentResult) {
+      // Find the fetch configuration
+      const fetchObj = this.findMaskObject(maskString);
+      if (!fetchObj) {
+        console.error("Invalid mask:", maskString);
+        return null;
+      }
+
+      // Get the root entity data source from the transformed data
+      const rootDataSource = entityTransform.dataSources.find((ds) => ds.isRootEntity === true);
+
+      if (!rootDataSource || !parentResult || !parentResult.items || parentResult.items.length === 0) {
+        console.error("Missing root data source or parent result data");
+        return null;
+      }
+
+      // Get the parent result data (first item)
+      const parentData = parentResult.items[0];
+
+      console.log("Parent data for building child filters:", parentData);
+
+      // Find all non-root data sources that have attachment definitions
+      const childDataSources = entityTransform.dataSources.filter((ds) => !ds.isRootEntity && ds.attachment);
+
+      if (childDataSources.length === 0) {
+        console.log("No child data sources with attachments found");
+        return [];
+      }
+
+      // Process each child data source
+      const childResults = await Promise.all(
+        childDataSources.map(async (childDS) => {
+          // Get the entity type for this child
+          const entityType = childDS.entityType;
+
+          // Build filter based on the linkage between parent and child
+          let filterText = "";
+
+          // Find linkage properties between this child and the parent
+          if (childDS.dataS && childDS.dataS.linkages && Array.isArray(childDS.dataS.linkages)) {
+            // Extract the linkage conditions
+            const filterConditions = childDS.dataS.linkages
+              .map((linkage) => {
+                const parentProperty = linkage.parentProperty;
+                const childProperty = linkage.childProperty;
+
+                // Get the value from parent data
+                if (parentProperty && childProperty && parentData[parentProperty] !== undefined) {
+                  const parentValue = parentData[parentProperty];
+
+                  // Format value based on type
+                  const formattedValue = typeof parentValue === "string" ? `'${parentValue}'` : parentValue;
+
+                  return `(${childProperty} eq ${formattedValue})`;
+                }
+                return null;
+              })
+              .filter((condition) => condition !== null);
+
+            if (filterConditions.length > 0) {
+              filterText = filterConditions.join(" and ");
+            }
+          }
+
+          // If no linkage filters were created, try using root ID columns
+          if (!filterText && entityTransform.rootIdColumns && entityTransform.rootIdColumns.length > 0) {
+            const rootFilterConditions = entityTransform.rootIdColumns
+              .filter((colName) => parentData[colName] !== undefined)
+              .map((colName) => {
+                const value = parentData[colName];
+                const formattedValue = typeof value === "string" ? `'${value}'` : value;
+                return `(${colName} eq ${formattedValue})`;
+              });
+
+            if (rootFilterConditions.length > 0) {
+              filterText = rootFilterConditions.join(" and ");
+            }
+          }
+
+          if (!filterText) {
+            console.error(`No valid filter condition could be created for ${entityType}`);
+            return { entityType, data: null };
+          }
+
+          // Prepare named filter parameter if available
+          let namedFilterParam = "";
+          if (childDS.namedFilter) {
+            namedFilterParam = `$namedfilters=${encodeURIComponent(childDS.namedFilter)}&`;
+          }
+
+          // Construct filter parameter
+          const filterParam = `${namedFilterParam}$filter=${encodeURIComponent(filterText)}`;
+
+          // Use sort parameter from dataSource or default
+          const orderByParam = childDS.sortbyParam ? `&$orderby=${encodeURIComponent(childDS.sortbyParam)}` : "";
+
+          // Build the complete URL
+          const url = `${this.AppUrl}/${this.authObj.environment}${this.URL_LOOKUP.detailUrls.mainUrl}${entityType}?${filterParam}${orderByParam}&$skip=0&$top=100`;
+
+          // Construct referrer URL
+          const refUrl = `${this.AppUrl}/${this.authObj.environment}${this.URL_LOOKUP.detailUrls.referrerUrl}${fetchObj.path}`;
+
+          console.log(`Fetching child data for ${entityType} with filter: ${filterText}`);
+          console.log(`Request URL: ${url}`);
+
+          try {
+            const response = await fetch(url, {
+              headers: {
+                accept: "application/json, text/plain, */*",
+                "accept-language": "en-US,en;q=0.9",
+                "cache-control": "no-cache",
+                "content-type": "application/json",
+                glledger: parentData.Gr || "GL",
+                jlledger: "--",
+                mask: maskString,
+                pragma: "no-cache",
+                priority: "u=1, i",
+                runtimemask: maskString,
+              },
+              referrer: refUrl,
+              referrerPolicy: "strict-origin-when-cross-origin",
+              body: null,
+              method: "GET",
+              mode: "cors",
+              credentials: "include",
+            });
+
+            if (!response.ok) {
+              console.error(`HTTP error ${response.status} for ${entityType}:`, await response.text());
+              return { entityType, data: null };
+            }
+
+            const data = await response.json();
+            console.log(`Retrieved ${data.items ? data.items.length : 0} items for ${entityType}`);
+            return { entityType, data };
+          } catch (error) {
+            console.error(`Fetch error for ${entityType}:`, error);
+            return { entityType, data: null };
+          }
+        })
+      );
+
+      return childResults;
+    }
+
+    /**
+     * Gets attachments for a specific mask and entity
+     */
+    async getAttachments(entityTransform, maskString, maskObj) {
+      // Step 1: Fetch the root detail data
+      const rootData = await this.getRootDetailData(entityTransform, maskString, maskObj);
+
+      if (!rootData || !rootData.items || rootData.items.length === 0) {
+        console.error("No root data found");
+        return null;
+      }
+
+      console.log("Root data retrieved:", rootData.items[0]);
+
+      // Step 2: Fetch children data for all attachment-related tables
+      const childrenData = await this.getChildrenInfo(entityTransform, maskString, rootData);
+
+      if (!childrenData || childrenData.length === 0) {
+        console.log("No child data sources with attachments");
+      } else {
+        console.log("Children data retrieved for:", childrenData.map((child) => child.entityType).join(", "));
+      }
+
+      // Step 3: Prepare for attachment requests
+      const fetchObj = this.findMaskObject(maskString);
+      if (!fetchObj) {
+        console.error("Invalid mask:", maskString);
+        return null;
+      }
+
+      // Prepare to collect all attachment results
+      const attachmentResults = [];
+
+      // Step 4: Process root entity attachments if available
+      if (rootData.items && rootData.items.length > 0) {
+        const rootEntity = entityTransform.dataSources.find((ds) => ds.isRootEntity);
+        if (rootEntity && rootEntity.attachment) {
+          const rootItem = rootData.items[0];
+
+          try {
+            // URL for attachments
+            const url = `${this.AppUrl}/${this.authObj.environment}${this.URL_LOOKUP.attachUrls.mainUrl}/${rootEntity.entityType}/attachments/`;
+
+            // Referrer URL
+            const refUrl = `${this.AppUrl}/${this.authObj.environment}${this.URL_LOOKUP.attachUrls.referrerUrl}${fetchObj.path}`;
+
+            console.log(`Fetching attachments for root entity with item:`, rootItem);
+
+            const response = await fetch(url, {
+              headers: {
+                accept: "application/json, text/plain, */*",
+                "accept-language": "en-US,en;q=0.9",
+                "cache-control": "no-cache",
+                "content-type": "application/json",
+                glledger: rootItem.Gr || "GL",
+                jlledger: "--",
+                mask: maskString,
+                pragma: "no-cache",
+                priority: "u=1, i",
+                runtimemask: maskString,
+              },
+              referrer: refUrl,
+              referrerPolicy: "strict-origin-when-cross-origin",
+              body: JSON.stringify(rootItem),
+              method: "POST",
+              mode: "cors",
+              credentials: "include",
+            });
+
+            if (!response.ok) {
+              console.error(`HTTP error ${response.status} for root attachments:`, await response.text());
+            } else {
+              const attachmentData = await response.json();
+              attachmentResults.push({
+                entityType: rootEntity.entityType,
+                isRoot: true,
+                attachments: attachmentData,
+              });
+            }
+          } catch (error) {
+            console.error("Error fetching root attachments:", error);
+          }
+        } else {
+          console.log("Root entity has no attachment definition");
+        }
+      }
+
+      // Step 5: Process child entity attachments
+      if (childrenData && childrenData.length > 0) {
+        // For each child data source that has data
+        for (const childResult of childrenData) {
+          if (!childResult.data || !childResult.data.items || childResult.data.items.length === 0) {
+            console.log(`No items found for child entity: ${childResult.entityType}`);
+            continue;
+          }
+
+          // Find the corresponding data source
+          const childDS = entityTransform.dataSources.find((ds) => ds.entityType === childResult.entityType);
+
+          if (!childDS || !childDS.attachment) {
+            console.log(`No attachment definition for child entity: ${childResult.entityType}`);
+            continue;
+          }
+
+          // Process each item in the child data
+          for (const childItem of childResult.data.items) {
+            try {
+              // URL for attachments
+              const url = `${this.AppUrl}/${this.authObj.environment}${this.URL_LOOKUP.attachUrls.mainUrl}/${childDS.entityType}/attachments/`;
+
+              // Referrer URL
+              const refUrl = `${this.AppUrl}/${this.authObj.environment}${this.URL_LOOKUP.attachUrls.referrerUrl}${fetchObj.path}`;
+
+              console.log(`Fetching attachments for child entity ${childResult.entityType} with item:`, childItem);
+
+              const response = await fetch(url, {
+                headers: {
+                  accept: "application/json, text/plain, */*",
+                  "accept-language": "en-US,en;q=0.9",
+                  "cache-control": "no-cache",
+                  "content-type": "application/json",
+                  glledger: childItem.Gr || "GL",
+                  jlledger: "--",
+                  mask: maskString,
+                  pragma: "no-cache",
+                  priority: "u=1, i",
+                  runtimemask: maskString,
+                },
+                referrer: refUrl,
+                referrerPolicy: "strict-origin-when-cross-origin",
+                body: JSON.stringify(childItem),
+                method: "POST",
+                mode: "cors",
+                credentials: "include",
+              });
+
+              if (!response.ok) {
+                console.error(`HTTP error ${response.status} for child attachments:`, await response.text());
+              } else {
+                const attachmentData = await response.json();
+                attachmentResults.push({
+                  entityType: childDS.entityType,
+                  isRoot: false,
+                  item: childItem,
+                  attachments: attachmentData,
+                });
+              }
+            } catch (error) {
+              console.error(`Error fetching attachments for child entity ${childResult.entityType}:`, error);
+            }
+          }
+        }
+      }
+
+      return attachmentResults;
+    }
   }
 
   return AdvancedControl;
 });
-// 20250410 306
+// 20250410 323
