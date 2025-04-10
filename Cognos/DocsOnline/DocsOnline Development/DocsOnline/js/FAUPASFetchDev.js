@@ -41,20 +41,35 @@ define(() => {
           orderBy: "PrPrefix,PrNo",
         },
         {
-          maskName: "ARUPTR",
-          urlPath: "accountsreceivable",
-          idTable: "ARTrnsDetail",
-          idData: "ARTrnsDetail",
-          idColumn: "Ref",
-          orderBy: "CustId,RefDt",
-        },
-        {
           maskName: "ARUPRF",
           urlPath: "accountsreceivable",
           idTable: "ARRefMaster",
           idData: "ARRefMaster",
           idColumn: "Ref",
           orderBy: "Ref",
+        },
+        {
+          maskName: "APOHBTUB",
+          urlPath: "accountspayable",
+          progIds:"BT20.OHHBatchMaster,BT20.OHBirMaster,BT20.OHBBatchDetail",
+          table: [
+            {
+              idTable: "OHBBatchDetail",
+              idData: "OHBBatchDetail",
+              filters: ["BatchId ", "Ref", "PeId"],
+              orderBy: "BatchId,PeId,Ref,RecNo",
+            },
+            {
+              idTable: "OHBirMaster",
+              idData: "OHBirMaster",
+              idColumn: ["BatchId "],
+              orderBy: "BatchId,SeqNo,PeId,Ref",
+            },
+          ],
+          idTable: "OHHBatchMaster",
+          idData: "OHHBatchMaster",
+          idColumn: "BatchId",
+          orderBy: "CreateDate%20desc,BatchId",
         },
       ],
     };
@@ -1988,9 +2003,61 @@ define(() => {
       this.oControl = null;
       this.authObj = null;
     }
+
+    getMaskDefinition (maskName,screenPath){
+      fetch("https://cppfosapp.fdn.cpp.edu/Production-UI/api/finance/screendef/accountspayable/APOHBTUB", {
+        "headers": {
+          "accept": "application/json, text/plain, */*",
+          "accept-language": "en-US,en;q=0.9",
+          "cache-control": "no-cache",
+          "content-type": "application/json",
+          "glledger": "--",
+          "jlledger": "--",
+          "mask": "APOHBTUB",
+          "pragma": "no-cache",
+          "runtimemask": "APOHBTUB",
+        },
+        "referrer": "https://cppfosapp.fdn.cpp.edu/Production-UI/ui/uiscreens/accountspayable/APOHBTUB",
+        "referrerPolicy": "strict-origin-when-cross-origin",
+        "body": null,
+        "method": "GET",
+        "mode": "cors",
+        "credentials": "include"
+      });
+    }
+    getBT20Models (maskName,screenPath){
+      fetch("https://cppfosapp.fdn.cpp.edu/Production-UI/api/finance/screendef/accountspayable/APOHBTUB", {
+        "headers": {
+          "accept": "application/json, text/plain, */*",
+          "accept-language": "en-US,en;q=0.9",
+          "cache-control": "no-cache",
+          "content-type": "application/json",
+          "glledger": "--",
+          "jlledger": "--",
+          "mask": "APOHBTUB",
+          "pragma": "no-cache",
+          "runtimemask": "APOHBTUB",
+        },
+        "referrer": "https://cppfosapp.fdn.cpp.edu/Production-UI/ui/uiscreens/accountspayable/APOHBTUB",
+        "referrerPolicy": "strict-origin-when-cross-origin",
+        "body": null,
+        "method": "GET",
+        "mode": "cors",
+        "credentials": "include"
+      });
+    }
   }
 
   return AdvancedControl;
 });
 
 //v20250408 1257 added PEUPPR
+
+
+
+/*
+OHBBatchDetail
+"PeId": "F56493",
+"Ref": "8122095",
+"BatchId": "RE031665"
+*/
