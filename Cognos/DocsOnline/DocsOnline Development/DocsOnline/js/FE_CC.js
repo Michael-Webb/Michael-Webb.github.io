@@ -80,7 +80,7 @@ define(() => {
     draw(oControlHost) {
       try {
         this.oControl = oControlHost;
-        oControlHost.loadingText = "Loading...";
+        oControlHost.loadingText = "Loading Docs Online...";
         this.drawID = this.oControl.generateUniqueID(); // *** Get and store drawID ***
 
         // Check each configuration parameter and collect the missing ones
@@ -104,7 +104,7 @@ define(() => {
           .catch((error) => console.warn(error));
 
         const myTimeout = setTimeout(() => {
-          oControlHost.container.innerHTML = "Hello world";
+          oControlHost.container.innerHTML = "Docs Online Loaded";
         }, 5000);
       } catch (error) {
         console.warn(error);
