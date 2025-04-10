@@ -285,81 +285,88 @@ define(() => {
      * @returns {Promise<Response>} The fetch response.
      */
     async fetchFromScreen(authObj, maskName) {
-      // Get the dynamic URL path based on the configured MASK_NAME
-      const screenDetails = this._getMaskDetails(maskName);
-      const screenUrl = `${this.AppUrl}/${authObj.environment}-UI/ui/uiscreens/${screenDetails.urlPath}/${screenDetails.maskName}`;
-      console.log(`fetchFromScreen: Starting authentication sequence at: ${screenUrl}`);
-
-      try {
-        // Initial fetch - follows all redirects in the authentication flow
-        const response = await fetch(screenUrl, {
-          headers: {
-            accept: "*/*",
-            "accept-language": "en-US,en;q=0.9",
-            "cache-control": "no-cache",
-            pragma: "no-cache",
-            priority: "u=1, i",
-            "sec-fetch-dest": "document",
-            "sec-fetch-mode": "navigate",
-            "sec-fetch-site": "same-site",
-            "sec-fetch-user": "?1",
-            "upgrade-insecure-requests": "1",
-          },
-          referrer: this.JobUrl,
-          referrerPolicy: "strict-origin-when-cross-origin",
-          body: null,
-          method: "GET",
-          mode: "no-cors",
-          credentials: "include", // Critical for maintaining cookies
-          redirect: "follow",
-        });
-
-        // Check if we were redirected
-        if (response.redirected) {
-          console.log(`Authentication flow redirected to final URL: ${response.url}`);
+        // Get the dynamic URL path based on the configured MASK_NAME
+        const screenDetails = this._getMaskDetails(maskName);
+        const screenUrl = `${this.AppUrl}/${authObj.environment}-UI/ui/uiscreens/${screenDetails.urlPath}/${screenDetails.maskName}`;
+        console.log(`fetchFromScreen: Fetching screen URL: ${screenUrl}`);
+        
+        try {
+          // Use no-cors as required by your system configuration
+          const response = await fetch(screenUrl, {
+            headers: {
+              "accept": "*/*",
+              "accept-language": "en-US,en;q=0.9",
+              "cache-control": "no-cache",
+              "pragma": "no-cache",
+              "priority": "u=1, i",
+              "sec-fetch-dest": "document",
+              "sec-fetch-mode": "navigate",
+              "sec-fetch-site": "same-site",
+              "sec-fetch-user": "?1",
+              "upgrade-insecure-requests": "1",
+            },
+            referrer: this.JobUrl,
+            referrerPolicy: "strict-origin-when-cross-origin",
+            body: null,
+            method: "GET",
+            mode: "no-cors", // Keep this as required
+            credentials: "include", // Essential for cookie handling
+          });
+          
+          console.log("Initial authentication request complete");
+          
+          // With no-cors, we can't access response properties like .ok or .status
+          // So we can't directly verify success here
+          
+          return response;
+        } catch (error) {
+          console.error("Error during FAUPAS fetch:", error);
+          throw error;
         }
-
-        // Check for successful response
-        if (!response.ok) {
-          throw new Error(`Screen fetch failed with status: ${response.status}`);
-        }
-
-        console.log("Authentication flow completed, verifying cookies with second request");
-
-        // Second verification fetch to ensure cookies are working
-        // This time use a lightweight API endpoint rather than the full page if possible
-        const verificationUrl = `${this.AppUrl}/${authObj.environment}-UI/api/user/info`;
-        const verificationResponse = await fetch(verificationUrl, {
-          method: "GET",
-          credentials: "include", // Again, include cookies
-          headers: {
-            accept: "application/json",
-            "cache-control": "no-cache",
-          },
-        });
-
-        if (!verificationResponse.ok) {
-          console.warn(`Verification request failed: ${verificationResponse.status}. Cookies may not be properly set.`);
-        } else {
-          console.log("Verification successful - authenticated session confirmed");
-          // Optionally parse user info if available
-          try {
-            const userInfo = await verificationResponse.json();
-            console.log("Authenticated as:", userInfo.username || userInfo.name || "Unknown user");
-          } catch (e) {
-            // JSON parsing failed, but the request was still successful
-            console.log("Verification successful but couldn't parse user info");
-          }
-        }
-
-        return verificationResponse; // Return the original response
-      } catch (error) {
-        console.error("Error during authentication fetch sequence:", error);
-        throw error;
       }
-    }
+      
+      async authenticate() {
+        try {
+          let authObject = this.getAuthObject();
+          this.authObject = authObject;
+          console.log(authObject);
+      
+          // Step 1: Get Cookies - using no-cors mode
+          console.log("Step 1: Setting authentication cookies...");
+          await this.fetchFromScreen(authObject, "FAUPAS");
+          
+          // Since we can't check the response with no-cors, 
+          // maybe add a small delay to ensure cookies are set
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // Step 2: Fetch API token - this will verify if cookies were set correctly
+          console.log("Step 2: Fetching API token...");
+          try {
+            const apiToken = await this.fetchApiToken();
+            this.authObject.apiToken = apiToken;
+            console.log("API Token obtained successfully - cookies are working");
+          } catch (error) {
+            console.error("Failed to get API token - cookies may not be set correctly:", error);
+            throw new Error("Authentication failed at API token stage");
+          }
+      
+          // Step 3: Validate security token
+          console.log("Step 3: Validating security token...");
+          await this.validateSecurityToken();
+      
+          // Step 4: Get Session Expiration
+          console.log("Step 4: Getting session expiration data...");
+          const sessionExpData = await this.getSessionExpiration();
+          
+          console.log("Authentication completed successfully");
+          return this.authObject;
+        } catch (error) {
+          console.error("Authentication failed:", error);
+          throw error;
+        }
+      }
   }
 
   return AdvancedControl;
 });
-// 20250410 944
+// 20250410 948
