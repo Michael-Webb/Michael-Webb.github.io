@@ -1705,180 +1705,6 @@ define(() => {
       // console.log(`Draw ID: ${this.drawID} - Completed processing batch.`); // Final log
     }
 
-    // REMOVE the old processSpanWithDefinitions function - it's no longer used.
-    // async processSpanWithDefinitions(span, definitions) { ... } // DELETE THIS
-
-    /**
-     * Process a single span with pre-fetched definitions
-     */
-    async processSpanWithDefinitions(span, definitions) {
-      // Make sure span is still in the DOM and valid
-      if (!span || !document.body.contains(span)) {
-        console.warn(`Draw ID: ${this.drawID} - Span no longer in DOM, skipping processing.`);
-        return;
-      }
-
-      const mask = span.getAttribute("data-mask");
-      const ref = span.getAttribute("data-ref");
-
-      if (!mask || !ref) {
-        console.warn(`Draw ID: ${this.drawID} - Span missing data-mask or data-ref attribute, skipping.`);
-        return;
-      }
-
-      // Create a unique ID for this span
-      const spanUniqueId = `${mask}-${ref}`;
-
-      // Check for an EXISTING icon container in the document
-      // *** IMPORTANT: Make sure this check is robust. If it incorrectly finds an old container, it will skip. ***
-      const existingContainer = document.getElementById(`doc-container-${spanUniqueId}`);
-      if (existingContainer) {
-        // Check if the existing container *already* has the final icon or is empty (meaning processing completed before)
-        // If it still contains the clock, maybe something went wrong last time? Let's allow reprocessing *if* it only has the clock.
-        const hasClockOnly = existingContainer.innerHTML.includes("lucide-clock");
-        const hasPaperclip = existingContainer.innerHTML.includes("lucide-paperclip");
-
-        if (!hasClockOnly || hasPaperclip) {
-          console.log(
-            `Draw ID: ${this.drawID} - Container already exists and processed for span ${spanUniqueId}, skipping.`
-          );
-          // Ensure the processed flag is set even if skipped here
-          span.setAttribute(`data-processed-${this.drawID}`, "true");
-          return;
-        } else {
-          console.log(
-            `Draw ID: ${this.drawID} - Container exists with only clock for ${spanUniqueId}, attempting re-processing.`
-          );
-          // Optionally remove the old container before creating a new one, or just proceed
-          existingContainer.remove();
-        }
-      }
-
-      // Mark processing with unique attributes
-      const processedAttr = `data-processed-${this.drawID}`;
-      const processingAttr = `data-processing-${this.drawID}`;
-
-      // *** Check if ALREADY processed by this instance ***
-      if (span.hasAttribute(processedAttr)) {
-        console.log(`Draw ID: ${this.drawID} - Span ${spanUniqueId} already processed by this instance, skipping.`);
-        return;
-      }
-      // *** Check if CURRENTLY being processed by this instance ***
-      if (span.hasAttribute(processingAttr)) {
-        console.log(
-          `Draw ID: ${this.drawID} - Span ${spanUniqueId} currently being processed by this instance, skipping.`
-        );
-        return;
-      }
-      span.setAttribute(processingAttr, "true");
-
-      // Create the container immediately with a clock icon
-      const container = document.createElement("span");
-      // Set a min-width and min-height using the ICON_DIMENSIONS so the cell doesn't collapse
-      container.style.display = "inline-block"; // Good!
-      container.style.minWidth = this.ICON_DIMENSIONS; // Good!
-      container.style.minHeight = this.ICON_DIMENSIONS; // Good!
-      container.style.verticalAlign = "middle"; // Might help alignment
-      container.id = `doc-container-${spanUniqueId}`; // Good!
-      // Immediately show a clock icon to indicate loading
-      container.innerHTML = this.getSvgForType("clock", this.ICON_DIMENSIONS); // Good!
-
-      // Insert the container next to the span.
-      // *** Logic for zero dimensions seems okay ***
-      const rect = span.getBoundingClientRect();
-      const hasZeroDimensions = rect.width === 0 || rect.height === 0;
-      let insertionTarget = span.parentNode; // Default target
-      let insertionReference = span.nextSibling; // Default reference node
-
-      if (hasZeroDimensions) {
-        let targetParent = span.parentElement;
-        if (targetParent && (targetParent.tagName === "TD" || targetParent.tagName === "TH")) {
-          // Append to TD/TH for zero-dimension spans
-          targetParent.appendChild(container);
-          console.log(`Appended clock container to ${targetParent.tagName} for zero-dimension span ${spanUniqueId}`);
-        } else {
-          // Fallback: Insert after span if parent isn't TD/TH
-          span.parentNode.insertBefore(container, span.nextSibling);
-          console.log(`Inserted clock container after span for zero-dimension span ${spanUniqueId}`);
-        }
-      } else {
-        // Standard insertion for visible spans
-        span.parentNode.insertBefore(container, span.nextSibling);
-      }
-      // --- Clock should be in the DOM here ---
-
-      try {
-        // Check for attachment data in session storage
-        const attachmentCacheKey = this.generateCacheKey(`attachments_${mask}_${ref}`, this.authObj);
-        const attachmentResults = this.getFromSessionStorage(attachmentCacheKey, true);
-
-        // --- The potential rapid replacement happens below ---
-
-        let documentCount = 0;
-        let documentData = [];
-        if (attachmentResults && Array.isArray(attachmentResults)) {
-          // *** Refined data extraction ***
-          documentData = attachmentResults.reduce((allDocs, result) => {
-            // Check the structure carefully based on how `getAttachments` returns data
-            // Assuming each result object has an `attachments` property which is the array of docs
-            if (result && result.attachments && Array.isArray(result.attachments)) {
-              return [...allDocs, ...result.attachments];
-            } else if (result && Array.isArray(result)) {
-              // Maybe the result *is* the array of attachments? Adapt if needed.
-              // return [...allDocs, ...result];
-            }
-            return allDocs;
-          }, []);
-          documentCount = documentData.length;
-        }
-
-        // Update the container based on the count
-        if (documentCount > 0) {
-          console.log(
-            `Draw ID: ${this.drawID} - Updating span ${spanUniqueId} with ${documentCount} attachments (from cache/fetch)`
-          );
-
-          // Create a paperclip icon element.
-          const iconElement = document.createElement("span");
-          iconElement.innerHTML = this.getSvgForType("paperclip", this.ICON_DIMENSIONS);
-          iconElement.style.cursor = "pointer";
-          iconElement.style.display = "inline-block"; // Important
-          iconElement.style.verticalAlign = "middle"; // Match container
-          iconElement.title = `${documentCount} document(s) for ${ref}`;
-          // Add click handler to open modal with document details
-          iconElement.addEventListener("click", (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log(`Clicked paperclip icon for mask=${mask}, ref=${ref}`);
-            this.openMessage(documentData, ref);
-          });
-          // Replace the clock icon with the paperclip icon inside the container
-          container.innerHTML = ""; // Clear clock
-          container.appendChild(iconElement); // Add paperclip
-          console.log(`Successfully processed span ${spanUniqueId} with ${documentCount} attachments`);
-        } else {
-          console.log(`Draw ID: ${this.drawID} - No attachments found for span ${spanUniqueId}, clearing clock icon`);
-          // No attachments found: remove the container's content (effectively removing the clock)
-          container.innerHTML = "";
-        }
-        // Mark the span as processed *after* successful update
-        span.setAttribute(processedAttr, "true");
-      } catch (error) {
-        console.error(`Draw ID: ${this.drawID} - Error processing span with mask=${mask}, ref=${ref}:`, error);
-        // Optionally add an error indicator?
-        container.innerHTML = this.getSvgForType("error", this.ICON_DIMENSIONS);
-        container.title = `Error processing attachments for ${ref}`;
-        // Still mark as processed to avoid retries on error? Or remove processing flag?
-        // Let's mark as processed to avoid loops on persistent errors.
-        span.setAttribute(processedAttr, "true");
-      } finally {
-        // Always remove the processing flag
-        if (span && span.hasAttribute(processingAttr)) {
-          span.removeAttribute(processingAttr);
-        }
-      }
-    }
-
     /**
      * Helper method to escape HTML content to prevent XSS vulnerabilities
      */
@@ -1895,37 +1721,124 @@ define(() => {
     /**
      * Enhanced check to determine if an element is visible, accounting for Cognos pagination
      */
+    /**
+     * Enhanced check to determine if an element is truly visible:
+     * - Not hidden by parent styles (display:none, visibility:hidden)
+     * - On an active Cognos page (if applicable)
+     * - Within the current browser viewport
+     */
     isElementVisibleInCognosPage(element) {
       if (!element) return false;
 
-      // Check if element itself is hidden
-      if (element.offsetParent === null) return false;
+      // 1. Basic DOM check: Is it even connected?
+      if (!document.body.contains(element)) {
+        // console.log(`Span ${element.dataset.mask}-${element.dataset.ref} not in body`);
+        return false;
+      }
 
-      // NOTE: We're removing the dimension check since that's causing all our spans to be excluded
-      // Instead, we'll only check parent visibility
+      // 2. Check visibility based on CSS and offsetParent
+      // offsetParent check handles upstream display:none effectively
+      if (element.offsetParent === null) {
+        // console.log(`Span ${element.dataset.mask}-${element.dataset.ref} hidden by offsetParent`);
+        return false;
+      }
 
-      // Check if any parent container is hidden or on an inactive page
+      // 3. Check explicit parent styles and Cognos page status
       let parent = element.parentElement;
+      let onActiveCognosPage = false; // Assume not on a paged element initially
+      let isPotentiallyPaged = false; // Track if we encounter any clsViewerPage
+
       while (parent) {
-        // Check for display:none, visibility:hidden
         const style = window.getComputedStyle(parent);
+        // Check standard CSS hiding
         if (style.display === "none" || style.visibility === "hidden") {
-          return false;
+          // console.log(`Span ${element.dataset.mask}-${element.dataset.ref} hidden by parent style`, parent);
+          return false; // Hidden by an ancestor
         }
 
-        // Special check for Cognos pagination
-        // If this element is in a clsViewerPage that's not displayed, it's not visible
+        // Check Cognos page visibility
         if (parent.classList && parent.classList.contains("clsViewerPage")) {
-          if (style.display !== "block") {
+          isPotentiallyPaged = true; // We are inside a Cognos paged structure
+          if (style.display === "block") {
+            // Assuming 'block' means active page
+            onActiveCognosPage = true;
+            // Don't break here, a higher parent could still be display:none
+          } else {
+            // It's inside *an inactive* Cognos page
+            // console.log(`Span ${element.dataset.mask}-${element.dataset.ref} on inactive Cognos page`, parent);
             return false;
           }
         }
-
         parent = parent.parentElement;
       }
 
-      // If we get here, consider the element visible in the active Cognos page
-      return true;
+      // If it's part of a paged structure but wasn't confirmed to be on an *active* page, treat as hidden.
+      // This handles cases where it might be outside the 'block' page but still controlled by pagination.
+      // (This logic might need adjustment based on exact Cognos structure if elements can be outside clsViewerPage)
+      // Let's simplify: If it was inside *any* clsViewerPage, it *must* have been found with display:block to be considered active.
+      if (isPotentiallyPaged && !onActiveCognosPage) {
+        // console.log(`Span ${element.dataset.mask}-${element.dataset.ref} potentially paged but not confirmed active`);
+        return false;
+      }
+
+      // 4. *** CRITICAL: Check if the element is within the viewport ***
+      // Only perform this check if it passed all the parent/page visibility checks above
+      const isInViewport = this.isElementInViewport(element);
+      // if (!isInViewport) {
+      //     console.log(`Span ${element.dataset.mask}-${element.dataset.ref} is not in viewport`);
+      // }
+      return isInViewport;
+    }
+
+    /**
+     * Determines if an element is in the viewport (Helper function - check if still accurate)
+     * Consider how it handles zero-dimension spans.
+     */
+    isElementInViewport(element) {
+      if (!element) return false;
+
+      // Get the element's bounding rectangle
+      let rect = element.getBoundingClientRect();
+
+      // If the element has no size (like our empty spans initially),
+      // check its parent TD/TR or a more relevant container instead.
+      // Checking the immediate parent might be enough if it's the TD.
+      if (rect.width === 0 || rect.height === 0) {
+        const parentElement = element.parentElement; // Typically the TD
+        if (parentElement) {
+          rect = parentElement.getBoundingClientRect();
+          // If parent is *also* 0x0, then it's truly not visible/rendered yet
+          if (rect.width === 0 || rect.height === 0) {
+            // console.log(`Span ${element.dataset.mask}-${element.dataset.ref} and parent have zero dimensions`);
+            return false;
+          }
+        } else {
+          // No parent? Definitely not visible.
+          // console.log(`Span ${element.dataset.mask}-${element.dataset.ref} has zero dimensions and no parent`);
+          return false;
+        }
+      }
+
+      // If dimensions are still zero after checking parent, consider it not visible
+      if (rect.width === 0 || rect.height === 0) {
+        // console.log(`Span ${element.dataset.mask}-${element.dataset.ref} resolved to zero dimensions`);
+        return false;
+      }
+
+      const windowHeight = window.innerHeight || document.documentElement.clientHeight;
+      const windowWidth = window.innerWidth || document.documentElement.clientWidth;
+
+      // Generous buffers allow loading slightly off-screen
+      const verticalBuffer = 150; // Increased buffer slightly
+      const horizontalBuffer = 50;
+
+      // Check if *any part* of the element bounding box is within the viewport + buffer
+      const vertInView = rect.bottom > 0 - verticalBuffer && rect.top < windowHeight + verticalBuffer;
+      const horzInView = rect.right > 0 - horizontalBuffer && rect.left < windowWidth + horizontalBuffer;
+
+      // console.log(`Span ${element.dataset.mask}-${element.dataset.ref} viewport check: rect=${JSON.stringify(rect)}, vert=${vertInView}, horz=${horzInView}`);
+
+      return vertInView && horzInView;
     }
 
     // Add this debugging function to your class
@@ -2850,4 +2763,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 420
+// 20250410 425
