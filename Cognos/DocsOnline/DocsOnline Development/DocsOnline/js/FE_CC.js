@@ -81,15 +81,14 @@ define(() => {
     draw(oControlHost) {
       this.oControl = oControlHost;
       this.drawID = this.oControl.generateUniqueID(); // *** Get and store drawID ***
-
-      this.LIST_NAME = oControlHost.page.getControlsByName("List1");
+      let listControlSearch = oControlHost.page.getControlsByName("List1");
+      this.LIST_NAME = (listControlSearch && listControlSearch.length > 0) ? listControlSearch : null;
       console.log(this.LIST_NAME)
       // Check each configuration parameter and collect the missing ones
       const missingParams = [];
       if (!this.AppUrl) missingParams.push("App Server Url");
       if (!this.JobUrl) missingParams.push("Job Server Url");
-      if (oControlHost.page.getControlsByName("List1").length = 0 || this.LIST_NAME == null)
-        missingParams.push("List Name");
+      if (this.LIST_NAME == null) missingParams.push("List Name");
       if (!this.ATT_ID_COL_NM) missingParams.push("Attachment ID Column Name");
 
       // If any parameters are missing, log specific error and return
@@ -366,4 +365,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 1117
+// 20250410 1122
