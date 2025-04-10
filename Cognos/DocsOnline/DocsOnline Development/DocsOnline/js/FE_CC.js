@@ -40,19 +40,37 @@ define(() => {
       const {
         ["App Server Url"]: AppUrl,
         ["Job Server Url"]: JobUrl,
-        ["Attachment Container"]: att_container,
-        ["Reference ID Column Name"]: refId,
-        ["DataStore ID Column Name"]: dSCN,
-        ["DataStore Mask Column Name"]: dMCN,
+        ["Attachment Container"]: LIST_NAME,
+        ["Attachment ID Column Name"]: ATT_ID_COL_NM,
+        ["Font Size"]: FONT_SIZE,
+        ["Lazy Loading"]: IS_LAZY_LOADED,
+        ["Icon Dimensions"]: ICON_DIMENSIONS,
+        ["Modal Label"]: MODAL_LABEL,
       } = this.oControl.configuration;
+
       this.AppUrl = this.removeTrailingSlash(AppUrl);
       this.JobUrl = this.removeTrailingSlash(JobUrl);
-      this.refID = refId;
-      this.att_container = att_container;
-      this.dSCN = dSCN;
-      this.dMCN = dMCN;
+      this.ATT_ID_COL_NM = ATT_ID_COL_NM;
+      this.MODAL_LABEL = MODAL_LABEL || "Attachments For ID: ";
+      this.LIST_NAME = LIST_NAME || null;
+      this.IS_LAZY_LOADED = IS_LAZY_LOADED !== false;
+      this.ICON_DIMENSIONS = ICON_DIMENSIONS || "16px";
+      this.FONT_SIZE = FONT_SIZE || "1em";
       this.m_DataStore;
       console.log("Configuration", this.oControl.configuration);
+
+      // Check each configuration parameter and collect the missing ones
+      const missingParams = [];
+      if (!this.AppUrl) missingParams.push("App Server Url");
+      if (!this.JobUrl) missingParams.push("Job Server Url");
+      if (!this.ATT_ID_COL_NM) missingParams.push("Attachment ID Column Name");
+
+      // If any parameters are missing, log specific error and return
+      if (missingParams.length > 0) {
+        let description = `Missing required configuration parameters: ${missingParams.join(", ")}`;
+        throw new scriptableReportError("AdvancedControl", "draw", description);
+      }
+
       fnDoneInitializing();
     }
 
@@ -64,10 +82,14 @@ define(() => {
       this.oControl = oControlHost;
       this.drawID = this.oControl.generateUniqueID(); // *** Get and store drawID ***
 
+      this.LIST_NAME = oControlHost.page.getControlsByName("List1");
       // Check each configuration parameter and collect the missing ones
       const missingParams = [];
       if (!this.AppUrl) missingParams.push("App Server Url");
       if (!this.JobUrl) missingParams.push("Job Server Url");
+      if (oControlHost.page.getControlsByName("List1").length = 0 || this.LIST_NAME == null)
+        missingParams.push("List Name");
+      if (!this.ATT_ID_COL_NM) missingParams.push("Attachment ID Column Name");
 
       // If any parameters are missing, log specific error and return
       if (missingParams.length > 0) {
@@ -93,7 +115,7 @@ define(() => {
      * @param {*} authDataSet
      */
     getAuthObject() {
-      const auth = this.m_DataStore
+      const auth = this.m_DataStore;
       if (!auth) {
         throw new Error("Auth data not available");
       }
@@ -343,4 +365,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 1051
+// 20250410 1110
