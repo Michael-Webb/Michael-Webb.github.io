@@ -19,7 +19,7 @@ define(() => {
       this.JobUrl = this.removeTrailingSlash(JobUrl);
       this.refID = refId;
       this.att_container = att_container;
-
+      this.m_DataStores = [];
       console.log("Configuration", this.oControl.configuration);
       fnDoneInitializing();
     }
@@ -47,12 +47,11 @@ define(() => {
      * Returns:
      */
     setData(oControlHost, oDataStore) {
-
-        console.log(oDataStore)
+        console.log(oDataStore);
+      this.m_DataStores.push(oDataStore);
       // Method below is for a multiple data stores by name to use later in the draw function
-    //   this.m_aDataStore[oDataStore.index] = oDataStore;
-
-    //   console.log(this.m_oDataStores);
+      //   this.m_aDataStore[oDataStore.index] = oDataStore;
+      console.log(this.m_DataStores);
 
       // Method below is for a single data store to use later in the draw function
       //   this.m_oDataStore = oDataStore;
