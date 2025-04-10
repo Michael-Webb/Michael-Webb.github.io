@@ -17,8 +17,8 @@ define(() => {
       } = this.oControl.configuration;
       this.AppUrl = this.removeTrailingSlash(AppUrl);
       this.JobUrl = this.removeTrailingSlash(JobUrl);
-      this.refID = refId
-      this.att_container = att_container
+      this.refID = refId;
+      this.att_container = att_container;
 
       console.log("Configuration", this.oControl.configuration);
       fnDoneInitializing();
@@ -47,31 +47,30 @@ define(() => {
      * Returns:
      */
     setData(oControlHost, oDataStore) {
+      // Method below is for a multiple data stores by name to use later in the draw function
+      this.m_aDataStore[oDataStore.index] = oDataStore;
 
-        // Method below is for a multiple data stores by name to use later in the draw function
-      this.m_oDataStores[oDataStore.name] = oDataStore;
-
-      console.log(this.m_oDataStores)
+      console.log(this.m_oDataStores);
 
       // Method below is for a single data store to use later in the draw function
-    //   this.m_oDataStore = oDataStore;
-    //   console.log("DataStore", this.m_oDataStore);
-    //   let sessionId_ColIndex = this.m_oDataStore.getColumnIndex("SessionId");
-    //   console.log(sessionId_ColIndex);
-    //   let sessionId = this.m_oDataStore.getCellValue(0, sessionId_ColIndex);
+      //   this.m_oDataStore = oDataStore;
+      //   console.log("DataStore", this.m_oDataStore);
+      //   let sessionId_ColIndex = this.m_oDataStore.getColumnIndex("SessionId");
+      //   console.log(sessionId_ColIndex);
+      //   let sessionId = this.m_oDataStore.getCellValue(0, sessionId_ColIndex);
 
-    //   let token_ColIndex = this.m_oDataStore.getColumnIndex("Token");
-    //   let token = this.m_oDataStore.getCellValue(0, token_ColIndex);
+      //   let token_ColIndex = this.m_oDataStore.getColumnIndex("Token");
+      //   let token = this.m_oDataStore.getCellValue(0, token_ColIndex);
 
-    //   let environment_ColIndex = this.m_oDataStore.getColumnIndex("Environment");
-    //   let environment = this.m_oDataStore.getCellValue(0, environment_ColIndex);
+      //   let environment_ColIndex = this.m_oDataStore.getColumnIndex("Environment");
+      //   let environment = this.m_oDataStore.getCellValue(0, environment_ColIndex);
 
-    //   let user_ColIndex = this.m_oDataStore.getColumnIndex("User");
-    //   let user = this.m_oDataStore.getCellValue(0, user_ColIndex);
+      //   let user_ColIndex = this.m_oDataStore.getColumnIndex("User");
+      //   let user = this.m_oDataStore.getCellValue(0, user_ColIndex);
 
-    //   let authObject = { sessionId, token, environment, user };
-    //   this.authObject = authObject;
-    //   console.log("authObject: ", authObject);
+      //   let authObject = { sessionId, token, environment, user };
+      //   this.authObject = authObject;
+      //   console.log("authObject: ", authObject);
     }
 
     _getMaskDetails(maskName) {
