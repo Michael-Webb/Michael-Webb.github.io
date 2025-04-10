@@ -169,7 +169,7 @@ define(() => {
           const uniqueModels = [...new Set([...btObjectValues, ...modelsArray.btString])];
 
           // Passing the combined set of btObjectValues and btString to getAttachDef
-          const attachDef = await this.getAttachDef(maskString, uniqueModels, autObject);
+          const attachDef = await this.getAttachDef(allMasks[0], uniqueModels, autObject);
 
           const entityTransform = this.transformDefintion(data, attachDef);
 
@@ -934,4 +934,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 104
+// 20250410 106
