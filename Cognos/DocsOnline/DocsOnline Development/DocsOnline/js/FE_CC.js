@@ -1207,203 +1207,218 @@ define(() => {
      * Initialize lazy loading of spans by adding scroll, resize, and mutation listeners
      */
     /**
- * Initialize lazy loading with targeted observation of LIST_NAME tables
- */
-initializeVisibleSpanLoading() {
-    // Ensure only one set of listeners/observers per instance
-    if (this.scrollHandler) {
-      console.log(`Draw ID: ${this.drawID} - Listeners already initialized, skipping.`);
-      return;
-    }
-  
-    this.scrollHandler = () => {
-      if (this.apiToken && !this.processingInProgress) {
-        this.processVisibleSpans();
+     * Initialize lazy loading with targeted observation of LIST_NAME tables
+     */
+    initializeVisibleSpanLoading() {
+      // Ensure only one set of listeners/observers per instance
+      if (this.scrollHandler) {
+        console.log(`Draw ID: ${this.drawID} - Listeners already initialized, skipping.`);
+        return;
       }
-    };
-  
-    this.throttledScrollHandler = this.throttle(this.scrollHandler, 150);
-  
-    // Listen on scroll events
-    document.addEventListener("scroll", this.throttledScrollHandler, { capture: true, passive: true });
-    window.addEventListener("scroll", this.throttledScrollHandler, { passive: true });
-    window.addEventListener("resize", this.throttledScrollHandler, { passive: true });
-  
-    this.intervalCheck = setInterval(() => {
-      if (this.apiToken && !this.processingInProgress) {
-        this.processVisibleSpans();
-      }
-    }, 1500);
-  
-    // Find tables to observe
-    const targetTables = document.querySelectorAll(`[lid="${this.LIST_NAME}"]`);
-    
-    // If no tables found yet, observe the body for tables being added
-    const observerTarget = targetTables.length > 0 ? 
-      targetTables : 
-      [document.querySelector(".idViewer") || document.body];
-    
-    console.log(`Draw ID: ${this.drawID} - Setting up MutationObserver on ${observerTarget.length} elements`);
-  
-    const observerOptions = {
-      attributes: true,
-      attributeFilter: ["style", "class"],
-      childList: true,
-      subtree: true,
-    };
-  
-    this.mutationObserver = new MutationObserver((mutationsList) => {
-      let needsProcessing = false;
-      let tablesAddedOrModified = false;
-      
-      for (const mutation of mutationsList) {
-        // Check if tables with our LIST_NAME were added
-        if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
-          for (const node of mutation.addedNodes) {
-            if (node.nodeType === Node.ELEMENT_NODE) {
-              // Check if a table with our LIST_NAME was added
-              if (node.matches && node.matches(`[lid="${this.LIST_NAME}"]`)) {
-                tablesAddedOrModified = true;
-                needsProcessing = true;
-                break;
-              }
-              
-              // Check if the added node contains a table with our LIST_NAME
-              if (node.querySelector && node.querySelector(`[lid="${this.LIST_NAME}"]`)) {
-                tablesAddedOrModified = true;
-                needsProcessing = true;
-                break;
+
+      this.scrollHandler = () => {
+        if (this.apiToken && !this.processingInProgress) {
+          this.processVisibleSpans();
+        }
+      };
+
+      this.throttledScrollHandler = this.throttle(this.scrollHandler, 150);
+
+      // Listen on scroll events
+      document.addEventListener("scroll", this.throttledScrollHandler, { capture: true, passive: true });
+      window.addEventListener("scroll", this.throttledScrollHandler, { passive: true });
+      window.addEventListener("resize", this.throttledScrollHandler, { passive: true });
+
+      this.intervalCheck = setInterval(() => {
+        if (this.apiToken && !this.processingInProgress) {
+          this.processVisibleSpans();
+        }
+      }, 1500);
+
+      // Find tables to observe
+      const targetTables = document.querySelectorAll(`[lid="${this.LIST_NAME}"]`);
+
+      // If no tables found yet, observe the body for tables being added
+      const observerTarget =
+        targetTables.length > 0 ? targetTables : [document.querySelector(".idViewer") || document.body];
+
+      console.log(`Draw ID: ${this.drawID} - Setting up MutationObserver on ${observerTarget.length} elements`);
+
+      const observerOptions = {
+        attributes: true,
+        attributeFilter: ["style", "class"],
+        childList: true,
+        subtree: true,
+      };
+
+      this.mutationObserver = new MutationObserver((mutationsList) => {
+        let needsProcessing = false;
+        let tablesAddedOrModified = false;
+
+        for (const mutation of mutationsList) {
+          // Check if tables with our LIST_NAME were added
+          if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
+            for (const node of mutation.addedNodes) {
+              if (node.nodeType === Node.ELEMENT_NODE) {
+                // Check if a table with our LIST_NAME was added
+                if (node.matches && node.matches(`[lid="${this.LIST_NAME}"]`)) {
+                  tablesAddedOrModified = true;
+                  needsProcessing = true;
+                  break;
+                }
+
+                // Check if the added node contains a table with our LIST_NAME
+                if (node.querySelector && node.querySelector(`[lid="${this.LIST_NAME}"]`)) {
+                  tablesAddedOrModified = true;
+                  needsProcessing = true;
+                  break;
+                }
               }
             }
           }
-        }
-        
-        // Check for attribute changes that might affect visibility
-        if (mutation.type === "attributes" && 
-            (mutation.attributeName === "style" || mutation.attributeName === "class")) {
-          const target = mutation.target;
-          if (target.matches && target.matches(`[lid="${this.LIST_NAME}"]`)) {
-            tablesAddedOrModified = true;
-            needsProcessing = true;
-            break;
+
+          // Check for attribute changes that might affect visibility
+          if (
+            mutation.type === "attributes" &&
+            (mutation.attributeName === "style" || mutation.attributeName === "class")
+          ) {
+            const target = mutation.target;
+            if (target.matches && target.matches(`[lid="${this.LIST_NAME}"]`)) {
+              tablesAddedOrModified = true;
+              needsProcessing = true;
+              break;
+            }
           }
+
+          if (needsProcessing) break;
         }
-  
-        if (needsProcessing) break;
-      }
-  
-      if (needsProcessing) {
-        console.log(`Draw ID: ${this.drawID} - Tables were ${tablesAddedOrModified ? 'added/modified' : 'not modified'}`);
-        
-        clearTimeout(this.mutationProcessTimeout);
-        this.mutationProcessTimeout = setTimeout(() => {
-          if (this.apiToken && !this.processingInProgress) {
-            this.processVisibleSpans();
-          }
-        }, 250);
-      }
-    });
-  
-    // Observe each target
-    observerTarget.forEach(target => {
-      this.mutationObserver.observe(target, observerOptions);
-    });
-    
-    console.log(`Draw ID: ${this.drawID} - MutationObserver initialized`);
-  }
+
+        if (needsProcessing) {
+          console.log(
+            `Draw ID: ${this.drawID} - Tables were ${tablesAddedOrModified ? "added/modified" : "not modified"}`
+          );
+
+          clearTimeout(this.mutationProcessTimeout);
+          this.mutationProcessTimeout = setTimeout(() => {
+            if (this.apiToken && !this.processingInProgress) {
+              this.processVisibleSpans();
+            }
+          }, 250);
+        }
+      });
+
+      // Observe each target
+      observerTarget.forEach((target) => {
+        this.mutationObserver.observe(target, observerOptions);
+      });
+
+      console.log(`Draw ID: ${this.drawID} - MutationObserver initialized`);
+    }
+
     /**
- * Process spans that are actually visible in the viewport, using LIST_NAME to find relevant tables
- */
-async processVisibleSpans() {
-    // Ensure API token is available
-    if (!this.apiToken) {
-      console.log(`Draw ID: ${this.drawID} - API token not yet available, skipping processVisibleSpans.`);
-      return;
+     * Process spans in visible rows of tables with LIST_NAME
+     */
+    async processVisibleSpans() {
+      // Ensure API token is available
+      if (!this.apiToken) {
+        console.log(`Draw ID: ${this.drawID} - API token not yet available, skipping processVisibleSpans.`);
+        return;
+      }
+
+      // Prevent concurrent execution
+      if (this.processingInProgress) {
+        console.log(`Draw ID: ${this.drawID} - Processing already in progress, skipping.`);
+        return;
+      }
+
+      this.processingInProgress = true;
+
+      try {
+        // Find all tables with the specified LIST_NAME
+        const tables = document.querySelectorAll(`[lid="${this.LIST_NAME}"]`);
+        console.log(`Draw ID: ${this.drawID} - Found ${tables.length} tables with lid="${this.LIST_NAME}"`);
+
+        if (tables.length === 0) {
+          console.log(`Draw ID: ${this.drawID} - No tables found with lid="${this.LIST_NAME}"`);
+          this.processingInProgress = false;
+          return;
+        }
+
+        // Find all rows in these tables
+        const allRows = [];
+        tables.forEach((table) => {
+          // Get all rows, either direct tr children or within tbody
+          const rows = table.querySelectorAll("tr");
+          allRows.push(...rows);
+        });
+
+        console.log(`Draw ID: ${this.drawID} - Found ${allRows.length} rows in tables with lid="${this.LIST_NAME}"`);
+
+        // Filter to only visible rows
+        const visibleRows = Array.from(allRows).filter((row) => {
+          const rect = row.getBoundingClientRect();
+
+          // Skip rows with no dimensions
+          if (rect.width === 0 || rect.height === 0) return false;
+
+          // Check if row is in viewport (with buffer)
+          const windowHeight = window.innerHeight || document.documentElement.clientHeight;
+          const buffer = 100; // Buffer to pre-load rows just outside viewport
+          return rect.top <= windowHeight + buffer && rect.bottom >= -buffer;
+        });
+
+        console.log(`Draw ID: ${this.drawID} - Found ${visibleRows.length} visible rows`);
+
+        if (visibleRows.length === 0) {
+          console.log(`Draw ID: ${this.drawID} - No visible rows found.`);
+          this.processingInProgress = false;
+          return;
+        }
+
+        // Find spans within these visible rows
+        const spansInVisibleRows = [];
+        visibleRows.forEach((row) => {
+          const spans = row.querySelectorAll(`span[data-name=${this.SPAN_NAME}]`);
+          spansInVisibleRows.push(...spans);
+        });
+
+        console.log(`Draw ID: ${this.drawID} - Found ${spansInVisibleRows.length} spans in visible rows`);
+
+        if (spansInVisibleRows.length === 0) {
+          console.log(`Draw ID: ${this.drawID} - No spans found in visible rows.`);
+          this.processingInProgress = false;
+          return;
+        }
+
+        // Filter to only unprocessed spans
+        const processedAttr = `data-processed-${this.drawID}`;
+        const processingAttr = `data-processing-${this.drawID}`;
+
+        const spansToProcess = Array.from(spansInVisibleRows).filter(
+          (span) => !span.hasAttribute(processedAttr) && !span.hasAttribute(processingAttr)
+        );
+
+        console.log(`Draw ID: ${this.drawID} - Found ${spansToProcess.length} unprocessed spans in visible rows`);
+
+        if (spansToProcess.length === 0) {
+          console.log(`Draw ID: ${this.drawID} - No unprocessed spans found in visible rows.`);
+          this.processingInProgress = false;
+          return;
+        }
+
+        // Get unique masks from the spans to process
+        const masks = [...new Set(spansToProcess.map((span) => span.getAttribute("data-mask")).filter(Boolean))];
+
+        console.log(`Draw ID: ${this.drawID} - Found ${masks.length} unique masks: ${masks.join(", ")}`);
+
+        // Process spans with these masks
+        await this.processSpansByMask(spansToProcess, masks, this.authObj);
+      } catch (error) {
+        console.error(`Error in processVisibleSpans (Instance ${this.drawID}):`, error);
+      } finally {
+        this.processingInProgress = false;
+      }
     }
-  
-    // Prevent concurrent execution
-    if (this.processingInProgress) {
-      console.log(`Draw ID: ${this.drawID} - Processing already in progress, skipping.`);
-      return;
-    }
-    
-    this.processingInProgress = true;
-    
-    try {
-      // Find all tables with the specified LIST_NAME
-      const tables = document.querySelectorAll(`[lid="${this.LIST_NAME}"]`);
-      console.log(`Draw ID: ${this.drawID} - Found ${tables.length} tables with lid="${this.LIST_NAME}"`);
-      
-      if (tables.length === 0) {
-        console.log(`Draw ID: ${this.drawID} - No tables found with lid="${this.LIST_NAME}"`);
-        this.processingInProgress = false;
-        return;
-      }
-      
-      // Find visible tables
-      const visibleTables = Array.from(tables).filter(table => {
-        const rect = table.getBoundingClientRect();
-        if (rect.width === 0 || rect.height === 0) return false;
-        
-        // Check if table is in or near viewport
-        const windowHeight = window.innerHeight || document.documentElement.clientHeight;
-        const buffer = 200; // Add buffer for tables partially in view
-        return rect.top <= (windowHeight + buffer) && rect.bottom >= -buffer;
-      });
-      
-      console.log(`Draw ID: ${this.drawID} - Found ${visibleTables.length} visible tables with lid="${this.LIST_NAME}"`);
-      
-      if (visibleTables.length === 0) {
-        console.log(`Draw ID: ${this.drawID} - No visible tables found with lid="${this.LIST_NAME}"`);
-        this.processingInProgress = false;
-        return;
-      }
-      
-      // Get all spans with the specified data attributes within the visible tables
-      const allSpans = [];
-      visibleTables.forEach(table => {
-        const spans = table.querySelectorAll(`span[data-name=${this.SPAN_NAME}]`);
-        allSpans.push(...spans);
-      });
-      
-      console.log(`Draw ID: ${this.drawID} - Found ${allSpans.length} total spans in visible tables`);
-      
-      if (allSpans.length === 0) {
-        this.processingInProgress = false;
-        return;
-      }
-      
-      // Filter to only spans that haven't been processed yet
-      const processedAttr = `data-processed-${this.drawID}`;
-      const processingAttr = `data-processing-${this.drawID}`;
-      
-      const spansToProcess = Array.from(allSpans).filter(span => 
-        !span.hasAttribute(processedAttr) && !span.hasAttribute(processingAttr)
-      );
-      
-      console.log(`Draw ID: ${this.drawID} - Found ${spansToProcess.length} unprocessed spans in visible tables`);
-      
-      if (spansToProcess.length === 0) {
-        console.log(`Draw ID: ${this.drawID} - No unprocessed spans found in visible tables.`);
-        this.processingInProgress = false;
-        return;
-      }
-      
-      // Get unique masks from the spans to process
-      const masks = [...new Set(spansToProcess.map(span => 
-        span.getAttribute('data-mask')).filter(Boolean))];
-        
-      console.log(`Draw ID: ${this.drawID} - Found ${masks.length} unique masks: ${masks.join(', ')}`);
-      
-      // Process spans with these masks
-      await this.processSpansByMask(spansToProcess, masks, this.authObj);
-      
-    } catch (error) {
-      console.error(`Error in processVisibleSpans (Instance ${this.drawID}):`, error);
-    } finally {
-      this.processingInProgress = false;
-    }
-  }
     /**
      * Process spans by mask - fetching definitions once per mask
      */
@@ -1576,4 +1591,4 @@ async processVisibleSpans() {
 
   return AdvancedControl;
 });
-// 20250410 230
+// 20250410 233
