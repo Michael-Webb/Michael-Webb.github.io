@@ -1394,6 +1394,9 @@ define(() => {
         });
 
         console.log(`Draw ID: ${this.drawID} - Found ${spansInVisibleRows.length} spans in visible rows`);
+
+        // Process spans with these masks
+        await this.processSpansByMask(spansToProcess, masks, this.authObj);
       } catch (error) {
         console.error(`Error in processVisibleSpans (Instance ${this.drawID}):`, error);
       } finally {
@@ -1572,4 +1575,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 238
+// 20250410 240
