@@ -19,8 +19,11 @@ define(() => {
      */
     draw(oControlHost) {
       oControlHost.container.innerHTML = "Hello world";
-      let listEl = oControlHost.page.getControlByName( "Asset List" )
-      console.log("listControl",listEl)
+      let listControl = oControlHost.page.getControlByName( "Asset List" ).element
+
+      let listEl = oControlHost.page.getControlByName( "Asset List" ).element
+      console.log("List Control",listControl )
+      console.log("List Element",listEl)
     }
 
     /*
