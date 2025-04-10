@@ -1556,9 +1556,6 @@ define(() => {
     /**
      * Process a single span with pre-fetched definitions
      */
-    /**
-     * Process a single span with pre-fetched definitions and display appropriate attachment icons
-     */
     async processSpanWithDefinitions(span, definitions) {
       // Make sure span is still in the DOM and valid
       if (!span || !document.body.contains(span)) {
@@ -1608,10 +1605,10 @@ define(() => {
 
         // Process attachment data if available
         if (attachmentResults && Array.isArray(attachmentResults)) {
-          // Collect all documents from attachment results
+          // Collect all documents from attachment results without looking for an .items property
           documentData = attachmentResults.reduce((allDocs, result) => {
-            if (result.attachments && result.attachments.items && Array.isArray(result.attachments.items)) {
-              return [...allDocs, ...result.attachments.items];
+            if (result.attachments && Array.isArray(result.attachments)) {
+              return [...allDocs, ...result.attachments];
             }
             return allDocs;
           }, []);
@@ -2664,6 +2661,6 @@ define(() => {
     }
   }
 
-  return AdvancedControl;a
+  return AdvancedControl;
 });
-// 20250410 344
+// 20250410 351
