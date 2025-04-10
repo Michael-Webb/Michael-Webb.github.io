@@ -1632,14 +1632,13 @@ define(() => {
           // Create the container with a globally unique ID
           const container = document.createElement("span");
           container.style.display = "inline-block";
-          container.style.minWidth = "20px";
-          container.style.minHeight = "16px";
+          container.style.minWidth = this.ICON_DIMENSIONS;
+          container.style.minHeight = this.ICON_DIMENSIONS;
           container.id = `doc-container-${spanUniqueId}`;
 
           // Create the icon element - only show paperclip since we confirmed we have documents
           const iconElement = document.createElement("span");
           iconElement.innerHTML = this.getSvgForType("paperclip", this.ICON_DIMENSIONS);
-          iconElement.style.marginLeft = "4px";
           iconElement.style.cursor = "pointer";
           iconElement.style.display = "inline-block";
           iconElement.title = `${documentCount} document(s) for ${ref}`;
@@ -2663,4 +2662,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 355
+// 20250410 357
