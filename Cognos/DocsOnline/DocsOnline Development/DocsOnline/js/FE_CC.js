@@ -2646,9 +2646,7 @@ define(() => {
           htmlContent: true,
           callback: {
             ok: async () => {
-              if (this.DEBUG_MODE) {
                 console.log("ok");
-              }
             },
           },
           callbackScope: { ok: this },
@@ -2665,4 +2663,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 354
+// 20250410 355
