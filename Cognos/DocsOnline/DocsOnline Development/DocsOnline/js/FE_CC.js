@@ -528,8 +528,8 @@ define(() => {
       }
 
       // Construct URLs using the helper function
-      const url = `${this.ALL_MASKS.AppUrl}/${authObj.environment}${this.URL_LOOKUP.screenDef.mainUrl}/${fetchObj.path}`;
-      const refUrl = `${this.ALL_MASKS.AppUrl}/${authObj.environment}${this.URL_LOOKUP.screenDef.referrerUrl}/${fetchObj.path}`;
+      const url = `${this.ALL_MASKS.AppUrl}/${authObj.environment}${this.URL_LOOKUP.screenDef.mainUrl}${fetchObj.path}`;
+      const refUrl = `${this.ALL_MASKS.AppUrl}/${authObj.environment}${this.URL_LOOKUP.screenDef.referrerUrl}${fetchObj.path}`;
 
       try {
         const response = await fetch(url, {
@@ -563,4 +563,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 1242
+// 20250410 1245
