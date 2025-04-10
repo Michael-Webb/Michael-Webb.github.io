@@ -166,6 +166,9 @@ define(() => {
 
           console.log(`Draw ID: ${this.drawID} - Authentication successful, API token acquired`);
 
+          const allSpansTest = document.querySelectorAll(`span[data-name=${this.SPAN_NAME}]`);
+          console.log(`Draw ID: ${this.drawID} - Found ${allSpansTest.length} total spans with data-name=${this.SPAN_NAME}`);
+          
 
           if (this.IS_LAZY_LOADED) {
             console.log(`Draw ID: ${this.drawID} - Initializing lazy loading.`);
@@ -912,7 +915,6 @@ define(() => {
      */
     setData(oControlHost, oDataStore) {
       this.m_DataStore = oDataStore;
-      console.log("Number of ID's", this.m_DataStore.rowCount);
     }
 
     _getMaskDetails(maskName) {
@@ -1270,132 +1272,184 @@ define(() => {
       this.mutationObserver.observe(observerTarget, observerOptions);
     }
     /**
-     * Process visible spans on the page, with screen definitions fetched only once
-     */
-    async processVisibleSpans() {
-      // Ensure API token is available
-      if (!this.apiToken) {
-        console.log(`Draw ID: ${this.drawID} - API token not yet available, skipping processVisibleSpans.`);
-        return;
-      }
-
-      // Prevent concurrent execution
-      if (this.processingInProgress) {
-        console.log(`Draw ID: ${this.drawID} - Processing already in progress, skipping.`);
-        return;
-      }
-
-      this.processingInProgress = true;
-
-      try {
-        // Get all spans with the specified data attributes
-        const allSpans = document.querySelectorAll(`span[data-name=${this.SPAN_NAME}]`);
-
-        if (allSpans.length === 0) {
-          console.log(`Draw ID: ${this.drawID} - No spans with data-name=${this.SPAN_NAME} found.`);
-          this.processingInProgress = false;
-          return;
+ * Process visible spans on the page
+ */
+async processVisibleSpans() {
+    // Ensure API token is available
+    if (!this.apiToken) {
+      console.log(`Draw ID: ${this.drawID} - API token not yet available, skipping processVisibleSpans.`);
+      return;
+    }
+  
+    // Prevent concurrent execution
+    if (this.processingInProgress) {
+      console.log(`Draw ID: ${this.drawID} - Processing already in progress, skipping.`);
+      return;
+    }
+    
+    this.processingInProgress = true;
+    
+    try {
+      // Get all spans with the specified data attributes
+      const allSpans = this.getAllAssetSpans();
+      
+      // Debug logging to see what we found
+      console.log(`Draw ID: ${this.drawID} - Found ${allSpans.length} total spans with data-name=${this.SPAN_NAME}`);
+      
+      // If no spans found, try a more general selector to debug
+      if (allSpans.length === 0) {
+        const anySpansWithDataName = document.querySelectorAll(`span[data-name]`);
+        console.log(`Draw ID: ${this.drawID} - Found ${anySpansWithDataName.length} spans with any data-name`);
+        
+        if (anySpansWithDataName.length > 0) {
+          // Log the first few to see what data-name values they have
+          const sampleSpans = Array.from(anySpansWithDataName).slice(0, 3);
+          console.log("Sample data-name values:", sampleSpans.map(span => span.getAttribute('data-name')));
         }
-
-        // Filter to only visible spans that haven't been processed yet
-        const processedAttr = `data-processed-${this.drawID}`;
-        const processingAttr = `data-processing-${this.drawID}`;
-
-        const spansToProcess = Array.from(allSpans).filter((span) => {
-          const isVisible = this.isElementInViewport(span);
-          const isProcessed = span.hasAttribute(processedAttr);
-          const isProcessing = span.hasAttribute(processingAttr);
-
-          return isVisible && !isProcessed && !isProcessing;
-        });
-
-        if (spansToProcess.length === 0) {
-          console.log(`Draw ID: ${this.drawID} - No new, visible, unprocessed spans found.`);
-          this.processingInProgress = false;
-          return;
-        }
-
-        console.log(`Draw ID: ${this.drawID} - Found ${spansToProcess.length} spans to process.`);
-
-        // Get unique masks from the spans to process
-        const masks = [...new Set(spansToProcess.map((span) => span.getAttribute("data-mask")))];
-        console.log(`Draw ID: ${this.drawID} - Found ${masks.length} unique masks to fetch definitions for.`);
-
-        // Fetch screen definitions, BT20 models, and attachment definitions once per mask
-        const definitionsMap = new Map();
-
-        for (const mask of masks) {
-          try {
-            // Check if we already have cached definitions for this mask
-            const cacheKey = this.generateCacheKey(`screen_defs_${mask}`, this.authObj);
-            let definitions = this.getFromSessionStorage(cacheKey, true);
-
-            if (!definitions) {
-              console.log(`Draw ID: ${this.drawID} - Fetching definitions for mask ${mask}.`);
-
-              // Fetch screen definition
-              const screenDef = await this.fetchScreenDef(mask, this.authObj);
-              if (!screenDef) {
-                console.error(`Draw ID: ${this.drawID} - Failed to get screen definition for mask ${mask}.`);
-                continue;
-              }
-
-              // Extract entity types
-              const entityTypes = this.extractEntityTypes(screenDef);
-
-              // Fetch BT20 models and attachment definitions
-              const btModels = await this.getBT20Models(mask, entityTypes.btString, this.authObj);
-              const attachDefs = await this.getAttachDef(mask, entityTypes.btString, this.authObj);
-
-              // Transform the screen definition
-              const transformedDef = this.transformDefintion(screenDef, attachDefs);
-
-              // Store all definitions together
-              definitions = {
-                screenDef,
-                entityTypes,
-                btModels,
-                attachDefs,
-                transformedDef,
-              };
-
-              // Cache the definitions
-              this.saveToSessionStorage(cacheKey, definitions, true);
-            } else {
-              console.log(`Draw ID: ${this.drawID} - Using cached definitions for mask ${mask}.`);
-            }
-
-            // Add to our map
-            definitionsMap.set(mask, definitions);
-          } catch (error) {
-            console.error(`Error fetching definitions for mask ${mask}:`, error);
+        
+        const anySpansWithDataMask = document.querySelectorAll(`span[data-mask]`);
+        console.log(`Draw ID: ${this.drawID} - Found ${anySpansWithDataMask.length} spans with data-mask`);
+        
+        if (anySpansWithDataMask.length > 0) {
+          // Try processing these spans instead
+          console.log(`Draw ID: ${this.drawID} - Attempting to process spans with data-mask instead`);
+          
+          // Process by mask directly
+          const masksToProcess = [...new Set(Array.from(anySpansWithDataMask).map(span => span.getAttribute('data-mask')))];
+          
+          // Process spans with these masks
+          if (masksToProcess.length > 0) {
+            console.log(`Draw ID: ${this.drawID} - Found masks: ${masksToProcess.join(', ')}`);
+            
+            // Process spans with these masks - using the approach from your non-lazy loading path
+            await this.processSpansByMask(anySpansWithDataMask, masksToProcess);
+            this.processingInProgress = false;
+            return;
           }
         }
-
-        // Now process each span using the pre-fetched definitions
-        const processingPromises = spansToProcess.map((span) => {
-          const mask = span.getAttribute("data-mask");
-          const definitions = definitionsMap.get(mask);
-
-          // Skip if we couldn't get definitions for this mask
-          if (!definitions) {
-            console.warn(`Draw ID: ${this.drawID} - No definitions available for mask ${mask}, skipping span.`);
-            return Promise.resolve();
-          }
-
-          return this.processSpanWithDefinitions(span, definitions);
-        });
-
-        // Wait for all processing to complete
-        await Promise.allSettled(processingPromises);
-
-        console.log(`Draw ID: ${this.drawID} - Completed processing batch of ${spansToProcess.length} spans.`);
-      } catch (error) {
-        console.error(`Error in processVisibleSpans (Instance ${this.drawID}):`, error);
-      } finally {
+        
         this.processingInProgress = false;
+        return;
+      }
+      
+      // Filter to only visible spans that haven't been processed yet
+      const processedAttr = `data-processed-${this.drawID}`;
+      const processingAttr = `data-processing-${this.drawID}`;
+      
+      const spansToProcess = Array.from(allSpans).filter(span => {
+        const isVisible = this.isElementInViewport(span);
+        const isProcessed = span.hasAttribute(processedAttr);
+        const isProcessing = span.hasAttribute(processingAttr);
+        
+        return isVisible && !isProcessed && !isProcessing;
+      });
+      
+      console.log(`Draw ID: ${this.drawID} - After filtering: ${spansToProcess.length} visible spans to process.`);
+      
+      if (spansToProcess.length === 0) {
+        console.log(`Draw ID: ${this.drawID} - No new, visible, unprocessed spans found.`);
+        this.processingInProgress = false;
+        return;
+      }
+      
+      // Get unique masks from the spans to process
+      const masks = [...new Set(spansToProcess.map(span => span.getAttribute('data-mask')))];
+      console.log(`Draw ID: ${this.drawID} - Found ${masks.length} unique masks: ${masks.join(', ')}`);
+      
+      // Process spans with these masks
+      await this.processSpansByMask(spansToProcess, masks);
+      
+    } catch (error) {
+      console.error(`Error in processVisibleSpans (Instance ${this.drawID}):`, error);
+    } finally {
+      this.processingInProgress = false;
+    }
+  }
+  
+  /**
+   * Process spans by mask - fetching definitions once per mask
+   */
+  async processSpansByMask(spansToProcess, masks) {
+    // Fetch screen definitions, BT20 models, and attachment definitions once per mask
+    const definitionsMap = new Map();
+    
+    for (const mask of masks) {
+      try {
+        if (!mask) {
+          console.warn(`Draw ID: ${this.drawID} - Skipping null/empty mask`);
+          continue;
+        }
+        
+        // Check if we already have cached definitions for this mask
+        const cacheKey = this.generateCacheKey(`screen_defs_${mask}`, this.authObj);
+        let definitions = this.getFromSessionStorage(cacheKey, true);
+        
+        if (!definitions) {
+          console.log(`Draw ID: ${this.drawID} - Fetching definitions for mask ${mask}.`);
+          
+          // Fetch screen definition
+          const screenDef = await this.fetchScreenDef(mask, this.authObj);
+          if (!screenDef) {
+            console.error(`Draw ID: ${this.drawID} - Failed to get screen definition for mask ${mask}.`);
+            continue;
+          }
+          
+          // Extract entity types
+          const entityTypes = this.extractEntityTypes(screenDef);
+          
+          // Fetch BT20 models and attachment definitions
+          const btModels = await this.getBT20Models(mask, entityTypes.btString, this.authObj);
+          const attachDefs = await this.getAttachDef(mask, entityTypes.btString, this.authObj);
+          
+          // Transform the screen definition
+          const transformedDef = this.transformDefintion(screenDef, attachDefs);
+          
+          // Store all definitions together
+          definitions = {
+            screenDef,
+            entityTypes,
+            btModels,
+            attachDefs,
+            transformedDef
+          };
+          
+          // Cache the definitions
+          this.saveToSessionStorage(cacheKey, definitions, true);
+        } else {
+          console.log(`Draw ID: ${this.drawID} - Using cached definitions for mask ${mask}.`);
+        }
+        
+        // Add to our map
+        definitionsMap.set(mask, definitions);
+      } catch (error) {
+        console.error(`Error fetching definitions for mask ${mask}:`, error);
       }
     }
+    
+    // Now process each span using the pre-fetched definitions
+    const processingPromises = spansToProcess.map(span => {
+      const mask = span.getAttribute('data-mask');
+      if (!mask) {
+        console.warn(`Draw ID: ${this.drawID} - Span has no mask attribute, skipping.`);
+        return Promise.resolve();
+      }
+      
+      const definitions = definitionsMap.get(mask);
+      
+      // Skip if we couldn't get definitions for this mask
+      if (!definitions) {
+        console.warn(`Draw ID: ${this.drawID} - No definitions available for mask ${mask}, skipping span.`);
+        return Promise.resolve();
+      }
+      
+      return this.processSpanWithDefinitions(span, definitions);
+    });
+    
+    // Wait for all processing to complete
+    await Promise.allSettled(processingPromises);
+    
+    console.log(`Draw ID: ${this.drawID} - Completed processing batch of ${spansToProcess.length} spans.`);
+  }
 
     /**
      * Process a single span with pre-fetched definitions
@@ -1467,4 +1521,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 144
+// 20250410 208
