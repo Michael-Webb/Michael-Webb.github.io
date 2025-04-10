@@ -532,7 +532,7 @@ define(() => {
         return;
       }
       const url = `${this.AppUrl}/${authObject.environment}${this.URL_LOOKUP.attachDef.mainUrl}`;
-      const refUrl = `${this.AppUrl}/${authObject.environment}${this.URL_LOOKUP.attachDef.referrerUrl}${fetchObj.path}/${fetchObj.mask}`;
+      const refUrl = `${this.AppUrl}/${authObject.environment}${this.URL_LOOKUP.attachDef.referrerUrl}${fetchObj.path}`;
       console.log("getAttachDef", url, refUrl);
 
       const attachDefParams = `progIds=${btModels.join(",")}`;
@@ -1602,4 +1602,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 251
+// 20250410 253
