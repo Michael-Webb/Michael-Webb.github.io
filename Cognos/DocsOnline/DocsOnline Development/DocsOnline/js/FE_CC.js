@@ -70,7 +70,6 @@ define(() => {
         let description = `Missing required configuration parameters: ${missingParams.join(", ")}`;
         throw new scriptableReportError("AdvancedControl", "draw", description);
       }
-      this.authenticate();
       fnDoneInitializing();
     }
 
@@ -382,4 +381,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 1208
+// 20250410 1210
