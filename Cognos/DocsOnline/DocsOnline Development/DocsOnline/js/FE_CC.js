@@ -310,7 +310,28 @@ define(() => {
           mode: "no-cors",
           credentials: "omit",
         });
-        return response;
+
+        const response2 = await fetch(screenUrl, {
+            headers: {
+              "accept": "*/*",
+              "accept-language": "en-US,en;q=0.9",
+              "cache-control": "no-cache",
+              "pragma": "no-cache",
+              "priority": "u=1, i",
+              "sec-fetch-dest": "document",
+              "sec-fetch-mode": "navigate",
+              "sec-fetch-site": "same-site",
+              "sec-fetch-user": "?1",
+              "upgrade-insecure-requests": "1",
+            },
+            referrer: this.JobUrl,
+            referrerPolicy: "strict-origin-when-cross-origin",
+            body: null,
+            method: "GET",
+            mode: "no-cors",
+            credentials: "include",
+          });
+        return response2;
       } catch (error) {
         console.error("Error during FAUPAS fetch:", error);
         throw error;
@@ -320,4 +341,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 920
+// 20250410 923
