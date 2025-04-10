@@ -1556,110 +1556,14 @@ define(() => {
     /**
      * Process a single span with pre-fetched definitions
      */
-    async processSpanWithDefinitions(span, definitions) {
-      // Make sure span is still in the DOM and valid
-      if (!span || !document.body.contains(span)) {
-        console.warn(`Draw ID: ${this.drawID} - Span no longer in DOM, skipping processing.`);
-        return;
-      }
-
-      const mask = span.getAttribute("data-mask");
-      const ref = span.getAttribute("data-ref");
-
-      if (!mask || !ref) {
-        console.warn(`Draw ID: ${this.drawID} - Span missing data-mask or data-ref attribute, skipping.`);
-        return;
-      }
-
-      // Create a unique ID for this span
-      const spanUniqueId = `${mask}-${ref}`;
-
-      // Check for EXISTING icon by looking for our container anywhere in the document
-      const existingContainer = document.getElementById(`doc-container-${spanUniqueId}`);
-      if (existingContainer) {
-        console.log(`Draw ID: ${this.drawID} - Container already exists for span ${spanUniqueId}, skipping.`);
-        span.setAttribute(`data-processed-${this.drawID}`, "true");
-        return;
-      }
-
-      // Use unique attributes to mark processing
-      const processedAttr = `data-processed-${this.drawID}`;
-      const processingAttr = `data-processing-${this.drawID}`;
-
-      // Check if already being processed
-      if (span.hasAttribute(processingAttr)) {
-        return;
-      }
-
-      // Mark as processing
-      span.setAttribute(processingAttr, "true");
-
-      try {
-        // For zero-dimension spans, we need a different approach
-        const rect = span.getBoundingClientRect();
-        const hasZeroDimensions = rect.width === 0 || rect.height === 0;
-
-        // Log for debugging
-        console.log(`Processing span with mask=${mask}, ref=${ref}, dimensions: ${rect.width}x${rect.height}`);
-
-        // Create the container with a globally unique ID
-        const container = document.createElement("span");
-        container.style.display = "inline-block";
-        container.style.minWidth = "20px";
-        container.style.minHeight = "16px";
-        container.id = `doc-container-${spanUniqueId}`;
-
-        // Create the icon element
-        const iconElement = document.createElement("span");
-        iconElement.innerHTML = "📎";
-        iconElement.style.marginLeft = "4px";
-        iconElement.style.cursor = "pointer";
-        iconElement.style.display = "inline-block";
-        iconElement.title = `Documents for ${ref}`;
-
-        // Add click handler that could open a modal with document details
-        iconElement.addEventListener("click", (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          console.log(`Clicked icon for mask=${mask}, ref=${ref}`);
-          // Here you would implement your modal or document display logic
-        });
-
-        // Add the icon to the container
-        container.appendChild(iconElement);
-
-        // Special handling for zero-dimension spans
-        if (hasZeroDimensions) {
-          // Try to find a suitable parent to attach to
-          let targetParent = span.parentElement;
-
-          // If the span is in a table cell, use that
-          if (targetParent && (targetParent.tagName === "TD" || targetParent.tagName === "TH")) {
-            // Append directly to the cell
-            targetParent.appendChild(container);
-            console.log(`Appended to ${targetParent.tagName} for zero-dimension span ${spanUniqueId}`);
-          } else {
-            // Just insert after the span as usual
-            span.parentNode.insertBefore(container, span.nextSibling);
-            console.log(`Inserted after span for zero-dimension span ${spanUniqueId}`);
-          }
-        } else {
-          // Normal case: insert after the span
-          span.parentNode.insertBefore(container, span.nextSibling);
-        }
-
-        // Mark as processed
-        span.setAttribute(processedAttr, "true");
-
-        console.log(`Successfully processed span ${spanUniqueId}`);
-      } catch (error) {
-        console.error(`Error processing span with mask=${mask}, ref=${ref}:`, error);
-      } finally {
-        // Always remove the processing flag
-        if (span) {
-          span.removeAttribute(processingAttr);
-        }
-      }
+    escapeHtml(unsafe) {
+      if (!unsafe) return "";
+      return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
     }
 
     /**
@@ -2221,8 +2125,405 @@ define(() => {
 
       return attachmentResults;
     }
+
+    /**
+     * Generates an SVG string for the specified file type and size.
+     *
+     * @param {string} fileType - The file type (e.g., "pdf", "csv", "image").
+     * @param {string} size - The desired size (e.g., "16px").
+     * @returns {string} The SVG markup.
+     */
+    getSvgForType(fileType, size) {
+      /*
+       ** Lucide License
+       ** ISC License
+       ** Copyright (c) for portions of Lucide are held by Cole Bemis 2013-2022 as part of Feather (MIT). All other copyright (c) for Lucide are held by Lucide Contributors 2022.
+       ** Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby granted, provided that the above copyright notice and this permission notice appear in all copies.
+       ** THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+       */
+      const height = size;
+      const width = size;
+
+      switch (fileType) {
+        case "pdf":
+          return `<svg xmlns="http://www.w3.org/2000/svg" height="${height}" width="${width}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text-icon lucide-file-text"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>`;
+        case "csv":
+          return `<svg xmlns="http://www.w3.org/2000/svg" height="${height}" width="${width}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-spreadsheet-icon lucide-file-spreadsheet"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h2"/><path d="M14 13h2"/><path d="M8 17h2"/><path d="M14 17h2"/></svg>`;
+        case "excel":
+          return `<svg xmlns="http://www.w3.org/2000/svg" height="${height}" width="${width}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-x-icon lucide-file-x"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="m14.5 12.5-5 5"/><path d="m9.5 12.5 5 5"/></svg>`;
+        case "image":
+          return `<svg xmlns="http://www.w3.org/2000/svg" height="${height}" width="${width}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-image-icon lucide-file-image"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><circle cx="10" cy="12" r="2"/><path d="m20 17-1.296-1.296a2.41 2.41 0 0 0-3.408 0L9 22"/></svg>`;
+        case "doc":
+          return `<svg xmlns="http://www.w3.org/2000/svg" height="${height}" width="${width}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text-icon lucide-file-text"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>`;
+        case "txt":
+          return `<svg xmlns="http://www.w3.org/2000/svg" height="${height}" width="${width}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text-icon lucide-file-text"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>`;
+        case "paperclip":
+          return `<svg xmlns="http://www.w3.org/2000/svg" height="${height}" width="${width}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-paperclip"><path d="M13.234 20.252 21 12.3"/><path d="m16 6-8.414 8.586a2 2 0 0 0 0 2.828 2 2 0 0 0 2.828 0l8.414-8.586a4 4 0 0 0 0-5.656 4 4 0 0 0-5.656 0l-8.415 8.585a6 6 0 1 0 8.486 8.486"/></svg>`;
+        case "clock":
+          return `<svg xmlns="http://www.w3.org/2000/svg" height="${height}" width="${width}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
+        case "error":
+          return `<svg xmlns="http://www.w3.org/2000/svg" height="${height}" width="${width}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-x-icon lucide-circle-x"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>`;
+        default:
+          return `<svg xmlns="http://www.w3.org/2000/svg" height="${height}" width="${width}" viewBox="0 0 24 24" fill="none" stroke="#FF0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-icon lucide-file"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>`;
+      }
+    }
+
+    /**
+     * Constructs the viewer URL to open a document.
+     *
+     * @param {string} docToken - Document token.
+     * @param {string} directUrl - Direct URL override, if applicable.
+     * @param {string} urlType - URL type to determine which URL to use.
+     * @returns {string} The constructed viewer URL.
+     */
+    getViewerUrl(docToken, directUrl, urlType) {
+      let url = `${this.AppUrl}/${this.authObj.environment}-UI/ui/Documents/viewer?docToken=${docToken}`;
+
+      if (!urlType) {
+        url = directUrl;
+      }
+
+      return url;
+    }
+
+    /**
+     * Builds and returns a DOM element containing a table of document details.
+     *
+     * @param {Array} documentData - Array of document objects.
+     * @param {string} RefId - Reference ID used in the modal title.
+     * @returns {HTMLElement|null} The constructed content container element or null on error.
+     */
+    getDocumentContent(documentData, RefId) {
+      try {
+        // Create just the content container
+        const modalContent = document.createElement("div");
+        modalContent.style.backgroundColor = "white";
+        modalContent.style.borderRadius = "5px";
+        modalContent.style.width = "100%";
+        modalContent.style.display = "flex";
+        modalContent.style.flexDirection = "column";
+        modalContent.style.position = "relative";
+        modalContent.style.fontSize = this.FONT_SIZE;
+
+        const modalBody = document.createElement("div");
+        modalBody.style.padding = "0";
+        modalBody.style.overflowY = "auto";
+        modalBody.style.flexGrow = "1";
+
+        // Create table
+        const table = document.createElement("table");
+        table.style.width = "100%";
+        table.style.borderCollapse = "collapse";
+        table.style.marginTop = "10px";
+        table.style.marginBottom = "10px";
+        table.style.tableLayout = "fixed"; // Use fixed layout for no word wrap
+
+        // Create table header
+        const thead = document.createElement("thead");
+        const headerRow = document.createElement("tr");
+
+        // Define headers
+        const headers = [
+          "Document ID",
+          "FileName",
+          "File Type",
+          "Pages",
+          "Page Count",
+          "Create Date",
+          "Attachment Definition",
+        ];
+
+        // Define column widths (percentages)
+        const columnWidths = [15, 30, 10, 8, 8, 15, 14];
+
+        headers.forEach((headerText, index) => {
+          const th = document.createElement("th");
+          th.textContent = headerText;
+          th.style.padding = "8px";
+          th.style.textAlign = "left";
+          th.style.borderBottom = "1px solid #ddd";
+          th.style.backgroundColor = "#f2f2f2";
+          th.style.width = columnWidths[index] + "%";
+          headerRow.appendChild(th);
+        });
+
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        documentData.sort((a, b) => {
+          // Convert docId strings to numbers for proper numerical sorting
+          const idA = parseInt(a.docId) || 0;
+          const idB = parseInt(b.docId) || 0;
+          return idA - idB;
+        });
+
+        // Create table body
+        const tbody = document.createElement("tbody");
+
+        documentData.forEach((doc) => {
+          const row = document.createElement("tr");
+          row.style.cursor = "pointer";
+          row.onmouseover = function () {
+            this.style.backgroundColor = "#f5f5f5";
+          };
+          row.onmouseout = function () {
+            this.style.backgroundColor = "";
+          };
+
+          let linkUrl = this.getViewerUrl(doc.docToken, doc.url, this.URL_TYPE);
+          // Add click handler to open document
+          if (linkUrl) {
+            row.onclick = function () {
+              window.open(linkUrl, "_blank");
+            };
+          }
+
+          // Create cells for each column
+          const createCell = (content, isIcon = false, isFilename = false) => {
+            const td = document.createElement("td");
+            td.style.padding = "8px";
+            td.style.borderBottom = "1px solid #ddd";
+            td.style.whiteSpace = "nowrap"; // Prevent word wrap
+            td.style.overflow = "hidden";
+            td.style.textOverflow = "ellipsis"; // Show ellipsis for overflow
+            td.title = content;
+
+            if (isFilename && linkUrl) {
+              // Create a hyperlink for the filename
+              const link = document.createElement("a");
+              link.href = linkUrl;
+              link.target = "_blank";
+              link.textContent = content || "";
+              link.style.textDecoration = "underline";
+              link.style.color = "#0066cc";
+
+              if (isIcon && doc.clsid) {
+                // Add icon before the link text
+                const extension = doc.clsid.toLowerCase();
+                let iconType = "generic";
+
+                if (extension.includes(".pdf")) {
+                  iconType = "pdf";
+                } else if (extension.includes(".csv")) {
+                  iconType = "csv";
+                } else if ([".xls", ".xlsx", ".xlsm", ".xlsb"].some((ext) => extension.includes(ext))) {
+                  iconType = "excel";
+                } else if (
+                  [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tiff", ".webp"].some((ext) => extension.includes(ext))
+                ) {
+                  iconType = "image";
+                } else if ([".doc", ".docx"].some((ext) => extension.includes(ext))) {
+                  iconType = "doc";
+                } else if ([".txt", ".rtf", ".odt"].some((ext) => extension.includes(ext))) {
+                  iconType = "txt";
+                }
+
+                const iconSpan = document.createElement("span");
+                iconSpan.innerHTML = this.getSvgForType(iconType, this.ICON_DIMENSIONS);
+                iconSpan.style.marginRight = "5px";
+                td.appendChild(iconSpan);
+              }
+
+              td.appendChild(link);
+
+              // Prevent row click from triggering when clicking the link directly
+              link.onclick = function (e) {
+                e.stopPropagation();
+              };
+            } else if (isIcon && doc.clsid) {
+              const iconSpan = document.createElement("span");
+              const extension = doc.clsid.toLowerCase();
+              let iconType = "generic";
+
+              if (extension.includes(".pdf")) {
+                iconType = "pdf";
+              } else if (extension.includes(".csv")) {
+                iconType = "csv";
+              } else if ([".xls", ".xlsx", ".xlsm", ".xlsb"].some((ext) => extension.includes(ext))) {
+                iconType = "excel";
+              } else if (
+                [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tiff", ".webp"].some((ext) => extension.includes(ext))
+              ) {
+                iconType = "image";
+              } else if ([".doc", ".docx"].some((ext) => extension.includes(ext))) {
+                iconType = "doc";
+              } else if ([".txt", ".rtf", ".odt"].some((ext) => extension.includes(ext))) {
+                iconType = "txt";
+              }
+
+              iconSpan.innerHTML = this.getSvgForType(iconType, this.ICON_DIMENSIONS);
+              td.appendChild(iconSpan);
+
+              const textSpan = document.createElement("span");
+              textSpan.textContent = " " + content;
+              td.appendChild(textSpan);
+            } else {
+              td.textContent = content || "";
+            }
+
+            return td;
+          };
+
+          // Add all cells to the row
+          row.appendChild(createCell(doc.docId));
+          row.appendChild(createCell(doc.description, true, true)); // Added true for isFilename
+          row.appendChild(createCell(doc.clsid.toLowerCase()));
+          row.appendChild(createCell(doc.pages));
+          row.appendChild(createCell(doc.pageCount));
+          row.appendChild(createCell(doc.createDt));
+          row.appendChild(createCell(doc.attachID));
+
+          tbody.appendChild(row);
+        });
+
+        table.appendChild(tbody);
+        modalBody.appendChild(table);
+
+        modalContent.appendChild(modalBody);
+
+        return modalContent;
+      } catch (error) {
+        console.error("Error creating document content:", error);
+        return null;
+      }
+    }
+
+    /**
+     * Opens a dialog message displaying document details in a table format.
+     *
+     * @param {Array} documentData - Array of document objects.
+     * @param {string} assetID - The asset ID used in the dialog title.
+     */
+    openMessage(documentData, assetID) {
+      try {
+        // Define headers and column widths
+        const headers = [
+          "Document ID",
+          "FileName",
+          "File Type",
+          "Pages",
+          "Page Count",
+          "Create Date",
+          "Attachment Definition",
+        ];
+
+        const columnWidths = [15, 30, 10, 8, 8, 15, 14];
+
+        // Sort the data
+        documentData.sort((a, b) => {
+          const idA = parseInt(a.docId) || 0;
+          const idB = parseInt(b.docId) || 0;
+          return idA - idB;
+        });
+
+        // Function to safely escape URLs
+        const escapeURL = (url) => {
+          if (!url) return "";
+          // First encode the URL to handle special characters
+          return url.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+        };
+
+        // Build the table HTML
+        let tableHtml = `
+              <div style="background-color:white;width:100%;font-size:${this.FONT_SIZE};">
+                <div style="overflow-y:auto;max-height:400px;">
+                  <table style="width:100%;border-collapse:collapse;margin:10px 0;table-layout:fixed;">
+                    <thead>
+                      <tr>`;
+
+        // Add header cells
+        headers.forEach((headerText, index) => {
+          tableHtml += `<th style="padding:8px;text-align:left;border-bottom:1px solid #ddd;background-color:#f2f2f2;width:${columnWidths[index]}%;">${headerText}</th>`;
+        });
+
+        tableHtml += `</tr>
+                    </thead>
+                    <tbody>`;
+
+        // Add rows for each document
+        documentData.forEach((doc) => {
+          let linkUrl = this.getViewerUrl(doc.docToken, doc.url, this.URL_TYPE);
+          const safeUrl = escapeURL(linkUrl);
+
+          tableHtml += `<tr style="cursor:pointer;" 
+                              onmouseover="this.style.backgroundColor='#f5f5f5';" 
+                              onmouseout="this.style.backgroundColor='';">`;
+
+          // Document ID
+          tableHtml += `<td style="padding:8px;border-bottom:1px solid #ddd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${doc.docId}">${doc.docId}</td>`;
+
+          // Filename with link
+          tableHtml += `<td style="padding:8px;border-bottom:1px solid #ddd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${
+            this.escapeHtml(doc.description) || ""
+          }">`;
+          if (linkUrl) {
+            tableHtml += `<a href="${safeUrl}" target="_blank" style="text-decoration:underline;color:#0066cc;">${
+              doc.description || ""
+            }</a>`;
+          } else {
+            tableHtml += this.escapeHtml(doc.description) || "";
+          }
+          tableHtml += `</td>`;
+
+          // File Type
+          const safeClsid = doc.clsid ? doc.clsid.toLowerCase() : "";
+          tableHtml += `<td style="padding:8px;border-bottom:1px solid #ddd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${safeClsid}">${safeClsid}</td>`;
+
+          // Pages
+          tableHtml += `<td style="padding:8px;border-bottom:1px solid #ddd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${
+            doc.pages || ""
+          }">${doc.pages || ""}</td>`;
+
+          // Page Count
+          tableHtml += `<td style="padding:8px;border-bottom:1px solid #ddd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${
+            doc.pageCount || ""
+          }">${doc.pageCount || ""}</td>`;
+
+          // Create Date
+          tableHtml += `<td style="padding:8px;border-bottom:1px solid #ddd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${
+            doc.createDt || ""
+          }">${doc.createDt || ""}</td>`;
+
+          // Attachment Definition
+          tableHtml += `<td style="padding:8px;border-bottom:1px solid #ddd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${
+            doc.attachID || ""
+          }">${doc.attachID || ""}</td>`;
+
+          tableHtml += `</tr>`;
+        });
+
+        tableHtml += `</tbody>
+                  </table>
+                </div>
+              </div>`;
+        let dialogObject = {
+          title: `${this.MODAL_LABEL} ${assetID}`,
+          message: tableHtml,
+          className: "info",
+          buttons: ["ok"],
+          width: "60%",
+          type: "info",
+          size: "default",
+          htmlContent: true,
+          callback: {
+            ok: async () => {
+              if (this.DEBUG_MODE) {
+                console.log("ok");
+              }
+            },
+          },
+          callbackScope: { ok: this },
+        };
+
+        // Create a simpler dialog first to test
+        this.oControl.page.application.GlassContext.getCoreSvc(".Dialog").createDialog(dialogObject);
+      } catch (error) {
+        console.error("Error showing dialog:", error);
+        alert(`Error showing document dialog: ${error.message}`);
+      }
+    }
   }
 
   return AdvancedControl;
 });
-// 20250410 330
+// 20250410 342
