@@ -101,7 +101,7 @@ define(() => {
         ["App Server Url"]: AppUrl,
         ["Job Server Url"]: JobUrl,
         ["Attachment ID Column Label"]: ATT_ID_COL_NM,
-        ["List Name"]: LIST_NAME
+        ["List Name"]: LIST_NAME,
         ["Span Name"]: SPAN_NAME,
         ["Font Size"]: FONT_SIZE,
         ["Lazy Loading"]: IS_LAZY_LOADED,
@@ -117,7 +117,7 @@ define(() => {
       this.IS_LAZY_LOADED = IS_LAZY_LOADED !== false;
       this.ICON_DIMENSIONS = ICON_DIMENSIONS || "16px";
       this.FONT_SIZE = FONT_SIZE || "1em";
-      this.LIST_NAME = LIST_NAME || "List1"
+      this.LIST_NAME = LIST_NAME || "List1";
       this.m_DataStore;
       console.log("Configuration", this.oControl.configuration);
 
@@ -1576,4 +1576,4 @@ async processVisibleSpans() {
 
   return AdvancedControl;
 });
-// 20250410 228
+// 20250410 230
