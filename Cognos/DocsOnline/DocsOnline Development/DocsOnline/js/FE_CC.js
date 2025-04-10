@@ -105,7 +105,7 @@ define(() => {
 
         const myTimeout = setTimeout(() => {
           oControlHost.container.innerHTML = "Docs Online Loaded";
-        }, 5000);
+        }, 1000);
       } catch (error) {
         console.warn(error);
       }
