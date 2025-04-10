@@ -99,11 +99,11 @@ define(() => {
     async authenticate() {
       try {
         let authObject = this.getAuthObject();
-        
+
         console.log(authObject);
 
         // Step 1: Get Cookies
-        let getCookies = await this.fetchFromScreen(authObject,"FAUPAS");
+        let getCookies = await this.fetchFromScreen(authObject, "FAUPAS");
         // Step 2: Fetch API token.
         const apiToken = await this.fetchApiToken(authObject);
         authObject.apiToken = apiToken;
@@ -168,7 +168,7 @@ define(() => {
      *
      * @returns {Promise<Response>} A Promise that resolves to the response of the validation.
      */
-        async validateSecurityToken(authObject) {
+    async validateSecurityToken(authObject) {
       try {
         const validationResponse = await fetch(
           `${this.JobUrl}/${authObject.environment}/api/User/ValidateSecurityToken`,
@@ -284,19 +284,21 @@ define(() => {
      *
      * @returns {Promise<Response>} The fetch response.
      */
-    async fetchFromScreen(authObj,maskName) {
+    async fetchFromScreen(authObj, maskName) {
       // Get the dynamic URL path based on the configured MASK_NAME
       const screenDetails = this._getMaskDetails(maskName);
       const screenUrl = `${this.AppUrl}/${authObj.environment}-UI/ui/uiscreens/${screenDetails.urlPath}/${screenDetails.maskName}`;
-      console.log(`fetchFromScreen: Fetching screen URL: ${screenUrl}`);
+      console.log(`fetchFromScreen: Starting authentication sequence at: ${screenUrl}`);
+
       try {
+        // Initial fetch - follows all redirects in the authentication flow
         const response = await fetch(screenUrl, {
           headers: {
-            "accept": "*/*",
+            accept: "*/*",
             "accept-language": "en-US,en;q=0.9",
             "cache-control": "no-cache",
-            "pragma": "no-cache",
-            "priority": "u=1, i",
+            pragma: "no-cache",
+            priority: "u=1, i",
             "sec-fetch-dest": "document",
             "sec-fetch-mode": "navigate",
             "sec-fetch-site": "same-site",
@@ -307,33 +309,52 @@ define(() => {
           referrerPolicy: "strict-origin-when-cross-origin",
           body: null,
           method: "GET",
-          mode: "no-cors",
-          credentials: "omit",
+          mode: "cors",
+          credentials: "include", // Critical for maintaining cookies
+          redirect: "follow",
         });
 
-        // const response2 = await fetch(screenUrl, {
-        //     headers: {
-        //       "accept": "*/*",
-        //       "accept-language": "en-US,en;q=0.9",
-        //       "cache-control": "no-cache",
-        //       "pragma": "no-cache",
-        //       "priority": "u=1, i",
-        //       "sec-fetch-dest": "document",
-        //       "sec-fetch-mode": "navigate",
-        //       "sec-fetch-site": "same-site",
-        //       "sec-fetch-user": "?1",
-        //       "upgrade-insecure-requests": "1",
-        //     },
-        //     referrer: this.JobUrl,
-        //     referrerPolicy: "strict-origin-when-cross-origin",
-        //     body: null,
-        //     method: "GET",
-        //     mode: "no-cors",
-        //     credentials: "include",
-        //   });
-        return response;
+        // Check if we were redirected
+        if (response.redirected) {
+          console.log(`Authentication flow redirected to final URL: ${response.url}`);
+        }
+
+        // Check for successful response
+        if (!response.ok) {
+          throw new Error(`Screen fetch failed with status: ${response.status}`);
+        }
+
+        console.log("Authentication flow completed, verifying cookies with second request");
+
+        // Second verification fetch to ensure cookies are working
+        // This time use a lightweight API endpoint rather than the full page if possible
+        const verificationUrl = `${this.AppUrl}/${authObj.environment}-UI/api/user/info`;
+        const verificationResponse = await fetch(verificationUrl, {
+          method: "GET",
+          credentials: "include", // Again, include cookies
+          headers: {
+            accept: "application/json",
+            "cache-control": "no-cache",
+          },
+        });
+
+        if (!verificationResponse.ok) {
+          console.warn(`Verification request failed: ${verificationResponse.status}. Cookies may not be properly set.`);
+        } else {
+          console.log("Verification successful - authenticated session confirmed");
+          // Optionally parse user info if available
+          try {
+            const userInfo = await verificationResponse.json();
+            console.log("Authenticated as:", userInfo.username || userInfo.name || "Unknown user");
+          } catch (e) {
+            // JSON parsing failed, but the request was still successful
+            console.log("Verification successful but couldn't parse user info");
+          }
+        }
+
+        return response; // Return the original response
       } catch (error) {
-        console.error("Error during FAUPAS fetch:", error);
+        console.error("Error during authentication fetch sequence:", error);
         throw error;
       }
     }
@@ -341,4 +362,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 927
+// 20250410 938
