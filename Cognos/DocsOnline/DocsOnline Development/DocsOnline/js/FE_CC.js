@@ -454,8 +454,8 @@ define(() => {
         console.error("Invalid mask:", maskString);
         return;
       }
-      const url = `${this.AppUrl}/${authObject.environment}${this.URL_LOOKUP.bt20models.mainUrl}`;
-      const refUrl = `${this.AppUrl}/${authObject.environment}${this.URL_LOOKUP.bt20models.referrerUrl}${fetchObj.path}/${fetchObj.mask}`;
+      const url = `${this.AppUrl}/${authObject.environment}${this.URL_LOOKUP.attachDef.mainUrl}`;
+      const refUrl = `${this.AppUrl}/${authObject.environment}${this.URL_LOOKUP.attachDef.referrerUrl}${fetchObj.path}/${fetchObj.mask}`;
 
       const attachDefParams = `progIds=${btModels.join(",")}`;
       try {
@@ -504,6 +504,7 @@ define(() => {
       // The main URL is already provided; build the referrer URL using the helper function.
       const url = `${this.AppUrl}/${authObject.environment}${this.URL_LOOKUP.bt20models.mainUrl}`;
       const refUrl = `${this.AppUrl}/${authObject.environment}${this.URL_LOOKUP.bt20models.referrerUrl}${fetchObj.path}/${fetchObj.mask}`;
+      console.log("BT20Url",url,refUrl)
 
       try {
         const response = await fetch(url, {
@@ -934,4 +935,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 106
+// 20250410 112
