@@ -1274,6 +1274,9 @@ define(() => {
     /**
  * Process visible spans on the page
  */
+/**
+ * Process visible spans on the page, handling zero-dimension spans
+ */
 async processVisibleSpans() {
     // Ensure API token is available
     if (!this.apiToken) {
@@ -1292,71 +1295,42 @@ async processVisibleSpans() {
     try {
       // Get all spans with the specified data attributes
       const allSpans = this.getAllAssetSpans();
-      
-      // Debug logging to see what we found
       console.log(`Draw ID: ${this.drawID} - Found ${allSpans.length} total spans with data-name=${this.SPAN_NAME}`);
       
-      // If no spans found, try a more general selector to debug
       if (allSpans.length === 0) {
-        const anySpansWithDataName = document.querySelectorAll(`span[data-name]`);
-        console.log(`Draw ID: ${this.drawID} - Found ${anySpansWithDataName.length} spans with any data-name`);
-        
-        if (anySpansWithDataName.length > 0) {
-          // Log the first few to see what data-name values they have
-          const sampleSpans = Array.from(anySpansWithDataName).slice(0, 3);
-          console.log("Sample data-name values:", sampleSpans.map(span => span.getAttribute('data-name')));
-        }
-        
-        const anySpansWithDataMask = document.querySelectorAll(`span[data-mask]`);
-        console.log(`Draw ID: ${this.drawID} - Found ${anySpansWithDataMask.length} spans with data-mask`);
-        
-        if (anySpansWithDataMask.length > 0) {
-          // Try processing these spans instead
-          console.log(`Draw ID: ${this.drawID} - Attempting to process spans with data-mask instead`);
-          
-          // Process by mask directly
-          const masksToProcess = [...new Set(Array.from(anySpansWithDataMask).map(span => span.getAttribute('data-mask')))];
-          
-          // Process spans with these masks
-          if (masksToProcess.length > 0) {
-            console.log(`Draw ID: ${this.drawID} - Found masks: ${masksToProcess.join(', ')}`);
-            
-            // Process spans with these masks - using the approach from your non-lazy loading path
-            await this.processSpansByMask(anySpansWithDataMask, masksToProcess);
-            this.processingInProgress = false;
-            return;
-          }
-        }
-        
         this.processingInProgress = false;
         return;
       }
       
-      // Filter to only visible spans that haven't been processed yet
+      // Filter to only spans that haven't been processed yet
       const processedAttr = `data-processed-${this.drawID}`;
       const processingAttr = `data-processing-${this.drawID}`;
       
-      const spansToProcess = Array.from(allSpans).filter(span => {
-        const isVisible = this.isElementInViewport(span);
-        const isProcessed = span.hasAttribute(processedAttr);
-        const isProcessing = span.hasAttribute(processingAttr);
-        
-        return isVisible && !isProcessed && !isProcessing;
-      });
+      const unprocessedSpans = Array.from(allSpans).filter(span => 
+        !span.hasAttribute(processedAttr) && !span.hasAttribute(processingAttr)
+      );
       
-      console.log(`Draw ID: ${this.drawID} - After filtering: ${spansToProcess.length} visible spans to process.`);
+      console.log(`Draw ID: ${this.drawID} - Found ${unprocessedSpans.length} unprocessed spans total`);
       
-      if (spansToProcess.length === 0) {
-        console.log(`Draw ID: ${this.drawID} - No new, visible, unprocessed spans found.`);
+      if (unprocessedSpans.length === 0) {
+        console.log(`Draw ID: ${this.drawID} - No unprocessed spans found.`);
         this.processingInProgress = false;
         return;
       }
       
+      // Since spans have zero dimensions, we'll skip the visibility check
+      // and just process all unprocessed spans
+      const spansToProcess = unprocessedSpans;
+      
+      console.log(`Draw ID: ${this.drawID} - Will process ${spansToProcess.length} spans (ignoring visibility check due to zero dimensions).`);
+      
       // Get unique masks from the spans to process
-      const masks = [...new Set(spansToProcess.map(span => span.getAttribute('data-mask')))];
+      const masks = [...new Set(spansToProcess.map(span => 
+        span.getAttribute('data-mask')).filter(Boolean))];
+        
       console.log(`Draw ID: ${this.drawID} - Found ${masks.length} unique masks: ${masks.join(', ')}`);
       
-      // Process spans with these masks
+      // Process all spans regardless of visibility
       await this.processSpansByMask(spansToProcess, masks);
       
     } catch (error) {
@@ -1365,7 +1339,6 @@ async processVisibleSpans() {
       this.processingInProgress = false;
     }
   }
-  
   /**
    * Process spans by mask - fetching definitions once per mask
    */
@@ -1454,71 +1427,89 @@ async processVisibleSpans() {
     /**
      * Process a single span with pre-fetched definitions
      */
-    async processSpanWithDefinitions(span, definitions) {
-      // Make sure span is still in the DOM and valid
-      if (!span || !document.body.contains(span)) {
-        console.warn(`Draw ID: ${this.drawID} - Span no longer in DOM, skipping processing.`);
-        return;
-      }
-
-      const mask = span.getAttribute("data-mask");
-      const ref = span.getAttribute("data-ref");
-
-      if (!mask || !ref) {
-        console.warn(`Draw ID: ${this.drawID} - Span missing data-mask or data-ref attribute, skipping.`);
-        return;
-      }
-
-      // Use unique attributes to mark processing
-      const processedAttr = `data-processed-${this.drawID}`;
-      const processingAttr = `data-processing-${this.drawID}`;
-
-      // Check if already processed or being processed
-      if (span.hasAttribute(processedAttr) || span.hasAttribute(processingAttr)) {
-        return;
-      }
-
-      // Mark as processing
-      span.setAttribute(processingAttr, "true");
-
-      try {
-        // Use the pre-fetched definitions
-        const { transformedDef } = definitions;
-
-        // Here you would implement the logic to update the UI for this span
-        // For example, add an icon or some visual indicator
-
-        // For demonstration, let's add a simple paperclip icon
-        const iconContainer = document.createElement("span");
-        iconContainer.innerHTML = "📎";
-        iconContainer.style.marginLeft = "4px";
-        iconContainer.style.cursor = "pointer";
-        iconContainer.title = `Documents for ${ref}`;
-
-        // Add click handler that could open a modal with document details
-        iconContainer.addEventListener("click", (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          console.log(`Clicked icon for mask=${mask}, ref=${ref}`);
-          // Here you would implement your modal or document display logic
-        });
-
-        // Insert after the span
-        span.parentNode.insertBefore(iconContainer, span.nextSibling);
-
-        // Mark as processed
-        span.setAttribute(processedAttr, "true");
-      } catch (error) {
-        console.error(`Error processing span with mask=${mask}, ref=${ref}:`, error);
-      } finally {
-        // Always remove the processing flag
-        if (span) {
-          span.removeAttribute(processingAttr);
-        }
+    /**
+ * Process a single span with pre-fetched definitions, handling zero-dimension spans
+ */
+async processSpanWithDefinitions(span, definitions) {
+    // Make sure span is still in the DOM and valid
+    if (!span || !document.body.contains(span)) {
+      console.warn(`Draw ID: ${this.drawID} - Span no longer in DOM, skipping processing.`);
+      return;
+    }
+  
+    const mask = span.getAttribute("data-mask");
+    const ref = span.getAttribute("data-ref");
+  
+    if (!mask || !ref) {
+      console.warn(`Draw ID: ${this.drawID} - Span missing data-mask or data-ref attribute, skipping.`);
+      return;
+    }
+  
+    // Use unique attributes to mark processing
+    const processedAttr = `data-processed-${this.drawID}`;
+    const processingAttr = `data-processing-${this.drawID}`;
+  
+    // Check if already processed or being processed
+    if (span.hasAttribute(processedAttr) || span.hasAttribute(processingAttr)) {
+      return;
+    }
+  
+    // Mark as processing
+    span.setAttribute(processingAttr, "true");
+  
+    try {
+      // Use the pre-fetched definitions
+      const { transformedDef } = definitions;
+  
+      // For spans with zero dimensions, ensure the icon will be visible
+      // by wrapping both in a container with dimensions
+      const container = document.createElement("span");
+      container.style.display = "inline-block"; // Force display
+      container.style.minWidth = "20px"; // Ensure minimum width
+      container.style.minHeight = "16px"; // Ensure minimum height
+      container.id = `doc-container-${this.drawID}-${mask}-${ref}`;
+      
+      // Create the icon element
+      const iconElement = document.createElement("span");
+      iconElement.innerHTML = "📎";
+      iconElement.style.marginLeft = "4px";
+      iconElement.style.cursor = "pointer";
+      iconElement.style.display = "inline-block";
+      iconElement.title = `Documents for ${ref}`;
+  
+      // Add click handler that could open a modal with document details
+      iconElement.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log(`Clicked icon for mask=${mask}, ref=${ref}`);
+        // Here you would implement your modal or document display logic
+      });
+  
+      // Add the original span content to the container (optional)
+      // const originalContent = span.innerHTML;
+      // span.innerHTML = "";  // Clear original span
+      // container.appendChild(document.createTextNode(originalContent));
+      
+      // Add the icon to the container
+      container.appendChild(iconElement);
+  
+      // Insert the container after the span
+      span.parentNode.insertBefore(container, span.nextSibling);
+  
+      // Mark as processed
+      span.setAttribute(processedAttr, "true");
+      
+    } catch (error) {
+      console.error(`Error processing span with mask=${mask}, ref=${ref}:`, error);
+    } finally {
+      // Always remove the processing flag
+      if (span) {
+        span.removeAttribute(processingAttr);
       }
     }
+  }
   }
 
   return AdvancedControl;
 });
-// 20250410 208
+// 20250410 217
