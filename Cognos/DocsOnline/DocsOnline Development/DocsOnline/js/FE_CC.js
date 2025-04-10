@@ -82,7 +82,7 @@ define(() => {
       try {
         this.oControl = oControlHost;
         this.drawID = this.oControl.generateUniqueID(); // *** Get and store drawID ***
-        console.log(this.LIST_NAME);
+
         // Check each configuration parameter and collect the missing ones
         const missingParams = [];
         if (!this.AppUrl) missingParams.push("App Server Url");
@@ -97,12 +97,29 @@ define(() => {
 
         oControlHost.container.innerHTML = "Hello world";
 
-        let spanList = document.querySelectorAll(`[data-name=${this.SPAN_NAME}]`);
-        console.log("spanList",spanList);
         this.authenticate();
+
+        let spanList = document.querySelectorAll(`[data-name=${this.SPAN_NAME}]`);
+        console.log("spanList", spanList);
+
+        let allMasks = this.getAllMasks(spanList)
       } catch (error) {
         console.warn(error);
       }
+    }
+
+    getSpanData(spanNode) {
+      const mask = spanNode.dataset.mask;
+      const ref = spanNode.dataset.ref;
+      return mask, ref;
+    }
+
+    getAllMasks(nodeList) {
+      // Assuming `nodelist` is your NodeList of span elements
+      const uniqueMasks = [...new Set([...nodelist].map((span) => span.dataset.mask))];
+
+      console.log(uniqueMasks);
+      return uniqueMasks
     }
 
     /*
@@ -365,4 +382,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 1154
+// 20250410 1205
