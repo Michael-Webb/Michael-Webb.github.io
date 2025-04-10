@@ -141,15 +141,14 @@ define(() => {
       try {
         this.oControl = oControlHost;
         oControlHost.loadingText = "Loading Docs Online...";
-        this.drawID = this.oControl.generateUniqueID(); // *** Get and store drawID ***
+        this.drawID = this.oControl.generateUniqueID();
 
-        // Check each configuration parameter and collect the missing ones
+        // Check configuration parameters
         const missingParams = [];
         if (!this.AppUrl) missingParams.push("App Server Url");
         if (!this.JobUrl) missingParams.push("Job Server Url");
         if (!this.ATT_ID_COL_NM) missingParams.push("Attachment ID Column Name");
 
-        // If any parameters are missing, log specific error and return
         if (missingParams.length > 0) {
           let description = `Missing required configuration parameters: ${missingParams.join(", ")}`;
           throw new scriptableReportError("AdvancedControl", "draw", description);
@@ -159,36 +158,29 @@ define(() => {
           // Get authentication - will use cached token if available
           const authObject = await this.authenticate();
 
-          // Now do things that require authentication
-          let spanList = document.querySelectorAll(`[data-name=${this.SPAN_NAME}]`);
-          console.log("spanList", spanList);
-          let allMasks = this.getAllMasks(spanList);
+          // Set processing flag
+          this.processingInProgress = false;
 
-          // Check for cached results first
-          const cachedKey = this.generateCacheKey(`all_screen_defs_${allMasks.join("_")}`, authObject);
-          const cachedScreenDefs = this.getFromSessionStorage(cachedKey, true);
+          if (this.IS_LAZY_LOADED) {
+            console.log(`Draw ID: ${this.drawID} - Initializing lazy loading.`);
 
-          if (cachedScreenDefs) {
-            console.log("Using cached screen definitions from previous draw");
-            // Process the cached screen definitions
-            // Add your processing logic here
+            // Initialize lazy loading and process only visible spans
+            this.initializeVisibleSpanLoading();
+            setTimeout(() => this.processVisibleSpans(), 200);
           } else {
-            // Iterate through all masks and fetch their screen definitions
-            const screenDefPromises = allMasks.map((mask) => this.fetchScreenDef(mask, authObject));
-            const screenDefs = await Promise.allSettled(screenDefPromises);
+            // Process all spans without lazy loading
+            const allSpans = this.getAllAssetSpans();
+            if (allSpans.length > 0) {
+              console.log(`Draw ID: ${this.drawID} - Processing ${allSpans.length} spans (Non-Lazy).`);
 
-            // Store all screen definitions for future draw calls
-            const successfulDefs = screenDefs
-              .filter((result) => result.status === "fulfilled" && result.value)
-              .map((result) => result.value);
+              // Process each span
+              const processingPromises = Array.from(allSpans).map((span) => this.processSpan(span));
+              await Promise.allSettled(processingPromises);
 
-            if (successfulDefs.length > 0) {
-              this.saveToSessionStorage(cachedKey, successfulDefs, true);
+              console.log(`Draw ID: ${this.drawID} - Finished processing all spans.`);
+            } else {
+              console.log(`Draw ID: ${this.drawID} - No spans found (Non-Lazy).`);
             }
-
-            console.log("All screen definitions:", screenDefs);
-            // Process the screen definitions
-            // Add your processing logic here
           }
         } catch (error) {
           console.warn(error);
@@ -675,7 +667,39 @@ define(() => {
     /*
      * The control is being destroyed so do any necessary cleanup. This method is optional.
      */
-    destroy(oControlHost) {}
+    destroy(oControlHost) {
+      console.log(`Destroying AdvancedControl Instance: ID=${this.drawID}`);
+
+      // Remove event listeners
+      if (this.throttledScrollHandler) {
+        document.removeEventListener("scroll", this.throttledScrollHandler, { capture: true });
+        window.removeEventListener("scroll", this.throttledScrollHandler);
+        window.removeEventListener("resize", this.throttledScrollHandler);
+        this.throttledScrollHandler = null;
+      }
+
+      if (this.intervalCheck) {
+        clearInterval(this.intervalCheck);
+        this.intervalCheck = null;
+      }
+
+      // Disconnect MutationObserver
+      if (this.mutationObserver) {
+        this.mutationObserver.disconnect();
+        this.mutationObserver = null;
+      }
+
+      if (this.mutationProcessTimeout) {
+        clearTimeout(this.mutationProcessTimeout);
+      }
+
+      // Clear cache if needed
+      this.clearCache();
+
+      // Clear references
+      this.oControl = null;
+      this.authObj = null;
+    }
 
     /**
      * Creates an object from the
@@ -882,6 +906,7 @@ define(() => {
      */
     setData(oControlHost, oDataStore) {
       this.m_DataStore = oDataStore;
+      console.log("Number of ID's", this.m_DataStore.rowCount);
     }
 
     _getMaskDetails(maskName) {
@@ -1067,8 +1092,373 @@ define(() => {
         throw error;
       }
     }
+
+    /**
+     * Returns all spans with data attributes on the page
+     */
+    getAllAssetSpans() {
+      // Get all spans with data-mask and data-ref attributes
+      return document.querySelectorAll(`span[data-name=${this.SPAN_NAME}]`);
+    }
+
+    /**
+     * Determines if an element is in the viewport
+     */
+    isElementInViewport(element) {
+      if (!element) return false;
+
+      // Get the element's bounding rectangle
+      let rect = element.getBoundingClientRect();
+
+      // If the element has no size, try to use its parent
+      if (rect.width === 0 || rect.height === 0) {
+        if (element.parentElement) {
+          rect = element.parentElement.getBoundingClientRect();
+        }
+      }
+
+      // If dimensions are still zero, consider it not visible
+      if (rect.width === 0 || rect.height === 0) {
+        return false;
+      }
+
+      const windowHeight = window.innerHeight || document.documentElement.clientHeight;
+      const windowWidth = window.innerWidth || document.documentElement.clientWidth;
+
+      // Generous buffers allow you to trigger processing slightly off-screen
+      const verticalBuffer = 100;
+      const horizontalBuffer = 50;
+
+      const isInVerticalViewport = rect.top < windowHeight + verticalBuffer && rect.bottom > 0 - verticalBuffer;
+      const isInHorizontalViewport = rect.left < windowWidth + horizontalBuffer && rect.right > 0 - horizontalBuffer;
+
+      return isInVerticalViewport && isInHorizontalViewport;
+    }
+    /**
+     * Determines if the element or its container is visible
+     */
+    isElementOrContainerVisible(element) {
+      if (!element) return false;
+
+      // Check if element itself is hidden
+      if (element.offsetParent === null) return false;
+
+      // Check if element has zero dimensions
+      const rect = element.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return false;
+
+      // Check if any parent container is hidden
+      let parent = element.parentElement;
+      while (parent) {
+        // Check for display:none, visibility:hidden
+        const style = window.getComputedStyle(parent);
+        if (style.display === "none" || style.visibility === "hidden") {
+          return false;
+        }
+
+        // Check for specific page classes that might be hidden
+        if (parent.classList && parent.classList.contains("clsViewerPage")) {
+          if (style.display === "none") {
+            return false;
+          }
+        }
+
+        parent = parent.parentElement;
+      }
+
+      return true;
+    }
+
+    /**
+     * Throttle function to prevent excessive calls
+     */
+    throttle(func, limit) {
+      let lastFunc;
+      let lastRan;
+      return (...args) => {
+        if (!lastRan) {
+          func.apply(this, args);
+          lastRan = Date.now();
+        } else {
+          clearTimeout(lastFunc);
+          lastFunc = setTimeout(() => {
+            if (Date.now() - lastRan >= limit) {
+              func.apply(this, args);
+              lastRan = Date.now();
+            }
+          }, limit - (Date.now() - lastRan));
+        }
+      };
+    }
+    /**
+     * Initialize lazy loading of spans by adding scroll, resize, and mutation listeners
+     */
+    initializeVisibleSpanLoading() {
+      // Ensure only one set of listeners/observers per instance
+      if (this.scrollHandler) {
+        console.log(`Draw ID: ${this.drawID} - Listeners already initialized, skipping.`);
+        return;
+      }
+
+      this.scrollHandler = () => {
+        if (this.apiToken && !this.processingInProgress) {
+          this.processVisibleSpans();
+        }
+      };
+
+      this.throttledScrollHandler = this.throttle(this.scrollHandler, 150);
+
+      // Listen on common scroll containers
+      document.addEventListener("scroll", this.throttledScrollHandler, { capture: true, passive: true });
+      window.addEventListener("scroll", this.throttledScrollHandler, { passive: true });
+      window.addEventListener("resize", this.throttledScrollHandler, { passive: true });
+
+      this.intervalCheck = setInterval(() => {
+        if (this.apiToken && !this.processingInProgress) {
+          this.processVisibleSpans();
+        }
+      }, 1500);
+
+      // MutationObserver Setup
+      let observerTarget = document.querySelector(".idViewer") || document.body;
+
+      const observerOptions = {
+        attributes: true,
+        attributeFilter: ["style"],
+        childList: true,
+        subtree: true,
+      };
+
+      this.mutationObserver = new MutationObserver((mutationsList) => {
+        let needsProcessing = false;
+        for (const mutation of mutationsList) {
+          // Check if nodes were added
+          if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
+            for (const node of mutation.addedNodes) {
+              if (node.nodeType === Node.ELEMENT_NODE) {
+                // Check if the added node contains a relevant span
+                if (
+                  node.querySelector(`span[data-name=${this.SPAN_NAME}]`) ||
+                  node.matches(`span[data-name=${this.SPAN_NAME}]`)
+                ) {
+                  needsProcessing = true;
+                  break;
+                }
+              }
+            }
+          }
+
+          if (needsProcessing) break;
+        }
+
+        if (needsProcessing) {
+          clearTimeout(this.mutationProcessTimeout);
+          this.mutationProcessTimeout = setTimeout(() => {
+            if (this.apiToken && !this.processingInProgress) {
+              this.processVisibleSpans();
+            }
+          }, 250);
+        }
+      });
+
+      this.mutationObserver.observe(observerTarget, observerOptions);
+    }
+    /**
+     * Process visible spans on the page, with screen definitions fetched only once
+     */
+    async processVisibleSpans() {
+      // Ensure API token is available
+      if (!this.apiToken) {
+        console.log(`Draw ID: ${this.drawID} - API token not yet available, skipping processVisibleSpans.`);
+        return;
+      }
+
+      // Prevent concurrent execution
+      if (this.processingInProgress) {
+        console.log(`Draw ID: ${this.drawID} - Processing already in progress, skipping.`);
+        return;
+      }
+
+      this.processingInProgress = true;
+
+      try {
+        // Get all spans with the specified data attributes
+        const allSpans = document.querySelectorAll(`span[data-name=${this.SPAN_NAME}]`);
+
+        if (allSpans.length === 0) {
+          console.log(`Draw ID: ${this.drawID} - No spans with data-name=${this.SPAN_NAME} found.`);
+          this.processingInProgress = false;
+          return;
+        }
+
+        // Filter to only visible spans that haven't been processed yet
+        const processedAttr = `data-processed-${this.drawID}`;
+        const processingAttr = `data-processing-${this.drawID}`;
+
+        const spansToProcess = Array.from(allSpans).filter((span) => {
+          const isVisible = this.isElementInViewport(span);
+          const isProcessed = span.hasAttribute(processedAttr);
+          const isProcessing = span.hasAttribute(processingAttr);
+
+          return isVisible && !isProcessed && !isProcessing;
+        });
+
+        if (spansToProcess.length === 0) {
+          console.log(`Draw ID: ${this.drawID} - No new, visible, unprocessed spans found.`);
+          this.processingInProgress = false;
+          return;
+        }
+
+        console.log(`Draw ID: ${this.drawID} - Found ${spansToProcess.length} spans to process.`);
+
+        // Get unique masks from the spans to process
+        const masks = [...new Set(spansToProcess.map((span) => span.getAttribute("data-mask")))];
+        console.log(`Draw ID: ${this.drawID} - Found ${masks.length} unique masks to fetch definitions for.`);
+
+        // Fetch screen definitions, BT20 models, and attachment definitions once per mask
+        const definitionsMap = new Map();
+
+        for (const mask of masks) {
+          try {
+            // Check if we already have cached definitions for this mask
+            const cacheKey = this.generateCacheKey(`screen_defs_${mask}`, this.authObj);
+            let definitions = this.getFromSessionStorage(cacheKey, true);
+
+            if (!definitions) {
+              console.log(`Draw ID: ${this.drawID} - Fetching definitions for mask ${mask}.`);
+
+              // Fetch screen definition
+              const screenDef = await this.fetchScreenDef(mask, this.authObj);
+              if (!screenDef) {
+                console.error(`Draw ID: ${this.drawID} - Failed to get screen definition for mask ${mask}.`);
+                continue;
+              }
+
+              // Extract entity types
+              const entityTypes = this.extractEntityTypes(screenDef);
+
+              // Fetch BT20 models and attachment definitions
+              const btModels = await this.getBT20Models(mask, entityTypes.btString, this.authObj);
+              const attachDefs = await this.getAttachDef(mask, entityTypes.btString, this.authObj);
+
+              // Transform the screen definition
+              const transformedDef = this.transformDefintion(screenDef, attachDefs);
+
+              // Store all definitions together
+              definitions = {
+                screenDef,
+                entityTypes,
+                btModels,
+                attachDefs,
+                transformedDef,
+              };
+
+              // Cache the definitions
+              this.saveToSessionStorage(cacheKey, definitions, true);
+            } else {
+              console.log(`Draw ID: ${this.drawID} - Using cached definitions for mask ${mask}.`);
+            }
+
+            // Add to our map
+            definitionsMap.set(mask, definitions);
+          } catch (error) {
+            console.error(`Error fetching definitions for mask ${mask}:`, error);
+          }
+        }
+
+        // Now process each span using the pre-fetched definitions
+        const processingPromises = spansToProcess.map((span) => {
+          const mask = span.getAttribute("data-mask");
+          const definitions = definitionsMap.get(mask);
+
+          // Skip if we couldn't get definitions for this mask
+          if (!definitions) {
+            console.warn(`Draw ID: ${this.drawID} - No definitions available for mask ${mask}, skipping span.`);
+            return Promise.resolve();
+          }
+
+          return this.processSpanWithDefinitions(span, definitions);
+        });
+
+        // Wait for all processing to complete
+        await Promise.allSettled(processingPromises);
+
+        console.log(`Draw ID: ${this.drawID} - Completed processing batch of ${spansToProcess.length} spans.`);
+      } catch (error) {
+        console.error(`Error in processVisibleSpans (Instance ${this.drawID}):`, error);
+      } finally {
+        this.processingInProgress = false;
+      }
+    }
+
+    /**
+     * Process a single span with pre-fetched definitions
+     */
+    async processSpanWithDefinitions(span, definitions) {
+      // Make sure span is still in the DOM and valid
+      if (!span || !document.body.contains(span)) {
+        console.warn(`Draw ID: ${this.drawID} - Span no longer in DOM, skipping processing.`);
+        return;
+      }
+
+      const mask = span.getAttribute("data-mask");
+      const ref = span.getAttribute("data-ref");
+
+      if (!mask || !ref) {
+        console.warn(`Draw ID: ${this.drawID} - Span missing data-mask or data-ref attribute, skipping.`);
+        return;
+      }
+
+      // Use unique attributes to mark processing
+      const processedAttr = `data-processed-${this.drawID}`;
+      const processingAttr = `data-processing-${this.drawID}`;
+
+      // Check if already processed or being processed
+      if (span.hasAttribute(processedAttr) || span.hasAttribute(processingAttr)) {
+        return;
+      }
+
+      // Mark as processing
+      span.setAttribute(processingAttr, "true");
+
+      try {
+        // Use the pre-fetched definitions
+        const { transformedDef } = definitions;
+
+        // Here you would implement the logic to update the UI for this span
+        // For example, add an icon or some visual indicator
+
+        // For demonstration, let's add a simple paperclip icon
+        const iconContainer = document.createElement("span");
+        iconContainer.innerHTML = "📎";
+        iconContainer.style.marginLeft = "4px";
+        iconContainer.style.cursor = "pointer";
+        iconContainer.title = `Documents for ${ref}`;
+
+        // Add click handler that could open a modal with document details
+        iconContainer.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log(`Clicked icon for mask=${mask}, ref=${ref}`);
+          // Here you would implement your modal or document display logic
+        });
+
+        // Insert after the span
+        span.parentNode.insertBefore(iconContainer, span.nextSibling);
+
+        // Mark as processed
+        span.setAttribute(processedAttr, "true");
+      } catch (error) {
+        console.error(`Error processing span with mask=${mask}, ref=${ref}:`, error);
+      } finally {
+        // Always remove the processing flag
+        if (span) {
+          span.removeAttribute(processingAttr);
+        }
+      }
+    }
   }
 
   return AdvancedControl;
 });
-// 20250410 121
+// 20250410 138

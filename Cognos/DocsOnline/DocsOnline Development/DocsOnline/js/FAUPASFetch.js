@@ -106,10 +106,8 @@ define(() => {
         // Log the error for debugging
         console.error("Error during control drawing:", error);
 
-        // Re-throw the error so the Cognos framework can handle it
-        // throw error;
       }
-      //   console.log("Drawing Complete - FAUPAS CC");
+        console.log("Drawing Complete - FAUPAS CC");
     }
 
     // Method to extract credentials from the DOM
@@ -119,13 +117,6 @@ define(() => {
         if (firstSpan) {
           const sessionID = firstSpan.getAttribute("data-sessionId") || "";
           const token = firstSpan.getAttribute("data-token") || "";
-
-          //   console.log("Extracted values:", {
-          //     sessionID,
-          //     token,
-          //     appBaseURL: this.AppUrl,
-          //     jobBaseURL: this.JobUrl,
-          //   });
 
           return { sessionID, token };
         } else {
