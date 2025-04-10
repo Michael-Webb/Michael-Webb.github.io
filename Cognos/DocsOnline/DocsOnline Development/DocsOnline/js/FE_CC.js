@@ -155,11 +155,17 @@ define(() => {
         }
 
         try {
+          // Set processing flag
+          this.processingInProgress = false;
+
           // Get authentication - will use cached token if available
           const authObject = await this.authenticate();
 
-          // Set processing flag
-          this.processingInProgress = false;
+          // Store the API token as an instance property so it can be accessed by other methods
+          this.apiToken = authObject.apiToken;
+
+          console.log(`Draw ID: ${this.drawID} - Authentication successful, API token acquired`);
+
 
           if (this.IS_LAZY_LOADED) {
             console.log(`Draw ID: ${this.drawID} - Initializing lazy loading.`);
@@ -1461,4 +1467,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 138
+// 20250410 144
