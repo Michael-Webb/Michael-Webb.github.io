@@ -82,7 +82,7 @@ define(() => {
       this.oControl = oControlHost;
       this.drawID = this.oControl.generateUniqueID(); // *** Get and store drawID ***
       let listControlSearch = oControlHost.page.getControlsByName("List1");
-      this.LIST_NAME = (listControlSearch && listControlSearch.length > 0) ? listControlSearch : null;
+      this.LIST_NAME = (listControlSearch && listControlSearch.length > 0) ? "List1" : null;
       console.log(this.LIST_NAME)
       // Check each configuration parameter and collect the missing ones
       const missingParams = [];
@@ -365,4 +365,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 1122
+// 20250410 1125
