@@ -99,8 +99,8 @@ define(() => {
 
       oControlHost.container.innerHTML = "Hello world";
 
-      let listEl = oControlHost.page.getControlsByName(this.LIST_NAME);
-      console.log("List Element", listEl);
+      let listEl = oControlHost.page.getControlByName(this.LIST_NAME).element;
+      console.log("List Element", listEl,listControlSearch);
 
       this.authenticate();
     }
@@ -365,4 +365,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 1125
+// 20250410 1127
