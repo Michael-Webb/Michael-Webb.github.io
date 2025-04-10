@@ -105,6 +105,7 @@ define(() => {
         ["Span Name"]: SPAN_NAME,
         ["Font Size"]: FONT_SIZE,
         ["Lazy Loading"]: IS_LAZY_LOADED,
+        ["Direct Url"]: URL_TYPE,
         ["Icon Dimensions"]: ICON_DIMENSIONS,
         ["Modal Label"]: MODAL_LABEL,
       } = this.oControl.configuration;
@@ -118,6 +119,7 @@ define(() => {
       this.ICON_DIMENSIONS = ICON_DIMENSIONS || "16px";
       this.FONT_SIZE = FONT_SIZE || "1em";
       this.LIST_NAME = LIST_NAME || "List1";
+      this.URL_TYPE = URL_TYPE
       this.m_DataStore;
       console.log("Configuration", this.oControl.configuration);
 
@@ -2663,4 +2665,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 351
+// 20250410 354
