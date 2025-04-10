@@ -163,12 +163,15 @@ define(() => {
 
           // Store the API token as an instance property so it can be accessed by other methods
           this.apiToken = authObject.apiToken;
+          this.authObj = authObject; // Make sure you store the entire auth object
 
           console.log(`Draw ID: ${this.drawID} - Authentication successful, API token acquired`);
+          console.log(`Draw ID: ${this.drawID} - Auth object environment: ${this.authObj.environment}`);
 
           const allSpansTest = document.querySelectorAll(`span[data-name=${this.SPAN_NAME}]`);
-          console.log(`Draw ID: ${this.drawID} - Found ${allSpansTest.length} total spans with data-name=${this.SPAN_NAME}`);
-          
+          console.log(
+            `Draw ID: ${this.drawID} - Found ${allSpansTest.length} total spans with data-name=${this.SPAN_NAME}`
+          );
 
           if (this.IS_LAZY_LOADED) {
             console.log(`Draw ID: ${this.drawID} - Initializing lazy loading.`);
@@ -1272,244 +1275,243 @@ define(() => {
       this.mutationObserver.observe(observerTarget, observerOptions);
     }
     /**
- * Process visible spans on the page
- */
-/**
- * Process visible spans on the page, handling zero-dimension spans
- */
-async processVisibleSpans() {
-    // Ensure API token is available
-    if (!this.apiToken) {
-      console.log(`Draw ID: ${this.drawID} - API token not yet available, skipping processVisibleSpans.`);
-      return;
-    }
-  
-    // Prevent concurrent execution
-    if (this.processingInProgress) {
-      console.log(`Draw ID: ${this.drawID} - Processing already in progress, skipping.`);
-      return;
-    }
-    
-    this.processingInProgress = true;
-    
-    try {
-      // Get all spans with the specified data attributes
-      const allSpans = this.getAllAssetSpans();
-      console.log(`Draw ID: ${this.drawID} - Found ${allSpans.length} total spans with data-name=${this.SPAN_NAME}`);
-      
-      if (allSpans.length === 0) {
-        this.processingInProgress = false;
+     * Process visible spans on the page
+     */
+    /**
+     * Process visible spans on the page, handling zero-dimension spans
+     */
+    async processVisibleSpans() {
+      // Ensure API token is available
+      if (!this.apiToken) {
+        console.log(`Draw ID: ${this.drawID} - API token not yet available, skipping processVisibleSpans.`);
         return;
       }
-      
-      // Filter to only spans that haven't been processed yet
-      const processedAttr = `data-processed-${this.drawID}`;
-      const processingAttr = `data-processing-${this.drawID}`;
-      
-      const unprocessedSpans = Array.from(allSpans).filter(span => 
-        !span.hasAttribute(processedAttr) && !span.hasAttribute(processingAttr)
-      );
-      
-      console.log(`Draw ID: ${this.drawID} - Found ${unprocessedSpans.length} unprocessed spans total`);
-      
-      if (unprocessedSpans.length === 0) {
-        console.log(`Draw ID: ${this.drawID} - No unprocessed spans found.`);
-        this.processingInProgress = false;
+
+      // Prevent concurrent execution
+      if (this.processingInProgress) {
+        console.log(`Draw ID: ${this.drawID} - Processing already in progress, skipping.`);
         return;
       }
-      
-      // Since spans have zero dimensions, we'll skip the visibility check
-      // and just process all unprocessed spans
-      const spansToProcess = unprocessedSpans;
-      
-      console.log(`Draw ID: ${this.drawID} - Will process ${spansToProcess.length} spans (ignoring visibility check due to zero dimensions).`);
-      
-      // Get unique masks from the spans to process
-      const masks = [...new Set(spansToProcess.map(span => 
-        span.getAttribute('data-mask')).filter(Boolean))];
-        
-      console.log(`Draw ID: ${this.drawID} - Found ${masks.length} unique masks: ${masks.join(', ')}`);
-      
-      // Process all spans regardless of visibility
-      await this.processSpansByMask(spansToProcess, masks);
-      
-    } catch (error) {
-      console.error(`Error in processVisibleSpans (Instance ${this.drawID}):`, error);
-    } finally {
-      this.processingInProgress = false;
-    }
-  }
-  /**
-   * Process spans by mask - fetching definitions once per mask
-   */
-  async processSpansByMask(spansToProcess, masks) {
-    // Fetch screen definitions, BT20 models, and attachment definitions once per mask
-    const definitionsMap = new Map();
-    
-    for (const mask of masks) {
+
+      this.processingInProgress = true;
+
       try {
-        if (!mask) {
-          console.warn(`Draw ID: ${this.drawID} - Skipping null/empty mask`);
-          continue;
+        // Get all spans with the specified data attributes
+        const allSpans = this.getAllAssetSpans();
+        console.log(`Draw ID: ${this.drawID} - Found ${allSpans.length} total spans with data-name=${this.SPAN_NAME}`);
+
+        if (allSpans.length === 0) {
+          this.processingInProgress = false;
+          return;
         }
-        
-        // Check if we already have cached definitions for this mask
-        const cacheKey = this.generateCacheKey(`screen_defs_${mask}`, this.authObj);
-        let definitions = this.getFromSessionStorage(cacheKey, true);
-        
-        if (!definitions) {
-          console.log(`Draw ID: ${this.drawID} - Fetching definitions for mask ${mask}.`);
-          
-          // Fetch screen definition
-          const screenDef = await this.fetchScreenDef(mask, this.authObj);
-          if (!screenDef) {
-            console.error(`Draw ID: ${this.drawID} - Failed to get screen definition for mask ${mask}.`);
+
+        // Filter to only spans that haven't been processed yet
+        const processedAttr = `data-processed-${this.drawID}`;
+        const processingAttr = `data-processing-${this.drawID}`;
+
+        const unprocessedSpans = Array.from(allSpans).filter(
+          (span) => !span.hasAttribute(processedAttr) && !span.hasAttribute(processingAttr)
+        );
+
+        console.log(`Draw ID: ${this.drawID} - Found ${unprocessedSpans.length} unprocessed spans total`);
+
+        if (unprocessedSpans.length === 0) {
+          console.log(`Draw ID: ${this.drawID} - No unprocessed spans found.`);
+          this.processingInProgress = false;
+          return;
+        }
+
+        // Since spans have zero dimensions, we'll skip the visibility check
+        // and just process all unprocessed spans
+        const spansToProcess = unprocessedSpans;
+
+        console.log(
+          `Draw ID: ${this.drawID} - Will process ${spansToProcess.length} spans (ignoring visibility check due to zero dimensions).`
+        );
+
+        // Get unique masks from the spans to process
+        const masks = [...new Set(spansToProcess.map((span) => span.getAttribute("data-mask")).filter(Boolean))];
+
+        console.log(`Draw ID: ${this.drawID} - Found ${masks.length} unique masks: ${masks.join(", ")}`);
+
+        // Process all spans regardless of visibility
+        await this.processSpansByMask(spansToProcess, masks,this.authObj);
+      } catch (error) {
+        console.error(`Error in processVisibleSpans (Instance ${this.drawID}):`, error);
+      } finally {
+        this.processingInProgress = false;
+      }
+    }
+    /**
+     * Process spans by mask - fetching definitions once per mask
+     */
+    async processSpansByMask(spansToProcess, masks, authObj) {
+      // Fetch screen definitions, BT20 models, and attachment definitions once per mask
+      const definitionsMap = new Map();
+
+      for (const mask of masks) {
+        try {
+          if (!mask) {
+            console.warn(`Draw ID: ${this.drawID} - Skipping null/empty mask`);
             continue;
           }
-          
-          // Extract entity types
-          const entityTypes = this.extractEntityTypes(screenDef);
-          
-          // Fetch BT20 models and attachment definitions
-          const btModels = await this.getBT20Models(mask, entityTypes.btString, this.authObj);
-          const attachDefs = await this.getAttachDef(mask, entityTypes.btString, this.authObj);
-          
-          // Transform the screen definition
-          const transformedDef = this.transformDefintion(screenDef, attachDefs);
-          
-          // Store all definitions together
-          definitions = {
-            screenDef,
-            entityTypes,
-            btModels,
-            attachDefs,
-            transformedDef
-          };
-          
-          // Cache the definitions
-          this.saveToSessionStorage(cacheKey, definitions, true);
-        } else {
-          console.log(`Draw ID: ${this.drawID} - Using cached definitions for mask ${mask}.`);
+
+          // Check if we already have cached definitions for this mask
+          const cacheKey = this.generateCacheKey(`screen_defs_${mask}`, authObj);
+          let definitions = this.getFromSessionStorage(cacheKey, true);
+
+          if (!definitions) {
+            console.log(`Draw ID: ${this.drawID} - Fetching definitions for mask ${mask}.`);
+
+            // Fetch screen definition
+            const screenDef = await this.fetchScreenDef(mask, authObj);
+            if (!screenDef) {
+              console.error(`Draw ID: ${this.drawID} - Failed to get screen definition for mask ${mask}.`);
+              continue;
+            }
+
+            // Extract entity types
+            const entityTypes = this.extractEntityTypes(screenDef);
+
+            // Fetch BT20 models and attachment definitions
+            const btModels = await this.getBT20Models(mask, entityTypes.btString, authObj);
+            const attachDefs = await this.getAttachDef(mask, entityTypes.btString, authObj);
+
+            // Transform the screen definition
+            const transformedDef = this.transformDefintion(screenDef, attachDefs);
+
+            // Store all definitions together
+            definitions = {
+              screenDef,
+              entityTypes,
+              btModels,
+              attachDefs,
+              transformedDef,
+            };
+
+            // Cache the definitions
+            this.saveToSessionStorage(cacheKey, definitions, true);
+          } else {
+            console.log(`Draw ID: ${this.drawID} - Using cached definitions for mask ${mask}.`);
+          }
+
+          // Add to our map
+          definitionsMap.set(mask, definitions);
+        } catch (error) {
+          console.error(`Error fetching definitions for mask ${mask}:`, error);
         }
-        
-        // Add to our map
-        definitionsMap.set(mask, definitions);
-      } catch (error) {
-        console.error(`Error fetching definitions for mask ${mask}:`, error);
       }
+
+      // Now process each span using the pre-fetched definitions
+      const processingPromises = spansToProcess.map((span) => {
+        const mask = span.getAttribute("data-mask");
+        if (!mask) {
+          console.warn(`Draw ID: ${this.drawID} - Span has no mask attribute, skipping.`);
+          return Promise.resolve();
+        }
+
+        const definitions = definitionsMap.get(mask);
+
+        // Skip if we couldn't get definitions for this mask
+        if (!definitions) {
+          console.warn(`Draw ID: ${this.drawID} - No definitions available for mask ${mask}, skipping span.`);
+          return Promise.resolve();
+        }
+
+        return this.processSpanWithDefinitions(span, definitions);
+      });
+
+      // Wait for all processing to complete
+      await Promise.allSettled(processingPromises);
+
+      console.log(`Draw ID: ${this.drawID} - Completed processing batch of ${spansToProcess.length} spans.`);
     }
-    
-    // Now process each span using the pre-fetched definitions
-    const processingPromises = spansToProcess.map(span => {
-      const mask = span.getAttribute('data-mask');
-      if (!mask) {
-        console.warn(`Draw ID: ${this.drawID} - Span has no mask attribute, skipping.`);
-        return Promise.resolve();
-      }
-      
-      const definitions = definitionsMap.get(mask);
-      
-      // Skip if we couldn't get definitions for this mask
-      if (!definitions) {
-        console.warn(`Draw ID: ${this.drawID} - No definitions available for mask ${mask}, skipping span.`);
-        return Promise.resolve();
-      }
-      
-      return this.processSpanWithDefinitions(span, definitions);
-    });
-    
-    // Wait for all processing to complete
-    await Promise.allSettled(processingPromises);
-    
-    console.log(`Draw ID: ${this.drawID} - Completed processing batch of ${spansToProcess.length} spans.`);
-  }
 
     /**
      * Process a single span with pre-fetched definitions
      */
     /**
- * Process a single span with pre-fetched definitions, handling zero-dimension spans
- */
-async processSpanWithDefinitions(span, definitions) {
-    // Make sure span is still in the DOM and valid
-    if (!span || !document.body.contains(span)) {
-      console.warn(`Draw ID: ${this.drawID} - Span no longer in DOM, skipping processing.`);
-      return;
-    }
-  
-    const mask = span.getAttribute("data-mask");
-    const ref = span.getAttribute("data-ref");
-  
-    if (!mask || !ref) {
-      console.warn(`Draw ID: ${this.drawID} - Span missing data-mask or data-ref attribute, skipping.`);
-      return;
-    }
-  
-    // Use unique attributes to mark processing
-    const processedAttr = `data-processed-${this.drawID}`;
-    const processingAttr = `data-processing-${this.drawID}`;
-  
-    // Check if already processed or being processed
-    if (span.hasAttribute(processedAttr) || span.hasAttribute(processingAttr)) {
-      return;
-    }
-  
-    // Mark as processing
-    span.setAttribute(processingAttr, "true");
-  
-    try {
-      // Use the pre-fetched definitions
-      const { transformedDef } = definitions;
-  
-      // For spans with zero dimensions, ensure the icon will be visible
-      // by wrapping both in a container with dimensions
-      const container = document.createElement("span");
-      container.style.display = "inline-block"; // Force display
-      container.style.minWidth = "20px"; // Ensure minimum width
-      container.style.minHeight = "16px"; // Ensure minimum height
-      container.id = `doc-container-${this.drawID}-${mask}-${ref}`;
-      
-      // Create the icon element
-      const iconElement = document.createElement("span");
-      iconElement.innerHTML = "📎";
-      iconElement.style.marginLeft = "4px";
-      iconElement.style.cursor = "pointer";
-      iconElement.style.display = "inline-block";
-      iconElement.title = `Documents for ${ref}`;
-  
-      // Add click handler that could open a modal with document details
-      iconElement.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log(`Clicked icon for mask=${mask}, ref=${ref}`);
-        // Here you would implement your modal or document display logic
-      });
-  
-      // Add the original span content to the container (optional)
-      // const originalContent = span.innerHTML;
-      // span.innerHTML = "";  // Clear original span
-      // container.appendChild(document.createTextNode(originalContent));
-      
-      // Add the icon to the container
-      container.appendChild(iconElement);
-  
-      // Insert the container after the span
-      span.parentNode.insertBefore(container, span.nextSibling);
-  
-      // Mark as processed
-      span.setAttribute(processedAttr, "true");
-      
-    } catch (error) {
-      console.error(`Error processing span with mask=${mask}, ref=${ref}:`, error);
-    } finally {
-      // Always remove the processing flag
-      if (span) {
-        span.removeAttribute(processingAttr);
+     * Process a single span with pre-fetched definitions, handling zero-dimension spans
+     */
+    async processSpanWithDefinitions(span, definitions) {
+      // Make sure span is still in the DOM and valid
+      if (!span || !document.body.contains(span)) {
+        console.warn(`Draw ID: ${this.drawID} - Span no longer in DOM, skipping processing.`);
+        return;
+      }
+
+      const mask = span.getAttribute("data-mask");
+      const ref = span.getAttribute("data-ref");
+
+      if (!mask || !ref) {
+        console.warn(`Draw ID: ${this.drawID} - Span missing data-mask or data-ref attribute, skipping.`);
+        return;
+      }
+
+      // Use unique attributes to mark processing
+      const processedAttr = `data-processed-${this.drawID}`;
+      const processingAttr = `data-processing-${this.drawID}`;
+
+      // Check if already processed or being processed
+      if (span.hasAttribute(processedAttr) || span.hasAttribute(processingAttr)) {
+        return;
+      }
+
+      // Mark as processing
+      span.setAttribute(processingAttr, "true");
+
+      try {
+        // Use the pre-fetched definitions
+        const { transformedDef } = definitions;
+
+        // For spans with zero dimensions, ensure the icon will be visible
+        // by wrapping both in a container with dimensions
+        const container = document.createElement("span");
+        container.style.display = "inline-block"; // Force display
+        container.style.minWidth = "20px"; // Ensure minimum width
+        container.style.minHeight = "16px"; // Ensure minimum height
+        container.id = `doc-container-${this.drawID}-${mask}-${ref}`;
+
+        // Create the icon element
+        const iconElement = document.createElement("span");
+        iconElement.innerHTML = "📎";
+        iconElement.style.marginLeft = "4px";
+        iconElement.style.cursor = "pointer";
+        iconElement.style.display = "inline-block";
+        iconElement.title = `Documents for ${ref}`;
+
+        // Add click handler that could open a modal with document details
+        iconElement.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log(`Clicked icon for mask=${mask}, ref=${ref}`);
+          // Here you would implement your modal or document display logic
+        });
+
+        // Add the original span content to the container (optional)
+        // const originalContent = span.innerHTML;
+        // span.innerHTML = "";  // Clear original span
+        // container.appendChild(document.createTextNode(originalContent));
+
+        // Add the icon to the container
+        container.appendChild(iconElement);
+
+        // Insert the container after the span
+        span.parentNode.insertBefore(container, span.nextSibling);
+
+        // Mark as processed
+        span.setAttribute(processedAttr, "true");
+      } catch (error) {
+        console.error(`Error processing span with mask=${mask}, ref=${ref}:`, error);
+      } finally {
+        // Always remove the processing flag
+        if (span) {
+          span.removeAttribute(processingAttr);
+        }
       }
     }
-  }
   }
 
   return AdvancedControl;
 });
-// 20250410 217
+// 20250410 222
