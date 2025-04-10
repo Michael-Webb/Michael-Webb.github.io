@@ -83,6 +83,7 @@ define(() => {
       this.drawID = this.oControl.generateUniqueID(); // *** Get and store drawID ***
 
       this.LIST_NAME = oControlHost.page.getControlsByName("List1");
+      console.log(this.LIST_NAME)
       // Check each configuration parameter and collect the missing ones
       const missingParams = [];
       if (!this.AppUrl) missingParams.push("App Server Url");
@@ -99,7 +100,7 @@ define(() => {
 
       oControlHost.container.innerHTML = "Hello world";
 
-      let listEl = oControlHost.page.getControlByName(this.LIST_NAME);
+      let listEl = oControlHost.page.getControlsByName(this.LIST_NAME);
       console.log("List Element", listEl);
 
       this.authenticate();
@@ -365,4 +366,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 1114
+// 20250410 1117
