@@ -42,28 +42,48 @@ define(() => {
         ["Job Server Url"]: JobUrl,
         ["Attachment Container"]: att_container,
         ["Reference ID Column Name"]: refId,
+        ["DataStore ID Column Name"]: dSCN,
+        ["DataStore Mask Column Name"]: dMCN,
       } = this.oControl.configuration;
       this.AppUrl = this.removeTrailingSlash(AppUrl);
       this.JobUrl = this.removeTrailingSlash(JobUrl);
       this.refID = refId;
       this.att_container = att_container;
-      this.m_DataStores = [];
+      this.dSCN = dSCN;
+      this.dMCN = dMCN;
+      this.m_DataStore;
       console.log("Configuration", this.oControl.configuration);
       fnDoneInitializing();
     }
 
-    /*
-     *Draw the control. This method is optional if the control has no UI.
+    /**
+     *
+     * @param {*} oControlHost
      */
     draw(oControlHost) {
+      this.oControl = oControlHost;
+      this.drawID = this.oControl.generateUniqueID(); // *** Get and store drawID ***
+
+      // Check each configuration parameter and collect the missing ones
+      const missingParams = [];
+      if (!this.AppUrl) missingParams.push("App Server Url");
+      if (!this.JobUrl) missingParams.push("Job Server Url");
+
+      // If any parameters are missing, log specific error and return
+      if (missingParams.length > 0) {
+        let description = `Missing required configuration parameters: ${missingParams.join(", ")}`;
+        throw new scriptableReportError("AdvancedControl", "draw", description);
+      }
+
       oControlHost.container.innerHTML = "Hello world";
-      let listControl = oControlHost.page.getControlByName("Asset List").element;
 
       let listEl = oControlHost.page.getControlByName("Asset List").element;
       console.log("List Control", listControl);
       console.log("List Element", listEl);
 
       this.authenticate();
+
+      console.log(this.getData("000105001"))
     }
 
     /*
@@ -76,21 +96,21 @@ define(() => {
      * @param {*} authDataSet
      */
     getAuthObject() {
-      const authDataStore = this.m_DataStores.find((dataStore) => dataStore.name === "Auth");
-      if (!authDataStore) {
+      const auth = this.m_DataStore
+      if (!auth) {
         throw new Error("Auth data not available");
       }
-      let sessionId_ColIndex = authDataStore.getColumnIndex("SessionId");
-      let sessionId = authDataStore.getCellValue(0, sessionId_ColIndex);
+      let sessionId_ColIndex = auth.getColumnIndex("SessionId");
+      let sessionId = auth.getCellValue(0, sessionId_ColIndex);
 
-      let token_ColIndex = authDataStore.getColumnIndex("Token");
-      let token = authDataStore.getCellValue(0, token_ColIndex);
+      let token_ColIndex = auth.getColumnIndex("Token");
+      let token = auth.getCellValue(0, token_ColIndex);
 
-      let environment_ColIndex = authDataStore.getColumnIndex("Environment");
-      let environment = authDataStore.getCellValue(0, environment_ColIndex);
+      let environment_ColIndex = auth.getColumnIndex("Environment");
+      let environment = auth.getCellValue(0, environment_ColIndex);
 
-      let user_ColIndex = authDataStore.getColumnIndex("User");
-      let user = authDataStore.getCellValue(0, user_ColIndex);
+      let user_ColIndex = auth.getColumnIndex("User");
+      let user = auth.getCellValue(0, user_ColIndex);
 
       let authObject = { sessionId, token, environment, user };
       return authObject;
@@ -251,7 +271,7 @@ define(() => {
      * @param {*} oDataStore
      */
     setData(oControlHost, oDataStore) {
-      this.m_DataStores.push(oDataStore);
+      this.m_DataStore = oDataStore;
     }
 
     _getMaskDetails(maskName) {
@@ -326,4 +346,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 1001
+// 20250410 1045
