@@ -308,7 +308,7 @@ define(() => {
           body: null,
           method: "GET",
           mode: "no-cors",
-          credentials: "include",
+          credentials: "omit",
         });
         return response;
       } catch (error) {
@@ -320,4 +320,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 912
+// 20250410 913
