@@ -77,7 +77,7 @@ define(() => {
      */
     getAuthObject() {
       const authDataStore = this.m_DataStores.find((dataStore) => dataStore.name === "Auth");
-      if (!authDataStore || authDataStore.getRowCount() === 0) {
+      if (!authDataStore) {
         throw new Error("Auth data not available");
       }
       let sessionId_ColIndex = authDataStore.getColumnIndex("SessionId");
