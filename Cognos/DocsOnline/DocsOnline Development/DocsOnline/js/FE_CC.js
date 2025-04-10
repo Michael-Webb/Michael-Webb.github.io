@@ -87,7 +87,6 @@ define(() => {
         const missingParams = [];
         if (!this.AppUrl) missingParams.push("App Server Url");
         if (!this.JobUrl) missingParams.push("Job Server Url");
-        if (this.LIST_NAME == null) missingParams.push("List Name");
         if (!this.ATT_ID_COL_NM) missingParams.push("Attachment ID Column Name");
 
         // If any parameters are missing, log specific error and return
