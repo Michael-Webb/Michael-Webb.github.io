@@ -1347,78 +1347,349 @@ define(() => {
     /**
      * Process spans in visible rows of tables with LIST_NAME
      */
-    /**
-     * Process spans in visible rows of tables with LIST_NAME
-     */
     async processVisibleSpans() {
-      // Ensure API token is available
-      if (!this.apiToken) {
-        console.log(`Draw ID: ${this.drawID} - API token not yet available, skipping processVisibleSpans.`);
-        return;
-      }
+        if (!this.apiToken) { /* console.log(`Draw ID: ${this.drawID} - No token, skip`); */ return; }
+        if (this.processingInProgress) { /* console.log(`Draw ID: ${this.drawID} - Already processing, skip`); */ return; }
+        this.processingInProgress = true;
+        console.log(`Draw ID: ${this.drawID} - processVisibleSpans START`);
 
-      // Prevent concurrent execution
-      if (this.processingInProgress) {
-        console.log(`Draw ID: ${this.drawID} - Processing already in progress, skipping.`);
-        return;
-      }
+        // Shared state for this batch run to coordinate concurrent fetches
+        const definitionsPromiseCache = new Map(); // Cache promises for ongoing definition fetches { mask: Promise<definitions> }
+        const attachmentsPromiseCache = new Map(); // Cache promises for ongoing attachment fetches { spanUniqueId: Promise<attachmentResults> }
 
-      this.processingInProgress = true;
 
-      try {
-        // Add this debugging call
-        //   this.debugVisibilityIssues();
+        try {
+            const allSpans = document.querySelectorAll(`span[data-name=${this.SPAN_NAME}]`);
+            if (allSpans.length === 0) {
+                console.log(`Draw ID: ${this.drawID} - No spans found.`);
+                this.processingInProgress = false;
+                return;
+            }
 
-        // Find all spans with our data-name
-        const allSpans = document.querySelectorAll(`span[data-name=${this.SPAN_NAME}]`);
-        console.log(`Draw ID: ${this.drawID} - Found ${allSpans.length} total spans`);
+            // 1. Filter for visible spans that haven't been fully processed yet
+            const visibleUnprocessedSpans = Array.from(allSpans).filter(span =>
+                !span.hasAttribute(`data-processed-${this.drawID}`) &&
+                this.isElementVisibleInCognosPage(span)
+            );
 
-        if (allSpans.length === 0) {
-          console.log(`Draw ID: ${this.drawID} - No spans found`);
-          this.processingInProgress = false;
-          return;
+             console.log(`Draw ID: ${this.drawID} - Found ${visibleUnprocessedSpans.length} visible/unprocessed spans.`);
+
+
+            if (visibleUnprocessedSpans.length === 0) {
+                this.processingInProgress = false;
+                return;
+            }
+
+            // 2. Group spans by mask-ref
+            const spansByMaskRef = new Map();
+            visibleUnprocessedSpans.forEach(span => {
+                const mask = span.getAttribute("data-mask");
+                const ref = span.getAttribute("data-ref");
+                if (!mask || !ref) return; // Skip invalid spans
+
+                // Ensure span isn't already marked as 'processing' by this instance *before* adding to group
+                 if (span.hasAttribute(`data-processing-${this.drawID}`)) {
+                     // console.log(`Draw ID: ${this.drawID} - Span ${mask}-${ref} already marked processing, skipping addition to batch.`);
+                     return;
+                 }
+
+                const key = `${mask}-${ref}`;
+                if (!spansByMaskRef.has(key)) {
+                    spansByMaskRef.set(key, { mask, ref, spans: [] });
+                }
+                spansByMaskRef.get(key).spans.push(span);
+            });
+
+            if (spansByMaskRef.size === 0) {
+                 console.log(`Draw ID: ${this.drawID} - No valid mask-ref groups need processing.`);
+                 this.processingInProgress = false;
+                 return;
+            }
+
+
+            // 3. Preprocessing: Insert Clocks Synchronously (avoids race conditions in Promise.all)
+            // And mark spans as 'processing' *before* starting async work
+            console.log(`Draw ID: ${this.drawID} - Preprocessing: Inserting clocks for ${spansByMaskRef.size} groups.`);
+            for (const [key, { mask, ref, spans }] of spansByMaskRef.entries()) {
+                const spanUniqueId = key;
+                const processingAttr = `data-processing-${this.drawID}`;
+                let container = document.getElementById(`doc-container-${spanUniqueId}`);
+
+                if (!container) {
+                    // Create and insert clock container
+                     // console.log(`Draw ID: ${this.drawID} - Inserting clock for ${spanUniqueId}`);
+                     container = document.createElement("span");
+                     container.style.display = "inline-block";
+                     container.style.minWidth = this.ICON_DIMENSIONS;
+                     container.style.minHeight = this.ICON_DIMENSIONS;
+                     container.style.verticalAlign = "middle";
+                     container.id = `doc-container-${spanUniqueId}`;
+                     container.innerHTML = this.getSvgForType("clock", this.ICON_DIMENSIONS);
+                     container.title = `Loading attachments for ${ref}...`;
+
+                    // Use the *first* span in the group for placement reference
+                    const refSpan = spans[0];
+                    if(refSpan && document.body.contains(refSpan)) {
+                        const rect = refSpan.getBoundingClientRect();
+                        const parentElement = refSpan.parentElement;
+                         if ((rect.width === 0 || rect.height === 0) && parentElement && (parentElement.tagName === "TD" || parentElement.tagName === "TH")) {
+                             parentElement.appendChild(container);
+                         } else if (parentElement) {
+                             parentElement.insertBefore(container, refSpan.nextSibling);
+                         } else {
+                             console.warn(`Draw ID: ${this.drawID} - Ref span for ${spanUniqueId} has no parent.`);
+                         }
+                    } else {
+                         console.warn(`Draw ID: ${this.drawID} - Ref span for ${spanUniqueId} invalid for placement.`);
+                    }
+                }
+
+                // Mark all spans in this group as processing *now*
+                spans.forEach(s => {
+                    if (s && !s.hasAttribute(processingAttr)) { // Check again to be safe
+                         s.setAttribute(processingAttr, "true");
+                     }
+                 });
+            }
+
+            // 4. Create Promises for Concurrent Processing
+            console.log(`Draw ID: ${this.drawID} - Creating ${spansByMaskRef.size} processing promises.`);
+            const processingPromises = [];
+            for (const [key, groupData] of spansByMaskRef.entries()) {
+                processingPromises.push(
+                    this.handleMaskRefGroupProcessing(
+                        groupData, // { mask, ref, spans }
+                        this.authObj,
+                        definitionsPromiseCache, // Pass shared caches
+                        attachmentsPromiseCache
+                    )
+                );
+            }
+
+            // 5. Execute all promises concurrently and wait for completion
+            console.log(`Draw ID: ${this.drawID} - Awaiting Promise.all...`);
+            await Promise.allSettled(processingPromises); // Use allSettled to ensure all complete, even if some fail
+            console.log(`Draw ID: ${this.drawID} - Promise.allSettled completed.`);
+
+        } catch (error) {
+            console.error(`Error in processVisibleSpans (Outer Try): ID=${this.drawID}`, error);
+        } finally {
+            this.processingInProgress = false; // Release the flag
+            console.log(`Draw ID: ${this.drawID} - processVisibleSpans END`);
+        }
+    }
+
+    /**
+     * Handles the processing for a single mask-ref group.
+     * Fetches definitions/attachments (using shared caches/promises) and updates the UI.
+     * Returns a promise that resolves when processing is complete for this group.
+     */
+    async handleMaskRefGroupProcessing(groupData, authObj, definitionsPromiseCache, attachmentsPromiseCache) {
+        const { mask, ref, spans } = groupData;
+        const spanUniqueId = `${mask}-${ref}`;
+        const drawID = this.drawID; // Capture instance ID for logging
+        const processedAttr = `data-processed-${drawID}`;
+        const processingAttr = `data-processing-${drawID}`;
+
+        // Find the container (should exist from preprocessing)
+        let container = document.getElementById(`doc-container-${spanUniqueId}`);
+        if (!container) {
+            console.warn(`Draw ID: ${drawID} - Container ${spanUniqueId} missing at start of handleMaskRefGroupProcessing.`);
+            // Mark spans as not processed so they can be retried if needed?
+             spans.forEach(s => { if(s) s.removeAttribute(processingAttr); });
+            return; // Cannot proceed without container
         }
 
-        // Filter to only spans in VISIBLE Cognos pages
-        const visibleSpans = Array.from(allSpans).filter((span) => this.isElementVisibleInCognosPage(span));
+        try {
+            // --- 1. Get Definitions ---
+            let definitions = null;
+            let definitionError = false;
+            const defCacheKey = this.generateCacheKey(`screen_defs_${mask}`, authObj);
 
-        console.log(`Draw ID: ${this.drawID} - Found ${visibleSpans.length} visible spans`);
+            if (definitionsPromiseCache.has(mask)) {
+                // A fetch for this mask is already in progress by another concurrent call
+                // console.log(`Draw ID: ${drawID} - Awaiting existing definitions promise for mask ${mask}.`);
+                definitions = await definitionsPromiseCache.get(mask);
+            } else {
+                // Check session storage first
+                definitions = this.getFromSessionStorage(defCacheKey, true);
+                if (!definitions || definitions.error) { // Check cache or cached error
+                    if(!definitions?.error) { // Only fetch if not already a known error
+                        // Fetch needed
+                        // console.log(`Draw ID: ${drawID} - Fetching definitions for mask ${mask}.`);
+                        const fetchPromise = (async () => {
+                            try {
+                                const screenDef = await this.fetchScreenDef(mask, authObj);
+                                if (!screenDef) throw new Error(`Failed screenDef`);
+                                const entityTypes = this.extractEntityTypes(screenDef);
+                                if (!entityTypes?.btString?.length) throw new Error(`No entity types`);
+                                const btModels = await this.getBT20Models(mask, entityTypes.btString, authObj);
+                                const attachDefs = await this.getAttachDef(mask, entityTypes.btString, authObj);
+                                const transformedDef = this.transformDefintion(screenDef, attachDefs);
+                                if (!transformedDef) throw new Error(`Failed transform`);
+                                const result = { transformedDef, error: null };
+                                this.saveToSessionStorage(defCacheKey, result, true); // Cache success
+                                return result;
+                            } catch (error) {
+                                console.error(`Draw ID: ${drawID} - Definition fetch/process error for mask ${mask}:`, error);
+                                const errorResult = { error: error.message || 'Definition fetch failed' };
+                                // Cache error state briefly? Or just handle locally? Let's handle locally for now.
+                                // this.saveToSessionStorage(defCacheKey, errorResult, true);
+                                return errorResult; // Return error state
+                            } finally {
+                                definitionsPromiseCache.delete(mask); // Remove promise once resolved/rejected
+                            }
+                        })();
+                        definitionsPromiseCache.set(mask, fetchPromise); // Store promise for others to await
+                        definitions = await fetchPromise;
+                    } else {
+                         // Definition error was found in session storage
+                         definitionError = true;
+                    }
+                }
+                 // else: Definitions were found in session storage
+            }
 
-        if (visibleSpans.length === 0) {
-          console.log(`Draw ID: ${this.drawID} - No visible spans found.`);
-          this.processingInProgress = false;
-          return;
+            // Check final definition state
+             if (!definitions || definitions.error) {
+                 definitionError = true;
+                 console.warn(`Draw ID: ${drawID} - Definition error for ${spanUniqueId}: ${definitions?.error || 'Unknown'}`);
+                 container.innerHTML = this.getSvgForType("error", this.ICON_DIMENSIONS);
+                 container.title = definitions?.error || `Definition error for ${mask}`;
+                 // Finalize spans immediately with error state
+                 spans.forEach(s => {
+                     if (s && s.hasAttribute(processingAttr)) {
+                         s.setAttribute(processedAttr, "true"); // Mark processed (with error)
+                         s.removeAttribute(processingAttr);
+                     }
+                 });
+                 return; // Stop processing this group
+             }
+
+
+            // --- 2. Get Attachments ---
+            let attachmentResults = null;
+            let attachmentError = false;
+            const attachmentCacheKey = this.generateCacheKey(`attachments_${spanUniqueId}`, authObj);
+
+            if (attachmentsPromiseCache.has(spanUniqueId)) {
+                // Fetch already in progress for this specific mask-ref
+                 // console.log(`Draw ID: ${drawID} - Awaiting existing attachments promise for ${spanUniqueId}.`);
+                 attachmentResults = await attachmentsPromiseCache.get(spanUniqueId);
+            } else {
+                // Check session storage
+                attachmentResults = this.getFromSessionStorage(attachmentCacheKey, true);
+                if (attachmentResults === null || attachmentResults?.error) { // Check cache or cached error
+                     if(!attachmentResults?.error) { // Only fetch if not already a known error
+                         // Fetch needed
+                         // console.log(`Draw ID: ${drawID} - Fetching attachments for ${spanUniqueId}.`);
+                         const fetchPromise = (async () => {
+                            try {
+                                const maskObj = { mask: mask, itemID: ref };
+                                const results = await this.getAttachments(definitions.transformedDef, mask, maskObj);
+                                this.saveToSessionStorage(attachmentCacheKey, results || null, true); // Cache result or null
+                                return results || null; // Return null if API returns nothing meaningful
+                            } catch (fetchError) {
+                                console.error(`Draw ID: ${drawID} - Attachment fetch error for ${spanUniqueId}:`, fetchError);
+                                const errorResult = { error: fetchError.message || 'Attachment fetch failed' };
+                                this.saveToSessionStorage(attachmentCacheKey, errorResult, true); // Cache error state
+                                return errorResult; // Return error state
+                            } finally {
+                                attachmentsPromiseCache.delete(spanUniqueId); // Remove promise once done
+                            }
+                        })();
+                        attachmentsPromiseCache.set(spanUniqueId, fetchPromise);
+                        attachmentResults = await fetchPromise;
+                     } else {
+                          // Attachment error was found in session storage
+                          attachmentError = true;
+                     }
+                }
+                 // else: Attachments were found in session storage
+            }
+
+             // Check final attachment state
+             if (attachmentResults?.error) {
+                 attachmentError = true;
+                 console.warn(`Draw ID: ${drawID} - Attachment error for ${spanUniqueId}: ${attachmentResults.error}`);
+                 container.innerHTML = this.getSvgForType("error", this.ICON_DIMENSIONS);
+                 container.title = attachmentResults.error;
+             }
+
+
+            // --- 3. Update Container UI ---
+            // This section runs once the attachment data (or error) is resolved
+            let documentCount = 0;
+            let documentData = [];
+
+            if (!attachmentError && attachmentResults && Array.isArray(attachmentResults)) {
+                documentData = attachmentResults.reduce((allDocs, result) => {
+                    if (result?.attachments && Array.isArray(result.attachments)) {
+                        return [...allDocs, ...result.attachments];
+                    } return allDocs;
+                }, []);
+                documentCount = documentData.length;
+            }
+
+             // Re-find container - DOM might have changed during awaits
+             container = document.getElementById(`doc-container-${spanUniqueId}`);
+             if (!container) {
+                 console.warn(`Draw ID: ${drawID} - Container ${spanUniqueId} missing during final update.`);
+                 // Spans were marked processing, need to clear that if container is gone?
+                 spans.forEach(s => { if(s) s.removeAttribute(processingAttr); });
+                 return; // Can't update
+             }
+
+
+            if (attachmentError) {
+                // Error already set above
+            } else if (documentCount > 0) {
+                container.innerHTML = this.getSvgForType("paperclip", this.ICON_DIMENSIONS);
+                container.style.cursor = "pointer";
+                 container.title = `${documentCount} document(s) for ${ref}`;
+                // Add click listener (should only happen once as container persists)
+                 // Check if listener already exists based on a class or attribute? Simpler: just add, modern browsers handle duplicates okay.
+                 // Or remove previous listeners if needed, but harder. Let's assume adding is okay.
+                 container.onclick = (e) => { // Use onclick for simplicity here, or manage event listeners more carefully if needed
+                    e.preventDefault(); e.stopPropagation();
+                    console.log(`Clicked paperclip icon for mask=${mask}, ref=${ref}`);
+                    this.openMessage(documentData, ref);
+                };
+            } else {
+                // No attachments or null result
+                container.innerHTML = "";
+                container.title = `No attachments for ${ref}`;
+                container.style.cursor = "default";
+                 container.onclick = null; // Remove listener if no attachments
+            }
+
+            // --- 4. Finalize Associated Spans ---
+            spans.forEach(s => {
+                if (s && document.body.contains(s) && s.hasAttribute(processingAttr)) {
+                    s.setAttribute(processedAttr, "true");
+                    s.removeAttribute(processingAttr);
+                }
+            });
+             // console.log(`Draw ID: ${drawID} - Finalized processing for group ${spanUniqueId}`);
+
+
+        } catch (error) {
+            console.error(`Draw ID: ${drawID} - Unhandled error in handleMaskRefGroupProcessing for ${spanUniqueId}:`, error);
+            // Attempt to update container to error state as fallback
+             container = document.getElementById(`doc-container-${spanUniqueId}`);
+             if(container) {
+                 container.innerHTML = this.getSvgForType("error", this.ICON_DIMENSIONS);
+                 container.title = `Processing error for ${ref}`;
+             }
+             // Ensure flags are cleaned up on associated spans
+             spans.forEach(s => {
+                if (s && s.hasAttribute(processingAttr)) {
+                    s.setAttribute(processedAttr, "true"); // Mark processed (with error)
+                    s.removeAttribute(processingAttr);
+                }
+            });
         }
-
-        // Process only spans that don't have an existing container
-        const spansToProcess = visibleSpans.filter((span) => {
-          const mask = span.getAttribute("data-mask");
-          const ref = span.getAttribute("data-ref");
-          if (!mask || !ref) return false;
-
-          // Check if this span already has a container
-          const spanUniqueId = `${mask}-${ref}`;
-          const existingContainer = document.getElementById(`doc-container-${spanUniqueId}`);
-          return !existingContainer;
-        });
-
-        console.log(`Draw ID: ${this.drawID} - Found ${spansToProcess.length} spans to process in order`);
-
-        if (spansToProcess.length === 0) {
-          console.log(`Draw ID: ${this.drawID} - No spans to process found.`);
-          this.processingInProgress = false;
-          return;
-        }
-
-        // *** CHANGE HERE: Call the new function ***
-        // Don't extract masks here, pass the whole list
-        await this.processSpansInOrder(spansToProcess, this.authObj);
-      } catch (error) {
-        console.error(`Error in processVisibleSpans (Instance ${this.drawID}):`, error);
-      } finally {
-        this.processingInProgress = false;
-      }
-    } // End of processVisibleSpans
+    }
 
     // *** NEW FUNCTION (Replaces processSpansByMask) ***
     async processSpansInOrder(spansToProcess, authObj) {
@@ -3024,4 +3295,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 446
+// 20250410 452
