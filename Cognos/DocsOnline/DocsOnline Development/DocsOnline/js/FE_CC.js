@@ -142,6 +142,7 @@ define(() => {
             method: "GET",
             mode: "cors",
             credentials: "omit",
+            "access-control-allow-origin:": "*",
           }
         );
 
@@ -292,17 +293,12 @@ define(() => {
         const response = await fetch(screenUrl, {
           headers: {
             priority: "u=0, i",
-            "sec-fetch-dest": "document",
-            "sec-fetch-mode": "navigate",
-            "sec-fetch-site": "same-site",
-            "sec-fetch-user": "?1",
-            "upgrade-insecure-requests": "1",
           },
           referrer: this.JobUrl,
           referrerPolicy: "strict-origin-when-cross-origin",
           body: null,
           method: "GET",
-          mode: "no-cors",
+          mode: "cors",
           credentials: "include",
         });
         return response;
