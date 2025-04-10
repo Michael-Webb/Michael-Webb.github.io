@@ -58,7 +58,7 @@ define(() => {
       let environment = this.m_oDataStore.getCellValue(0, environment_ColIndex);
 
       let user_ColIndex = this.m_oDataStore.getColumnIndex("User");
-      let user = this.m_oDataStore.getCell(0, user_ColIndex);
+      let user = this.m_oDataStore.getCellValue(0, user_ColIndex);
 
         let authObject = {sessionId,token,environment,user}
       console.log("authObject: ",authObject);
