@@ -8,8 +8,8 @@ define(() => {
      *
      */
     initialize(oControlHost, fnDoneInitializing) {
-      this.refID = oControlHost.configuration["ID Reference"];
-      
+      let refID = oControlHost.configuration["ID Reference"];
+      this.refID = refID
       console.log("Asset ID: ",refID);
       fnDoneInitializing();
     }
