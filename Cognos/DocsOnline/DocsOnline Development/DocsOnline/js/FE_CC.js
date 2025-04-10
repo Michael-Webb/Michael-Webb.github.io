@@ -1556,6 +1556,146 @@ define(() => {
     /**
      * Process a single span with pre-fetched definitions
      */
+    /**
+     * Process a single span with pre-fetched definitions and display appropriate attachment icons
+     */
+    async processSpanWithDefinitions(span, definitions) {
+      // Make sure span is still in the DOM and valid
+      if (!span || !document.body.contains(span)) {
+        console.warn(`Draw ID: ${this.drawID} - Span no longer in DOM, skipping processing.`);
+        return;
+      }
+
+      const mask = span.getAttribute("data-mask");
+      const ref = span.getAttribute("data-ref");
+
+      if (!mask || !ref) {
+        console.warn(`Draw ID: ${this.drawID} - Span missing data-mask or data-ref attribute, skipping.`);
+        return;
+      }
+
+      // Create a unique ID for this span
+      const spanUniqueId = `${mask}-${ref}`;
+
+      // Check for EXISTING icon by looking for our container anywhere in the document
+      const existingContainer = document.getElementById(`doc-container-${spanUniqueId}`);
+      if (existingContainer) {
+        console.log(`Draw ID: ${this.drawID} - Container already exists for span ${spanUniqueId}, skipping.`);
+        span.setAttribute(`data-processed-${this.drawID}`, "true");
+        return;
+      }
+
+      // Use unique attributes to mark processing
+      const processedAttr = `data-processed-${this.drawID}`;
+      const processingAttr = `data-processing-${this.drawID}`;
+
+      // Check if already being processed
+      if (span.hasAttribute(processingAttr)) {
+        return;
+      }
+
+      // Mark as processing
+      span.setAttribute(processingAttr, "true");
+
+      try {
+        // Check for attachment data in session storage
+        const attachmentCacheKey = this.generateCacheKey(`attachments_${mask}_${ref}`, this.authObj);
+        const attachmentResults = this.getFromSessionStorage(attachmentCacheKey, true);
+
+        // Count the actual documents
+        let documentCount = 0;
+        let documentData = [];
+
+        // Process attachment data if available
+        if (attachmentResults && Array.isArray(attachmentResults)) {
+          // Collect all documents from attachment results
+          documentData = attachmentResults.reduce((allDocs, result) => {
+            if (result.attachments && result.attachments.items && Array.isArray(result.attachments.items)) {
+              return [...allDocs, ...result.attachments.items];
+            }
+            return allDocs;
+          }, []);
+
+          documentCount = documentData.length;
+        }
+
+        // Only proceed with showing an icon if we have documents
+        if (documentCount > 0) {
+          // For zero-dimension spans, we need a different approach
+          const rect = span.getBoundingClientRect();
+          const hasZeroDimensions = rect.width === 0 || rect.height === 0;
+
+          // Log for debugging
+          console.log(
+            `Processing span with mask=${mask}, ref=${ref}, dimensions: ${rect.width}x${rect.height}, attachments: ${documentCount}`
+          );
+
+          // Create the container with a globally unique ID
+          const container = document.createElement("span");
+          container.style.display = "inline-block";
+          container.style.minWidth = "20px";
+          container.style.minHeight = "16px";
+          container.id = `doc-container-${spanUniqueId}`;
+
+          // Create the icon element - only show paperclip since we confirmed we have documents
+          const iconElement = document.createElement("span");
+          iconElement.innerHTML = this.getSvgForType("paperclip", this.ICON_DIMENSIONS);
+          iconElement.style.marginLeft = "4px";
+          iconElement.style.cursor = "pointer";
+          iconElement.style.display = "inline-block";
+          iconElement.title = `${documentCount} document(s) for ${ref}`;
+
+          // Add click handler to open modal with document details
+          iconElement.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log(`Clicked paperclip icon for mask=${mask}, ref=${ref}`);
+            this.openMessage(documentData, ref);
+          });
+
+          // Add the icon to the container
+          container.appendChild(iconElement);
+
+          // Special handling for zero-dimension spans
+          if (hasZeroDimensions) {
+            // Try to find a suitable parent to attach to
+            let targetParent = span.parentElement;
+
+            // If the span is in a table cell, use that
+            if (targetParent && (targetParent.tagName === "TD" || targetParent.tagName === "TH")) {
+              // Append directly to the cell
+              targetParent.appendChild(container);
+              console.log(`Appended to ${targetParent.tagName} for zero-dimension span ${spanUniqueId}`);
+            } else {
+              // Just insert after the span as usual
+              span.parentNode.insertBefore(container, span.nextSibling);
+              console.log(`Inserted after span for zero-dimension span ${spanUniqueId}`);
+            }
+          } else {
+            // Normal case: insert after the span
+            span.parentNode.insertBefore(container, span.nextSibling);
+          }
+
+          console.log(`Successfully processed span ${spanUniqueId} with ${documentCount} attachments`);
+        } else {
+          console.log(`No attachments found for span ${spanUniqueId}, not showing icon`);
+        }
+
+        // Mark as processed regardless of whether we added an icon
+        span.setAttribute(processedAttr, "true");
+      } catch (error) {
+        console.error(`Error processing span with mask=${mask}, ref=${ref}:`, error);
+      } finally {
+        // Always remove the processing flag
+        if (span) {
+          span.removeAttribute(processingAttr);
+        }
+      }
+    }
+
+    /**
+     * Helper method to escape HTML content to prevent XSS vulnerabilities
+     */
     escapeHtml(unsafe) {
       if (!unsafe) return "";
       return unsafe
@@ -2524,6 +2664,6 @@ define(() => {
     }
   }
 
-  return AdvancedControl;
+  return AdvancedControl;a
 });
-// 20250410 342
+// 20250410 344
