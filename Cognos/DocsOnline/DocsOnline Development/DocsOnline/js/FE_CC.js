@@ -1427,133 +1427,286 @@ define(() => {
     /**
      * Process spans by mask - fetching definitions once per mask
      */
+    /**
+     * Process spans by mask - fetching definitions, inserting clocks,
+     * then fetching attachments and updating icons.
+     */
     async processSpansByMask(spansToProcess, masks, authObj) {
-      // Fetch screen definitions, BT20 models, and attachment definitions once per mask
+      // --- Phase 0: Fetch Definitions (Same as before) ---
       const definitionsMap = new Map();
-
       for (const mask of masks) {
         try {
           if (!mask) {
-            console.warn(`Draw ID: ${this.drawID} - Skipping null/empty mask`);
+            console.warn(`Draw ID: ${this.drawID} - Skipping null/empty mask in definitions fetch`);
             continue;
           }
-
-          // Check if we already have cached definitions for this mask
           const cacheKey = this.generateCacheKey(`screen_defs_${mask}`, authObj);
           let definitions = this.getFromSessionStorage(cacheKey, true);
-
           if (!definitions) {
             console.log(`Draw ID: ${this.drawID} - Fetching definitions for mask ${mask}.`);
-
-            // Fetch screen definition
             const screenDef = await this.fetchScreenDef(mask, authObj);
             if (!screenDef) {
               console.error(`Draw ID: ${this.drawID} - Failed to get screen definition for mask ${mask}.`);
               continue;
             }
-
-            // Extract entity types
             const entityTypes = this.extractEntityTypes(screenDef);
-
-            // Fetch BT20 models and attachment definitions
             const btModels = await this.getBT20Models(mask, entityTypes.btString, authObj);
             const attachDefs = await this.getAttachDef(mask, entityTypes.btString, authObj);
-
-            // Transform the screen definition
             const transformedDef = this.transformDefintion(screenDef, attachDefs);
-
-            // Store all definitions together
-            definitions = {
-              screenDef,
-              entityTypes,
-              btModels,
-              attachDefs,
-              transformedDef,
-            };
-
-            // Cache the definitions
+            definitions = { screenDef, entityTypes, btModels, attachDefs, transformedDef };
             this.saveToSessionStorage(cacheKey, definitions, true);
           } else {
             console.log(`Draw ID: ${this.drawID} - Using cached definitions for mask ${mask}.`);
           }
-
-          // Add to our map
           definitionsMap.set(mask, definitions);
         } catch (error) {
           console.error(`Error fetching definitions for mask ${mask}:`, error);
+          // If definitions fail, we can't process spans for this mask
         }
       }
 
-      // Group spans by mask and ref to avoid duplicate processing
+      // Group spans by mask and ref (Same as before)
       const spansByMaskAndRef = new Map();
-
       for (const span of spansToProcess) {
         const mask = span.getAttribute("data-mask");
         const ref = span.getAttribute("data-ref");
-
         if (!mask || !ref) continue;
-
-        const key = `${mask}-${ref}`;
+        const key = `${mask}-${ref}`; // Unique key for mask-ref pair
         if (!spansByMaskAndRef.has(key)) {
           spansByMaskAndRef.set(key, { mask, ref, spans: [] });
         }
         spansByMaskAndRef.get(key).spans.push(span);
       }
 
-      // Process each unique mask-ref combination
+      // --- Phase 1: Insert Clocks ---
+      console.log(
+        `Draw ID: ${this.drawID} - Starting Phase 1: Inserting clocks for ${spansByMaskAndRef.size} mask-ref groups.`
+      );
       for (const [key, { mask, ref, spans }] of spansByMaskAndRef.entries()) {
-        try {
-          const definitions = definitionsMap.get(mask);
+        const spanUniqueId = key; // Use the map key as the unique ID for the container
 
-          if (!definitions || !definitions.transformedDef) {
-            console.warn(`No definitions available for mask ${mask}, skipping spans.`);
+        // Check if definitions are available for this mask before proceeding
+        if (!definitionsMap.has(mask)) {
+          console.warn(
+            `Draw ID: ${this.drawID} - No definitions found for mask ${mask}, skipping clock insertion for ${key}`
+          );
+          continue;
+        }
+
+        for (const span of spans) {
+          // Make sure span is still in the DOM
+          if (!span || !document.body.contains(span)) continue;
+
+          const processedAttr = `data-processed-${this.drawID}`;
+          const processingAttr = `data-processing-${this.drawID}`;
+
+          // Skip if already fully processed or currently being processed by THIS logic flow
+          if (span.hasAttribute(processedAttr) || span.hasAttribute(processingAttr)) {
             continue;
           }
 
-          // Check if we already have cached attachment data
+          // Check if a container ALREADY exists for this mask-ref pair (might happen if processed partially before)
+          let container = document.getElementById(`doc-container-${spanUniqueId}`);
+
+          if (!container) {
+            // Mark as starting processing (clock insertion phase)
+            span.setAttribute(processingAttr, "true");
+
+            // Create container & clock
+            container = document.createElement("span");
+            container.style.display = "inline-block";
+            container.style.minWidth = this.ICON_DIMENSIONS;
+            container.style.minHeight = this.ICON_DIMENSIONS;
+            container.style.verticalAlign = "middle"; // Align icon nicely
+            container.id = `doc-container-${spanUniqueId}`;
+            container.innerHTML = this.getSvgForType("clock", this.ICON_DIMENSIONS);
+            container.title = `Loading attachments for ${ref}...`; // Add title
+
+            // Insert container into DOM (using your existing placement logic)
+            const rect = span.getBoundingClientRect();
+            const hasZeroDimensions = rect.width === 0 || rect.height === 0;
+            if (hasZeroDimensions) {
+              let targetParent = span.parentElement;
+              if (targetParent && (targetParent.tagName === "TD" || targetParent.tagName === "TH")) {
+                targetParent.appendChild(container);
+              } else {
+                span.parentNode.insertBefore(container, span.nextSibling);
+              }
+            } else {
+              span.parentNode.insertBefore(container, span.nextSibling);
+            }
+            // console.log(`Draw ID: ${this.drawID} - Inserted clock for ${spanUniqueId}`); // Keep log concise
+          } else {
+            // If container exists, ensure the processing flag is set on the span
+            if (!span.hasAttribute(processingAttr)) {
+              span.setAttribute(processingAttr, "true");
+            }
+            // console.log(`Draw ID: ${this.drawID} - Container already exists for ${spanUniqueId}, ensuring processing flag.`);
+          }
+        }
+      }
+      console.log(`Draw ID: ${this.drawID} - Finished Phase 1: Clock insertion.`);
+
+      // --- Phase 2: Fetch Attachments and Update Icons ---
+      console.log(`Draw ID: ${this.drawID} - Starting Phase 2: Fetching attachments and updating icons.`);
+      for (const [key, { mask, ref, spans }] of spansByMaskAndRef.entries()) {
+        const spanUniqueId = key;
+        try {
+          const definitions = definitionsMap.get(mask);
+
+          // Skip if definitions failed earlier
+          if (!definitions || !definitions.transformedDef) {
+            console.warn(
+              `Draw ID: ${this.drawID} - No definitions for mask ${mask}, cannot fetch/update for ${key}. Clearing processing flags.`
+            );
+            // Clean up processing flags for spans in this group
+            spans.forEach((span) => {
+              if (span && span.hasAttribute(`data-processing-${this.drawID}`)) {
+                span.removeAttribute(`data-processing-${this.drawID}`);
+                // Optionally remove the clock container or add an error icon here
+                const container = document.getElementById(`doc-container-${spanUniqueId}`);
+                if (container) container.innerHTML = this.getSvgForType("error", this.ICON_DIMENSIONS); // Indicate definition error
+              }
+            });
+            continue; // Move to the next mask-ref group
+          }
+
+          // Check cache for attachment results
           const attachmentCacheKey = this.generateCacheKey(`attachments_${mask}_${ref}`, this.authObj);
           let attachmentResults = this.getFromSessionStorage(attachmentCacheKey, true);
+          let fetchedThisTime = false;
 
-          if (!attachmentResults) {
-            // Create a mask object with the ref as the itemID
-            const maskObj = {
-              mask: mask,
-              itemID: ref,
-            };
+          // *** Fetch attachments ONLY if not cached ***
+          if (attachmentResults === null || attachmentResults === undefined) {
+            // Explicit check for null/undefined needed if you cache non-JSON null
+            const maskObj = { mask: mask, itemID: ref };
+            console.log(`Draw ID: ${this.drawID} - Fetching attachments for ${key} (Not Cached).`);
 
-            console.log(`Fetching attachments for mask=${mask}, ref=${ref}`);
-
-            // Call getAttachments to fetch the attachment data
+            // ---vvv--- ACTUAL /attachments/ HTTP REQUESTS HAPPEN HERE ---vvv---
             attachmentResults = await this.getAttachments(definitions.transformedDef, mask, maskObj);
+            // ---^^^--- END OF /attachments/ REQUESTS ---^^^---
+            fetchedThisTime = true;
 
-            // Log attachment results
             if (attachmentResults) {
               const totalAttachments = attachmentResults.reduce((count, result) => {
-                return count + (result.attachments && result.attachments.items ? result.attachments.items.length : 0);
+                if (result && result.attachments && Array.isArray(result.attachments)) {
+                  return count + result.attachments.length;
+                } else if (result && Array.isArray(result)) {
+                  // Adjust if getAttachments returns array directly
+                  // return count + result.length;
+                }
+                return count;
               }, 0);
-
-              console.log(`Retrieved ${totalAttachments} attachments for ${mask}-${ref}`);
-
-              // Cache the attachment results
-              this.saveToSessionStorage(attachmentCacheKey, attachmentResults, true);
+              console.log(`Draw ID: ${this.drawID} - Retrieved ${totalAttachments} attachments for ${key}. Caching.`);
+              this.saveToSessionStorage(attachmentCacheKey, attachmentResults, true); // Cache successful fetch
             } else {
-              console.log(`No attachment results for ${mask}-${ref}`);
+              console.log(`Draw ID: ${this.drawID} - No attachment results fetched for ${key}. Caching null.`);
+              // Cache null to indicate fetch attempt failed or returned nothing, prevent re-fetching immediately
+              this.saveToSessionStorage(attachmentCacheKey, null, false); // Store literal null
+              attachmentResults = null; // Ensure it's null for the update logic
             }
           } else {
-            console.log(`Using cached attachment data for ${mask}-${ref}`);
+            console.log(`Draw ID: ${this.drawID} - Using cached attachment data for ${key}.`);
           }
 
-          // Process each span normally (without attachment UI)
-          for (const span of spans) {
-            await this.processSpanWithDefinitions(span, definitions);
+          // *** Update the containers for all spans associated with this mask-ref ***
+          let documentCount = 0;
+          let documentData = [];
+          // Recalculate count based on fetched or cached data
+          if (attachmentResults && Array.isArray(attachmentResults)) {
+            documentData = attachmentResults.reduce((allDocs, result) => {
+              if (result && result.attachments && Array.isArray(result.attachments)) {
+                return [...allDocs, ...result.attachments];
+              } else if (result && Array.isArray(result)) {
+                // return [...allDocs, ...result];
+              }
+              return allDocs;
+            }, []);
+            documentCount = documentData.length;
           }
+
+          // Find the container (should exist from Phase 1)
+          const container = document.getElementById(`doc-container-${spanUniqueId}`);
+
+          if (!container) {
+            console.warn(
+              `Draw ID: ${this.drawID} - Container 'doc-container-${spanUniqueId}' missing during update phase for ${key}.`
+            );
+            // Clean up flags on associated spans if container is missing
+            spans.forEach((span) => {
+              if (span) {
+                span.removeAttribute(`data-processing-${this.drawID}`);
+                span.removeAttribute(`data-processed-${this.drawID}`); // Remove processed flag too if container gone
+              }
+            });
+            continue; // Skip update if container is gone
+          }
+
+          // Update the single container for this mask-ref
+          console.log(
+            `Draw ID: ${this.drawID} - Updating container ${container.id} with ${documentCount} attachments.`
+          );
+          if (documentCount > 0) {
+            // Create paperclip icon element
+            const iconElement = document.createElement("span");
+            iconElement.innerHTML = this.getSvgForType("paperclip", this.ICON_DIMENSIONS);
+            iconElement.style.cursor = "pointer";
+            iconElement.style.display = "inline-block";
+            iconElement.style.verticalAlign = "middle";
+            iconElement.title = `${documentCount} document(s) for ${ref}`;
+            // Add click handler (only once per container)
+            iconElement.addEventListener("click", (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log(`Clicked paperclip icon for mask=${mask}, ref=${ref}`);
+              this.openMessage(documentData, ref); // Use potentially updated documentData
+            });
+            // Replace clock with paperclip
+            container.innerHTML = ""; // Clear clock
+            container.appendChild(iconElement);
+            container.title = `${documentCount} document(s) for ${ref}`; // Update title
+          } else {
+            // No attachments, clear the clock
+            container.innerHTML = "";
+            container.title = `No attachments for ${ref}`; // Update title
+          }
+
+          // Mark all associated spans as fully processed and remove processing flag
+          spans.forEach((span) => {
+            if (span && document.body.contains(span)) {
+              // Check if span still exists
+              const processedAttr = `data-processed-${this.drawID}`;
+              const processingAttr = `data-processing-${this.drawID}`;
+              span.setAttribute(processedAttr, "true");
+              span.removeAttribute(processingAttr);
+            }
+          });
         } catch (error) {
-          console.error(`Error processing attachments for ${mask}-${ref}:`, error);
+          console.error(`Draw ID: ${this.drawID} - Error during attachment fetch or update for ${key}:`, error);
+          // Handle errors - update the container to show an error
+          const container = document.getElementById(`doc-container-${spanUniqueId}`);
+          if (container) {
+            container.innerHTML = this.getSvgForType("error", this.ICON_DIMENSIONS);
+            container.title = `Error loading attachments for ${ref}`;
+          }
+          // Mark associated spans as processed (to avoid loops) and clear processing flag
+          spans.forEach((span) => {
+            if (span && document.body.contains(span)) {
+              const processedAttr = `data-processed-${this.drawID}`;
+              const processingAttr = `data-processing-${this.drawID}`;
+              span.setAttribute(processedAttr, "true"); // Mark processed even on error
+              span.removeAttribute(processingAttr);
+            }
+          });
         }
       }
 
-      console.log(`Draw ID: ${this.drawID} - Completed processing batch of ${spansToProcess.length} spans.`);
+      console.log(`Draw ID: ${this.drawID} - Finished Phase 2: Attachments fetched/updated.`);
+      // console.log(`Draw ID: ${this.drawID} - Completed processing batch.`); // Final log
     }
+
+    // REMOVE the old processSpanWithDefinitions function - it's no longer used.
+    // async processSpanWithDefinitions(span, definitions) { ... } // DELETE THIS
 
     /**
      * Process a single span with pre-fetched definitions
@@ -2697,4 +2850,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 417
+// 20250410 420
