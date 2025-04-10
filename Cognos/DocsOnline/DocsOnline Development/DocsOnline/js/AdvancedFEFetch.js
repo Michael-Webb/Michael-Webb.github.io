@@ -169,7 +169,7 @@ class FetchTest {
     // The main URL is already provided; build the referrer URL using the helper function.
     const url = this.URL_LOOKUP.bt20models.mainUrl;
     const refUrl = this.joinUrlParts(this.URL_LOOKUP.bt20models.referrerUrl, fetchObj.path, fetchObj.mask);
-
+    ${this.BASE_APP_URL}/${this.ENVIRONMENT}-UI/ui/uiscreens/
     try {
       const response = await fetch(url, {
         headers: {
