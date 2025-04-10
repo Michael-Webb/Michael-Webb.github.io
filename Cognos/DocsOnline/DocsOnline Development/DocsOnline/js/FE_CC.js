@@ -352,7 +352,7 @@ define(() => {
           }
         }
 
-        return response; // Return the original response
+        return verificationResponse; // Return the original response
       } catch (error) {
         console.error("Error during authentication fetch sequence:", error);
         throw error;
