@@ -119,7 +119,7 @@ define(() => {
       this.ICON_DIMENSIONS = ICON_DIMENSIONS || "16px";
       this.FONT_SIZE = FONT_SIZE || "1em";
       this.LIST_NAME = LIST_NAME || "List1";
-      this.URL_TYPE = URL_TYPE
+      this.URL_TYPE = URL_TYPE;
       this.m_DataStore;
       console.log("Configuration", this.oControl.configuration);
 
@@ -1559,121 +1559,125 @@ define(() => {
      * Process a single span with pre-fetched definitions
      */
     async processSpanWithDefinitions(span, definitions) {
-        // Make sure span is still in the DOM and valid
-        if (!span || !document.body.contains(span)) {
-          console.warn(`Draw ID: ${this.drawID} - Span no longer in DOM, skipping processing.`);
-          return;
-        }
-      
-        const mask = span.getAttribute("data-mask");
-        const ref = span.getAttribute("data-ref");
-      
-        if (!mask || !ref) {
-          console.warn(`Draw ID: ${this.drawID} - Span missing data-mask or data-ref attribute, skipping.`);
-          return;
-        }
-      
-        // Create a unique ID for this span
-        const spanUniqueId = `${mask}-${ref}`;
-      
-        // Check for an EXISTING icon container in the document
-        const existingContainer = document.getElementById(`doc-container-${spanUniqueId}`);
-        if (existingContainer) {
-          console.log(`Draw ID: ${this.drawID} - Container already exists for span ${spanUniqueId}, skipping.`);
-          span.setAttribute(`data-processed-${this.drawID}`, "true");
-          return;
-        }
-      
-        // Mark processing with unique attributes
-        const processedAttr = `data-processed-${this.drawID}`;
-        const processingAttr = `data-processing-${this.drawID}`;
-        if (span.hasAttribute(processingAttr)) return;
-        span.setAttribute(processingAttr, "true");
-      
-        // Create the container immediately with a clock icon
-        const container = document.createElement("span");
-        // Set a min-width and min-height using the ICON_DIMENSIONS so the cell doesn't collapse
-        container.style.display = "inline-block";
-        container.style.minWidth = this.ICON_DIMENSIONS;
-        container.style.minHeight = this.ICON_DIMENSIONS;
-        container.id = `doc-container-${spanUniqueId}`;
-        // Immediately show a clock icon to indicate loading
-        container.innerHTML = this.getSvgForType("clock", this.ICON_DIMENSIONS);
-      
-        // Insert the container next to the span.
-        const rect = span.getBoundingClientRect();
-        const hasZeroDimensions = rect.width === 0 || rect.height === 0;
-        if (hasZeroDimensions) {
-          let targetParent = span.parentElement;
-          if (targetParent && (targetParent.tagName === "TD" || targetParent.tagName === "TH")) {
-            targetParent.appendChild(container);
-            console.log(`Appended clock container to ${targetParent.tagName} for zero-dimension span ${spanUniqueId}`);
-          } else {
-            span.parentNode.insertBefore(container, span.nextSibling);
-            console.log(`Inserted clock container after span for zero-dimension span ${spanUniqueId}`);
-          }
+      // Ensure the span is still in the DOM
+      if (!span || !document.body.contains(span)) {
+        console.warn(`Draw ID: ${this.drawID} - Span no longer in DOM, skipping processing.`);
+        return;
+      }
+
+      const mask = span.getAttribute("data-mask");
+      const ref = span.getAttribute("data-ref");
+
+      if (!mask || !ref) {
+        console.warn(`Draw ID: ${this.drawID} - Span missing data-mask or data-ref attribute, skipping.`);
+        return;
+      }
+
+      // Create a unique id for this span
+      const spanUniqueId = `${mask}-${ref}`;
+
+      // Check if a container already exists; if so, mark as processed and exit.
+      let container = document.getElementById(`doc-container-${spanUniqueId}`);
+      if (container) {
+        console.log(`Draw ID: ${this.drawID} - Container already exists for span ${spanUniqueId}, skipping.`);
+        span.setAttribute(`data-processed-${this.drawID}`, "true");
+        return;
+      }
+
+      // Use unique attributes to flag processing on the span.
+      const processedAttr = `data-processed-${this.drawID}`;
+      const processingAttr = `data-processing-${this.drawID}`;
+      if (span.hasAttribute(processingAttr)) return;
+      span.setAttribute(processingAttr, "true");
+
+      // Create a container for the icon but tag it as loading.
+      container = document.createElement("span");
+      container.style.display = "inline-block";
+      container.style.minWidth = this.ICON_DIMENSIONS;
+      container.style.minHeight = this.ICON_DIMENSIONS;
+      container.id = `doc-container-${spanUniqueId}`;
+      // Mark that a request is in progress.
+      container.setAttribute("data-loading", "true");
+      // Initially, show the clock icon.
+      container.innerHTML = this.getSvgForType("clock", this.ICON_DIMENSIONS);
+
+      // Insert the container next to the span.
+      const rect = span.getBoundingClientRect();
+      const hasZeroDimensions = rect.width === 0 || rect.height === 0;
+      if (hasZeroDimensions) {
+        let targetParent = span.parentElement;
+        if (targetParent && (targetParent.tagName === "TD" || targetParent.tagName === "TH")) {
+          targetParent.appendChild(container);
+          console.log(
+            `Appended container with clock to ${targetParent.tagName} for zero-dimension span ${spanUniqueId}`
+          );
         } else {
           span.parentNode.insertBefore(container, span.nextSibling);
+          console.log(`Inserted container with clock after span for zero-dimension span ${spanUniqueId}`);
         }
-      
-        try {
-          // Check for attachment data in session storage
-          const attachmentCacheKey = this.generateCacheKey(`attachments_${mask}_${ref}`, this.authObj);
-          const attachmentResults = this.getFromSessionStorage(attachmentCacheKey, true);
-      
-          let documentCount = 0;
-          let documentData = [];
-          if (attachmentResults && Array.isArray(attachmentResults)) {
-            // Note: We look directly on the attachments array
-            documentData = attachmentResults.reduce((allDocs, result) => {
-              if (result.attachments && Array.isArray(result.attachments)) {
-                return [...allDocs, ...result.attachments];
-              }
-              return allDocs;
-            }, []);
-            documentCount = documentData.length;
-          }
-      
-          // Update the container: if documents were found, replace the clock icon with a paperclip icon.
-          if (documentCount > 0) {
-            console.log(
-              `Processing span with mask=${mask}, ref=${ref}, dimensions: ${rect.width}x${rect.height}, attachments: ${documentCount}`
-            );
-      
-            // Create a paperclip icon element.
-            const iconElement = document.createElement("span");
-            iconElement.innerHTML = this.getSvgForType("paperclip", this.ICON_DIMENSIONS);
-            iconElement.style.cursor = "pointer";
-            iconElement.style.display = "inline-block";
-            iconElement.title = `${documentCount} document(s) for ${ref}`;
-            // Add click handler to open modal with document details
-            iconElement.addEventListener("click", (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              console.log(`Clicked paperclip icon for mask=${mask}, ref=${ref}`);
-              this.openMessage(documentData, ref);
-            });
-            // Replace the clock icon with the paperclip icon inside the container
-            container.innerHTML = "";
-            container.appendChild(iconElement);
-            console.log(`Successfully processed span ${spanUniqueId} with ${documentCount} attachments`);
-          } else {
-            console.log(`No attachments found for span ${spanUniqueId}, clearing clock icon`);
-            // No attachments found: remove the container's content (or remove it entirely if preferred)
-            container.innerHTML = "";
-          }
-          // Mark the span as processed
-          span.setAttribute(processedAttr, "true");
-        } catch (error) {
-          console.error(`Error processing span with mask=${mask}, ref=${ref}:`, error);
-        } finally {
-          // Always remove the processing flag
-          if (span) {
-            span.removeAttribute(processingAttr);
-          }
+      } else {
+        span.parentNode.insertBefore(container, span.nextSibling);
+      }
+
+      try {
+        // Now fetch the attachment data.
+        const attachmentCacheKey = this.generateCacheKey(`attachments_${mask}_${ref}`, this.authObj);
+        const attachmentResults = this.getFromSessionStorage(attachmentCacheKey, true);
+
+        let documentCount = 0;
+        let documentData = [];
+        if (attachmentResults && Array.isArray(attachmentResults)) {
+          // Gather documents from all attachment result objects; note we look directly for an array in result.attachments.
+          documentData = attachmentResults.reduce((allDocs, result) => {
+            if (result.attachments && Array.isArray(result.attachments)) {
+              return [...allDocs, ...result.attachments];
+            }
+            return allDocs;
+          }, []);
+          documentCount = documentData.length;
+        }
+
+        // The asynchronous request has completed; remove the flag
+        container.removeAttribute("data-loading");
+
+        // If we found attachments, change the clock icon to a paperclip with a click handler.
+        if (documentCount > 0) {
+          console.log(
+            `Processing span with mask=${mask}, ref=${ref}, dimensions: ${rect.width}x${rect.height}, attachments: ${documentCount}`
+          );
+          // Create a paperclip icon element.
+          const iconElement = document.createElement("span");
+          iconElement.innerHTML = this.getSvgForType("paperclip", this.ICON_DIMENSIONS);
+          iconElement.style.cursor = "pointer";
+          iconElement.style.display = "inline-block";
+          iconElement.title = `${documentCount} document(s) for ${ref}`;
+          iconElement.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log(`Clicked paperclip icon for mask=${mask}, ref=${ref}`);
+            this.openMessage(documentData, ref);
+          });
+          // Replace the clock icon with the paperclip icon.
+          container.innerHTML = "";
+          container.appendChild(iconElement);
+          console.log(`Successfully processed span ${spanUniqueId} with ${documentCount} attachments`);
+        } else {
+          console.log(`No attachments found for span ${spanUniqueId}; leaving cell empty.`);
+          // No attachments: clear the container's content.
+          container.innerHTML = "";
+        }
+
+        // Mark this span as processed.
+        span.setAttribute(processedAttr, "true");
+      } catch (error) {
+        console.error(`Error processing span with mask=${mask}, ref=${ref}:`, error);
+      } finally {
+        // Always remove the processing flag from the span.
+        if (span) {
+          span.removeAttribute(processingAttr);
         }
       }
-      
+    }
 
     /**
      * Helper method to escape HTML content to prevent XSS vulnerabilities
@@ -2629,7 +2633,7 @@ define(() => {
           htmlContent: true,
           callback: {
             ok: async () => {
-                console.log("ok");
+              console.log("ok");
             },
           },
           callbackScope: { ok: this },
@@ -2646,4 +2650,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 408
+// 20250410 414
