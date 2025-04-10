@@ -533,6 +533,7 @@ define(() => {
       }
       const url = `${this.AppUrl}/${authObject.environment}${this.URL_LOOKUP.attachDef.mainUrl}`;
       const refUrl = `${this.AppUrl}/${authObject.environment}${this.URL_LOOKUP.attachDef.referrerUrl}${fetchObj.path}/${fetchObj.mask}`;
+      console.log("getAttachDef", url, refUrl);
 
       const attachDefParams = `progIds=${btModels.join(",")}`;
       try {
@@ -1601,4 +1602,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 249
+// 20250410 251
