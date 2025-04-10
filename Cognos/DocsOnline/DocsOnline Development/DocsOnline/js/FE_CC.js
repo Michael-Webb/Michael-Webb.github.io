@@ -1346,216 +1346,212 @@ define(() => {
      * Process spans in visible rows of tables with LIST_NAME
      */
     /**
- * Process spans in visible rows of tables with LIST_NAME
- */
-async processVisibleSpans() {
-    // Ensure API token is available
-    if (!this.apiToken) {
-      console.log(`Draw ID: ${this.drawID} - API token not yet available, skipping processVisibleSpans.`);
-      return;
-    }
-  
-    // Prevent concurrent execution
-    if (this.processingInProgress) {
-      console.log(`Draw ID: ${this.drawID} - Processing already in progress, skipping.`);
-      return;
-    }
-  
-    this.processingInProgress = true;
-  
-    try {
-      // Add this debugging call
-    //   this.debugVisibilityIssues();
-  
-      // Find all spans with our data-name
-      const allSpans = document.querySelectorAll(`span[data-name=${this.SPAN_NAME}]`);
-      console.log(`Draw ID: ${this.drawID} - Found ${allSpans.length} total spans`);
-  
-      if (allSpans.length === 0) {
-        console.log(`Draw ID: ${this.drawID} - No spans found`);
-        this.processingInProgress = false;
+     * Process spans in visible rows of tables with LIST_NAME
+     */
+    async processVisibleSpans() {
+      // Ensure API token is available
+      if (!this.apiToken) {
+        console.log(`Draw ID: ${this.drawID} - API token not yet available, skipping processVisibleSpans.`);
         return;
       }
-  
-      // Filter to only spans in VISIBLE Cognos pages
-      const visibleSpans = Array.from(allSpans).filter((span) => this.isElementVisibleInCognosPage(span));
-  
-      console.log(`Draw ID: ${this.drawID} - Found ${visibleSpans.length} visible spans`);
-  
-      if (visibleSpans.length === 0) {
-        console.log(`Draw ID: ${this.drawID} - No visible spans found.`);
-        this.processingInProgress = false;
+
+      // Prevent concurrent execution
+      if (this.processingInProgress) {
+        console.log(`Draw ID: ${this.drawID} - Processing already in progress, skipping.`);
         return;
       }
-  
-      // Process only spans that don't have an existing container
-      const spansToProcess = visibleSpans.filter((span) => {
-        const mask = span.getAttribute("data-mask");
-        const ref = span.getAttribute("data-ref");
-        if (!mask || !ref) return false;
-  
-        // Check if this span already has a container
-        const spanUniqueId = `${mask}-${ref}`;
-        const existingContainer = document.getElementById(`doc-container-${spanUniqueId}`);
-        return !existingContainer;
-      });
-  
-      console.log(`Draw ID: ${this.drawID} - Found ${spansToProcess.length} spans to process`);
-  
-      if (spansToProcess.length === 0) {
-        console.log(`Draw ID: ${this.drawID} - No spans to process found.`);
-        this.processingInProgress = false;
-        return;
-      }
-  
-      // Get unique masks from the spans to process
-      const masks = [...new Set(spansToProcess.map((span) => span.getAttribute("data-mask")).filter(Boolean))];
-  
-      console.log(`Draw ID: ${this.drawID} - Found ${masks.length} unique masks: ${masks.join(", ")}`);
-  
-      // Process spans with these masks
-      await this.processSpansByMask(spansToProcess, masks, this.authObj);
-    } catch (error) {
-      console.error(`Error in processVisibleSpans (Instance ${this.drawID}):`, error);
-    } finally {
-      this.processingInProgress = false;
-    }
-  }
-  
-  /**
-   * Process spans by mask - fetching definitions once per mask
-   */
-  async processSpansByMask(spansToProcess, masks, authObj) {
-    // Fetch screen definitions, BT20 models, and attachment definitions once per mask
-    const definitionsMap = new Map();
-  
-    for (const mask of masks) {
+
+      this.processingInProgress = true;
+
       try {
-        if (!mask) {
-          console.warn(`Draw ID: ${this.drawID} - Skipping null/empty mask`);
-          continue;
+        // Add this debugging call
+        //   this.debugVisibilityIssues();
+
+        // Find all spans with our data-name
+        const allSpans = document.querySelectorAll(`span[data-name=${this.SPAN_NAME}]`);
+        console.log(`Draw ID: ${this.drawID} - Found ${allSpans.length} total spans`);
+
+        if (allSpans.length === 0) {
+          console.log(`Draw ID: ${this.drawID} - No spans found`);
+          this.processingInProgress = false;
+          return;
         }
-  
-        // Check if we already have cached definitions for this mask
-        const cacheKey = this.generateCacheKey(`screen_defs_${mask}`, authObj);
-        let definitions = this.getFromSessionStorage(cacheKey, true);
-  
-        if (!definitions) {
-          console.log(`Draw ID: ${this.drawID} - Fetching definitions for mask ${mask}.`);
-  
-          // Fetch screen definition
-          const screenDef = await this.fetchScreenDef(mask, authObj);
-          if (!screenDef) {
-            console.error(`Draw ID: ${this.drawID} - Failed to get screen definition for mask ${mask}.`);
+
+        // Filter to only spans in VISIBLE Cognos pages
+        const visibleSpans = Array.from(allSpans).filter((span) => this.isElementVisibleInCognosPage(span));
+
+        console.log(`Draw ID: ${this.drawID} - Found ${visibleSpans.length} visible spans`);
+
+        if (visibleSpans.length === 0) {
+          console.log(`Draw ID: ${this.drawID} - No visible spans found.`);
+          this.processingInProgress = false;
+          return;
+        }
+
+        // Process only spans that don't have an existing container
+        const spansToProcess = visibleSpans.filter((span) => {
+          const mask = span.getAttribute("data-mask");
+          const ref = span.getAttribute("data-ref");
+          if (!mask || !ref) return false;
+
+          // Check if this span already has a container
+          const spanUniqueId = `${mask}-${ref}`;
+          const existingContainer = document.getElementById(`doc-container-${spanUniqueId}`);
+          return !existingContainer;
+        });
+
+        console.log(`Draw ID: ${this.drawID} - Found ${spansToProcess.length} spans to process`);
+
+        if (spansToProcess.length === 0) {
+          console.log(`Draw ID: ${this.drawID} - No spans to process found.`);
+          this.processingInProgress = false;
+          return;
+        }
+
+        // Get unique masks from the spans to process
+        const masks = [...new Set(spansToProcess.map((span) => span.getAttribute("data-mask")).filter(Boolean))];
+
+        console.log(`Draw ID: ${this.drawID} - Found ${masks.length} unique masks: ${masks.join(", ")}`);
+
+        // Process spans with these masks
+        await this.processSpansByMask(spansToProcess, masks, this.authObj);
+      } catch (error) {
+        console.error(`Error in processVisibleSpans (Instance ${this.drawID}):`, error);
+      } finally {
+        this.processingInProgress = false;
+      }
+    }
+
+    /**
+     * Process spans by mask - fetching definitions once per mask
+     */
+    async processSpansByMask(spansToProcess, masks, authObj) {
+      // Fetch screen definitions, BT20 models, and attachment definitions once per mask
+      const definitionsMap = new Map();
+
+      for (const mask of masks) {
+        try {
+          if (!mask) {
+            console.warn(`Draw ID: ${this.drawID} - Skipping null/empty mask`);
             continue;
           }
-  
-          // Extract entity types
-          const entityTypes = this.extractEntityTypes(screenDef);
-  
-          // Fetch BT20 models and attachment definitions
-          const btModels = await this.getBT20Models(mask, entityTypes.btString, authObj);
-          const attachDefs = await this.getAttachDef(mask, entityTypes.btString, authObj);
-  
-          // Transform the screen definition
-          const transformedDef = this.transformDefintion(screenDef, attachDefs);
-  
-          // Store all definitions together
-          definitions = {
-            screenDef,
-            entityTypes,
-            btModels,
-            attachDefs,
-            transformedDef,
-          };
-  
-          // Cache the definitions
-          this.saveToSessionStorage(cacheKey, definitions, true);
-        } else {
-          console.log(`Draw ID: ${this.drawID} - Using cached definitions for mask ${mask}.`);
-        }
-  
-        // Add to our map
-        definitionsMap.set(mask, definitions);
-      } catch (error) {
-        console.error(`Error fetching definitions for mask ${mask}:`, error);
-      }
-    }
-  
-    // Group spans by mask and ref to avoid duplicate processing
-    const spansByMaskAndRef = new Map();
-    
-    for (const span of spansToProcess) {
-      const mask = span.getAttribute("data-mask");
-      const ref = span.getAttribute("data-ref");
-      
-      if (!mask || !ref) continue;
-      
-      const key = `${mask}-${ref}`;
-      if (!spansByMaskAndRef.has(key)) {
-        spansByMaskAndRef.set(key, { mask, ref, spans: [] });
-      }
-      spansByMaskAndRef.get(key).spans.push(span);
-    }
-  
-    // Process each unique mask-ref combination
-    for (const [key, { mask, ref, spans }] of spansByMaskAndRef.entries()) {
-      try {
-        const definitions = definitionsMap.get(mask);
-        
-        if (!definitions || !definitions.transformedDef) {
-          console.warn(`No definitions available for mask ${mask}, skipping spans.`);
-          continue;
-        }
-        
-        // Check if we already have cached attachment data
-        const attachmentCacheKey = this.generateCacheKey(`attachments_${mask}_${ref}`, this.authObj);
-        let attachmentResults = this.getFromSessionStorage(attachmentCacheKey, true);
-        
-        if (!attachmentResults) {
-          // Create a mask object with the ref as the itemID
-          const maskObj = { 
-            mask: mask, 
-            itemID: ref 
-          };
-          
-          console.log(`Fetching attachments for mask=${mask}, ref=${ref}`);
-          
-          // Call getAttachments to fetch the attachment data
-          attachmentResults = await this.getAttachments(
-            definitions.transformedDef, 
-            mask, 
-            maskObj
-          );
-          
-          // Log attachment results
-          if (attachmentResults) {
-            const totalAttachments = attachmentResults.reduce((count, result) => {
-              return count + (result.attachments && result.attachments.items ? result.attachments.items.length : 0);
-            }, 0);
-            
-            console.log(`Retrieved ${totalAttachments} attachments for ${mask}-${ref}`);
-            
-            // Cache the attachment results
-            this.saveToSessionStorage(attachmentCacheKey, attachmentResults, true);
+
+          // Check if we already have cached definitions for this mask
+          const cacheKey = this.generateCacheKey(`screen_defs_${mask}`, authObj);
+          let definitions = this.getFromSessionStorage(cacheKey, true);
+
+          if (!definitions) {
+            console.log(`Draw ID: ${this.drawID} - Fetching definitions for mask ${mask}.`);
+
+            // Fetch screen definition
+            const screenDef = await this.fetchScreenDef(mask, authObj);
+            if (!screenDef) {
+              console.error(`Draw ID: ${this.drawID} - Failed to get screen definition for mask ${mask}.`);
+              continue;
+            }
+
+            // Extract entity types
+            const entityTypes = this.extractEntityTypes(screenDef);
+
+            // Fetch BT20 models and attachment definitions
+            const btModels = await this.getBT20Models(mask, entityTypes.btString, authObj);
+            const attachDefs = await this.getAttachDef(mask, entityTypes.btString, authObj);
+
+            // Transform the screen definition
+            const transformedDef = this.transformDefintion(screenDef, attachDefs);
+
+            // Store all definitions together
+            definitions = {
+              screenDef,
+              entityTypes,
+              btModels,
+              attachDefs,
+              transformedDef,
+            };
+
+            // Cache the definitions
+            this.saveToSessionStorage(cacheKey, definitions, true);
           } else {
-            console.log(`No attachment results for ${mask}-${ref}`);
+            console.log(`Draw ID: ${this.drawID} - Using cached definitions for mask ${mask}.`);
           }
-        } else {
-          console.log(`Using cached attachment data for ${mask}-${ref}`);
+
+          // Add to our map
+          definitionsMap.set(mask, definitions);
+        } catch (error) {
+          console.error(`Error fetching definitions for mask ${mask}:`, error);
         }
-        
-        // Process each span normally (without attachment UI)
-        for (const span of spans) {
-          await this.processSpan(span);
-        }
-      } catch (error) {
-        console.error(`Error processing attachments for ${mask}-${ref}:`, error);
       }
+
+      // Group spans by mask and ref to avoid duplicate processing
+      const spansByMaskAndRef = new Map();
+
+      for (const span of spansToProcess) {
+        const mask = span.getAttribute("data-mask");
+        const ref = span.getAttribute("data-ref");
+
+        if (!mask || !ref) continue;
+
+        const key = `${mask}-${ref}`;
+        if (!spansByMaskAndRef.has(key)) {
+          spansByMaskAndRef.set(key, { mask, ref, spans: [] });
+        }
+        spansByMaskAndRef.get(key).spans.push(span);
+      }
+
+      // Process each unique mask-ref combination
+      for (const [key, { mask, ref, spans }] of spansByMaskAndRef.entries()) {
+        try {
+          const definitions = definitionsMap.get(mask);
+
+          if (!definitions || !definitions.transformedDef) {
+            console.warn(`No definitions available for mask ${mask}, skipping spans.`);
+            continue;
+          }
+
+          // Check if we already have cached attachment data
+          const attachmentCacheKey = this.generateCacheKey(`attachments_${mask}_${ref}`, this.authObj);
+          let attachmentResults = this.getFromSessionStorage(attachmentCacheKey, true);
+
+          if (!attachmentResults) {
+            // Create a mask object with the ref as the itemID
+            const maskObj = {
+              mask: mask,
+              itemID: ref,
+            };
+
+            console.log(`Fetching attachments for mask=${mask}, ref=${ref}`);
+
+            // Call getAttachments to fetch the attachment data
+            attachmentResults = await this.getAttachments(definitions.transformedDef, mask, maskObj);
+
+            // Log attachment results
+            if (attachmentResults) {
+              const totalAttachments = attachmentResults.reduce((count, result) => {
+                return count + (result.attachments && result.attachments.items ? result.attachments.items.length : 0);
+              }, 0);
+
+              console.log(`Retrieved ${totalAttachments} attachments for ${mask}-${ref}`);
+
+              // Cache the attachment results
+              this.saveToSessionStorage(attachmentCacheKey, attachmentResults, true);
+            } else {
+              console.log(`No attachment results for ${mask}-${ref}`);
+            }
+          } else {
+            console.log(`Using cached attachment data for ${mask}-${ref}`);
+          }
+
+          // Process each span normally (without attachment UI)
+          for (const span of spans) {
+            await this.processSpanWithDefinitions(span, definitions);
+          }
+        } catch (error) {
+          console.error(`Error processing attachments for ${mask}-${ref}:`, error);
+        }
+      }
+
+      console.log(`Draw ID: ${this.drawID} - Completed processing batch of ${spansToProcess.length} spans.`);
     }
-  
-    console.log(`Draw ID: ${this.drawID} - Completed processing batch of ${spansToProcess.length} spans.`);
-  }
 
     /**
      * Process a single span with pre-fetched definitions
