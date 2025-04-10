@@ -1402,7 +1402,7 @@ define(() => {
           return !existingContainer;
         });
 
-        console.log(`Draw ID: ${this.drawID} - Found ${spansToProcess.length} spans to process`);
+        console.log(`Draw ID: ${this.drawID} - Found ${spansToProcess.length} spans to process in order`);
 
         if (spansToProcess.length === 0) {
           console.log(`Draw ID: ${this.drawID} - No spans to process found.`);
@@ -1410,19 +1410,280 @@ define(() => {
           return;
         }
 
-        // Get unique masks from the spans to process
-        const masks = [...new Set(spansToProcess.map((span) => span.getAttribute("data-mask")).filter(Boolean))];
-
-        console.log(`Draw ID: ${this.drawID} - Found ${masks.length} unique masks: ${masks.join(", ")}`);
-
-        // Process spans with these masks
-        await this.processSpansByMask(spansToProcess, masks, this.authObj);
+        // *** CHANGE HERE: Call the new function ***
+        // Don't extract masks here, pass the whole list
+        await this.processSpansInOrder(spansToProcess, this.authObj);
       } catch (error) {
         console.error(`Error in processVisibleSpans (Instance ${this.drawID}):`, error);
       } finally {
         this.processingInProgress = false;
       }
+    } // End of processVisibleSpans
+
+    // *** NEW FUNCTION (Replaces processSpansByMask) ***
+    async processSpansInOrder(spansToProcess, authObj) {
+      console.log(`Draw ID: ${this.drawID} - Starting processSpansInOrder for ${spansToProcess.length} spans.`);
+
+      // Local cache for definitions during this batch run (avoids repeated session storage checks within the loop)
+      const definitionsCache = new Map();
+      // Set to track mask-refs for which attachment fetch is *in progress* within this batch
+      const fetchingAttachments = new Set();
+
+      for (const span of spansToProcess) {
+        // Ensure span is still valid
+        if (!span || !document.body.contains(span)) {
+          console.warn(`Draw ID: ${this.drawID} - Span no longer in DOM, skipping.`);
+          continue;
+        }
+
+        const mask = span.getAttribute("data-mask");
+        const ref = span.getAttribute("data-ref");
+
+        if (!mask || !ref) {
+          console.warn(`Draw ID: ${this.drawID} - Span missing data-mask or data-ref, skipping.`);
+          continue;
+        }
+
+        const spanUniqueId = `${mask}-${ref}`; // ID for container and attachment cache
+        const processedAttr = `data-processed-${this.drawID}`;
+        const processingAttr = `data-processing-${this.drawID}`;
+
+        // --- 1. Check Existing State & Insert Clock ---
+        let container = document.getElementById(`doc-container-${spanUniqueId}`);
+        let needsUpdate = false; // Flag if we need to run the update logic for this container
+
+        if (container) {
+          // Container exists. Is the *current* span already marked?
+          if (span.hasAttribute(processedAttr) || span.hasAttribute(processingAttr)) {
+            // console.log(`Draw ID: ${this.drawID} - Span ${span.outerHTML} for ${spanUniqueId} already processed/processing, skipping.`);
+            continue; // Skip this specific span, but others might need the container updated
+          } else {
+            // Container exists from another span, but this span needs processing flags set.
+            // Mark this span as processing, it will be updated later when the container is.
+            span.setAttribute(processingAttr, "true");
+            needsUpdate = true; // Ensure the container update logic runs later
+            // console.log(`Draw ID: ${this.drawID} - Container for ${spanUniqueId} exists, marking span ${span.outerHTML} for processing.`);
+          }
+        } else {
+          // Container does NOT exist, create it and insert clock
+          // console.log(`Draw ID: ${this.drawID} - Creating container and clock for ${spanUniqueId}`);
+          span.setAttribute(processingAttr, "true"); // Mark this span as initiating processing
+
+          container = document.createElement("span");
+          container.style.display = "inline-block";
+          container.style.minWidth = this.ICON_DIMENSIONS;
+          container.style.minHeight = this.ICON_DIMENSIONS;
+          container.style.verticalAlign = "middle";
+          container.id = `doc-container-${spanUniqueId}`;
+          container.innerHTML = this.getSvgForType("clock", this.ICON_DIMENSIONS);
+          container.title = `Loading attachments for ${ref}...`;
+
+          // Insert container (using existing placement logic)
+          const rect = span.getBoundingClientRect();
+          const hasZeroDimensions = rect.width === 0 || rect.height === 0;
+          if (hasZeroDimensions) {
+            let targetParent = span.parentElement;
+            if (targetParent && (targetParent.tagName === "TD" || targetParent.tagName === "TH")) {
+              targetParent.appendChild(container);
+            } else {
+              span.parentNode.insertBefore(container, span.nextSibling);
+            }
+          } else {
+            span.parentNode.insertBefore(container, span.nextSibling);
+          }
+          needsUpdate = true; // Container was just created, needs update logic
+        }
+
+        // --- 2. Ensure Definitions are Available ---
+        let definitions = definitionsCache.get(mask);
+        let definitionError = false;
+
+        if (!definitions) {
+          // Check session storage first
+          const defCacheKey = this.generateCacheKey(`screen_defs_${mask}`, authObj);
+          definitions = this.getFromSessionStorage(defCacheKey, true);
+
+          if (!definitions) {
+            // Not in session storage, fetch them
+            console.log(
+              `Draw ID: ${this.drawID} - Fetching definitions for mask ${mask} (triggered by ${spanUniqueId}).`
+            );
+            try {
+              const screenDef = await this.fetchScreenDef(mask, authObj);
+              if (!screenDef) throw new Error(`Failed to get screen definition for mask ${mask}.`);
+
+              const entityTypes = this.extractEntityTypes(screenDef);
+              const btModels = await this.getBT20Models(mask, entityTypes.btString, authObj);
+              const attachDefs = await this.getAttachDef(mask, entityTypes.btString, authObj);
+              const transformedDef = this.transformDefintion(screenDef, attachDefs);
+
+              definitions = { screenDef, entityTypes, btModels, attachDefs, transformedDef, error: null }; // Add error flag
+              this.saveToSessionStorage(defCacheKey, definitions, true); // Cache successful fetch
+              definitionsCache.set(mask, definitions); // Cache locally for this batch
+              console.log(`Draw ID: ${this.drawID} - Successfully fetched and cached definitions for ${mask}.`);
+            } catch (error) {
+              console.error(`Draw ID: ${this.drawID} - Error fetching definitions for mask ${mask}:`, error);
+              definitions = { error: error.message || "Failed to fetch definitions" }; // Store error state
+              // Don't save error state to session storage? Or maybe save it briefly?
+              // Let's cache the error locally for this batch run only.
+              definitionsCache.set(mask, definitions);
+              definitionError = true;
+            }
+          } else {
+            // Found in session storage, cache locally for this batch
+            definitionsCache.set(mask, definitions);
+            if (definitions.error) {
+              // Check if cached definitions indicate a past error
+              definitionError = true;
+            }
+            // console.log(`Draw ID: ${this.drawID} - Using cached definitions for ${mask}.`);
+          }
+        } else if (definitions.error) {
+          // Already known error from local cache
+          definitionError = true;
+        }
+
+        // If definitions failed, update container to error and skip attachment fetch
+        if (definitionError) {
+          console.warn(
+            `Draw ID: ${this.drawID} - Cannot process attachments for ${spanUniqueId} due to definition error for mask ${mask}.`
+          );
+          if (container) {
+            container.innerHTML = this.getSvgForType("error", this.ICON_DIMENSIONS);
+            container.title = `Error loading definition for ${mask}`;
+          }
+          // Mark this span as processed (with error)
+          span.setAttribute(processedAttr, "true");
+          span.removeAttribute(processingAttr);
+          continue; // Move to the next span
+        }
+
+        // --- 3. Fetch Attachments (if needed and not already fetching) ---
+        const attachmentCacheKey = this.generateCacheKey(`attachments_${mask}_${ref}`, this.authObj);
+        let attachmentResults = this.getFromSessionStorage(attachmentCacheKey, true);
+        let attachmentFetchInitiated = false;
+
+        // Fetch only if: Not cached AND not currently being fetched by another concurrent iteration for the same mask-ref
+        if (attachmentResults === null && !fetchingAttachments.has(spanUniqueId)) {
+          fetchingAttachments.add(spanUniqueId); // Mark as fetch initiated
+          attachmentFetchInitiated = true;
+          console.log(`Draw ID: ${this.drawID} - Initiating attachment fetch for ${spanUniqueId}.`);
+          try {
+            const maskObj = { mask: mask, itemID: ref };
+            // ---vvv--- ACTUAL /attachments/ HTTP REQUESTS HAPPEN HERE ---vvv---
+            attachmentResults = await this.getAttachments(definitions.transformedDef, mask, maskObj);
+            // ---^^^--- END OF /attachments/ REQUESTS ---^^^---
+
+            if (attachmentResults) {
+              const totalCount = attachmentResults.reduce(
+                (count, result) => count + (result?.attachments?.length || 0),
+                0
+              );
+              console.log(`Draw ID: ${this.drawID} - Fetched ${totalCount} attachments for ${spanUniqueId}. Caching.`);
+              this.saveToSessionStorage(attachmentCacheKey, attachmentResults, true);
+            } else {
+              console.log(`Draw ID: ${this.drawID} - No attachment results fetched for ${spanUniqueId}. Caching null.`);
+              this.saveToSessionStorage(attachmentCacheKey, null, false); // Cache the null result
+              attachmentResults = null; // Ensure it's null locally
+            }
+          } catch (fetchError) {
+            console.error(`Draw ID: ${this.drawID} - Error fetching attachments for ${spanUniqueId}:`, fetchError);
+            attachmentResults = { error: fetchError.message || "Failed to fetch attachments" }; // Store error state
+            // Cache the error state so we don't retry immediately
+            this.saveToSessionStorage(attachmentCacheKey, attachmentResults, true);
+          } finally {
+            fetchingAttachments.delete(spanUniqueId); // Remove from fetching set
+          }
+        }
+
+        // --- 4. Update Icon Container (only if needed) ---
+        // Update if container was just created OR if fetch just completed
+        if (needsUpdate || attachmentFetchInitiated) {
+          // Retrieve latest attachment results again in case a concurrent fetch finished
+          if (attachmentFetchInitiated) {
+            attachmentResults = this.getFromSessionStorage(attachmentCacheKey, true);
+          }
+
+          console.log(`Draw ID: ${this.drawID} - Updating container for ${spanUniqueId}.`);
+          let documentCount = 0;
+          let documentData = [];
+          let attachmentError = false;
+
+          if (attachmentResults && attachmentResults.error) {
+            attachmentError = true;
+            console.warn(
+              `Draw ID: ${this.drawID} - Attachment fetch for ${spanUniqueId} resulted in error: ${attachmentResults.error}`
+            );
+          } else if (attachmentResults && Array.isArray(attachmentResults)) {
+            documentData = attachmentResults.reduce((allDocs, result) => {
+              if (result && result.attachments && Array.isArray(result.attachments)) {
+                return [...allDocs, ...result.attachments];
+              }
+              return allDocs;
+            }, []);
+            documentCount = documentData.length;
+          } // Handles null case correctly (count stays 0)
+
+          if (container) {
+            // Check container still exists
+            if (attachmentError) {
+              container.innerHTML = this.getSvgForType("error", this.ICON_DIMENSIONS);
+              container.title = `Error loading attachments for ${ref}`;
+            } else if (documentCount > 0) {
+              // Create paperclip icon
+              const iconElement = document.createElement("span");
+              iconElement.innerHTML = this.getSvgForType("paperclip", this.ICON_DIMENSIONS);
+              iconElement.style.cursor = "pointer";
+              iconElement.style.display = "inline-block";
+              iconElement.style.verticalAlign = "middle";
+              iconElement.title = `${documentCount} document(s) for ${ref}`;
+              // Add click handler - check if one already exists to prevent duplicates
+              if (!container.querySelector(".lucide-paperclip")) {
+                // Only add listener if paperclip not already there
+                iconElement.addEventListener("click", (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log(`Clicked paperclip icon for mask=${mask}, ref=${ref}`);
+                  this.openMessage(documentData, ref);
+                });
+                container.innerHTML = "";
+                container.appendChild(iconElement);
+              } else {
+                // Paperclip already exists, maybe just update title?
+                container.title = `${documentCount} document(s) for ${ref}`;
+              }
+            } else {
+              // No attachments, clear the container
+              container.innerHTML = "";
+              container.title = `No attachments for ${ref}`;
+            }
+          } else {
+            console.warn(`Draw ID: ${this.drawID} - Container ${spanUniqueId} disappeared before update.`);
+          }
+
+          // --- 5. Update ALL Spans Associated with this Container ---
+          // Find all spans that *should* be using this container and mark them processed
+          const allSpansForContainer = document.querySelectorAll(
+            `span[data-name="${this.SPAN_NAME}"][data-mask="${mask}"][data-ref="${ref}"]`
+          );
+          allSpansForContainer.forEach((s) => {
+            if (s && s.hasAttribute(processingAttr)) {
+              // Only update those marked as processing
+              s.setAttribute(processedAttr, "true");
+              s.removeAttribute(processingAttr);
+            }
+          });
+          console.log(
+            `Draw ID: ${this.drawID} - Marked ${allSpansForContainer.length} spans as processed for ${spanUniqueId}.`
+          );
+        } // End if(needsUpdate || attachmentFetchInitiated)
+      } // End for...of spansToProcess loop
+
+      console.log(`Draw ID: ${this.drawID} - Finished processSpansInOrder.`);
     }
+
+    // Remove or comment out the old processSpansByMask function
+    // async processSpansByMask(spansToProcess, masks, authObj) { ... }
 
     /**
      * Process spans by mask - fetching definitions once per mask
@@ -2763,6 +3024,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 426
-
-
+// 20250410 446
