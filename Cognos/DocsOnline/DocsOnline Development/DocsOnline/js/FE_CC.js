@@ -598,7 +598,7 @@ define(() => {
 
       // The main URL is already provided; build the referrer URL using the helper function.
       const url = `${this.AppUrl}/${authObject.environment}${this.URL_LOOKUP.bt20models.mainUrl}`;
-      const refUrl = `${this.AppUrl}/${authObject.environment}${this.URL_LOOKUP.bt20models.referrerUrl}${fetchObj.path}/${fetchObj.mask}`;
+      const refUrl = `${this.AppUrl}/${authObject.environment}${this.URL_LOOKUP.bt20models.referrerUrl}${fetchObj.path}`;
       console.log("BT20Url", url, refUrl);
 
       try {
@@ -1601,4 +1601,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 242
+// 20250410 249
