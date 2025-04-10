@@ -127,7 +127,7 @@ define(() => {
     async fetchApiToken(authObject) {
       try {
         const tokenResponse = await fetch(
-          `${this.JobUrl}/${authObject.environment}/api/user/apiToken?sessionId=${authObject.sessionId}&authToken=${authObject.token}`,
+          `${this.JobUrl}/${authObject.environment}/api/user/apiToken?sessionId=${encodeURIComponent(authObject.sessionId)}&authToken=${encodeURIComponent(authObject.token)}`,
           {
             headers: {
               accept: "*/*",
@@ -189,7 +189,7 @@ define(() => {
               "&claims=NameIdentifier&claims=Name&claims=GivenName&claims=Surname",
             method: "POST",
             mode: "cors",
-            credentials: "omit",
+            credentials: "inlclude",
           }
         );
 
@@ -369,4 +369,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 950
+// 20250410 955
