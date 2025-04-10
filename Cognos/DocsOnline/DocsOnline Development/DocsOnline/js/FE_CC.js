@@ -47,6 +47,8 @@ define(() => {
      * Returns:
      */
     setData(oControlHost, oDataStore) {
+
+        console.log(oDataStore)
       // Method below is for a multiple data stores by name to use later in the draw function
       this.m_aDataStore[oDataStore.index] = oDataStore;
 
