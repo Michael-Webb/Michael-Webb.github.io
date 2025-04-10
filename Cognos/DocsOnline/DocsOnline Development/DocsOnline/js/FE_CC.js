@@ -29,6 +29,66 @@ define(() => {
         },
       ],
     };
+    ALL_MASKS = {
+      masks: [
+        {
+          mask: "APOHBTUB",
+          module: "accountspayable",
+          name: "BatchId",
+          itemID: "RE031665",
+        },
+        {
+          mask: "FAUPAS",
+          module: "fixedassets",
+          name: "Faid",
+          itemID: "130013048",
+        },
+        {
+          mask: "GLUPKY",
+          module: "generalledger",
+          name: "Key",
+          itemID: "190010",
+        },
+        {
+          mask: "PEUPPE",
+          module: "personentity",
+        },
+        {
+          mask: "POUPPR",
+          module: "purchasing",
+          name: "PrNo",
+          itemID: "000015",
+        },
+        {
+          mask: "ARUPRF",
+          module: "accountsreceivable",
+          name: "Ref",
+          itemID: "AR257328",
+        },
+      ],
+    };
+    URL_LOOKUP = {
+      screenDef: {
+        mainUrl: `-UI/api/finance/screendef/`,
+        referrerUrl: `-UI/ui/uiscreens/`,
+      },
+      bt20models: {
+        mainUrl: `-UI/api/finance/legacy/workflow/GetBT20Models`,
+        referrerUrl: `-UI/ui/uiscreens/`,
+      },
+      attachDef: {
+        mainUrl: `-UI/api/finance/legacy/documents/attachDefinitions`,
+        referrerUrl: `-UI/ui/uiscreens/`,
+      },
+      detailUrls: {
+        mainUrl: `-UI/data/finance/legacy/`,
+        referrerUrl: `-UI/ui/uiscreens/`,
+      },
+      attachUrls: {
+        mainUrl: `-UI/api/finance/legacy/documents`,
+        referrerUrl: `-UI/ui/uiscreens/`,
+      },
+    };
     /*
      * Initialize the control. This method is optional. If this method is implemented, fnDoneInitializing must be called when done initializing, or a Promise must be returned.
      * Parameters: oControlHost, fnDoneInitializing
@@ -73,11 +133,52 @@ define(() => {
       fnDoneInitializing();
     }
 
+    // /**
+    //  *
+    //  * @param {*} oControlHost
+    //  */
+    // draw(oControlHost) {
+    //   try {
+    //     this.oControl = oControlHost;
+    //     oControlHost.loadingText = "Loading Docs Online...";
+    //     this.drawID = this.oControl.generateUniqueID(); // *** Get and store drawID ***
+
+    //     // Check each configuration parameter and collect the missing ones
+    //     const missingParams = [];
+    //     if (!this.AppUrl) missingParams.push("App Server Url");
+    //     if (!this.JobUrl) missingParams.push("Job Server Url");
+    //     if (!this.ATT_ID_COL_NM) missingParams.push("Attachment ID Column Name");
+
+    //     // If any parameters are missing, log specific error and return
+    //     if (missingParams.length > 0) {
+    //       let description = `Missing required configuration parameters: ${missingParams.join(", ")}`;
+    //       throw new scriptableReportError("AdvancedControl", "draw", description);
+    //     }
+    //     this.authenticate()
+    //       .then((res) => {
+
+    //         // Now do things that require authentication
+    //         let spanList = document.querySelectorAll(`[data-name=${this.SPAN_NAME}]`);
+    //         console.log("spanList", spanList);
+    //         let allMasks = this.getAllMasks(spanList);
+    //         this.fetchScreenDef(allMasks[0],res)
+    //       })
+    //       .catch((error) => console.warn(error))
+    //       .finally(() => {
+    //         const myTimeout = setTimeout(() => {
+    //           oControlHost.container.innerHTML = "Docs Online Loaded";
+    //         }, 1000);
+    //       });
+    //   } catch (error) {
+    //     console.warn(error);
+    //   }
+    // }
+
     /**
      *
      * @param {*} oControlHost
      */
-    draw(oControlHost) {
+    async draw(oControlHost) {
       try {
         this.oControl = oControlHost;
         oControlHost.loadingText = "Loading Docs Online...";
@@ -94,18 +195,22 @@ define(() => {
           let description = `Missing required configuration parameters: ${missingParams.join(", ")}`;
           throw new scriptableReportError("AdvancedControl", "draw", description);
         }
-        this.authenticate()
-          .then(() => {
-            // Now do things that require authentication
-            let spanList = document.querySelectorAll(`[data-name=${this.SPAN_NAME}]`);
-            console.log("spanList", spanList);
-            let allMasks = this.getAllMasks(spanList);
-          })
-          .catch((error) => console.warn(error));
 
-        const myTimeout = setTimeout(() => {
-          oControlHost.container.innerHTML = "Docs Online Loaded";
-        }, 1000);
+        try {
+          const res = await this.authenticate();
+
+          // Now do things that require authentication
+          let spanList = document.querySelectorAll(`[data-name=${this.SPAN_NAME}]`);
+          console.log("spanList", spanList);
+          let allMasks = this.getAllMasks(spanList);
+          await this.fetchScreenDef(allMasks[0], res);
+        } catch (error) {
+          console.warn(error);
+        } finally {
+          const myTimeout = setTimeout(() => {
+            oControlHost.container.innerHTML = "Docs Online Loaded";
+          }, 1000);
+        }
       } catch (error) {
         console.warn(error);
       }
@@ -172,6 +277,7 @@ define(() => {
 
         // Step 4: Get Session Expiration and log it.
         const sessionExpData = await this.getSessionExpiration(authObject);
+        return authObject;
       } catch (error) {
         console.error("Authentication failed:", error);
         throw error;
@@ -381,8 +487,80 @@ define(() => {
         throw error;
       }
     }
+    /**
+     * Finds the mask object corresponding to the provided mask string.
+     * @param {string} maskString - The mask string to find.
+     * @returns {object|null} The mask object with properties, or null if not found.
+     */
+    findMaskObject(maskString) {
+      const foundMask = this.ALL_MASKS.masks.find((item) => item.mask === maskString);
+      if (foundMask) {
+        return {
+          mask: foundMask.mask,
+          path: `${foundMask.module}/${foundMask.mask}`,
+          itemID: foundMask.itemID,
+          name: foundMask.name,
+        };
+      } else {
+        console.error("Mask not found:", maskString);
+        return null;
+      }
+    }
+
+    /**
+     * Joins URL parts ensuring there is exactly one slash between each part and a trailing slash.
+     * @param {...string} parts - The parts of the URL to join.
+     * @returns {string} The joined URL.
+     */
+    joinUrlParts(...parts) {
+      return parts.map((part) => part.replace(/\/+$/, "")).join("/") + "/";
+    }
+    /**
+     * Fetches the screen definition for a given mask string.
+     * @param {string} maskString - The mask string used to locate the fetch configuration.
+     * @returns {Promise<object|null>} The JSON response from the API, or null on error.
+     */
+    async fetchScreenDef(maskString, authObj) {
+      const fetchObj = this.findMaskObject(maskString);
+      if (!fetchObj) {
+        console.error("Invalid mask:", maskString);
+        return;
+      }
+
+      // Construct URLs using the helper function
+      const url = `${this.ALL_MASKS.AppUrl}/${authObj.environment}${this.URL_LOOKUP.screenDef.mainUrl}/${fetchObj.path}`;
+      const refUrl = `${this.ALL_MASKS.AppUrl}/${authObj.environment}${this.URL_LOOKUP.screenDef.referrerUrl}/${fetchObj.path}`;
+
+      try {
+        const response = await fetch(url, {
+          headers: {
+            accept: "application/json, text/plain, */*",
+            "accept-language": "en-US,en;q=0.9",
+            "cache-control": "no-cache",
+            "content-type": "application/json",
+            glledger: "--",
+            jlledger: "--",
+            mask: fetchObj.mask,
+            pragma: "no-cache",
+          },
+          referrer: refUrl,
+          referrerPolicy: "strict-origin-when-cross-origin",
+          method: "GET",
+          mode: "cors",
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          console.error(response.status, await response.text());
+        }
+        return await response.json();
+      } catch (error) {
+        console.error("Fetch error:", error);
+        throw error;
+      }
+    }
   }
 
   return AdvancedControl;
 });
-// 20250410 1222
+// 20250410 1242
