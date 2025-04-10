@@ -252,6 +252,31 @@ define(() => {
       return `${prefix}_${authObject.environment}`;
     }
 
+    /**
+     * Clears cached data from session storage
+     */
+    clearCache() {
+      try {
+        // Clear any cached data specific to this instance
+        if (this.authObj && this.authObj.environment) {
+          // Find and remove all cache keys related to this environment
+          const keysToRemove = [];
+          for (let i = 0; i < sessionStorage.length; i++) {
+            const key = sessionStorage.key(i);
+            if (key && key.includes(this.authObj.environment)) {
+              keysToRemove.push(key);
+            }
+          }
+
+          // Remove the collected keys
+          keysToRemove.forEach((key) => sessionStorage.removeItem(key));
+          console.log(`Draw ID: ${this.drawID} - Cleared ${keysToRemove.length} cached items from session storage`);
+        }
+      } catch (error) {
+        console.error(`Error clearing cache: ${error}`);
+      }
+    }
+
     transformDefintion(data, attachmentDefinitions = []) {
       // Validate input structure
       if (!data || !Array.isArray(data.dataSources) || !data.rootComponent) {
@@ -1602,4 +1627,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 253
+// 20250410 255
