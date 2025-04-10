@@ -93,15 +93,20 @@ define(() => {
           let description = `Missing required configuration parameters: ${missingParams.join(", ")}`;
           throw new scriptableReportError("AdvancedControl", "draw", description);
         }
-        this.authenticate();
+        this.authenticate()
+          .then(() => {
+            // Now do things that require authentication
+            let spanList = document.querySelectorAll(`[data-name=${this.SPAN_NAME}]`);
+            console.log("spanList", spanList);
+            let allMasks = this.getAllMasks(spanList);
+          })
+          .catch((error) => console.warn(error));
         oControlHost.container.innerHTML = "Hello world";
-
-        
 
         let spanList = document.querySelectorAll(`[data-name=${this.SPAN_NAME}]`);
         console.log("spanList", spanList);
 
-        let allMasks = this.getAllMasks(spanList)
+        let allMasks = this.getAllMasks(spanList);
       } catch (error) {
         console.warn(error);
       }
@@ -118,7 +123,7 @@ define(() => {
       const uniqueMasks = [...new Set([...nodeList].map((span) => span.dataset.mask))];
 
       console.log(uniqueMasks);
-      return uniqueMasks
+      return uniqueMasks;
     }
 
     /*
@@ -381,4 +386,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 1210
+// 20250410 1214
