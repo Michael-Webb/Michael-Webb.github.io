@@ -1559,7 +1559,7 @@ define(() => {
      * Process a single span with pre-fetched definitions
      */
     async processSpanWithDefinitions(span, definitions) {
-      // Ensure the span is still in the DOM
+      // Make sure span is still in the DOM and valid
       if (!span || !document.body.contains(span)) {
         console.warn(`Draw ID: ${this.drawID} - Span no longer in DOM, skipping processing.`);
         return;
@@ -1573,107 +1573,154 @@ define(() => {
         return;
       }
 
-      // Create a unique id for this span
+      // Create a unique ID for this span
       const spanUniqueId = `${mask}-${ref}`;
 
-      // Check if a container already exists; if so, mark as processed and exit.
-      let container = document.getElementById(`doc-container-${spanUniqueId}`);
-      if (container) {
-        console.log(`Draw ID: ${this.drawID} - Container already exists for span ${spanUniqueId}, skipping.`);
-        span.setAttribute(`data-processed-${this.drawID}`, "true");
-        return;
+      // Check for an EXISTING icon container in the document
+      // *** IMPORTANT: Make sure this check is robust. If it incorrectly finds an old container, it will skip. ***
+      const existingContainer = document.getElementById(`doc-container-${spanUniqueId}`);
+      if (existingContainer) {
+        // Check if the existing container *already* has the final icon or is empty (meaning processing completed before)
+        // If it still contains the clock, maybe something went wrong last time? Let's allow reprocessing *if* it only has the clock.
+        const hasClockOnly = existingContainer.innerHTML.includes("lucide-clock");
+        const hasPaperclip = existingContainer.innerHTML.includes("lucide-paperclip");
+
+        if (!hasClockOnly || hasPaperclip) {
+          console.log(
+            `Draw ID: ${this.drawID} - Container already exists and processed for span ${spanUniqueId}, skipping.`
+          );
+          // Ensure the processed flag is set even if skipped here
+          span.setAttribute(`data-processed-${this.drawID}`, "true");
+          return;
+        } else {
+          console.log(
+            `Draw ID: ${this.drawID} - Container exists with only clock for ${spanUniqueId}, attempting re-processing.`
+          );
+          // Optionally remove the old container before creating a new one, or just proceed
+          existingContainer.remove();
+        }
       }
 
-      // Use unique attributes to flag processing on the span.
+      // Mark processing with unique attributes
       const processedAttr = `data-processed-${this.drawID}`;
       const processingAttr = `data-processing-${this.drawID}`;
-      if (span.hasAttribute(processingAttr)) return;
+
+      // *** Check if ALREADY processed by this instance ***
+      if (span.hasAttribute(processedAttr)) {
+        console.log(`Draw ID: ${this.drawID} - Span ${spanUniqueId} already processed by this instance, skipping.`);
+        return;
+      }
+      // *** Check if CURRENTLY being processed by this instance ***
+      if (span.hasAttribute(processingAttr)) {
+        console.log(
+          `Draw ID: ${this.drawID} - Span ${spanUniqueId} currently being processed by this instance, skipping.`
+        );
+        return;
+      }
       span.setAttribute(processingAttr, "true");
 
-      // Create a container for the icon but tag it as loading.
-      container = document.createElement("span");
-      container.style.display = "inline-block";
-      container.style.minWidth = this.ICON_DIMENSIONS;
-      container.style.minHeight = this.ICON_DIMENSIONS;
-      container.id = `doc-container-${spanUniqueId}`;
-      // Mark that a request is in progress.
-      container.setAttribute("data-loading", "true");
-      // Initially, show the clock icon.
-      container.innerHTML = this.getSvgForType("clock", this.ICON_DIMENSIONS);
+      // Create the container immediately with a clock icon
+      const container = document.createElement("span");
+      // Set a min-width and min-height using the ICON_DIMENSIONS so the cell doesn't collapse
+      container.style.display = "inline-block"; // Good!
+      container.style.minWidth = this.ICON_DIMENSIONS; // Good!
+      container.style.minHeight = this.ICON_DIMENSIONS; // Good!
+      container.style.verticalAlign = "middle"; // Might help alignment
+      container.id = `doc-container-${spanUniqueId}`; // Good!
+      // Immediately show a clock icon to indicate loading
+      container.innerHTML = this.getSvgForType("clock", this.ICON_DIMENSIONS); // Good!
 
       // Insert the container next to the span.
+      // *** Logic for zero dimensions seems okay ***
       const rect = span.getBoundingClientRect();
       const hasZeroDimensions = rect.width === 0 || rect.height === 0;
+      let insertionTarget = span.parentNode; // Default target
+      let insertionReference = span.nextSibling; // Default reference node
+
       if (hasZeroDimensions) {
         let targetParent = span.parentElement;
         if (targetParent && (targetParent.tagName === "TD" || targetParent.tagName === "TH")) {
+          // Append to TD/TH for zero-dimension spans
           targetParent.appendChild(container);
-          console.log(
-            `Appended container with clock to ${targetParent.tagName} for zero-dimension span ${spanUniqueId}`
-          );
+          console.log(`Appended clock container to ${targetParent.tagName} for zero-dimension span ${spanUniqueId}`);
         } else {
+          // Fallback: Insert after span if parent isn't TD/TH
           span.parentNode.insertBefore(container, span.nextSibling);
-          console.log(`Inserted container with clock after span for zero-dimension span ${spanUniqueId}`);
+          console.log(`Inserted clock container after span for zero-dimension span ${spanUniqueId}`);
         }
       } else {
+        // Standard insertion for visible spans
         span.parentNode.insertBefore(container, span.nextSibling);
       }
+      // --- Clock should be in the DOM here ---
 
       try {
-        // Now fetch the attachment data.
+        // Check for attachment data in session storage
         const attachmentCacheKey = this.generateCacheKey(`attachments_${mask}_${ref}`, this.authObj);
         const attachmentResults = this.getFromSessionStorage(attachmentCacheKey, true);
+
+        // --- The potential rapid replacement happens below ---
 
         let documentCount = 0;
         let documentData = [];
         if (attachmentResults && Array.isArray(attachmentResults)) {
-          // Gather documents from all attachment result objects; note we look directly for an array in result.attachments.
+          // *** Refined data extraction ***
           documentData = attachmentResults.reduce((allDocs, result) => {
-            if (result.attachments && Array.isArray(result.attachments)) {
+            // Check the structure carefully based on how `getAttachments` returns data
+            // Assuming each result object has an `attachments` property which is the array of docs
+            if (result && result.attachments && Array.isArray(result.attachments)) {
               return [...allDocs, ...result.attachments];
+            } else if (result && Array.isArray(result)) {
+              // Maybe the result *is* the array of attachments? Adapt if needed.
+              // return [...allDocs, ...result];
             }
             return allDocs;
           }, []);
           documentCount = documentData.length;
         }
 
-        // The asynchronous request has completed; remove the flag
-        container.removeAttribute("data-loading");
-
-        // If we found attachments, change the clock icon to a paperclip with a click handler.
+        // Update the container based on the count
         if (documentCount > 0) {
           console.log(
-            `Processing span with mask=${mask}, ref=${ref}, dimensions: ${rect.width}x${rect.height}, attachments: ${documentCount}`
+            `Draw ID: ${this.drawID} - Updating span ${spanUniqueId} with ${documentCount} attachments (from cache/fetch)`
           );
+
           // Create a paperclip icon element.
           const iconElement = document.createElement("span");
           iconElement.innerHTML = this.getSvgForType("paperclip", this.ICON_DIMENSIONS);
           iconElement.style.cursor = "pointer";
-          iconElement.style.display = "inline-block";
+          iconElement.style.display = "inline-block"; // Important
+          iconElement.style.verticalAlign = "middle"; // Match container
           iconElement.title = `${documentCount} document(s) for ${ref}`;
+          // Add click handler to open modal with document details
           iconElement.addEventListener("click", (e) => {
             e.preventDefault();
             e.stopPropagation();
             console.log(`Clicked paperclip icon for mask=${mask}, ref=${ref}`);
             this.openMessage(documentData, ref);
           });
-          // Replace the clock icon with the paperclip icon.
-          container.innerHTML = "";
-          container.appendChild(iconElement);
+          // Replace the clock icon with the paperclip icon inside the container
+          container.innerHTML = ""; // Clear clock
+          container.appendChild(iconElement); // Add paperclip
           console.log(`Successfully processed span ${spanUniqueId} with ${documentCount} attachments`);
         } else {
-          console.log(`No attachments found for span ${spanUniqueId}; leaving cell empty.`);
-          // No attachments: clear the container's content.
+          console.log(`Draw ID: ${this.drawID} - No attachments found for span ${spanUniqueId}, clearing clock icon`);
+          // No attachments found: remove the container's content (effectively removing the clock)
           container.innerHTML = "";
         }
-
-        // Mark this span as processed.
+        // Mark the span as processed *after* successful update
         span.setAttribute(processedAttr, "true");
       } catch (error) {
-        console.error(`Error processing span with mask=${mask}, ref=${ref}:`, error);
+        console.error(`Draw ID: ${this.drawID} - Error processing span with mask=${mask}, ref=${ref}:`, error);
+        // Optionally add an error indicator?
+        container.innerHTML = this.getSvgForType("error", this.ICON_DIMENSIONS);
+        container.title = `Error processing attachments for ${ref}`;
+        // Still mark as processed to avoid retries on error? Or remove processing flag?
+        // Let's mark as processed to avoid loops on persistent errors.
+        span.setAttribute(processedAttr, "true");
       } finally {
-        // Always remove the processing flag from the span.
-        if (span) {
+        // Always remove the processing flag
+        if (span && span.hasAttribute(processingAttr)) {
           span.removeAttribute(processingAttr);
         }
       }
@@ -2650,4 +2697,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 414
+// 20250410 417
