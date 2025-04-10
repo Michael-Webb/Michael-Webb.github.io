@@ -325,48 +325,48 @@ define(() => {
         }
       }
       
-      async authenticate() {
-        try {
-          let authObject = this.getAuthObject();
-          this.authObject = authObject;
-          console.log(authObject);
+    //   async authenticate() {
+    //     try {
+    //       let authObject = this.getAuthObject();
+    //       this.authObject = authObject;
+    //       console.log(authObject);
       
-          // Step 1: Get Cookies - using no-cors mode
-          console.log("Step 1: Setting authentication cookies...");
-          await this.fetchFromScreen(authObject, "FAUPAS");
+    //       // Step 1: Get Cookies - using no-cors mode
+    //       console.log("Step 1: Setting authentication cookies...");
+    //       await this.fetchFromScreen(authObject, "FAUPAS");
           
-          // Since we can't check the response with no-cors, 
-          // maybe add a small delay to ensure cookies are set
-          await new Promise(resolve => setTimeout(resolve, 500));
+    //       // Since we can't check the response with no-cors, 
+    //       // maybe add a small delay to ensure cookies are set
+    //       await new Promise(resolve => setTimeout(resolve, 500));
           
-          // Step 2: Fetch API token - this will verify if cookies were set correctly
-          console.log("Step 2: Fetching API token...");
-          try {
-            const apiToken = await this.fetchApiToken();
-            this.authObject.apiToken = apiToken;
-            console.log("API Token obtained successfully - cookies are working");
-          } catch (error) {
-            console.error("Failed to get API token - cookies may not be set correctly:", error);
-            throw new Error("Authentication failed at API token stage");
-          }
+    //       // Step 2: Fetch API token - this will verify if cookies were set correctly
+    //       console.log("Step 2: Fetching API token...");
+    //       try {
+    //         const apiToken = await this.fetchApiToken();
+    //         this.authObject.apiToken = apiToken;
+    //         console.log("API Token obtained successfully - cookies are working");
+    //       } catch (error) {
+    //         console.error("Failed to get API token - cookies may not be set correctly:", error);
+    //         throw new Error("Authentication failed at API token stage");
+    //       }
       
-          // Step 3: Validate security token
-          console.log("Step 3: Validating security token...");
-          await this.validateSecurityToken();
+    //       // Step 3: Validate security token
+    //       console.log("Step 3: Validating security token...");
+    //       await this.validateSecurityToken();
       
-          // Step 4: Get Session Expiration
-          console.log("Step 4: Getting session expiration data...");
-          const sessionExpData = await this.getSessionExpiration();
+    //       // Step 4: Get Session Expiration
+    //       console.log("Step 4: Getting session expiration data...");
+    //       const sessionExpData = await this.getSessionExpiration();
           
-          console.log("Authentication completed successfully");
-          return this.authObject;
-        } catch (error) {
-          console.error("Authentication failed:", error);
-          throw error;
-        }
-      }
+    //       console.log("Authentication completed successfully");
+    //       return this.authObject;
+    //     } catch (error) {
+    //       console.error("Authentication failed:", error);
+    //       throw error;
+    //     }
+    //   }
   }
 
   return AdvancedControl;
 });
-// 20250410 948
+// 20250410 950
