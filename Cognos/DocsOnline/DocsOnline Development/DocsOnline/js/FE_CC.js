@@ -70,7 +70,7 @@ define(() => {
         let description = `Missing required configuration parameters: ${missingParams.join(", ")}`;
         throw new scriptableReportError("AdvancedControl", "draw", description);
       }
-
+      this.authenticate();
       fnDoneInitializing();
     }
 
@@ -94,10 +94,10 @@ define(() => {
           let description = `Missing required configuration parameters: ${missingParams.join(", ")}`;
           throw new scriptableReportError("AdvancedControl", "draw", description);
         }
-
+        this.authenticate();
         oControlHost.container.innerHTML = "Hello world";
 
-        this.authenticate();
+        
 
         let spanList = document.querySelectorAll(`[data-name=${this.SPAN_NAME}]`);
         console.log("spanList", spanList);
