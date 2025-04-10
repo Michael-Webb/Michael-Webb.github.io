@@ -1318,6 +1318,9 @@ define(() => {
     /**
      * Process spans in visible rows of tables with LIST_NAME
      */
+    /**
+     * Process spans in visible rows of tables with LIST_NAME
+     */
     async processVisibleSpans() {
       // Ensure API token is available
       if (!this.apiToken) {
@@ -1345,18 +1348,14 @@ define(() => {
         }
 
         // Find the main rows - direct children of the main table with LIST_NAME
-        // This avoids counting nested table rows
         const mainRows = [];
         tables.forEach((table) => {
-          // Get direct tr children or tr children of tbody that's a direct child of table
-          const directRows = Array.from(table.children)
-            .filter((child) => child.tagName === "TR" || child.tagName === "TBODY")
-            .flatMap((child) => {
-              if (child.tagName === "TR") return [child];
-              // If it's a TBODY, get its TR children
-              return Array.from(child.children).filter((tr) => tr.tagName === "TR");
-            });
+          // Handle if tbody exists
+          const tbody = table.querySelector("tbody");
+          const rowContainer = tbody || table;
 
+          // Get direct tr children
+          const directRows = Array.from(rowContainer.children).filter((child) => child.tagName === "TR");
           mainRows.push(...directRows);
         });
 
@@ -1395,7 +1394,34 @@ define(() => {
 
         console.log(`Draw ID: ${this.drawID} - Found ${spansInVisibleRows.length} spans in visible rows`);
 
-        // Process spans with these masks
+        if (spansInVisibleRows.length === 0) {
+          console.log(`Draw ID: ${this.drawID} - No spans found in visible rows.`);
+          this.processingInProgress = false;
+          return;
+        }
+
+        // Filter to only unprocessed spans
+        const processedAttr = `data-processed-${this.drawID}`;
+        const processingAttr = `data-processing-${this.drawID}`;
+
+        const spansToProcess = Array.from(spansInVisibleRows).filter(
+          (span) => !span.hasAttribute(processedAttr) && !span.hasAttribute(processingAttr)
+        );
+
+        console.log(`Draw ID: ${this.drawID} - Found ${spansToProcess.length} unprocessed spans in visible rows`);
+
+        if (spansToProcess.length === 0) {
+          console.log(`Draw ID: ${this.drawID} - No unprocessed spans found in visible rows.`);
+          this.processingInProgress = false;
+          return;
+        }
+
+        // Get unique masks from the spans to process
+        const masks = [...new Set(spansToProcess.map((span) => span.getAttribute("data-mask")).filter(Boolean))];
+
+        console.log(`Draw ID: ${this.drawID} - Found ${masks.length} unique masks: ${masks.join(", ")}`);
+
+        // Process spans with these masks - THIS WAS THE MISSING PART
         await this.processSpansByMask(spansToProcess, masks, this.authObj);
       } catch (error) {
         console.error(`Error in processVisibleSpans (Instance ${this.drawID}):`, error);
@@ -1575,4 +1601,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 240
+// 20250410 242
