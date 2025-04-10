@@ -78,12 +78,9 @@ define(() => {
       oControlHost.container.innerHTML = "Hello world";
 
       let listEl = oControlHost.page.getControlByName("Asset List").element;
-      console.log("List Control", listControl);
       console.log("List Element", listEl);
 
       this.authenticate();
-
-      console.log(this.getData("000105001"))
     }
 
     /*
@@ -346,4 +343,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 1045
+// 20250410 1051
