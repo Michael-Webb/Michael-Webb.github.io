@@ -99,17 +99,17 @@ define(() => {
     async authenticate() {
       try {
         let authObject = this.getAuthObject();
-        this.authObject = authObject;
+        
         console.log(authObject);
 
         // Step 1: Get Cookies
-        let getCookies = await this.fetchFromScreen("FAUPAS");
+        let getCookies = await this.fetchFromScreen(authObject,"FAUPAS");
         // Step 2: Fetch API token.
         const apiToken = await this.fetchApiToken();
-        this.authObject.apiToken = apiToken;
-
+        authObject.apiToken = apiToken;
+        this.authObject = authObject;
         // Step 3: Validate security token.
-        await this.validateSecurityToken();
+        const validateToken = await this.validateSecurityToken();
 
         // Step 4: Get Session Expiration and log it.
         const sessionExpData = await this.getSessionExpiration();
@@ -284,10 +284,10 @@ define(() => {
      *
      * @returns {Promise<Response>} The fetch response.
      */
-    async fetchFromScreen(maskName) {
+    async fetchFromScreen(authObj,maskName) {
       // Get the dynamic URL path based on the configured MASK_NAME
       const screenDetails = this._getMaskDetails(maskName);
-      const screenUrl = `${this.AppUrl}/${this.authObject.environment}-UI/ui/uiscreens/${screenDetails.urlPath}/${screenDetails.maskName}`;
+      const screenUrl = `${this.AppUrl}/${authObj.environment}-UI/ui/uiscreens/${screenDetails.urlPath}/${screenDetails.maskName}`;
       console.log(`fetchFromScreen: Fetching screen URL: ${screenUrl}`);
       try {
         const response = await fetch(screenUrl, {
