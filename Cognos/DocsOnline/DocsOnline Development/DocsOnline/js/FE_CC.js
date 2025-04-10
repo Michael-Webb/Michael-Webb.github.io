@@ -1599,9 +1599,9 @@ define(() => {
       // Check if element itself is hidden
       if (element.offsetParent === null) return false;
 
-      // Check if element has zero dimensions
+      // Check if element has zero dimensions - CHANGE THIS TO LOGICAL OR
       const rect = element.getBoundingClientRect();
-      if (rect.width === 0 && rect.height === 0) return false;
+      if (rect.width === 0 || rect.height === 0) return false; // Changed from && to ||
 
       // Check if any parent container is hidden or on an inactive page
       let parent = element.parentElement;
@@ -1623,8 +1623,9 @@ define(() => {
         parent = parent.parentElement;
       }
 
-      // Additionally check viewport visibility
-      return this.isElementInViewport(element);
+      // For this case, we'll consider it visible even if not in viewport
+      // since we want to process all spans in the active Cognos page
+      return true; // Changed from requiring viewport visibility
     }
 
     // Add this debugging function to your class
@@ -1737,4 +1738,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 304
+// 20250410 305
