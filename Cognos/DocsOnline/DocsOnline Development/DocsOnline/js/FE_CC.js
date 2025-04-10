@@ -76,8 +76,6 @@ define(() => {
     setData(oControlHost, oDataStore) {
       this.m_DataStores.push(oDataStore);
       console.log(this.m_DataStores);
-
-      //
     }
 
     _getMaskDetails(maskName) {
