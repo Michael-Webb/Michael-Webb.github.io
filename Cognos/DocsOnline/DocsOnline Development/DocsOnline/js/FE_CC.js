@@ -102,10 +102,10 @@ define(() => {
             let allMasks = this.getAllMasks(spanList);
           })
           .catch((error) => console.warn(error));
-        
-        const myTimeout = setTimeout(oControlHost.container.innerHTML = "Hello world", 5000);
 
-        
+        const myTimeout = setTimeout(() => {
+          oControlHost.container.innerHTML = "Hello world";
+        }, 5000);
       } catch (error) {
         console.warn(error);
       }
@@ -385,4 +385,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 1219
+// 20250410 1222
