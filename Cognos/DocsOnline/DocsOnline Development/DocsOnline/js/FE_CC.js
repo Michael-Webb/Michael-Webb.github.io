@@ -1361,6 +1361,9 @@ define(() => {
       this.processingInProgress = true;
 
       try {
+        // Add this debugging call
+        this.debugVisibilityIssues();
+
         // Find all spans with our data-name
         const allSpans = document.querySelectorAll(`span[data-name=${this.SPAN_NAME}]`);
         console.log(`Draw ID: ${this.drawID} - Found ${allSpans.length} total spans`);
@@ -1415,7 +1418,6 @@ define(() => {
         this.processingInProgress = false;
       }
     }
-
 
     /**
      * Process spans by mask - fetching definitions once per mask
@@ -1624,8 +1626,115 @@ define(() => {
       // Additionally check viewport visibility
       return this.isElementInViewport(element);
     }
+
+    // Add this debugging function to your class
+    debugVisibilityIssues() {
+      // Get ALL spans with the data-name attribute first
+      const allNamedSpans = document.querySelectorAll(`span[data-name=${this.SPAN_NAME}]`);
+      console.log(`Debug: Found ${allNamedSpans.length} total spans with data-name=${this.SPAN_NAME}`);
+
+      if (allNamedSpans.length === 0) {
+        console.log(`Debug: No spans with data-name=${this.SPAN_NAME} found at all. Check the SPAN_NAME value.`);
+
+        // Check if there are ANY spans with data attributes
+        const anyDataSpans = document.querySelectorAll("span[data-mask]");
+        console.log(`Debug: Found ${anyDataSpans.length} spans with data-mask attribute`);
+
+        if (anyDataSpans.length > 0) {
+          // Show what data-name values exist
+          const dataNames = new Set();
+          anyDataSpans.forEach((span) => {
+            if (span.dataset.name) dataNames.add(span.dataset.name);
+          });
+          console.log(`Debug: Found these data-name values: ${Array.from(dataNames).join(", ")}`);
+        }
+        return;
+      }
+
+      // Check each span for required attributes
+      let missingMask = 0;
+      let missingRef = 0;
+
+      allNamedSpans.forEach((span) => {
+        if (!span.dataset.mask) missingMask++;
+        if (!span.dataset.ref) missingRef++;
+      });
+
+      console.log(`Debug: Spans missing data-mask: ${missingMask}, missing data-ref: ${missingRef}`);
+
+      // Check visibility status of each span
+      let hiddenByOffsetParent = 0;
+      let hiddenByDimensions = 0;
+      let hiddenByStyle = 0;
+      let hiddenByCognosPage = 0;
+      let notInViewport = 0;
+      let fullyVisible = 0;
+
+      allNamedSpans.forEach((span) => {
+        if (span.offsetParent === null) {
+          hiddenByOffsetParent++;
+          return;
+        }
+
+        const rect = span.getBoundingClientRect();
+        if (rect.width === 0 && rect.height === 0) {
+          hiddenByDimensions++;
+          return;
+        }
+
+        // Check parent containers
+        let isHiddenByParent = false;
+        let isHiddenByCognosPage = false;
+        let parent = span.parentElement;
+
+        while (parent) {
+          const style = window.getComputedStyle(parent);
+          if (style.display === "none" || style.visibility === "hidden") {
+            isHiddenByParent = true;
+            break;
+          }
+
+          if (parent.classList && parent.classList.contains("clsViewerPage")) {
+            if (style.display !== "block") {
+              isHiddenByCognosPage = true;
+              break;
+            }
+          }
+
+          parent = parent.parentElement;
+        }
+
+        if (isHiddenByParent) {
+          hiddenByStyle++;
+          return;
+        }
+
+        if (isHiddenByCognosPage) {
+          hiddenByCognosPage++;
+          return;
+        }
+
+        // Check viewport visibility
+        if (!this.isElementInViewport(span)) {
+          notInViewport++;
+          return;
+        }
+
+        // If we got here, the span is fully visible
+        fullyVisible++;
+      });
+
+      console.log(`Debug: Visibility breakdown:
+      - Hidden by offsetParent: ${hiddenByOffsetParent}
+      - Hidden by zero dimensions: ${hiddenByDimensions}
+      - Hidden by parent style: ${hiddenByStyle}
+      - Hidden by Cognos page: ${hiddenByCognosPage}
+      - Not in viewport: ${notInViewport}
+      - Fully visible: ${fullyVisible}
+    `);
+    }
   }
 
   return AdvancedControl;
 });
-// 20250410 302
+// 20250410 304
