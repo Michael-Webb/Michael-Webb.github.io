@@ -34,6 +34,9 @@ define(() => {
       let listEl = oControlHost.page.getControlByName("Asset List").element;
       console.log("List Control", listControl);
       console.log("List Element", listEl);
+
+      let authObject = this.getAuthObject()
+      console.log(authObject)
     }
 
     /*
@@ -41,37 +44,40 @@ define(() => {
      */
     destroy(oControlHost) {}
 
-    /*
-     * Called to pass authored data into the control. This method is optional.
-     * Parameters: oControlHost, oDataStore
-     * Returns:
+    /**
+     * Creates an object from the 
+     * @param {*} authDataSet
+     */
+    getAuthObject() {
+
+      const authDataStore = this.m_DataStores.find(dataStore => dataStore.name === "Auth");
+
+      let sessionId_ColIndex = authDataStore.getColumnIndex("SessionId");
+      console.log(sessionId_ColIndex);
+      let sessionId = authDataStore.getCellValue(0, sessionId_ColIndex);
+
+      let token_ColIndex = authDataStore.getColumnIndex("Token");
+      let token = authDataStore.getCellValue(0, token_ColIndex);
+
+      let environment_ColIndex = authDataStore.getColumnIndex("Environment");
+      let environment = authDataStore.getCellValue(0, environment_ColIndex);
+
+      let user_ColIndex = authDataStore.getColumnIndex("User");
+      let user = authDataStore.getCellValue(0, user_ColIndex);
+
+      let authObject = { sessionId, token, environment, user };
+      return authObject
+    }
+
+    /**
+     *
+     * @param {*} oDataStore
      */
     setData(oControlHost, oDataStore) {
-        console.log(oDataStore);
       this.m_DataStores.push(oDataStore);
-      // Method below is for a multiple data stores by name to use later in the draw function
-      //   this.m_aDataStore[oDataStore.index] = oDataStore;
       console.log(this.m_DataStores);
 
-      // Method below is for a single data store to use later in the draw function
-      //   this.m_oDataStore = oDataStore;
-      //   console.log("DataStore", this.m_oDataStore);
-      //   let sessionId_ColIndex = this.m_oDataStore.getColumnIndex("SessionId");
-      //   console.log(sessionId_ColIndex);
-      //   let sessionId = this.m_oDataStore.getCellValue(0, sessionId_ColIndex);
-
-      //   let token_ColIndex = this.m_oDataStore.getColumnIndex("Token");
-      //   let token = this.m_oDataStore.getCellValue(0, token_ColIndex);
-
-      //   let environment_ColIndex = this.m_oDataStore.getColumnIndex("Environment");
-      //   let environment = this.m_oDataStore.getCellValue(0, environment_ColIndex);
-
-      //   let user_ColIndex = this.m_oDataStore.getColumnIndex("User");
-      //   let user = this.m_oDataStore.getCellValue(0, user_ColIndex);
-
-      //   let authObject = { sessionId, token, environment, user };
-      //   this.authObject = authObject;
-      //   console.log("authObject: ", authObject);
+      //
     }
 
     _getMaskDetails(maskName) {
