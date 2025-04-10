@@ -292,7 +292,16 @@ define(() => {
       try {
         const response = await fetch(screenUrl, {
           headers: {
-            priority: "u=0, i",
+            "accept": "*/*",
+            "accept-language": "en-US,en;q=0.9",
+            "cache-control": "no-cache",
+            "pragma": "no-cache",
+            "priority": "u=1, i",
+            "sec-fetch-dest": "document",
+            "sec-fetch-mode": "navigate",
+            "sec-fetch-site": "same-site",
+            "sec-fetch-user": "?1",
+            "upgrade-insecure-requests": "1",
           },
           referrer: this.JobUrl,
           referrerPolicy: "strict-origin-when-cross-origin",
