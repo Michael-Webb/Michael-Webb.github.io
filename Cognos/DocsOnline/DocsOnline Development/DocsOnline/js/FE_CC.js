@@ -1143,39 +1143,39 @@ define(() => {
       return document.querySelectorAll(`span[data-name=${this.SPAN_NAME}]`);
     }
 
-    /**
-     * Determines if an element is in the viewport
-     */
-    isElementInViewport(element) {
-      if (!element) return false;
+    // /**
+    //  * Determines if an element is in the viewport
+    //  */
+    // isElementInViewport(element) {
+    //   if (!element) return false;
 
-      // Get the element's bounding rectangle
-      let rect = element.getBoundingClientRect();
+    //   // Get the element's bounding rectangle
+    //   let rect = element.getBoundingClientRect();
 
-      // If the element has no size, try to use its parent
-      if (rect.width === 0 || rect.height === 0) {
-        if (element.parentElement) {
-          rect = element.parentElement.getBoundingClientRect();
-        }
-      }
+    //   // If the element has no size, try to use its parent
+    //   if (rect.width === 0 || rect.height === 0) {
+    //     if (element.parentElement) {
+    //       rect = element.parentElement.getBoundingClientRect();
+    //     }
+    //   }
 
-      // If dimensions are still zero, consider it not visible
-      if (rect.width === 0 || rect.height === 0) {
-        return false;
-      }
+    //   // If dimensions are still zero, consider it not visible
+    //   if (rect.width === 0 || rect.height === 0) {
+    //     return false;
+    //   }
 
-      const windowHeight = window.innerHeight || document.documentElement.clientHeight;
-      const windowWidth = window.innerWidth || document.documentElement.clientWidth;
+    //   const windowHeight = window.innerHeight || document.documentElement.clientHeight;
+    //   const windowWidth = window.innerWidth || document.documentElement.clientWidth;
 
-      // Generous buffers allow you to trigger processing slightly off-screen
-      const verticalBuffer = 100;
-      const horizontalBuffer = 50;
+    //   // Generous buffers allow you to trigger processing slightly off-screen
+    //   const verticalBuffer = 100;
+    //   const horizontalBuffer = 50;
 
-      const isInVerticalViewport = rect.top < windowHeight + verticalBuffer && rect.bottom > 0 - verticalBuffer;
-      const isInHorizontalViewport = rect.left < windowWidth + horizontalBuffer && rect.right > 0 - horizontalBuffer;
+    //   const isInVerticalViewport = rect.top < windowHeight + verticalBuffer && rect.bottom > 0 - verticalBuffer;
+    //   const isInHorizontalViewport = rect.left < windowWidth + horizontalBuffer && rect.right > 0 - horizontalBuffer;
 
-      return isInVerticalViewport && isInHorizontalViewport;
-    }
+    //   return isInVerticalViewport && isInHorizontalViewport;
+    // }
     /**
      * Determines if the element or its container is visible
      */
@@ -2763,4 +2763,6 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 425
+// 20250410 426
+
+
