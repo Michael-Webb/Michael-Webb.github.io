@@ -185,9 +185,9 @@ define(() => {
             referrerPolicy: "strict-origin-when-cross-origin",
             body:
               "sessionId=" +
-              authObject.sessionId +
+              encodeURIComponent(authObject.sessionId) +
               "&authToken=" +
-              authObject.token +
+              encodeURIComponent(authObject.token) +
               "&claims=NameIdentifier&claims=Name&claims=GivenName&claims=Surname",
             method: "POST",
             mode: "cors",
@@ -330,4 +330,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 955
+// 20250410 959
