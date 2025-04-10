@@ -491,7 +491,7 @@ define(() => {
      * @param {string} maskString - The mask string used for the fetch configuration.
      * @returns {Promise<object|null>} The JSON response from the API, or null on error.
      */
-    static async getBT20Models(maskString, btModels, authObject) {
+    async getBT20Models(maskString, btModels, authObject) {
       const btModelObject = {
         dataObjects: btModels.map((item) => ({ progID: item })),
       };
@@ -934,4 +934,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 101=2
+// 20250410 104
