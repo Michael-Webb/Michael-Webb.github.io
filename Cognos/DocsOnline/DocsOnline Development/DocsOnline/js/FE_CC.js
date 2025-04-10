@@ -133,6 +133,9 @@ define(() => {
               accept: "*/*",
               "accept-language": "en-US,en;q=0.9",
               "content-type": "application/x-www-form-urlencoded",
+              "sec-fetch-dest": "empty",
+              "sec-fetch-mode": "no-cors",
+              "sec-fetch-site": "same-site",
             },
             referrerPolicy: "strict-origin-when-cross-origin",
             body: null,
@@ -317,4 +320,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 918
+// 20250410 920
