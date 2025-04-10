@@ -1095,6 +1095,7 @@ define(() => {
       // Construct URLs using the helper function
       const url = `${this.AppUrl}/${authObj.environment}${this.URL_LOOKUP.screenDef.mainUrl}${fetchObj.path}`;
       const refUrl = `${this.AppUrl}/${authObj.environment}${this.URL_LOOKUP.screenDef.referrerUrl}${fetchObj.path}`;
+      console.log("fetchScreenDef", url, refUrl);
 
       try {
         const response = await fetch(url, {
@@ -1344,9 +1345,6 @@ define(() => {
     /**
      * Process spans in visible rows of tables with LIST_NAME
      */
-    /**
-     * Process spans in visible rows of tables with LIST_NAME
-     */
     async processVisibleSpans() {
       // Ensure API token is available
       if (!this.apiToken) {
@@ -1363,81 +1361,43 @@ define(() => {
       this.processingInProgress = true;
 
       try {
-        // Find all tables with the specified LIST_NAME
-        const tables = document.querySelectorAll(`[lid="${this.LIST_NAME}"]`);
-        console.log(`Draw ID: ${this.drawID} - Found ${tables.length} tables with lid="${this.LIST_NAME}"`);
+        // Find all spans with our data-name
+        const allSpans = document.querySelectorAll(`span[data-name=${this.SPAN_NAME}]`);
+        console.log(`Draw ID: ${this.drawID} - Found ${allSpans.length} total spans`);
 
-        if (tables.length === 0) {
-          console.log(`Draw ID: ${this.drawID} - No tables found with lid="${this.LIST_NAME}"`);
+        if (allSpans.length === 0) {
+          console.log(`Draw ID: ${this.drawID} - No spans found`);
           this.processingInProgress = false;
           return;
         }
 
-        // Find the main rows - direct children of the main table with LIST_NAME
-        const mainRows = [];
-        tables.forEach((table) => {
-          // Handle if tbody exists
-          const tbody = table.querySelector("tbody");
-          const rowContainer = tbody || table;
+        // Filter to only spans in VISIBLE Cognos pages
+        const visibleSpans = Array.from(allSpans).filter((span) => this.isElementVisibleInCognosPage(span));
 
-          // Get direct tr children
-          const directRows = Array.from(rowContainer.children).filter((child) => child.tagName === "TR");
-          mainRows.push(...directRows);
-        });
+        console.log(`Draw ID: ${this.drawID} - Found ${visibleSpans.length} visible spans`);
 
-        console.log(
-          `Draw ID: ${this.drawID} - Found ${mainRows.length} main rows in tables with lid="${this.LIST_NAME}"`
-        );
-
-        // Filter to only visible rows
-        const visibleRows = mainRows.filter((row) => {
-          const rect = row.getBoundingClientRect();
-
-          // Skip rows with no dimensions
-          if (rect.width === 0 || rect.height === 0) return false;
-
-          // Check if row is in viewport (with buffer)
-          const windowHeight = window.innerHeight || document.documentElement.clientHeight;
-          const buffer = 100; // Buffer to pre-load rows just outside viewport
-          return rect.top <= windowHeight + buffer && rect.bottom >= -buffer;
-        });
-
-        console.log(`Draw ID: ${this.drawID} - Found ${visibleRows.length} visible main rows`);
-
-        if (visibleRows.length === 0) {
-          console.log(`Draw ID: ${this.drawID} - No visible rows found.`);
+        if (visibleSpans.length === 0) {
+          console.log(`Draw ID: ${this.drawID} - No visible spans found.`);
           this.processingInProgress = false;
           return;
         }
 
-        // Find spans within these visible rows (searching any level down)
-        const spansInVisibleRows = [];
-        visibleRows.forEach((row) => {
-          // Search any level deep within the row for spans with our data-name
-          const spans = row.querySelectorAll(`span[data-name=${this.SPAN_NAME}]`);
-          spansInVisibleRows.push(...spans);
+        // Process only spans that don't have an existing container
+        const spansToProcess = visibleSpans.filter((span) => {
+          const mask = span.getAttribute("data-mask");
+          const ref = span.getAttribute("data-ref");
+          if (!mask || !ref) return false;
+
+          // Check if this span already has a container
+          const spanUniqueId = `${mask}-${ref}`;
+          const existingContainer = document.getElementById(`doc-container-${spanUniqueId}`);
+          return !existingContainer;
         });
 
-        console.log(`Draw ID: ${this.drawID} - Found ${spansInVisibleRows.length} spans in visible rows`);
-
-        if (spansInVisibleRows.length === 0) {
-          console.log(`Draw ID: ${this.drawID} - No spans found in visible rows.`);
-          this.processingInProgress = false;
-          return;
-        }
-
-        // Filter to only unprocessed spans
-        const processedAttr = `data-processed-${this.drawID}`;
-        const processingAttr = `data-processing-${this.drawID}`;
-
-        const spansToProcess = Array.from(spansInVisibleRows).filter(
-          (span) => !span.hasAttribute(processedAttr) && !span.hasAttribute(processingAttr)
-        );
-
-        console.log(`Draw ID: ${this.drawID} - Found ${spansToProcess.length} unprocessed spans in visible rows`);
+        console.log(`Draw ID: ${this.drawID} - Found ${spansToProcess.length} spans to process`);
 
         if (spansToProcess.length === 0) {
-          console.log(`Draw ID: ${this.drawID} - No unprocessed spans found in visible rows.`);
+          console.log(`Draw ID: ${this.drawID} - No spans to process found.`);
           this.processingInProgress = false;
           return;
         }
@@ -1447,7 +1407,7 @@ define(() => {
 
         console.log(`Draw ID: ${this.drawID} - Found ${masks.length} unique masks: ${masks.join(", ")}`);
 
-        // Process spans with these masks - THIS WAS THE MISSING PART
+        // Process spans with these masks
         await this.processSpansByMask(spansToProcess, masks, this.authObj);
       } catch (error) {
         console.error(`Error in processVisibleSpans (Instance ${this.drawID}):`, error);
@@ -1455,6 +1415,8 @@ define(() => {
         this.processingInProgress = false;
       }
     }
+
+
     /**
      * Process spans by mask - fetching definitions once per mask
      */
@@ -1543,9 +1505,6 @@ define(() => {
     /**
      * Process a single span with pre-fetched definitions
      */
-    /**
-     * Process a single span with pre-fetched definitions, handling zero-dimension spans
-     */
     async processSpanWithDefinitions(span, definitions) {
       // Make sure span is still in the DOM and valid
       if (!span || !document.body.contains(span)) {
@@ -1561,12 +1520,23 @@ define(() => {
         return;
       }
 
+      // Create a unique ID for this span
+      const spanUniqueId = `${mask}-${ref}`;
+
+      // Check for EXISTING icon by looking for our container anywhere in the document
+      const existingContainer = document.getElementById(`doc-container-${spanUniqueId}`);
+      if (existingContainer) {
+        console.log(`Draw ID: ${this.drawID} - Container already exists for span ${spanUniqueId}, skipping.`);
+        span.setAttribute(`data-processed-${this.drawID}`, "true");
+        return;
+      }
+
       // Use unique attributes to mark processing
       const processedAttr = `data-processed-${this.drawID}`;
       const processingAttr = `data-processing-${this.drawID}`;
 
-      // Check if already processed or being processed
-      if (span.hasAttribute(processedAttr) || span.hasAttribute(processingAttr)) {
+      // Check if already being processed
+      if (span.hasAttribute(processingAttr)) {
         return;
       }
 
@@ -1577,13 +1547,12 @@ define(() => {
         // Use the pre-fetched definitions
         const { transformedDef } = definitions;
 
-        // For spans with zero dimensions, ensure the icon will be visible
-        // by wrapping both in a container with dimensions
+        // Create the container with a globally unique ID
         const container = document.createElement("span");
-        container.style.display = "inline-block"; // Force display
-        container.style.minWidth = "20px"; // Ensure minimum width
-        container.style.minHeight = "16px"; // Ensure minimum height
-        container.id = `doc-container-${this.drawID}-${mask}-${ref}`;
+        container.style.display = "inline-block";
+        container.style.minWidth = "20px";
+        container.style.minHeight = "16px";
+        container.id = `doc-container-${spanUniqueId}`; // Use our unique ID instead of draw ID
 
         // Create the icon element
         const iconElement = document.createElement("span");
@@ -1600,11 +1569,6 @@ define(() => {
           console.log(`Clicked icon for mask=${mask}, ref=${ref}`);
           // Here you would implement your modal or document display logic
         });
-
-        // Add the original span content to the container (optional)
-        // const originalContent = span.innerHTML;
-        // span.innerHTML = "";  // Clear original span
-        // container.appendChild(document.createTextNode(originalContent));
 
         // Add the icon to the container
         container.appendChild(iconElement);
@@ -1623,8 +1587,45 @@ define(() => {
         }
       }
     }
+
+    /**
+     * Enhanced check to determine if an element is visible, accounting for Cognos pagination
+     */
+    isElementVisibleInCognosPage(element) {
+      if (!element) return false;
+
+      // Check if element itself is hidden
+      if (element.offsetParent === null) return false;
+
+      // Check if element has zero dimensions
+      const rect = element.getBoundingClientRect();
+      if (rect.width === 0 && rect.height === 0) return false;
+
+      // Check if any parent container is hidden or on an inactive page
+      let parent = element.parentElement;
+      while (parent) {
+        // Check for display:none, visibility:hidden
+        const style = window.getComputedStyle(parent);
+        if (style.display === "none" || style.visibility === "hidden") {
+          return false;
+        }
+
+        // Special check for Cognos pagination
+        // If this element is in a clsViewerPage that's not displayed, it's not visible
+        if (parent.classList && parent.classList.contains("clsViewerPage")) {
+          if (style.display !== "block") {
+            return false;
+          }
+        }
+
+        parent = parent.parentElement;
+      }
+
+      // Additionally check viewport visibility
+      return this.isElementInViewport(element);
+    }
   }
 
   return AdvancedControl;
 });
-// 20250410 255
+// 20250410 302
