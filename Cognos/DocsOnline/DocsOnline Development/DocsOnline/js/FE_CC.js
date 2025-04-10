@@ -50,9 +50,9 @@ define(() => {
 
         console.log(oDataStore)
       // Method below is for a multiple data stores by name to use later in the draw function
-      this.m_aDataStore[oDataStore.index] = oDataStore;
+    //   this.m_aDataStore[oDataStore.index] = oDataStore;
 
-      console.log(this.m_oDataStores);
+    //   console.log(this.m_oDataStores);
 
       // Method below is for a single data store to use later in the draw function
       //   this.m_oDataStore = oDataStore;
