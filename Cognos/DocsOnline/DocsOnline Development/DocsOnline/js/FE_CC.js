@@ -191,7 +191,7 @@ define(() => {
               "&claims=NameIdentifier&claims=Name&claims=GivenName&claims=Surname",
             method: "POST",
             mode: "cors",
-            credentials: "include",
+            credentials: "omit",
           }
         );
 
@@ -316,10 +316,6 @@ define(() => {
         });
 
         console.log("Initial authentication request complete");
-
-        // With no-cors, we can't access response properties like .ok or .status
-        // So we can't directly verify success here
-
         return response;
       } catch (error) {
         console.error("Error during FAUPAS fetch:", error);
@@ -330,4 +326,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 959
+// 20250410 1001
