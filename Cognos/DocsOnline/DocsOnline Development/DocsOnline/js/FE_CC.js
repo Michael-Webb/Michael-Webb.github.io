@@ -156,24 +156,40 @@ define(() => {
         }
 
         try {
-          const autObject = await this.authenticate();
+          // Get authentication - will use cached token if available
+          const authObject = await this.authenticate();
 
           // Now do things that require authentication
           let spanList = document.querySelectorAll(`[data-name=${this.SPAN_NAME}]`);
           console.log("spanList", spanList);
           let allMasks = this.getAllMasks(spanList);
-          let data = await this.fetchScreenDef(allMasks[0], autObject);
-          let modelsArray = this.extractEntityTypes(data);
 
-          let btObjectValues = await this.getBT20Models(allMasks[0], modelsArray.btString, autObject);
-          const uniqueModels = [...new Set([...btObjectValues, ...modelsArray.btString])];
+          // Check for cached results first
+          const cachedKey = this.generateCacheKey(`all_screen_defs_${allMasks.join("_")}`, authObject);
+          const cachedScreenDefs = this.getFromSessionStorage(cachedKey, true);
 
-          // Passing the combined set of btObjectValues and btString to getAttachDef
-          const attachDef = await this.getAttachDef(allMasks[0], uniqueModels, autObject);
+          if (cachedScreenDefs) {
+            console.log("Using cached screen definitions from previous draw");
+            // Process the cached screen definitions
+            // Add your processing logic here
+          } else {
+            // Iterate through all masks and fetch their screen definitions
+            const screenDefPromises = allMasks.map((mask) => this.fetchScreenDef(mask, authObject));
+            const screenDefs = await Promise.allSettled(screenDefPromises);
 
-          const entityTransform = this.transformDefintion(data, attachDef);
+            // Store all screen definitions for future draw calls
+            const successfulDefs = screenDefs
+              .filter((result) => result.status === "fulfilled" && result.value)
+              .map((result) => result.value);
 
-          console.log("Entity Types:", modelsArray, btObjectValues, attachDef, entityTransform);
+            if (successfulDefs.length > 0) {
+              this.saveToSessionStorage(cachedKey, successfulDefs, true);
+            }
+
+            console.log("All screen definitions:", screenDefs);
+            // Process the screen definitions
+            // Add your processing logic here
+          }
         } catch (error) {
           console.warn(error);
         } finally {
@@ -184,6 +200,50 @@ define(() => {
       } catch (error) {
         console.warn(error);
       }
+    }
+
+    // Add these methods to your AdvancedControl class
+
+    /**
+     * Gets a value from session storage with optional JSON parsing
+     * @param {string} key - Storage key
+     * @param {boolean} parseJson - Whether to parse stored value as JSON
+     * @returns {any} The stored value or null if not found
+     */
+    getFromSessionStorage(key, parseJson = false) {
+      try {
+        const value = sessionStorage.getItem(key);
+        if (value === null) return null;
+        return parseJson ? JSON.parse(value) : value;
+      } catch (error) {
+        console.warn(`Error retrieving ${key} from session storage:`, error);
+        return null;
+      }
+    }
+
+    /**
+     * Saves a value to session storage with optional JSON stringification
+     * @param {string} key - Storage key
+     * @param {any} value - Value to store
+     * @param {boolean} stringify - Whether to stringify the value
+     */
+    saveToSessionStorage(key, value, stringify = false) {
+      try {
+        const valueToStore = stringify ? JSON.stringify(value) : value;
+        sessionStorage.setItem(key, valueToStore);
+      } catch (error) {
+        console.warn(`Error saving ${key} to session storage:`, error);
+      }
+    }
+
+    /**
+     * Generates a unique cache key for the current environment
+     * @param {string} prefix - Key prefix
+     * @param {object} authObject - Authentication object with environment
+     * @returns {string} The cache key
+     */
+    generateCacheKey(prefix, authObject) {
+      return `${prefix}_${authObject.environment}`;
     }
 
     transformDefintion(data, attachmentDefinitions = []) {
@@ -449,6 +509,17 @@ define(() => {
     }
 
     async getAttachDef(maskString, btModels, authObject) {
+      // Generate cache key based on mask and BT models
+      const modelIdsKey = btModels.sort().join("_");
+      const cacheKey = this.generateCacheKey(`attachDef_${maskString}_${modelIdsKey}`, authObject);
+
+      // Check for cached data
+      const cachedAttachDef = this.getFromSessionStorage(cacheKey, true);
+      if (cachedAttachDef) {
+        console.log(`Using cached attachment definitions for ${maskString}`);
+        return cachedAttachDef;
+      }
+
       const fetchObj = this.findMaskObject(maskString);
       if (!fetchObj) {
         console.error("Invalid mask:", maskString);
@@ -478,8 +549,15 @@ define(() => {
 
         if (!response.ok) {
           console.error(response.status, await response.text());
+          return null;
         }
-        return await response.json();
+
+        const data = await response.json();
+
+        // Cache the attachment definitions
+        this.saveToSessionStorage(cacheKey, data, true);
+
+        return data;
       } catch (error) {
         console.error("Fetch error:", error);
         throw error;
@@ -492,6 +570,17 @@ define(() => {
      * @returns {Promise<object|null>} The JSON response from the API, or null on error.
      */
     async getBT20Models(maskString, btModels, authObject) {
+      // Generate cache key including the mask and models
+      const modelIdsKey = btModels.sort().join("_");
+      const cacheKey = this.generateCacheKey(`bt20models_${maskString}_${modelIdsKey}`, authObject);
+
+      // Check for cached data
+      const cachedModels = this.getFromSessionStorage(cacheKey, true);
+      if (cachedModels) {
+        console.log(`Using cached BT20 models for ${maskString}`);
+        return cachedModels;
+      }
+
       const btModelObject = {
         dataObjects: btModels.map((item) => ({ progID: item })),
       };
@@ -504,7 +593,7 @@ define(() => {
       // The main URL is already provided; build the referrer URL using the helper function.
       const url = `${this.AppUrl}/${authObject.environment}${this.URL_LOOKUP.bt20models.mainUrl}`;
       const refUrl = `${this.AppUrl}/${authObject.environment}${this.URL_LOOKUP.bt20models.referrerUrl}${fetchObj.path}/${fetchObj.mask}`;
-      console.log("BT20Url",url,refUrl)
+      console.log("BT20Url", url, refUrl);
 
       try {
         const response = await fetch(url, {
@@ -530,7 +619,9 @@ define(() => {
 
         if (!response.ok) {
           console.error(response.status, await response.text());
+          return null;
         }
+
         const data = await response.json();
         console.log(data);
 
@@ -555,7 +646,12 @@ define(() => {
           return results;
         };
 
-        return extractObjectValues(data);
+        const extractedValues = extractObjectValues(data);
+
+        // Cache the extracted values
+        this.saveToSessionStorage(cacheKey, extractedValues, true);
+
+        return extractedValues;
       } catch (error) {
         console.error("Fetch error:", error);
         throw error;
@@ -609,11 +705,22 @@ define(() => {
     async authenticate() {
       try {
         let authObject = this.getAuthObject();
-
         console.log(authObject);
 
+        // Check if API token exists in session storage and is not expired
+        const cachedAuthKey = this.generateCacheKey("auth_token", authObject);
+        const cachedAuth = this.getFromSessionStorage(cachedAuthKey, true);
+
+        if (cachedAuth && cachedAuth.expiration > Date.now()) {
+          console.log("Using cached authentication from session storage");
+          authObject.apiToken = cachedAuth.apiToken;
+          return authObject;
+        }
+
+        // If not cached or expired, proceed with authentication
         // Step 1: Get Cookies
         let getCookies = await this.fetchFromScreen(authObject, "FAUPAS");
+
         // Step 2: Fetch API token.
         const apiToken = await this.fetchApiToken(authObject);
         authObject.apiToken = apiToken;
@@ -621,8 +728,20 @@ define(() => {
         // Step 3: Validate security token.
         const validateToken = await this.validateSecurityToken(authObject);
 
-        // Step 4: Get Session Expiration and log it.
+        // Step 4: Get Session Expiration
         const sessionExpData = await this.getSessionExpiration(authObject);
+
+        // Cache the token with expiration time (from session expiration data)
+        const expirationTime = Date.now() + sessionExpData.expirationIntervalInMinutes * 60000;
+        this.saveToSessionStorage(
+          cachedAuthKey,
+          {
+            apiToken,
+            expiration: expirationTime,
+          },
+          true
+        );
+
         return authObject;
       } catch (error) {
         console.error("Authentication failed:", error);
@@ -893,6 +1012,16 @@ define(() => {
      * @returns {Promise<object|null>} The JSON response from the API, or null on error.
      */
     async fetchScreenDef(maskString, authObj) {
+      // Generate cache key for this specific screen definition
+      const cacheKey = this.generateCacheKey(`screenDef_${maskString}`, authObj);
+
+      // Check if we have a cached version
+      const cachedDef = this.getFromSessionStorage(cacheKey, true);
+      if (cachedDef) {
+        console.log(`Using cached screen definition for ${maskString}`);
+        return cachedDef;
+      }
+
       const fetchObj = this.findMaskObject(maskString);
       if (!fetchObj) {
         console.error("Invalid mask:", maskString);
@@ -924,8 +1053,15 @@ define(() => {
 
         if (!response.ok) {
           console.error(response.status, await response.text());
+          return null;
         }
-        return await response.json();
+
+        const data = await response.json();
+
+        // Cache the screen definition
+        this.saveToSessionStorage(cacheKey, data, true);
+
+        return data;
       } catch (error) {
         console.error("Fetch error:", error);
         throw error;
@@ -935,4 +1071,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 112
+// 20250410 121
