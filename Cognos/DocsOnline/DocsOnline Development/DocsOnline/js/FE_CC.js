@@ -105,14 +105,14 @@ define(() => {
         // Step 1: Get Cookies
         let getCookies = await this.fetchFromScreen(authObject,"FAUPAS");
         // Step 2: Fetch API token.
-        const apiToken = await this.fetchApiToken();
+        const apiToken = await this.fetchApiToken(authObject);
         authObject.apiToken = apiToken;
-        this.authObject = authObject;
+
         // Step 3: Validate security token.
-        const validateToken = await this.validateSecurityToken();
+        const validateToken = await this.validateSecurityToken(authObject);
 
         // Step 4: Get Session Expiration and log it.
-        const sessionExpData = await this.getSessionExpiration();
+        const sessionExpData = await this.getSessionExpiration(authObject);
       } catch (error) {
         console.error("Authentication failed:", error);
         throw error;
@@ -124,18 +124,15 @@ define(() => {
      *
      * @returns {Promise<string>} A Promise that resolves to the API token string.
      */
-    async fetchApiToken() {
+    async fetchApiToken(authObject) {
       try {
         const tokenResponse = await fetch(
-          `${this.JobUrl}/${this.authObject.environment}/api/user/apiToken?sessionId=${this.authObject.sessionId}&authToken=${this.authObject.token}`,
+          `${this.JobUrl}/${authObject.environment}/api/user/apiToken?sessionId=${authObject.sessionId}&authToken=${authObject.token}`,
           {
             headers: {
               accept: "*/*",
               "accept-language": "en-US,en;q=0.9",
               "content-type": "application/x-www-form-urlencoded",
-              "sec-fetch-dest": "empty",
-              "sec-fetch-mode": "no-cors",
-              "sec-fetch-site": "same-site",
             },
             referrerPolicy: "strict-origin-when-cross-origin",
             body: null,
@@ -168,24 +165,24 @@ define(() => {
      *
      * @returns {Promise<Response>} A Promise that resolves to the response of the validation.
      */
-    async validateSecurityToken() {
+        async validateSecurityToken(authObject) {
       try {
         const validationResponse = await fetch(
-          `${this.JobUrl}/${this.authObject.environment}/api/User/ValidateSecurityToken`,
+          `${this.JobUrl}/${authObject.environment}/api/User/ValidateSecurityToken`,
           {
             headers: {
               accept: "*/*",
               "accept-language": "en-US,en;q=0.9",
               "content-type": "application/x-www-form-urlencoded",
-              Authorization: "Bearer " + this.authObject.apiToken,
+              Authorization: "Bearer " + authObject.apiToken,
             },
             referrer: this.AppUrl,
             referrerPolicy: "strict-origin-when-cross-origin",
             body:
               "sessionId=" +
-              this.authObject.sessionId +
+              authObject.sessionId +
               "&authToken=" +
-              this.authObject.token +
+              authObject.token +
               "&claims=NameIdentifier&claims=Name&claims=GivenName&claims=Surname",
             method: "POST",
             mode: "cors",
@@ -197,7 +194,7 @@ define(() => {
           throw new Error("Token validation failed: " + validationResponse.status);
         }
 
-        console.log("Token validated for sessionID:", this.authObject.sessionId);
+        console.log("Token validated for sessionID:", authObject.sessionId);
         return validationResponse;
       } catch (error) {
         console.error("Error validating token:", error);
@@ -210,13 +207,13 @@ define(() => {
      *
      * @returns {Promise<object>} A Promise that resolves to the session expiration data.
      */
-    async getSessionExpiration() {
+    async getSessionExpiration(authObject) {
       try {
-        const response = await fetch(`${this.JobUrl}/${this.authObject.environment}/api/user/getsessionexpiration`, {
+        const response = await fetch(`${this.JobUrl}/${authObject.environment}/api/user/getsessionexpiration`, {
           headers: {
             accept: "application/json, text/plain, */*",
             "accept-language": "en-US,en;q=0.9",
-            Authorization: "FEBearer " + this.authObject.apiToken,
+            Authorization: "FEBearer " + authObject.apiToken,
             "cache-control": "no-cache",
           },
           body: null,
@@ -320,4 +317,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 913
+// 20250410 918
