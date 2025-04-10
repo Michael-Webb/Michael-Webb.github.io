@@ -19,7 +19,6 @@ define(() => {
       this.JobUrl = this.removeTrailingSlash(JobUrl);
       this.refID = refId
       this.att_container = att_container
-      this.refID = refID;
 
       console.log("Configuration", this.oControl.configuration);
       fnDoneInitializing();
