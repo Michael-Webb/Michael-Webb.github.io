@@ -1344,18 +1344,28 @@ define(() => {
           return;
         }
 
-        // Find all rows in these tables
-        const allRows = [];
+        // Find the main rows - direct children of the main table with LIST_NAME
+        // This avoids counting nested table rows
+        const mainRows = [];
         tables.forEach((table) => {
-          // Get all rows, either direct tr children or within tbody
-          const rows = table.querySelectorAll("tr");
-          allRows.push(...rows);
+          // Get direct tr children or tr children of tbody that's a direct child of table
+          const directRows = Array.from(table.children)
+            .filter((child) => child.tagName === "TR" || child.tagName === "TBODY")
+            .flatMap((child) => {
+              if (child.tagName === "TR") return [child];
+              // If it's a TBODY, get its TR children
+              return Array.from(child.children).filter((tr) => tr.tagName === "TR");
+            });
+
+          mainRows.push(...directRows);
         });
 
-        console.log(`Draw ID: ${this.drawID} - Found ${allRows.length} rows in tables with lid="${this.LIST_NAME}"`);
+        console.log(
+          `Draw ID: ${this.drawID} - Found ${mainRows.length} main rows in tables with lid="${this.LIST_NAME}"`
+        );
 
         // Filter to only visible rows
-        const visibleRows = Array.from(allRows).filter((row) => {
+        const visibleRows = mainRows.filter((row) => {
           const rect = row.getBoundingClientRect();
 
           // Skip rows with no dimensions
@@ -1367,7 +1377,7 @@ define(() => {
           return rect.top <= windowHeight + buffer && rect.bottom >= -buffer;
         });
 
-        console.log(`Draw ID: ${this.drawID} - Found ${visibleRows.length} visible rows`);
+        console.log(`Draw ID: ${this.drawID} - Found ${visibleRows.length} visible main rows`);
 
         if (visibleRows.length === 0) {
           console.log(`Draw ID: ${this.drawID} - No visible rows found.`);
@@ -1375,44 +1385,15 @@ define(() => {
           return;
         }
 
-        // Find spans within these visible rows
+        // Find spans within these visible rows (searching any level down)
         const spansInVisibleRows = [];
         visibleRows.forEach((row) => {
+          // Search any level deep within the row for spans with our data-name
           const spans = row.querySelectorAll(`span[data-name=${this.SPAN_NAME}]`);
           spansInVisibleRows.push(...spans);
         });
 
         console.log(`Draw ID: ${this.drawID} - Found ${spansInVisibleRows.length} spans in visible rows`);
-
-        if (spansInVisibleRows.length === 0) {
-          console.log(`Draw ID: ${this.drawID} - No spans found in visible rows.`);
-          this.processingInProgress = false;
-          return;
-        }
-
-        // Filter to only unprocessed spans
-        const processedAttr = `data-processed-${this.drawID}`;
-        const processingAttr = `data-processing-${this.drawID}`;
-
-        const spansToProcess = Array.from(spansInVisibleRows).filter(
-          (span) => !span.hasAttribute(processedAttr) && !span.hasAttribute(processingAttr)
-        );
-
-        console.log(`Draw ID: ${this.drawID} - Found ${spansToProcess.length} unprocessed spans in visible rows`);
-
-        if (spansToProcess.length === 0) {
-          console.log(`Draw ID: ${this.drawID} - No unprocessed spans found in visible rows.`);
-          this.processingInProgress = false;
-          return;
-        }
-
-        // Get unique masks from the spans to process
-        const masks = [...new Set(spansToProcess.map((span) => span.getAttribute("data-mask")).filter(Boolean))];
-
-        console.log(`Draw ID: ${this.drawID} - Found ${masks.length} unique masks: ${masks.join(", ")}`);
-
-        // Process spans with these masks
-        await this.processSpansByMask(spansToProcess, masks, this.authObj);
       } catch (error) {
         console.error(`Error in processVisibleSpans (Instance ${this.drawID}):`, error);
       } finally {
@@ -1591,4 +1572,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 233
+// 20250410 238
