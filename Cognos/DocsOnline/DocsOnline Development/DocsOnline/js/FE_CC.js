@@ -1546,15 +1546,19 @@ define(() => {
       span.setAttribute(processingAttr, "true");
 
       try {
-        // Use the pre-fetched definitions
-        const { transformedDef } = definitions;
+        // For zero-dimension spans, we need a different approach
+        const rect = span.getBoundingClientRect();
+        const hasZeroDimensions = rect.width === 0 || rect.height === 0;
+
+        // Log for debugging
+        console.log(`Processing span with mask=${mask}, ref=${ref}, dimensions: ${rect.width}x${rect.height}`);
 
         // Create the container with a globally unique ID
         const container = document.createElement("span");
         container.style.display = "inline-block";
         container.style.minWidth = "20px";
         container.style.minHeight = "16px";
-        container.id = `doc-container-${spanUniqueId}`; // Use our unique ID instead of draw ID
+        container.id = `doc-container-${spanUniqueId}`;
 
         // Create the icon element
         const iconElement = document.createElement("span");
@@ -1575,11 +1579,30 @@ define(() => {
         // Add the icon to the container
         container.appendChild(iconElement);
 
-        // Insert the container after the span
-        span.parentNode.insertBefore(container, span.nextSibling);
+        // Special handling for zero-dimension spans
+        if (hasZeroDimensions) {
+          // Try to find a suitable parent to attach to
+          let targetParent = span.parentElement;
+
+          // If the span is in a table cell, use that
+          if (targetParent && (targetParent.tagName === "TD" || targetParent.tagName === "TH")) {
+            // Append directly to the cell
+            targetParent.appendChild(container);
+            console.log(`Appended to ${targetParent.tagName} for zero-dimension span ${spanUniqueId}`);
+          } else {
+            // Just insert after the span as usual
+            span.parentNode.insertBefore(container, span.nextSibling);
+            console.log(`Inserted after span for zero-dimension span ${spanUniqueId}`);
+          }
+        } else {
+          // Normal case: insert after the span
+          span.parentNode.insertBefore(container, span.nextSibling);
+        }
 
         // Mark as processed
         span.setAttribute(processedAttr, "true");
+
+        console.log(`Successfully processed span ${spanUniqueId}`);
       } catch (error) {
         console.error(`Error processing span with mask=${mask}, ref=${ref}:`, error);
       } finally {
@@ -1599,9 +1622,8 @@ define(() => {
       // Check if element itself is hidden
       if (element.offsetParent === null) return false;
 
-      // Check if element has zero dimensions - CHANGE THIS TO LOGICAL OR
-      const rect = element.getBoundingClientRect();
-      if (rect.width === 0 || rect.height === 0) return false; // Changed from && to ||
+      // NOTE: We're removing the dimension check since that's causing all our spans to be excluded
+      // Instead, we'll only check parent visibility
 
       // Check if any parent container is hidden or on an inactive page
       let parent = element.parentElement;
@@ -1623,9 +1645,8 @@ define(() => {
         parent = parent.parentElement;
       }
 
-      // For this case, we'll consider it visible even if not in viewport
-      // since we want to process all spans in the active Cognos page
-      return true; // Changed from requiring viewport visibility
+      // If we get here, consider the element visible in the active Cognos page
+      return true;
     }
 
     // Add this debugging function to your class
@@ -1738,4 +1759,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 305
+// 20250410 306
