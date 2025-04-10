@@ -37,6 +37,10 @@ define(() => {
       // Method below is for a single data store to use later in the draw function
       this.m_oDataStore = oDataStore;
       console.log("DataStore",this.m_oDataStore)
+      let colIndex = this.m_oDataStore.getColumnIndex(this.refID)
+      let mainVal = this.m_oDataStore.getCellValue(0,colIndex)
+      let mainVal2 = this.m_oDataStore.getCell(0,colIndex)
+      console.log("mainVal: ",mainVal,"mainVal2: ",mainVal2)
     }
   }
 
