@@ -40,8 +40,8 @@ define(() => {
       const {
         ["App Server Url"]: AppUrl,
         ["Job Server Url"]: JobUrl,
-        ["Attachment Container"]: LIST_NAME,
-        ["Attachment ID Column Name"]: ATT_ID_COL_NM,
+        ["Attachment ID Column Label"]: ATT_ID_COL_NM,
+        ["Span Name"]: SPAN_NAME,
         ["Font Size"]: FONT_SIZE,
         ["Lazy Loading"]: IS_LAZY_LOADED,
         ["Icon Dimensions"]: ICON_DIMENSIONS,
@@ -51,8 +51,8 @@ define(() => {
       this.AppUrl = this.removeTrailingSlash(AppUrl);
       this.JobUrl = this.removeTrailingSlash(JobUrl);
       this.ATT_ID_COL_NM = ATT_ID_COL_NM;
+      this.SPAN_NAME = SPAN_NAME;
       this.MODAL_LABEL = MODAL_LABEL || "Attachments For ID: ";
-      this.LIST_NAME = LIST_NAME || null;
       this.IS_LAZY_LOADED = IS_LAZY_LOADED !== false;
       this.ICON_DIMENSIONS = ICON_DIMENSIONS || "16px";
       this.FONT_SIZE = FONT_SIZE || "1em";
@@ -79,30 +79,31 @@ define(() => {
      * @param {*} oControlHost
      */
     draw(oControlHost) {
-      this.oControl = oControlHost;
-      this.drawID = this.oControl.generateUniqueID(); // *** Get and store drawID ***
-      let listControlSearch = oControlHost.page.getControlsByName("List1");
-      this.LIST_NAME = (listControlSearch && listControlSearch.length > 0) ? "List1" : null;
-      console.log(this.LIST_NAME)
-      // Check each configuration parameter and collect the missing ones
-      const missingParams = [];
-      if (!this.AppUrl) missingParams.push("App Server Url");
-      if (!this.JobUrl) missingParams.push("Job Server Url");
-      if (this.LIST_NAME == null) missingParams.push("List Name");
-      if (!this.ATT_ID_COL_NM) missingParams.push("Attachment ID Column Name");
+      try {
+        this.oControl = oControlHost;
+        this.drawID = this.oControl.generateUniqueID(); // *** Get and store drawID ***
+        console.log(this.LIST_NAME);
+        // Check each configuration parameter and collect the missing ones
+        const missingParams = [];
+        if (!this.AppUrl) missingParams.push("App Server Url");
+        if (!this.JobUrl) missingParams.push("Job Server Url");
+        if (this.LIST_NAME == null) missingParams.push("List Name");
+        if (!this.ATT_ID_COL_NM) missingParams.push("Attachment ID Column Name");
 
-      // If any parameters are missing, log specific error and return
-      if (missingParams.length > 0) {
-        let description = `Missing required configuration parameters: ${missingParams.join(", ")}`;
-        throw new scriptableReportError("AdvancedControl", "draw", description);
+        // If any parameters are missing, log specific error and return
+        if (missingParams.length > 0) {
+          let description = `Missing required configuration parameters: ${missingParams.join(", ")}`;
+          throw new scriptableReportError("AdvancedControl", "draw", description);
+        }
+
+        oControlHost.container.innerHTML = "Hello world";
+
+        let spanList = document.querySelectorAll(`[data-name=${this.SPAN_NAME}]`);
+        console.log("spanList",spanList);
+        this.authenticate();
+      } catch (error) {
+        console.warn(error);
       }
-
-      oControlHost.container.innerHTML = "Hello world";
-
-      let listEl = oControlHost.page.getControlByName(this.LIST_NAME).element;
-      console.log("List Element", listEl,listControlSearch);
-
-      this.authenticate();
     }
 
     /*
@@ -365,4 +366,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 1127
+// 20250410 1145
