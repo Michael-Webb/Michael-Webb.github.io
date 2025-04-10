@@ -80,6 +80,7 @@ define(() => {
     draw(oControlHost) {
       try {
         this.oControl = oControlHost;
+        oControlHost.loadingText = "Loading...";
         this.drawID = this.oControl.generateUniqueID(); // *** Get and store drawID ***
 
         // Check each configuration parameter and collect the missing ones
@@ -102,11 +103,6 @@ define(() => {
           })
           .catch((error) => console.warn(error));
         oControlHost.container.innerHTML = "Hello world";
-
-        let spanList = document.querySelectorAll(`[data-name=${this.SPAN_NAME}]`);
-        console.log("spanList", spanList);
-
-        let allMasks = this.getAllMasks(spanList);
       } catch (error) {
         console.warn(error);
       }
@@ -386,4 +382,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250410 1214
+// 20250410 1217
