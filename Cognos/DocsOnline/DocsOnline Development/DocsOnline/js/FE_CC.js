@@ -116,7 +116,7 @@ define(() => {
 
     getAllMasks(nodeList) {
       // Assuming `nodelist` is your NodeList of span elements
-      const uniqueMasks = [...new Set([...nodelist].map((span) => span.dataset.mask))];
+      const uniqueMasks = [...new Set([...nodeList].map((span) => span.dataset.mask))];
 
       console.log(uniqueMasks);
       return uniqueMasks
