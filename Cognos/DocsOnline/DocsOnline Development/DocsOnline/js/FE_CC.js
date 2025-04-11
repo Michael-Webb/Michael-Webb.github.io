@@ -737,6 +737,15 @@ define(() => {
         clearTimeout(this.mutationProcessTimeout);
       }
 
+      // *** IMPORTANT: Add IntersectionObserver disconnect ***
+      if (this.intersectionObserver) {
+        this.intersectionObserver.disconnect();
+        this.intersectionObserver = null;
+        console.log(`Draw ID: ${this.drawID} - Disconnected IntersectionObserver.`);
+      }
+
+      this.viewerPageObserversInitialized = false;
+
       // Clear cache if needed
       this.clearCache();
 
@@ -1290,26 +1299,39 @@ define(() => {
      * When a container becomes visible (display: block), it queries for new spans and adds them to the intersection observer.
      */
     initializeViewerPageObserver() {
-      // Query for all viewer page containers, even if they are hidden.
+      // Prevent re-initialization
+      if (this.viewerPageObserversInitialized) {
+        console.log(`Draw ID: ${this.drawID} - Viewer page observers already initialized.`);
+        return;
+      }
+
       const viewerPages = document.querySelectorAll(".clsViewerPage");
+      console.log(`Draw ID: ${this.drawID} - Found ${viewerPages.length} viewer pages to observe.`); // Add log
 
       viewerPages.forEach((page) => {
-        // Create a MutationObserver for each page container.
+        // ... rest of the observer setup ...
         const mutationObserver = new MutationObserver((mutations) => {
           mutations.forEach((mutation) => {
             if (mutation.attributeName === "style") {
-              const display = window.getComputedStyle(mutation.target).display;
-              // When the container becomes visible, re-query for new spans.
+              const targetPage = mutation.target; // More specific name
+              const display = window.getComputedStyle(targetPage).display;
+
               if (display === "block") {
-                console.log(`Container ${mutation.target} is now visible; re-attaching observer to new spans.`);
-                // Query for spans within this visible container.
-                const newSpans = mutation.target.querySelectorAll(`span[data-name="${this.SPAN_NAME}"]`);
+                console.log(`Draw ID: ${this.drawID} - MutationObserver: Container became visible:`, targetPage); // Log target
+
+                // Query within the specific target that became visible
+                const newSpans = targetPage.querySelectorAll(`span[data-name="${this.SPAN_NAME}"]`);
+                console.log(
+                  `Draw ID: ${this.drawID} - MutationObserver: Found ${newSpans.length} new spans in visible container.`
+                ); // Log count
+
                 newSpans.forEach((span) => {
-                  // Only observe spans that are not already processed or being processed.
                   if (
                     !span.hasAttribute(`data-processed-${this.drawID}`) &&
-                    !span.hasAttribute(`data-processing-${this.drawID}`)
+                    !span.hasAttribute(`data-processing-${this.drawID}`) &&
+                    this.intersectionObserver // Ensure observer exists
                   ) {
+                    console.log(`Draw ID: ${this.drawID} - MutationObserver: Observing new span:`, span); // Log observed span
                     this.intersectionObserver.observe(span);
                   }
                 });
@@ -1317,10 +1339,12 @@ define(() => {
             }
           });
         });
-
-        // Observe attribute changes (style changes) on the container.
         mutationObserver.observe(page, { attributes: true, attributeFilter: ["style"] });
       });
+
+      // Set the flag after successful initialization
+      this.viewerPageObserversInitialized = true;
+      console.log(`Draw ID: ${this.drawID} - Viewer page observers initialized.`);
     }
 
     /**
@@ -3289,4 +3313,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250411 123
+// 20250411 128
