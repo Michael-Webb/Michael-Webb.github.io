@@ -290,8 +290,8 @@ define(() => {
           container.style.display = "inline-block";
           container.style.minWidth = this.ICON_DIMENSIONS;
           container.style.minHeight = this.ICON_DIMENSIONS;
-          container.style.width = this.ICON_DIMENSIONS
-          container.style.height = this.ICON_DIMENSIONS
+          container.style.width = this.ICON_DIMENSIONS;
+          container.style.height = this.ICON_DIMENSIONS;
           container.style.verticalAlign = "middle";
           container.id = `doc-container-${spanUniqueId}`;
           container.innerHTML = this.getSvgForType("clock", this.ICON_DIMENSIONS);
@@ -1722,8 +1722,8 @@ define(() => {
             container.style.display = "inline-block";
             container.style.minWidth = this.ICON_DIMENSIONS;
             container.style.minHeight = this.ICON_DIMENSIONS;
-            container.style.width = this.ICON_DIMENSIONS
-          container.style.height = this.ICON_DIMENSIONS
+            container.style.width = this.ICON_DIMENSIONS;
+            container.style.height = this.ICON_DIMENSIONS;
             container.style.verticalAlign = "middle";
             container.id = `doc-container-${spanUniqueId}`;
             container.innerHTML = this.getSvgForType("clock", this.ICON_DIMENSIONS);
@@ -2061,8 +2061,8 @@ define(() => {
           container.style.display = "inline-block";
           container.style.minWidth = this.ICON_DIMENSIONS;
           container.style.minHeight = this.ICON_DIMENSIONS;
-          container.style.width = this.ICON_DIMENSIONS
-          container.style.height = this.ICON_DIMENSIONS
+          container.style.width = this.ICON_DIMENSIONS;
+          container.style.height = this.ICON_DIMENSIONS;
           container.style.verticalAlign = "middle";
           container.id = `doc-container-${spanUniqueId}`;
           container.innerHTML = this.getSvgForType("clock", this.ICON_DIMENSIONS);
@@ -2362,8 +2362,8 @@ define(() => {
             container.style.display = "inline-block";
             container.style.minWidth = this.ICON_DIMENSIONS;
             container.style.minHeight = this.ICON_DIMENSIONS;
-            container.style.width = this.ICON_DIMENSIONS
-          container.style.height = this.ICON_DIMENSIONS
+            container.style.width = this.ICON_DIMENSIONS;
+            container.style.height = this.ICON_DIMENSIONS;
             container.style.verticalAlign = "middle"; // Align icon nicely
             container.id = `doc-container-${spanUniqueId}`;
             container.innerHTML = this.getSvgForType("clock", this.ICON_DIMENSIONS);
@@ -2782,57 +2782,98 @@ define(() => {
     /**
      * Gets root detail data for a specific entity
      */
+    /**
+     * Gets root detail data for a specific entity. Handles cases where the primary filter
+     * field is derived from linkages rather than directly from the mask configuration.
+     */
     async getRootDetailData(entityTransform, maskString, itemIDInput) {
       // Find the root entity data source from the transformed data
       const dataSourceObj = entityTransform.dataSources.find((ds) => ds.isRootEntity === true);
 
       if (!dataSourceObj) {
-        console.error("No root entity data source found in the transform");
+        console.error(
+          `Draw ID: ${this.drawID} - No root entity data source found in the transform for mask ${maskString}`
+        );
         return null;
       }
 
-      // Get the appropriate fetch configuration
+      // Get the fetch configuration (still needed for URL path)
       const fetchObj = this.findMaskObject(maskString);
       if (!fetchObj) {
-        console.error("Invalid mask:", maskString);
+        console.error(`Draw ID: ${this.drawID} - Invalid mask configuration for: ${maskString}`);
         return null;
       }
 
-      // For the URL, we need to use the entity type
+      // Get the entity type for the URL
       const entityType = dataSourceObj.entityType;
 
-      // Determine which filter field to use
-      const filterField = fetchObj.name;
+      // --- MODIFIED LOGIC TO DETERMINE filterField ---
+      let filterField = null;
 
-      // Extract the actual item ID value
-      let itemIDValue;
+      // 1. Prioritize using rootIdColumns identified by transformDefintion
+      //    This array contains the parent properties used in linkages TO the root entity.
+      if (entityTransform.rootIdColumns && entityTransform.rootIdColumns.length > 0) {
+        filterField = entityTransform.rootIdColumns[0]; // Use the first identified key
+        console.log(
+          `Draw ID: ${this.drawID} - Using filter field '${filterField}' derived from rootIdColumns for mask ${maskString}`
+        );
+      }
 
-      // Handle different input formats
+      // 2. Fallback (Less reliable, but tries original method if rootIdColumns missing)
+      //    Check if fetchObj.name exists and differs from the one found via rootIdColumns
+      //    This fallback might be removed if rootIdColumns proves consistently reliable.
+      if (!filterField && fetchObj && fetchObj.name) {
+        console.warn(
+          `Draw ID: ${this.drawID} - rootIdColumns empty for mask ${maskString}. Falling back to fetchObj.name: '${fetchObj.name}'. This might be incorrect.`
+        );
+        filterField = fetchObj.name;
+      }
+
+      // 3. Final Check - We MUST have a filter field
+      if (!filterField) {
+        console.error(
+          `Draw ID: ${this.drawID} - Could not determine a valid filter field for the root entity '${entityType}' for mask ${maskString}. Neither rootIdColumns nor fetchObj.name provided it.`
+        );
+        throw new Error(`Cannot build root filter for mask ${maskString}: Filter field undetermined.`);
+      }
+      // --- END OF MODIFIED LOGIC ---
+
+      // Extract the actual item ID value (Keep existing logic)
+      let itemIDValue = null;
       if (typeof itemIDInput === "string") {
-        // If it's directly a string
         itemIDValue = itemIDInput;
       } else if (itemIDInput && typeof itemIDInput === "object") {
-        // If it's an object, check for itemID property
         if (itemIDInput.itemID) {
           itemIDValue = itemIDInput.itemID;
-        } else if (Object.prototype.hasOwnProperty.call(itemIDInput, "mask")) {
-          // It might be a mask object from ALL_MASKS
-          const maskObj = this.ALL_MASKS.masks.find((mask) => mask.mask === maskString);
-          if (maskObj && maskObj.itemID) {
-            itemIDValue = maskObj.itemID;
+          // Original logic might rely on fetchObj.name to get itemID if itemIDInput is the raw maskObj
+          // Let's refine this slightly to be more robust if fetchObj.name was the fallback
+        } else if (Object.prototype.hasOwnProperty.call(itemIDInput, "mask") && itemIDInput.mask === maskString) {
+          // Find the corresponding entry in ALL_MASKS again to get its itemID
+          const maskConfig = this.ALL_MASKS.masks.find((m) => m.mask === maskString);
+          if (maskConfig && maskConfig.itemID) {
+            itemIDValue = maskConfig.itemID;
+            console.log(
+              `Draw ID: ${this.drawID} - Extracted itemID '${itemIDValue}' from ALL_MASKS config for mask ${maskString}`
+            );
           }
         }
       }
 
       // Ensure we have a valid item ID
-      if (!itemIDValue) {
-        console.error("Could not extract a valid itemID from input:", itemIDInput);
-        return null;
+      if (itemIDValue === null || itemIDValue === undefined) {
+        // Check for null/undefined
+        console.error(
+          `Draw ID: ${this.drawID} - Could not extract a valid itemID from input for mask ${maskString}:`,
+          itemIDInput
+        );
+        return null; // Cannot proceed without an ID value
       }
 
-      console.log("Using itemID value:", itemIDValue);
+      console.log(
+        `Draw ID: ${this.drawID} - Using filter field '${filterField}' and itemID value '${itemIDValue}' for root data fetch (Mask: ${maskString}).`
+      );
 
-      // Build the filter text
+      // Build the filter text (Assume string comparison for now, OData might need adjustment for numeric IDs)
       const filterText = `(${filterField} eq '${itemIDValue}')`;
 
       // Prepare named filter parameter if available
@@ -2847,16 +2888,16 @@ define(() => {
       // Use sort parameter from dataSource or default
       const orderByParam = dataSourceObj.sortbyParam
         ? `&$orderby=${encodeURIComponent(dataSourceObj.sortbyParam)}`
-        : `&$orderby=CreateDate desc,BatchId`;
+        : `&$orderby=${filterField}`; // Default sort by the filter field if specific sort missing
 
       // Build the complete URL
-      const url = `${this.AppUrl}/${this.authObj.environment}${this.URL_LOOKUP.detailUrls.mainUrl}${entityType}?${filterParam}${orderByParam}&$skip=0&$top=20`;
+      const url = `${this.AppUrl}/${this.authObj.environment}${this.URL_LOOKUP.detailUrls.mainUrl}${entityType}?${filterParam}${orderByParam}&$skip=0&$top=20`; // Keep top=20 or adjust if needed
 
       // Construct referrer URL
       const refUrl = `${this.AppUrl}/${this.authObj.environment}${this.URL_LOOKUP.detailUrls.referrerUrl}${fetchObj.path}`;
 
-      console.log("Making request to:", url);
-      console.log("Filter text:", filterText);
+      console.log(`Draw ID: ${this.drawID} - Root Detail Request: ${url}`);
+      // console.log(`Draw ID: ${this.drawID} - Filter text constructed: ${filterText}`); // Maybe too verbose
 
       try {
         const response = await fetch(url, {
@@ -2865,8 +2906,8 @@ define(() => {
             "accept-language": "en-US,en;q=0.9",
             "cache-control": "no-cache",
             "content-type": "application/json",
-            glledger: "GL",
-            jlledger: "--",
+            glledger: "GL", // Consider if this should be dynamic
+            jlledger: "--", // Consider if this should be dynamic
             mask: maskString,
             pragma: "no-cache",
             priority: "u=1, i",
@@ -2881,14 +2922,25 @@ define(() => {
         });
 
         if (!response.ok) {
-          console.error(`HTTP error ${response.status}:`, await response.text());
+          console.error(
+            `Draw ID: ${this.drawID} - HTTP error ${response.status} fetching root data for ${maskString} (${filterField}=${itemIDValue}):`,
+            await response.text()
+          );
           return null;
         }
+        const responseData = await response.json();
+        if (!responseData || !responseData.items || responseData.items.length === 0) {
+          console.warn(
+            `Draw ID: ${this.drawID} - No root data found for mask ${maskString} with ${filterField} = ${itemIDValue}`
+          );
+          // Return the empty result structure, as getAttachments expects this format
+          return { items: [], metadata: responseData.metadata || {} };
+        }
 
-        return await response.json();
+        return responseData;
       } catch (error) {
-        console.error("Fetch error:", error);
-        throw error;
+        console.error(`Draw ID: ${this.drawID} - Fetch error in getRootDetailData for mask ${maskString}:`, error);
+        throw error; // Re-throw to be caught by the caller (e.g., getAttachments)
       }
     }
 
@@ -3662,4 +3714,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250411 260
+// 20250411 454
