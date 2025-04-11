@@ -288,9 +288,9 @@ define(() => {
         if (!container) {
           // Insert clock icon container
           container = document.createElement("span");
-          container.style.display = "inline-block";
-          container.style.minWidth = this.ICON_DIMENSIONS;
-          container.style.minHeight = this.ICON_DIMENSIONS;
+          container.style.display = "inline";
+          // container.style.minWidth = this.ICON_DIMENSIONS;
+          // container.style.minHeight = this.ICON_DIMENSIONS;
           container.style.verticalAlign = "middle";
           container.id = `doc-container-${spanUniqueId}`;
           container.innerHTML = this.getSvgForType("clock", this.ICON_DIMENSIONS);
@@ -1718,9 +1718,9 @@ define(() => {
             // Create and insert clock container
             // console.log(`Draw ID: ${this.drawID} - Inserting clock for ${spanUniqueId}`);
             container = document.createElement("span");
-            container.style.display = "inline-block";
-            container.style.minWidth = this.ICON_DIMENSIONS;
-            container.style.minHeight = this.ICON_DIMENSIONS;
+            container.style.display = "inline";
+            // container.style.minWidth = this.ICON_DIMENSIONS;
+            // container.style.minHeight = this.ICON_DIMENSIONS;
             container.style.verticalAlign = "middle";
             container.id = `doc-container-${spanUniqueId}`;
             container.innerHTML = this.getSvgForType("clock", this.ICON_DIMENSIONS);
@@ -2055,9 +2055,9 @@ define(() => {
           span.setAttribute(processingAttr, "true"); // Mark this span as initiating processing
 
           container = document.createElement("span");
-          container.style.display = "inline-block";
-          container.style.minWidth = this.ICON_DIMENSIONS;
-          container.style.minHeight = this.ICON_DIMENSIONS;
+          container.style.display = "inline";
+          // container.style.minWidth = this.ICON_DIMENSIONS;
+          // container.style.minHeight = this.ICON_DIMENSIONS;
           container.style.verticalAlign = "middle";
           container.id = `doc-container-${spanUniqueId}`;
           container.innerHTML = this.getSvgForType("clock", this.ICON_DIMENSIONS);
@@ -2354,9 +2354,9 @@ define(() => {
 
             // Create container & clock
             container = document.createElement("span");
-            container.style.display = "inline-block";
-            container.style.minWidth = this.ICON_DIMENSIONS;
-            container.style.minHeight = this.ICON_DIMENSIONS;
+            container.style.display = "inline";
+            // container.style.minWidth = this.ICON_DIMENSIONS;
+            // container.style.minHeight = this.ICON_DIMENSIONS;
             container.style.verticalAlign = "middle"; // Align icon nicely
             container.id = `doc-container-${spanUniqueId}`;
             container.innerHTML = this.getSvgForType("clock", this.ICON_DIMENSIONS);
@@ -3653,4 +3653,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250411 214
+// 20250411 234
