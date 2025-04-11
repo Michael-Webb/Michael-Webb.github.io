@@ -699,7 +699,7 @@ class FetchTest {
     }
 
     // Process each child data source
-    const childResults = await Promise.all(
+    const childResults = await Promise.allSettled(
       childDataSources.map(async (childDS) => {
         // Get the entity type for this child
         const entityType = childDS.entityType;
