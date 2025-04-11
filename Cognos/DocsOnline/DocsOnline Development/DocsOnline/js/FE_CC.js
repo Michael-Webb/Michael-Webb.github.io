@@ -205,8 +205,18 @@ define(() => {
             if (allSpans.length > 0) {
               console.log(`Draw ID: ${this.drawID} - Processing ${allSpans.length} spans (Non-Lazy).`);
 
-              // Fix: use processSpansInOrder instead of processSpan
-              await this.processSpansInOrder(Array.from(allSpans), this.authObj);
+              // Group spans by mask and ref to avoid duplicate processing
+              const spanGroups = this.groupSpansByMaskRef(Array.from(allSpans));
+              console.log(`Draw ID: ${this.drawID} - Grouped into ${spanGroups.size} unique mask-ref combinations.`);
+
+              // Create a promise for each unique mask-ref group
+              const processingPromises = [];
+              for (const [key, group] of spanGroups.entries()) {
+                processingPromises.push(this.processIndividualSpanGroup(group, this.authObj));
+              }
+
+              // Process all groups concurrently
+              await Promise.allSettled(processingPromises);
 
               console.log(`Draw ID: ${this.drawID} - Finished processing all spans.`);
             } else {
@@ -225,8 +235,207 @@ define(() => {
       }
     }
 
-    // Add these methods to your AdvancedControl class
+    /**
+     * Groups spans by their mask and ref attributes to avoid duplicate processing
+     * @param {Array} spans - Array of span elements
+     * @returns {Map} Map with mask-ref keys and grouped span data
+     */
+    groupSpansByMaskRef(spans) {
+      const spanGroups = new Map();
 
+      for (const span of spans) {
+        const mask = span.getAttribute("data-mask");
+        const ref = span.getAttribute("data-ref");
+
+        if (!mask || !ref) continue;
+
+        const key = `${mask}-${ref}`;
+        if (!spanGroups.has(key)) {
+          spanGroups.set(key, { mask, ref, spans: [] });
+        }
+
+        spanGroups.get(key).spans.push(span);
+      }
+
+      return spanGroups;
+    }
+
+    /**
+     * Processes a group of spans with the same mask and ref
+     * @param {Object} group - Object containing mask, ref, and spans array
+     * @param {Object} authObj - Authentication object
+     * @returns {Promise} Promise that resolves when processing is complete
+     */
+    async processIndividualSpanGroup(group, authObj) {
+      const { mask, ref, spans } = group;
+      const spanUniqueId = `${mask}-${ref}`;
+      const processedAttr = `data-processed-${this.drawID}`;
+      const processingAttr = `data-processing-${this.drawID}`;
+
+      try {
+        // Mark all spans in this group as processing
+        spans.forEach((span) => {
+          if (span && !span.hasAttribute(processedAttr) && !span.hasAttribute(processingAttr)) {
+            span.setAttribute(processingAttr, "true");
+          }
+        });
+
+        // Create container for this group
+        let container = document.getElementById(`doc-container-${spanUniqueId}`);
+        if (!container) {
+          // Insert clock icon container
+          container = document.createElement("span");
+          container.style.display = "inline-block";
+          container.style.minWidth = this.ICON_DIMENSIONS;
+          container.style.minHeight = this.ICON_DIMENSIONS;
+          container.style.verticalAlign = "middle";
+          container.id = `doc-container-${spanUniqueId}`;
+          container.innerHTML = this.getSvgForType("clock", this.ICON_DIMENSIONS);
+          container.title = `Loading attachments for ${ref}...`;
+
+          // Place container next to the first span in the group
+          if (spans.length > 0) {
+            const firstSpan = spans[0];
+            const rect = firstSpan.getBoundingClientRect();
+            if (rect.width === 0 || rect.height === 0) {
+              const parentElement = firstSpan.parentElement;
+              if (parentElement && (parentElement.tagName === "TD" || parentElement.tagName === "TH")) {
+                parentElement.appendChild(container);
+              } else {
+                firstSpan.parentNode.insertBefore(container, firstSpan.nextSibling);
+              }
+            } else {
+              firstSpan.parentNode.insertBefore(container, firstSpan.nextSibling);
+            }
+          }
+        }
+
+        // Fetch definition for this mask
+        const defCacheKey = this.generateCacheKey(`screen_defs_${mask}`, authObj);
+        let definition = this.getFromSessionStorage(defCacheKey, true);
+
+        if (!definition) {
+          console.log(`Processing ${spanUniqueId}: Fetching screen definition`);
+          try {
+            const screenDef = await this.fetchScreenDef(mask, authObj);
+            if (!screenDef) throw new Error(`Failed to get screen definition for mask ${mask}`);
+
+            const entityTypes = this.extractEntityTypes(screenDef);
+            const btModels = await this.getBT20Models(mask, entityTypes.btString, authObj);
+            const attachDefs = await this.getAttachDef(mask, entityTypes.btString, authObj);
+            const transformedDef = this.transformDefintion(screenDef, attachDefs);
+
+            definition = {
+              screenDef,
+              entityTypes,
+              btModels,
+              attachDefs,
+              transformedDef,
+            };
+
+            this.saveToSessionStorage(defCacheKey, definition, true);
+          } catch (error) {
+            console.error(`Error fetching definition for ${spanUniqueId}:`, error);
+            container.innerHTML = this.getSvgForType("error", this.ICON_DIMENSIONS);
+            container.title = `Error loading definition: ${error.message}`;
+
+            // Mark spans as processed with error
+            spans.forEach((span) => {
+              span.setAttribute(processedAttr, "true");
+              span.removeAttribute(processingAttr);
+            });
+
+            return; // Exit early on definition error
+          }
+        }
+
+        // Fetch attachments
+        const attachmentCacheKey = this.generateCacheKey(`attachments_${mask}_${ref}`, authObj);
+        let attachmentResults = this.getFromSessionStorage(attachmentCacheKey, true);
+
+        if (attachmentResults === null) {
+          console.log(`Processing ${spanUniqueId}: Fetching attachments`);
+          try {
+            const maskObj = { mask: mask, itemID: ref };
+            attachmentResults = await this.getAttachments(definition.transformedDef, mask, maskObj);
+            this.saveToSessionStorage(attachmentCacheKey, attachmentResults, true);
+          } catch (error) {
+            console.error(`Error fetching attachments for ${spanUniqueId}:`, error);
+            container.innerHTML = this.getSvgForType("error", this.ICON_DIMENSIONS);
+            container.title = `Error loading attachments: ${error.message}`;
+
+            // Mark spans as processed with error
+            spans.forEach((span) => {
+              span.setAttribute(processedAttr, "true");
+              span.removeAttribute(processingAttr);
+            });
+
+            return; // Exit early on attachment error
+          }
+        }
+
+        // Process results and update container
+        let documentCount = 0;
+        let documentData = [];
+
+        if (attachmentResults && Array.isArray(attachmentResults)) {
+          documentData = attachmentResults.reduce((allDocs, result) => {
+            if (result?.attachments && Array.isArray(result.attachments)) {
+              return [...allDocs, ...result.attachments];
+            }
+            return allDocs;
+          }, []);
+          documentCount = documentData.length;
+        }
+
+        // Update container based on results
+        if (documentCount > 0) {
+          container.innerHTML = this.getSvgForType("paperclip", this.ICON_DIMENSIONS);
+          container.style.cursor = "pointer";
+          container.title = `${documentCount} document(s) for ${ref}`;
+
+          // Add click listener
+          container.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.openMessage(documentData, ref);
+          };
+        } else {
+          // No attachments
+          container.innerHTML = "";
+          container.title = `No attachments for ${ref}`;
+          container.style.cursor = "default";
+          container.onclick = null;
+        }
+
+        // Mark all spans in this group as processed
+        spans.forEach((span) => {
+          if (span) {
+            span.setAttribute(processedAttr, "true");
+            span.removeAttribute(processingAttr);
+          }
+        });
+
+        console.log(`Processing ${spanUniqueId}: Complete with ${documentCount} documents`);
+      } catch (error) {
+        console.error(`Unhandled error processing ${spanUniqueId}:`, error);
+
+        // Update container to error state if possible
+        const container = document.getElementById(`doc-container-${spanUniqueId}`);
+        if (container) {
+          container.innerHTML = this.getSvgForType("error", this.ICON_DIMENSIONS);
+          container.title = `Processing error: ${error.message}`;
+        }
+
+        // Mark spans as processed with error
+        spans.forEach((span) => {
+          if (span) {
+            span.setAttribute(processedAttr, "true");
+            span.removeAttribute(processingAttr);
+          }
+        });
+      }
+    }
     /**
      * Gets a value from session storage with optional JSON parsing
      * @param {string} key - Storage key
@@ -2084,12 +2293,6 @@ define(() => {
       console.log(`Draw ID: ${this.drawID} - Finished processSpansInOrder.`);
     }
 
-    // Remove or comment out the old processSpansByMask function
-    // async processSpansByMask(spansToProcess, masks, authObj) { ... }
-
-    /**
-     * Process spans by mask - fetching definitions once per mask
-     */
     /**
      * Process spans by mask - fetching definitions, inserting clocks,
      * then fetching attachments and updating icons.
@@ -3411,4 +3614,4 @@ define(() => {
 
   return AdvancedControl;
 });
-/* 20250411 154 */
+/* 20250411 201 */
