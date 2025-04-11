@@ -96,6 +96,7 @@ define(() => {
      *
      */
     initialize(oControlHost, fnDoneInitializing) {
+      console.log("Initiallize START");
       this.oControl = oControlHost;
       const {
         ["App Server Url"]: AppUrl,
@@ -134,6 +135,7 @@ define(() => {
         let description = `Missing required configuration parameters: ${missingParams.join(", ")}`;
         throw new scriptableReportError("AdvancedControl", "draw", description);
       }
+      console.log("Initiallize END");
       fnDoneInitializing();
     }
 
@@ -182,7 +184,7 @@ define(() => {
 
             // Initialize lazy loading and process only visible spans
             this.initializeVisibleSpanLoading();
-            setTimeout(() => this.processVisibleSpans(), 200);
+            setTimeout(() => this.processVisibleSpans(), 100);
           } else {
             // Process all spans without lazy loading
             const allSpans = this.getAllAssetSpans();
@@ -1238,52 +1240,37 @@ define(() => {
      * This replaces scroll and resize listeners to detect when spans become visible.
      */
     initializeVisibleSpanLoading() {
-      // If the observer is already set up, don't reinitialize.
       if (this.intersectionObserver) {
         console.log(`Draw ID: ${this.drawID} - IntersectionObserver already initialized.`);
         return;
       }
 
-      // Set up options:
-      // - root: null (viewport)
-      // - rootMargin: provides a buffer zone (e.g., "150px 50px" means 150px top/bottom and 50px left/right)
-      // - threshold: 0.1 means the callback fires when 10% of the element is visible
       const observerOptions = {
         root: null,
         rootMargin: "150px 50px",
         threshold: 0.1,
       };
 
-      // Define the callback for observer events.
       const observerCallback = (entries, observer) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             console.log(`Draw ID: ${this.drawID} - Span visible:`, entry.target);
-            // Unobserve this target immediately to avoid duplicate processing
             observer.unobserve(entry.target);
-            // Option 1: Process the individual element (e.g., this.processSpan(entry.target)).
-            // Option 2: Trigger processing of all visible (and unprocessed) spans.
-            // Here, we schedule processing of all visible spans.
             if (this.visibilityProcessingTimeout) {
               clearTimeout(this.visibilityProcessingTimeout);
             }
             this.visibilityProcessingTimeout = setTimeout(() => {
-              // This method (processVisibleSpans) already groups and fetches attachments for visible spans.
-              // It will only operate on spans that are not yet marked as processed.
               this.processVisibleSpans();
-            }, 200); // slight debounce delay (adjust as needed)
+            }, 200);
           }
         });
       };
 
-      // Create the observer instance
       this.intersectionObserver = new IntersectionObserver(observerCallback.bind(this), observerOptions);
 
-      // Start observing spans that match the SPAN_NAME
-      // We use querySelectorAll to get fresh spans; since pagination adds new spans, call this method after new content is rendered.
+      // Initially observe all existing spans.
       const spans = document.querySelectorAll(`span[data-name="${this.SPAN_NAME}"]`);
       spans.forEach((span) => {
-        // Only observe spans that are not flagged as processed or already being processed
         if (
           !span.hasAttribute(`data-processed-${this.drawID}`) &&
           !span.hasAttribute(`data-processing-${this.drawID}`)
@@ -1293,6 +1280,47 @@ define(() => {
       });
 
       console.log(`Draw ID: ${this.drawID} - IntersectionObserver initialized and observing spans.`);
+
+      // Set up MutationObservers on all viewer page containers.
+      this.initializeViewerPageObserver();
+    }
+
+    /**
+     * Initializes a MutationObserver on each 'clsViewerPage' container to detect when a page becomes visible.
+     * When a container becomes visible (display: block), it queries for new spans and adds them to the intersection observer.
+     */
+    initializeViewerPageObserver() {
+      // Query for all viewer page containers, even if they are hidden.
+      const viewerPages = document.querySelectorAll(".clsViewerPage");
+
+      viewerPages.forEach((page) => {
+        // Create a MutationObserver for each page container.
+        const mutationObserver = new MutationObserver((mutations) => {
+          mutations.forEach((mutation) => {
+            if (mutation.attributeName === "style") {
+              const display = window.getComputedStyle(mutation.target).display;
+              // When the container becomes visible, re-query for new spans.
+              if (display === "block") {
+                console.log(`Container ${mutation.target} is now visible; re-attaching observer to new spans.`);
+                // Query for spans within this visible container.
+                const newSpans = mutation.target.querySelectorAll(`span[data-name="${this.SPAN_NAME}"]`);
+                newSpans.forEach((span) => {
+                  // Only observe spans that are not already processed or being processed.
+                  if (
+                    !span.hasAttribute(`data-processed-${this.drawID}`) &&
+                    !span.hasAttribute(`data-processing-${this.drawID}`)
+                  ) {
+                    this.intersectionObserver.observe(span);
+                  }
+                });
+              }
+            }
+          });
+        });
+
+        // Observe attribute changes (style changes) on the container.
+        mutationObserver.observe(page, { attributes: true, attributeFilter: ["style"] });
+      });
     }
 
     /**
@@ -1306,7 +1334,7 @@ define(() => {
         /* console.log(`Draw ID: ${this.drawID} - Already processing, skip`); */ return;
       }
       this.processingInProgress = true;
-      //console.log(`Draw ID: ${this.drawID} - processVisibleSpans START`);
+      console.log(`Draw ID: ${this.drawID} - processVisibleSpans START`);
 
       // Shared state for this batch run to coordinate concurrent fetches
       const definitionsPromiseCache = new Map(); // Cache promises for ongoing definition fetches { mask: Promise<definitions> }
@@ -2819,7 +2847,7 @@ define(() => {
               // Referrer URL
               const refUrl = `${this.AppUrl}/${this.authObj.environment}${this.URL_LOOKUP.attachUrls.referrerUrl}${fetchObj.path}`;
 
-            //   console.log(`Fetching attachments for child entity ${childResult.entityType} with item:`, childItem);
+              //   console.log(`Fetching attachments for child entity ${childResult.entityType} with item:`, childItem);
 
               const response = await fetch(url, {
                 headers: {
@@ -3261,4 +3289,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250411 901
+// 20250411 914
