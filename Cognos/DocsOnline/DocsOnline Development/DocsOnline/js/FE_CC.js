@@ -97,7 +97,6 @@ define(() => {
      */
     initialize(oControlHost, fnDoneInitializing) {
       console.log("Initiallize START");
-      this.clearCache();
       this.oControl = oControlHost;
       const {
         ["App Server Url"]: AppUrl,
@@ -3663,4 +3662,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250411 251
+// 20250411 259
