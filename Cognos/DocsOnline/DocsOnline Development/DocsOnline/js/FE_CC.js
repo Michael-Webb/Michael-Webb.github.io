@@ -97,7 +97,7 @@ define(() => {
      */
     initialize(oControlHost, fnDoneInitializing) {
       console.log("Initiallize START");
-      this.clearCache()
+      this.clearCache();
       this.oControl = oControlHost;
       const {
         ["App Server Url"]: AppUrl,
@@ -175,6 +175,19 @@ define(() => {
           console.log(`Draw ID: ${this.drawID} - Authentication successful, API token acquired`);
           console.log(`Draw ID: ${this.drawID} - Auth object environment: ${this.authObj.environment}`);
 
+          // ***NEW ADDITION: Update session expiration on every draw***
+          try {
+            const sessionExpData = await this.getSessionExpiration(this.authObj);
+            console.log(
+              `Draw ID: ${this.drawID} - Updated session expiration. New expiration in ${sessionExpData.expirationIntervalInMinutes} minutes`
+            );
+          } catch (sessionError) {
+            console.warn(
+              `Draw ID: ${this.drawID} - Failed to update session expiration, continuing with existing token:`,
+              sessionError
+            );
+          }
+
           const allSpansTest = document.querySelectorAll(`span[data-name=${this.SPAN_NAME}]`);
           console.log(
             `Draw ID: ${this.drawID} - Found ${allSpansTest.length} total spans with data-name=${this.SPAN_NAME}`
@@ -192,9 +205,8 @@ define(() => {
             if (allSpans.length > 0) {
               console.log(`Draw ID: ${this.drawID} - Processing ${allSpans.length} spans (Non-Lazy).`);
 
-              // Process each span
-              const processingPromises = Array.from(allSpans).map((span) => this.processSpan(span));
-              await Promise.allSettled(processingPromises);
+              // Fix: use processSpansInOrder instead of processSpan
+              await this.processSpansInOrder(Array.from(allSpans), this.authObj);
 
               console.log(`Draw ID: ${this.drawID} - Finished processing all spans.`);
             } else {
@@ -3399,4 +3411,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250411 139
+/* 20250411 154 */
