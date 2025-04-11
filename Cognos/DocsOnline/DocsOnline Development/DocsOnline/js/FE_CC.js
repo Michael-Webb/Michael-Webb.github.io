@@ -193,6 +193,9 @@ define(() => {
             `Draw ID: ${this.drawID} - Found ${allSpansTest.length} total spans with data-name=${this.SPAN_NAME}`
           );
 
+          // Always initialize the page observer to handle pagination, regardless of lazy loading setting
+          this.initializeViewerPageObserver();
+
           if (this.IS_LAZY_LOADED) {
             console.log(`Draw ID: ${this.drawID} - Initializing lazy loading.`);
 
@@ -930,58 +933,6 @@ define(() => {
       return uniqueMasks;
     }
 
-    /*
-     * The control is being destroyed so do any necessary cleanup. This method is optional.
-     */
-    destroy(oControlHost) {
-      console.log(`Destroying AdvancedControl Instance: ID=${this.drawID}`);
-
-      // Remove event listeners
-      if (this.throttledScrollHandler) {
-        document.removeEventListener("scroll", this.throttledScrollHandler, { capture: true });
-        window.removeEventListener("scroll", this.throttledScrollHandler);
-        window.removeEventListener("resize", this.throttledScrollHandler);
-        this.throttledScrollHandler = null;
-      }
-
-      if (this.intervalCheck) {
-        clearInterval(this.intervalCheck);
-        this.intervalCheck = null;
-      }
-
-      // Disconnect MutationObserver
-      if (this.mutationObserver) {
-        this.mutationObserver.disconnect();
-        this.mutationObserver = null;
-      }
-
-      // Disconnect the document-wide observer
-      if (this.documentObserver) {
-        this.documentObserver.disconnect();
-        this.documentObserver = null;
-      }
-
-      if (this.mutationProcessTimeout) {
-        clearTimeout(this.mutationProcessTimeout);
-      }
-
-      // Disconnect IntersectionObserver
-      if (this.intersectionObserver) {
-        this.intersectionObserver.disconnect();
-        this.intersectionObserver = null;
-        console.log(`Draw ID: ${this.drawID} - Disconnected IntersectionObserver.`);
-      }
-
-      this.viewerPageObserversInitialized = false;
-
-      // Clear cache if needed
-      this.clearCache();
-
-      // Clear references
-      this.oControl = null;
-      this.authObj = null;
-    }
-
     /**
      * Creates an object from the
      * @param {*} authDataSet
@@ -1576,7 +1527,6 @@ define(() => {
       this.viewerPageObserversInitialized = true;
       console.log(`Draw ID: ${this.drawID} - Viewer page observers initialized.`);
     }
-
     /**
      * Sets up an observer for a specific viewer page
      * @param {Element} page - The viewer page element to observe
@@ -1599,7 +1549,7 @@ define(() => {
             if (display === "block") {
               console.log(`Draw ID: ${this.drawID} - Page became visible:`, targetPage);
 
-              // Process this page immediately - find spans in this specific page
+              // Find spans in this specific page
               const newSpans = targetPage.querySelectorAll(`span[data-name="${this.SPAN_NAME}"]`);
               console.log(`Draw ID: ${this.drawID} - Found ${newSpans.length} spans in newly visible page.`);
 
@@ -1613,21 +1563,28 @@ define(() => {
 
                 if (unprocessedSpans.length > 0) {
                   console.log(
-                    `Draw ID: ${this.drawID} - Adding ${unprocessedSpans.length} unprocessed spans to observer.`
+                    `Draw ID: ${this.drawID} - Found ${unprocessedSpans.length} unprocessed spans in newly visible page.`
                   );
 
-                  // Option 1: Add to intersection observer
-                  if (this.intersectionObserver) {
-                    unprocessedSpans.forEach((span) => {
-                      this.intersectionObserver.observe(span);
+                  if (this.IS_LAZY_LOADED) {
+                    // If using lazy loading, add to intersection observer
+                    if (this.intersectionObserver) {
+                      unprocessedSpans.forEach((span) => {
+                        this.intersectionObserver.observe(span);
+                      });
+                    }
+                  } else {
+                    // If not lazy loading, process spans immediately using the same group approach
+                    const spanGroups = this.groupSpansByMaskRef(unprocessedSpans);
+                    console.log(
+                      `Draw ID: ${this.drawID} - Grouped ${unprocessedSpans.length} spans into ${spanGroups.size} groups for processing.`
+                    );
+
+                    // Process each group
+                    spanGroups.forEach((group) => {
+                      this.processIndividualSpanGroup(group, this.authObj);
                     });
                   }
-
-                  // Option 2: Process immediately (more aggressive approach)
-                  // Delay slightly to ensure the DOM is stable
-                  setTimeout(() => {
-                    this.processSpansInOrder(unprocessedSpans, this.authObj);
-                  }, 250);
                 }
               }
             }
@@ -1639,6 +1596,12 @@ define(() => {
         attributes: true,
         attributeFilter: ["style"],
       });
+
+      // Store observer reference for cleanup
+      if (!this.pageObservers) {
+        this.pageObservers = new Map();
+      }
+      this.pageObservers.set(page, mutationObserver);
 
       // Check if the page is already visible and process it
       const display = window.getComputedStyle(page).display;
@@ -1657,10 +1620,21 @@ define(() => {
             `Draw ID: ${this.drawID} - Found ${unprocessedSpans.length} unprocessed spans in already visible page.`
           );
 
-          // Add to intersection observer
-          if (this.intersectionObserver) {
-            unprocessedSpans.forEach((span) => {
-              this.intersectionObserver.observe(span);
+          if (this.IS_LAZY_LOADED) {
+            // If using lazy loading, add to intersection observer
+            if (this.intersectionObserver) {
+              unprocessedSpans.forEach((span) => {
+                this.intersectionObserver.observe(span);
+              });
+            }
+          } else {
+            // If not lazy loading, process spans immediately
+            const spanGroups = this.groupSpansByMaskRef(unprocessedSpans);
+            console.log(`Draw ID: ${this.drawID} - Processing ${spanGroups.size} groups in visible page.`);
+
+            // Process each group
+            spanGroups.forEach((group) => {
+              this.processIndividualSpanGroup(group, this.authObj);
             });
           }
         }
@@ -3610,8 +3584,73 @@ define(() => {
         alert(`Error showing document dialog: ${error.message}`);
       }
     }
+
+    /*
+     * The control is being destroyed so do any necessary cleanup. This method is optional.
+     */
+    destroy(oControlHost) {
+      console.log(`Destroying AdvancedControl Instance: ID=${this.drawID}`);
+
+      // Remove event listeners
+      if (this.throttledScrollHandler) {
+        document.removeEventListener("scroll", this.throttledScrollHandler, { capture: true });
+        window.removeEventListener("scroll", this.throttledScrollHandler);
+        window.removeEventListener("resize", this.throttledScrollHandler);
+        this.throttledScrollHandler = null;
+      }
+
+      if (this.intervalCheck) {
+        clearInterval(this.intervalCheck);
+        this.intervalCheck = null;
+      }
+
+      // Disconnect MutationObserver
+      if (this.mutationObserver) {
+        this.mutationObserver.disconnect();
+        this.mutationObserver = null;
+      }
+
+      // Disconnect the document-wide observer
+      if (this.documentObserver) {
+        this.documentObserver.disconnect();
+        this.documentObserver = null;
+      }
+
+      if (this.mutationProcessTimeout) {
+        clearTimeout(this.mutationProcessTimeout);
+      }
+
+      // Disconnect all page-specific observers
+      if (this.pageObservers && this.pageObservers.size > 0) {
+        console.log(`Draw ID: ${this.drawID} - Disconnecting ${this.pageObservers.size} page observers.`);
+        this.pageObservers.forEach((observer, page) => {
+          observer.disconnect();
+        });
+        this.pageObservers.clear();
+      }
+
+      if (this.mutationProcessTimeout) {
+        clearTimeout(this.mutationProcessTimeout);
+      }
+
+      // Disconnect IntersectionObserver
+      if (this.intersectionObserver) {
+        this.intersectionObserver.disconnect();
+        this.intersectionObserver = null;
+        console.log(`Draw ID: ${this.drawID} - Disconnected IntersectionObserver.`);
+      }
+
+      this.viewerPageObserversInitialized = false;
+
+      // Clear cache if needed
+      this.clearCache();
+
+      // Clear references
+      this.oControl = null;
+      this.authObj = null;
+    }
   }
 
   return AdvancedControl;
 });
-/* 20250411 201 */
+// 20250411 214
