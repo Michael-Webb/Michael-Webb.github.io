@@ -288,9 +288,11 @@ define(() => {
         if (!container) {
           // Insert clock icon container
           container = document.createElement("span");
-          container.style.display = "inline";
+          container.style.display = "inline-block";
           container.style.minWidth = this.ICON_DIMENSIONS;
           container.style.minHeight = this.ICON_DIMENSIONS;
+          container.style.width = this.ICON_DIMENSIONS
+          container.style.height = this.ICON_DIMENSIONS
           container.style.verticalAlign = "middle";
           container.id = `doc-container-${spanUniqueId}`;
           container.innerHTML = this.getSvgForType("clock", this.ICON_DIMENSIONS);
@@ -1718,9 +1720,11 @@ define(() => {
             // Create and insert clock container
             // console.log(`Draw ID: ${this.drawID} - Inserting clock for ${spanUniqueId}`);
             container = document.createElement("span");
-            container.style.display = "inline";
+            container.style.display = "inline-block";
             container.style.minWidth = this.ICON_DIMENSIONS;
             container.style.minHeight = this.ICON_DIMENSIONS;
+            container.style.width = this.ICON_DIMENSIONS
+          container.style.height = this.ICON_DIMENSIONS
             container.style.verticalAlign = "middle";
             container.id = `doc-container-${spanUniqueId}`;
             container.innerHTML = this.getSvgForType("clock", this.ICON_DIMENSIONS);
@@ -2055,9 +2059,11 @@ define(() => {
           span.setAttribute(processingAttr, "true"); // Mark this span as initiating processing
 
           container = document.createElement("span");
-          container.style.display = "inline";
+          container.style.display = "inline-block";
           container.style.minWidth = this.ICON_DIMENSIONS;
           container.style.minHeight = this.ICON_DIMENSIONS;
+          container.style.width = this.ICON_DIMENSIONS
+          container.style.height = this.ICON_DIMENSIONS
           container.style.verticalAlign = "middle";
           container.id = `doc-container-${spanUniqueId}`;
           container.innerHTML = this.getSvgForType("clock", this.ICON_DIMENSIONS);
@@ -2354,9 +2360,11 @@ define(() => {
 
             // Create container & clock
             container = document.createElement("span");
-            container.style.display = "inline";
+            container.style.display = "inline-block";
             container.style.minWidth = this.ICON_DIMENSIONS;
             container.style.minHeight = this.ICON_DIMENSIONS;
+            container.style.width = this.ICON_DIMENSIONS
+          container.style.height = this.ICON_DIMENSIONS
             container.style.verticalAlign = "middle"; // Align icon nicely
             container.id = `doc-container-${spanUniqueId}`;
             container.innerHTML = this.getSvgForType("clock", this.ICON_DIMENSIONS);
@@ -3227,6 +3235,8 @@ define(() => {
           return `<svg xmlns="http://www.w3.org/2000/svg" height="${height}" width="${width}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
         case "error":
           return `<svg xmlns="http://www.w3.org/2000/svg" height="${height}" width="${width}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-x-icon lucide-circle-x"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>`;
+        case "not found":
+          return `<svg xmlns="http://www.w3.org/2000/svg" height="${height}" width="${width}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-minus-icon lucide-minus"><path d="M5 12h14"/></svg>`;
         default:
           return `<svg xmlns="http://www.w3.org/2000/svg" height="${height}" width="${width}" viewBox="0 0 24 24" fill="none" stroke="#FF0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-icon lucide-file"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>`;
       }
@@ -3653,4 +3663,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250411 242
+// 20250411 251
