@@ -97,6 +97,7 @@ define(() => {
      */
     initialize(oControlHost, fnDoneInitializing) {
       console.log("Initiallize START");
+      this.clearCache()
       this.oControl = oControlHost;
       const {
         ["App Server Url"]: AppUrl,
@@ -733,11 +734,17 @@ define(() => {
         this.mutationObserver = null;
       }
 
+      // Disconnect the document-wide observer
+      if (this.documentObserver) {
+        this.documentObserver.disconnect();
+        this.documentObserver = null;
+      }
+
       if (this.mutationProcessTimeout) {
         clearTimeout(this.mutationProcessTimeout);
       }
 
-      // *** IMPORTANT: Add IntersectionObserver disconnect ***
+      // Disconnect IntersectionObserver
       if (this.intersectionObserver) {
         this.intersectionObserver.disconnect();
         this.intersectionObserver = null;
@@ -1305,42 +1312,44 @@ define(() => {
         return;
       }
 
-      const viewerPages = document.querySelectorAll(".clsViewerPage");
-      console.log(`Draw ID: ${this.drawID} - Found ${viewerPages.length} viewer pages to observe.`); // Add log
-
-      viewerPages.forEach((page) => {
-        // ... rest of the observer setup ...
-        const mutationObserver = new MutationObserver((mutations) => {
-          mutations.forEach((mutation) => {
-            if (mutation.attributeName === "style") {
-              const targetPage = mutation.target; // More specific name
-              const display = window.getComputedStyle(targetPage).display;
-
-              if (display === "block") {
-                console.log(`Draw ID: ${this.drawID} - MutationObserver: Container became visible:`, targetPage); // Log target
-
-                // Query within the specific target that became visible
-                const newSpans = targetPage.querySelectorAll(`span[data-name="${this.SPAN_NAME}"]`);
-                console.log(
-                  `Draw ID: ${this.drawID} - MutationObserver: Found ${newSpans.length} new spans in visible container.`
-                ); // Log count
-
-                newSpans.forEach((span) => {
-                  if (
-                    !span.hasAttribute(`data-processed-${this.drawID}`) &&
-                    !span.hasAttribute(`data-processing-${this.drawID}`) &&
-                    this.intersectionObserver // Ensure observer exists
-                  ) {
-                    console.log(`Draw ID: ${this.drawID} - MutationObserver: Observing new span:`, span); // Log observed span
-                    this.intersectionObserver.observe(span);
-                  }
-                });
+      // Set up a document-wide observer to catch any new viewer pages added during pagination
+      const documentObserver = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
+            // Check if any new viewer pages were added
+            mutation.addedNodes.forEach((node) => {
+              if (node.nodeType === 1) {
+                // Element node
+                // Check if it's a viewer page itself
+                if (node.classList && node.classList.contains("clsViewerPage")) {
+                  this.setupPageObserver(node);
+                }
+                // Or check its children for viewer pages
+                const newPages = node.querySelectorAll(".clsViewerPage");
+                if (newPages.length > 0) {
+                  console.log(`Draw ID: ${this.drawID} - Found ${newPages.length} new viewer pages from DOM mutation.`);
+                  newPages.forEach((page) => this.setupPageObserver(page));
+                }
               }
-            }
-          });
+            });
+          }
         });
-        mutationObserver.observe(page, { attributes: true, attributeFilter: ["style"] });
       });
+
+      // Start observing the document for new pages
+      documentObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
+      });
+
+      // Also set up observers for existing viewer pages
+      const viewerPages = document.querySelectorAll(".clsViewerPage");
+      console.log(`Draw ID: ${this.drawID} - Found ${viewerPages.length} existing viewer pages to observe.`);
+
+      viewerPages.forEach((page) => this.setupPageObserver(page));
+
+      // Store the document observer for cleanup
+      this.documentObserver = documentObserver;
 
       // Set the flag after successful initialization
       this.viewerPageObserversInitialized = true;
@@ -1348,14 +1357,104 @@ define(() => {
     }
 
     /**
+     * Sets up an observer for a specific viewer page
+     * @param {Element} page - The viewer page element to observe
+     */
+    setupPageObserver(page) {
+      // Only observe if not already being observed (use a data attribute to track)
+      if (page.hasAttribute(`data-observed-${this.drawID}`)) {
+        return;
+      }
+
+      // Mark as being observed
+      page.setAttribute(`data-observed-${this.drawID}`, "true");
+
+      const mutationObserver = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.attributeName === "style") {
+            const targetPage = mutation.target;
+            const display = window.getComputedStyle(targetPage).display;
+
+            if (display === "block") {
+              console.log(`Draw ID: ${this.drawID} - Page became visible:`, targetPage);
+
+              // Process this page immediately - find spans in this specific page
+              const newSpans = targetPage.querySelectorAll(`span[data-name="${this.SPAN_NAME}"]`);
+              console.log(`Draw ID: ${this.drawID} - Found ${newSpans.length} spans in newly visible page.`);
+
+              if (newSpans.length > 0) {
+                // Filter for unprocessed spans
+                const unprocessedSpans = Array.from(newSpans).filter(
+                  (span) =>
+                    !span.hasAttribute(`data-processed-${this.drawID}`) &&
+                    !span.hasAttribute(`data-processing-${this.drawID}`)
+                );
+
+                if (unprocessedSpans.length > 0) {
+                  console.log(
+                    `Draw ID: ${this.drawID} - Adding ${unprocessedSpans.length} unprocessed spans to observer.`
+                  );
+
+                  // Option 1: Add to intersection observer
+                  if (this.intersectionObserver) {
+                    unprocessedSpans.forEach((span) => {
+                      this.intersectionObserver.observe(span);
+                    });
+                  }
+
+                  // Option 2: Process immediately (more aggressive approach)
+                  // Delay slightly to ensure the DOM is stable
+                  setTimeout(() => {
+                    this.processSpansInOrder(unprocessedSpans, this.authObj);
+                  }, 250);
+                }
+              }
+            }
+          }
+        });
+      });
+
+      mutationObserver.observe(page, {
+        attributes: true,
+        attributeFilter: ["style"],
+      });
+
+      // Check if the page is already visible and process it
+      const display = window.getComputedStyle(page).display;
+      if (display === "block") {
+        console.log(`Draw ID: ${this.drawID} - Page already visible at setup time:`, page);
+
+        // Process any spans in this page that haven't been processed yet
+        const visibleSpans = page.querySelectorAll(`span[data-name="${this.SPAN_NAME}"]`);
+        const unprocessedSpans = Array.from(visibleSpans).filter(
+          (span) =>
+            !span.hasAttribute(`data-processed-${this.drawID}`) && !span.hasAttribute(`data-processing-${this.drawID}`)
+        );
+
+        if (unprocessedSpans.length > 0) {
+          console.log(
+            `Draw ID: ${this.drawID} - Found ${unprocessedSpans.length} unprocessed spans in already visible page.`
+          );
+
+          // Add to intersection observer
+          if (this.intersectionObserver) {
+            unprocessedSpans.forEach((span) => {
+              this.intersectionObserver.observe(span);
+            });
+          }
+        }
+      }
+    }
+
+    /**
      * Process spans in visible rows of tables with LIST_NAME
      */
     async processVisibleSpans() {
       if (!this.apiToken) {
-        /* console.log(`Draw ID: ${this.drawID} - No token, skip`); */ return;
+        return;
       }
       if (this.processingInProgress) {
-        /* console.log(`Draw ID: ${this.drawID} - Already processing, skip`); */ return;
+        return;
       }
       this.processingInProgress = true;
       console.log(`Draw ID: ${this.drawID} - processVisibleSpans START`);
@@ -1365,6 +1464,7 @@ define(() => {
       const attachmentsPromiseCache = new Map(); // Cache promises for ongoing attachment fetches { spanUniqueId: Promise<attachmentResults> }
 
       try {
+        // Find ALL spans, even those that might be in hidden pages
         const allSpans = document.querySelectorAll(`span[data-name=${this.SPAN_NAME}]`);
         if (allSpans.length === 0) {
           console.log(`Draw ID: ${this.drawID} - No spans found.`);
@@ -1373,6 +1473,7 @@ define(() => {
         }
 
         // 1. Filter for visible spans that haven't been fully processed yet
+        // Enhanced visibility check that considers pagination
         const visibleUnprocessedSpans = Array.from(allSpans).filter(
           (span) => !span.hasAttribute(`data-processed-${this.drawID}`) && this.isElementVisibleInCognosPage(span)
         );
@@ -2269,9 +2370,6 @@ define(() => {
     }
 
     /**
-     * Enhanced check to determine if an element is visible, accounting for Cognos pagination
-     */
-    /**
      * Enhanced check to determine if an element is truly visible:
      * - Not hidden by parent styles (display:none, visibility:hidden)
      * - On an active Cognos page (if applicable)
@@ -2282,62 +2380,50 @@ define(() => {
 
       // 1. Basic DOM check: Is it even connected?
       if (!document.body.contains(element)) {
-        // console.log(`Span ${element.dataset.mask}-${element.dataset.ref} not in body`);
         return false;
       }
 
-      // 2. Check visibility based on CSS and offsetParent
-      // offsetParent check handles upstream display:none effectively
-      if (element.offsetParent === null) {
-        // console.log(`Span ${element.dataset.mask}-${element.dataset.ref} hidden by offsetParent`);
-        return false;
-      }
+      // 2. Check if element is actually part of a visible page
+      let parent = element;
+      let foundViewerPage = false;
+      let isOnVisiblePage = false;
 
-      // 3. Check explicit parent styles and Cognos page status
-      let parent = element.parentElement;
-      let onActiveCognosPage = false; // Assume not on a paged element initially
-      let isPotentiallyPaged = false; // Track if we encounter any clsViewerPage
-
+      // Traverse up to find if the element is within a viewer page and if that page is visible
       while (parent) {
-        const style = window.getComputedStyle(parent);
-        // Check standard CSS hiding
-        if (style.display === "none" || style.visibility === "hidden") {
-          // console.log(`Span ${element.dataset.mask}-${element.dataset.ref} hidden by parent style`, parent);
-          return false; // Hidden by an ancestor
-        }
-
-        // Check Cognos page visibility
         if (parent.classList && parent.classList.contains("clsViewerPage")) {
-          isPotentiallyPaged = true; // We are inside a Cognos paged structure
+          foundViewerPage = true;
+          const style = window.getComputedStyle(parent);
           if (style.display === "block") {
-            // Assuming 'block' means active page
-            onActiveCognosPage = true;
-            // Don't break here, a higher parent could still be display:none
-          } else {
-            // It's inside *an inactive* Cognos page
-            // console.log(`Span ${element.dataset.mask}-${element.dataset.ref} on inactive Cognos page`, parent);
-            return false;
+            isOnVisiblePage = true;
           }
+          break; // Stop at first viewer page ancestor
         }
         parent = parent.parentElement;
       }
 
-      // If it's part of a paged structure but wasn't confirmed to be on an *active* page, treat as hidden.
-      // This handles cases where it might be outside the 'block' page but still controlled by pagination.
-      // (This logic might need adjustment based on exact Cognos structure if elements can be outside clsViewerPage)
-      // Let's simplify: If it was inside *any* clsViewerPage, it *must* have been found with display:block to be considered active.
-      if (isPotentiallyPaged && !onActiveCognosPage) {
-        // console.log(`Span ${element.dataset.mask}-${element.dataset.ref} potentially paged but not confirmed active`);
+      // If it's inside a viewer page, it must be on a visible one
+      if (foundViewerPage && !isOnVisiblePage) {
         return false;
       }
 
-      // 4. *** CRITICAL: Check if the element is within the viewport ***
-      // Only perform this check if it passed all the parent/page visibility checks above
-      const isInViewport = this.isElementInViewport(element);
-      // if (!isInViewport) {
-      //     console.log(`Span ${element.dataset.mask}-${element.dataset.ref} is not in viewport`);
-      // }
-      return isInViewport;
+      // 3. Check visibility based on CSS and offsetParent
+      if (element.offsetParent === null) {
+        return false;
+      }
+
+      // 4. Check explicit parent styles
+      parent = element.parentElement;
+      while (parent) {
+        const style = window.getComputedStyle(parent);
+        // Check standard CSS hiding
+        if (style.display === "none" || style.visibility === "hidden") {
+          return false; // Hidden by an ancestor
+        }
+        parent = parent.parentElement;
+      }
+
+      // 5. Check if the element is within the viewport
+      return this.isElementInViewport(element);
     }
 
     /**
@@ -3313,4 +3399,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250411 128
+// 20250411 139
