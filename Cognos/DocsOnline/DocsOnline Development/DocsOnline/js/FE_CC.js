@@ -27,6 +27,10 @@ define(() => {
           maskName: "APOHBTUB",
           urlPath: "accountspayable",
         },
+        {
+          maskName: "POUPRD",
+          urlPath: "purchasing",
+        },
       ],
     };
     ALL_MASKS = {
@@ -64,6 +68,10 @@ define(() => {
           module: "accountsreceivable",
           name: "Ref",
           itemID: "AR257328",
+        },
+        {
+          mask: "POUPRD",
+          module: "purchasing",
         },
       ],
     };
@@ -3714,4 +3722,4 @@ define(() => {
 
   return AdvancedControl;
 });
-// 20250411 454
+// 20250411 525
