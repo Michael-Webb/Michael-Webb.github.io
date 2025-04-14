@@ -2827,11 +2827,15 @@ define(() => {
 
       // 1. Prioritize using rootIdColumns identified by transformDefintion
       //    This array contains the parent properties used in linkages TO the root entity.
-      if (entityTransform.rootIdColumns && entityTransform.rootIdColumns.length > 0) {
-        filterField = entityTransform.rootIdColumns[0]; // Use the first identified key
-        console.log(
-          `Draw ID: ${this.drawID} - Using filter field '${filterField}' derived from rootIdColumns for mask ${maskString}`
+      // Original logic for other masks
+      else if (entityTransform.rootIdColumns && entityTransform.rootIdColumns.length > 0) {
+        filterField = entityTransform.rootIdColumns[0];
+        console.log(`Draw ID: ${this.drawID} - Using filter field '${filterField}' derived from rootIdColumns`);
+      } else if (!filterField && fetchObj && fetchObj.name) {
+        console.warn(
+          `Draw ID: ${this.drawID} - rootIdColumns empty. Falling back to fetchObj.name: '${fetchObj.name}'`
         );
+        filterField = fetchObj.name;
       }
 
       // 2. Fallback (Less reliable, but tries original method if rootIdColumns missing)
