@@ -2818,6 +2818,13 @@ define(() => {
       // --- MODIFIED LOGIC TO DETERMINE filterField ---
       let filterField = null;
 
+      // Special handling for GLUPKY mask
+      if (maskString === "GLUPKY") {
+        // For GLUPKY, we always want to filter by Key, not Gr
+        filterField = "Key";
+        console.log(`Draw ID: ${this.drawID} - Special case for GLUPKY: Using filter field 'Key' instead of 'Gr'`);
+      }
+
       // 1. Prioritize using rootIdColumns identified by transformDefintion
       //    This array contains the parent properties used in linkages TO the root entity.
       if (entityTransform.rootIdColumns && entityTransform.rootIdColumns.length > 0) {
