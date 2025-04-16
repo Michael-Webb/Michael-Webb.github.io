@@ -47,9 +47,9 @@ define(
   
         setData(oControlHost, oDataStore) {
           this.points = [];
-          const nameCol = oControlHost.configuration.NameCol || "Name";
-          const lngCol = oControlHost.configuration.LongitudeCol || "Longitude";
-          const latCol = oControlHost.configuration.LatitudeCol || "Latitude";
+          const nameCol = oControlHost.configuration.Name || "Name"
+          const lngCol = oControlHost.configuration.Longitude || "Longitude";
+          const latCol = oControlHost.configuration.Latitude || "Latitude";
           const iName = oDataStore.getColumnIndex(nameCol);
           const iLng = oDataStore.getColumnIndex(lngCol);
           const iLat = oDataStore.getColumnIndex(latCol);
