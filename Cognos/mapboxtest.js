@@ -42,56 +42,48 @@ define(["https://api.mapbox.com/mapbox-gl-js/v3.11.0/mapbox-gl.js", "jquery"], f
     }
 
     setData(oControlHost, oDataStore) {
-        // 1) Read & trim your configured column‑names (fallback to defaults)
-        const nameCol = oControlHost.configuration.Name?.trim()      || "Name";
-        const latCol  = oControlHost.configuration.Latitude?.trim()  || "Latitude";
-        const lngCol  = oControlHost.configuration.Longitude?.trim() || "Longitude";
-      
-        // 2) Lookup their indices (→ NaN if not found)
-        const iName = oDataStore.getColumnIndex(nameCol);
-        const iLat  = oDataStore.getColumnIndex(latCol);
-        const iLng  = oDataStore.getColumnIndex(lngCol);
-      
-        // 3) Bail out early if any are missing
-        if (Number.isNaN(iName) || Number.isNaN(iLat) || Number.isNaN(iLng)) {
-          console.error(
-            "BasicControl.setData: missing column(s)",
-            { nameCol,  iName },
-            { latCol,   iLat  },
-            { lngCol,   iLng  }
-          );
-          return;
-        }
-      
-        // 4) Build the points array, skipping rows with bad data
-        this.points = [];
-        for (let row = 0; row < oDataStore.rowCount; row++) {
-          const rawName = oDataStore.getCellValue(row, iName);
-          const rawLat  = oDataStore.getCellValue(row, iLat);
-          const rawLng  = oDataStore.getCellValue(row, iLng);
-      
-          const lat = parseFloat(rawLat),
-                lng = parseFloat(rawLng);
-      
-          if (
-            rawName == null            || rawName === "" ||
-            Number.isNaN(lat)          ||
-            Number.isNaN(lng)
-          ) {
-            console.warn(
-              `BasicControl.setData: skipping row ${row}`,
-              { rawName, rawLat, rawLng }
-            );
-            continue;
-          }
-      
-          this.points.push({ name: rawName, lat, lng });
-        }
-      
-        // 5) Flag that data is ready for your draw logic
-        this._dataReady = true;
+      // 1) Read & trim your configured column‑names (fallback to defaults)
+      const nameCol = oControlHost.configuration.Name?.trim() || "Name";
+      const latCol = oControlHost.configuration.Latitude?.trim() || "Latitude";
+      const lngCol = oControlHost.configuration.Longitude?.trim() || "Longitude";
+
+      // 2) Lookup their indices (→ NaN if not found)
+      const iName = oDataStore.getColumnIndex(nameCol);
+      const iLat = oDataStore.getColumnIndex(latCol);
+      const iLng = oDataStore.getColumnIndex(lngCol);
+
+      // 3) Bail out early if any are missing
+      if (Number.isNaN(iName) || Number.isNaN(iLat) || Number.isNaN(iLng)) {
+        console.error(
+          "BasicControl.setData: missing column(s)",
+          { nameCol, iName },
+          { latCol, iLat },
+          { lngCol, iLng }
+        );
+        return;
       }
-      
+
+      // 4) Build the points array, skipping rows with bad data
+      this.points = [];
+      for (let row = 0; row < oDataStore.rowCount; row++) {
+        const rawName = oDataStore.getCellValue(row, iName);
+        const rawLat = oDataStore.getCellValue(row, iLat);
+        const rawLng = oDataStore.getCellValue(row, iLng);
+
+        const lat = parseFloat(rawLat),
+          lng = parseFloat(rawLng);
+
+        if (rawName == null || rawName === "" || Number.isNaN(lat) || Number.isNaN(lng)) {
+          console.warn(`BasicControl.setData: skipping row ${row}`, { rawName, rawLat, rawLng });
+          continue;
+        }
+
+        this.points.push({ name: rawName, lat, lng });
+      }
+
+      // 5) Flag that data is ready for your draw logic
+      this._dataReady = true;
+    }
 
     draw(oControlHost) {
       // if map already loaded, draw immediately; otherwise queue it
@@ -103,6 +95,11 @@ define(["https://api.mapbox.com/mapbox-gl-js/v3.11.0/mapbox-gl.js", "jquery"], f
     }
 
     _drawMarkers() {
+      if (this.points.length === 0) {
+        console.warn("BasicControl: no points to draw");
+        return;
+      }
+
       // clear out old markers
       this.markers.forEach((m) => m.remove());
       this.markers = [];
