@@ -248,17 +248,19 @@ define(() => {
             const dialogConfig = {
                 title: "My Custom Advanced Dialog",
                 message: "This is the message content for the custom dialog.",
-                //htmlContent: "<p style='color: blue;'>Or use <strong>HTML</strong> content!</p>", // Alternative to message
-                type: 'info', // 'info', 'warning', 'error', 'share', 'embed'
-                width: '600px', // Or 'small', 'large'
+                type: 'info',
+                width: '600px',
                 buttons: [
-                    'ok', // Standard button
-                    'cancel', // Standard button
+                    'ok',
+                    'cancel',
                     {
+                        // --- CORRECTED BUTTON DEFINITION ---
+                        // Only provide properties the MST model likely expects.
+                        // 'BaseDialog' will determine the visual style (primary/secondary)
+                        // based on the defaultId or its internal logic.
                         text: "Special Action",
-                        type: 'primary', // 'primary' or 'secondary'
-                        defaultId: 'special', // Unique ID for this button
-                        // handler is automatically wrapped by the service if using callback.general
+                        defaultId: 'special' // Use defaultId to identify the button
+                        // --- END CORRECTION ---
                     }
                 ],
                 callback: {
@@ -266,28 +268,26 @@ define(() => {
                         console.log(`Dialog button clicked: ${buttonInfo.btn}`);
                         if (buttonInfo.btn === 'ok') {
                             console.log("OK action confirmed!");
-                            // Perform OK action
                         } else if (buttonInfo.btn === 'cancel') {
                             console.log("Dialog cancelled.");
-                            // Perform cancel action (dialog closes automatically)
                         } else if (buttonInfo.btn === 'special') {
                             console.log("Performing special action...");
                             alert("Special Action Performed!");
-                            // NOTE: Custom buttons might not automatically close the dialog.
-                            // You might need to call close programmatically if needed:
-                            // this.GlassContext.getCoreSvc('.Dialog').removeDialog('special');
+                            // If this custom button should close the dialog, you might need
+                            // to explicitly call the removeDialog service method here:
+                            // try {
+                            //    this.GlassContext.getCoreSvc('.Dialog')?.removeDialog('special');
+                            // } catch(e) { console.error("Error closing dialog", e); }
                         }
                     },
-                    // Alternatively, provide specific callbacks:
-                    // ok: () => { console.log("Specific OK callback"); },
-                    // cancel: () => { console.log("Specific Cancel callback"); }
                 },
-                 showCloseX: true, // Show the 'X' button in the header
-                 className: 'my-custom-dialog-class' // Add a custom CSS class
+                 showCloseX: true,
+                 className: 'my-custom-dialog-class'
             };
 
             this.createCustomDialog(dialogConfig);
         }
+
 
          showSimplerDialog() {
              this.createCustomDialog({
