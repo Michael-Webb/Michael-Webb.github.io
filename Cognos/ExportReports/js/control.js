@@ -305,34 +305,6 @@ define(() => {
                  buttons: ['ok'] // Only an OK button
              });
          }
-    //   createDialog(message,title,type,buttons,width,generalCallback,htmlContent,className,callbackScope){
-    //     let dialogObject = {
-    //         message: e,
-    //         title: t,
-    //         type: n,
-    //         buttons: r,
-    //         width: s,
-    //         callback: {
-    //             general: o
-    //         },
-    //         htmlContent: a,
-    //         className: l,
-    //         callbackScope: {
-    //             ok: this
-    //         }
-    //     };
-
-        /*
-        type: "info","error","warning","share"
-        buttons: ["ok","cancel","copy"]
-
-        */
-
-
-    //     this.oControlHost.page.application.GlassContext.getCoreSvc(".Dialog").createDialog(dialogObject);
-
-    //   }
-
     }
   
     return AdvancedControl;
