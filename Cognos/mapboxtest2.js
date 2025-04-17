@@ -201,7 +201,7 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
         const lngCol  = oControlHost.configuration.Longitude?.trim()    || "Longitude";
         // NEW: an array of extra‐properties you want to pull in
         const propCols = Array.isArray(oControlHost.configuration.properties)
-          ? oControlHost.configuration.properties.map(p => p.trim())
+          ? oControlHost.configuration.Properties.map(p => p.trim())
           : [];
       
         // 2) Lookup their indices
@@ -298,4 +298,4 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
 
   return BasicControl;
 });
-//v9
+//v10
