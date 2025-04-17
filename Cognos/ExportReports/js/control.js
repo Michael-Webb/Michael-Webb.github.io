@@ -285,54 +285,55 @@ define(() => {
 
     // --- Example Usage ---
     showExampleDialog() {
-      const dialogConfig = {
-        title: "Initial Example Dialog",
-        message: "Click OK to see an info dialog, or Cancel to see a warning dialog.",
-        type: "info", // Initial dialog type
-        width: "500px", // Adjusted width slightly
-        buttons: [
-          "ok", // Standard OK button
-          "cancel", // Standard Cancel button
-        ],
-        callback: {
-          general: (buttonInfo) => {
-            console.log(`Initial Dialog button clicked: ${buttonInfo.btn}`); // Log which button was clicked
+        const dialogConfig = {
+            title: "Initial Example Dialog",
+            message: "Click OK to see an info dialog, or Cancel to see a warning dialog.",
+            type: 'info',
+            width: '500px',
+            buttons: [ 'ok', 'cancel' ], // Standard buttons
+            callback: {
+                // General callback runs first for ANY button click
+                general: (buttonInfo) => {
+                    console.log(`Initial Dialog button clicked: ${buttonInfo.btn}`);
 
-            // The first dialog will close automatically after this callback runs
-            // because we used standard 'ok' and 'cancel' buttons.
+                    if (buttonInfo.btn === 'ok') {
+                        console.log("OK clicked in general. Opening INFO dialog...");
+                        const okDialogConfig = {
+                            title: "Information",
+                            message: "This dialog was triggered by clicking OK.",
+                            type: 'info',
+                            buttons: ['ok']
+                        };
+                        this.createCustomDialog(okDialogConfig);
 
-            if (buttonInfo.btn === "ok") {
-              // --- Show the INFO dialog ---
-              console.log("OK clicked. Opening INFO dialog...");
-              const okDialogConfig = {
-                title: "Information",
-                message: "This dialog was triggered by clicking OK.",
-                type: "info", // Set type to info
-                buttons: ["ok"], // Simple OK button for the second dialog
-              };
-              // IMPORTANT: Use 'this' which refers to the AdvancedControl instance
-              this.createCustomDialog(okDialogConfig);
-              // --- End INFO dialog ---
-            } else if (buttonInfo.btn === "cancel") {
-              // --- Show the WARNING dialog ---
-              console.log("Cancel clicked. Opening WARNING dialog...");
-              const cancelDialogConfig = {
-                title: "Warning Confirmation",
-                message: "This dialog was triggered by clicking Cancel.",
-                type: "warning", // Set type to warning
-                buttons: ["ok"], // Simple OK button for the second dialog
-              };
-              // IMPORTANT: Use 'this' which refers to the AdvancedControl instance
-              this.createCustomDialog(cancelDialogConfig);
-              // --- End WARNING dialog ---
-            }
-          },
-        },
-        showCloseX: true,
-        className: "my-custom-dialog-class",
-      };
+                    } else if (buttonInfo.btn === 'cancel') {
+                        console.log("Cancel clicked in general. Opening WARNING dialog...");
+                        const cancelDialogConfig = {
+                            title: "Warning Confirmation",
+                            message: "This dialog was triggered by clicking Cancel.",
+                            type: 'warning',
+                            buttons: ['ok']
+                        };
+                        this.createCustomDialog(cancelDialogConfig);
+                    }
+                },
+                // --- ADDED EMPTY SPECIFIC CALLBACKS ---
+                // Add these empty functions to satisfy the DialogService's
+                // notifier lookup during the dialog removal process for
+                // standard 'ok' and 'cancel' buttons.
+                ok: () => {
+                    // console.log("Specific OK callback executed (can be empty)");
+                },
+                cancel: () => {
+                    // console.log("Specific Cancel callback executed (can be empty)");
+                }
+                // --- END ADDED CALLBACKS ---
+            },
+             showCloseX: true,
+             className: 'my-custom-dialog-class'
+        };
 
-      this.createCustomDialog(dialogConfig);
+        this.createCustomDialog(dialogConfig);
     }
 
     showSimplerDialog() {
@@ -347,4 +348,4 @@ define(() => {
 
   return AdvancedControl;
 });
-//v5
+//v6
