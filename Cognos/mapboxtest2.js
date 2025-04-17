@@ -1,5 +1,3 @@
-// define(["https://api.mapbox.com/mapbox-gl-js/v3.11.0/mapbox-gl.js", "jquery"], function (mapboxgl, $) {
-
 define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.11.0/mapbox-gl.js", "jquery"], function (mapboxgl, $) {
   "use strict";
 
@@ -219,4 +217,4 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.11.0/mapbox-gl.js", "jquer
 
   return BasicControl;
 });
-//v1
+//v3
