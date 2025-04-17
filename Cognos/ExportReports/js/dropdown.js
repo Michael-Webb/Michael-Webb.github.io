@@ -63,8 +63,9 @@ define(() => {
   
         const dialogConfig = {
           title: `Select a ${colName}`,
-          htmlContent,
-          type: "default",
+          message:htmlContent,
+          htmlContent:true,
+          type: "info",
           buttons: ["ok", "cancel"],
           callback: {
             ok: () => {
@@ -101,4 +102,4 @@ define(() => {
   
     return DropdownControl;
   });
-  //v3
+  //v4
