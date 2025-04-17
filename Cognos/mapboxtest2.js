@@ -12,6 +12,7 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
     static _stylesInjected = false;
 
     initialize(oControlHost, fnDoneInitializing) {
+      this._container = oControlHost.container;
       const container = oControlHost.container;
       const cid = oControlHost.container.id;
       // Set basic layout styles for the container
@@ -195,7 +196,7 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
       this.map = new mapboxgl.Map({
         container: container.querySelector("#map"),
         style: "mapbox://styles/mapbox/light-v11",
-        center: [30, 15],
+        // center: [30, 15],
         zoom: 1,
       });
       this.map.addControl(new mapboxgl.NavigationControl());
@@ -216,8 +217,19 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
           maxZoom: 12, // optional: don’t zoom in past this
           duration: 0, // optional: set to 0 for no animation
         });
+        // 3️⃣ stash for later resets
+        this._initialBounds = bounds;
+        this._initialPadding = 40;
+
         this.addMarkers();
         this.buildLocationList(this.geojsonFeature);
+
+        this.map.on("click", () => {
+          this.map.fitBounds(this._initialBounds, {
+            padding: this._initialPadding,
+            duration: 300,
+          });
+        });
       });
 
       fnDoneInitializing();
@@ -368,14 +380,28 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
     }
 
     createPopUp(currentFeature) {
+      // 1️⃣ Remove any existing popups
       const popUps = document.getElementsByClassName("mapboxgl-popup");
-      /** Check if there is already a popup on the map and if so, remove it */
       if (popUps[0]) popUps[0].remove();
 
+      // 2️⃣ Build dynamic HTML from all feature properties
+      const props = currentFeature.properties;
+      let html = `<h3>${props.name}</h3>`;
+      html += `<div class="popup-body">`;
+      for (const [key, value] of Object.entries(props)) {
+        if (key === "name" || key === "id") continue; // skip name/id if you like
+        html += `<div><strong>${key}</strong>: ${value}</div>`;
+      }
+      html += `</div>`;
+
+      // 3️⃣ Create and add the popup to the map
       const popup = new mapboxgl.Popup({ closeOnClick: false })
         .setLngLat(currentFeature.geometry.coordinates)
-        .setHTML(`<h3>${currentFeature.properties.name}</h3><h4>Longitude: ${currentFeature.properties.Longitude} Latitude:${currentFeature.properties.Latitude} </h4>`)
+        .setHTML(html)
         .addTo(this.map);
+
+      // 4️⃣ Prevent clicks inside the popup from bubbling up to the map
+      popup.getElement().addEventListener("click", (e) => e.stopPropagation());
     }
 
     addMarkers() {
@@ -419,8 +445,25 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
         new mapboxgl.Marker(el, { offset: [0, -23] }).setLngLat(feature.geometry.coordinates).addTo(this.map);
       }
     }
+    destroy() {
+      // 1) remove map event listeners & the map
+      if (this.map) {
+        this.map.off("load").off("click"); // remove your background‐click handler
+        this.markers.forEach((m) => m.remove()); // clear any Marker DOM
+        this.map.remove(); // fully tear down Mapbox
+        this.map = null;
+      }
+
+      // 2) clear out your sidebar listings
+      if (this._container) {
+        const listings = this._container.querySelector(".listings");
+        if (listings) {
+          listings.innerHTML = ""; // strips out all listing <div>s & their click listeners
+        }
+      }
+    }
   }
 
   return BasicControl;
 });
-//v19
+//v20
