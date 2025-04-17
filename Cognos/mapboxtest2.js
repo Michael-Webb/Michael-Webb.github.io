@@ -88,11 +88,11 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
                     text-decoration: none;
                     }
 
-                    .listings .item:last-child {
+                .listings .item:last-child {
                     border-bottom: none;
                     }
 
-                    .listings .item .title {
+                .listings .item .title {
                     display: block;
                     color: #00853e;
                     font-weight: 700;
@@ -127,56 +127,56 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
                     border-radius: 0;
                     }
             /* Marker tweaks */
-.mapboxgl-popup-close-button {
-  display: none;
-}
+                .mapboxgl-popup-close-button {
+                display: none;
+                }
 
-.mapboxgl-popup-content {
-  font:
-    400 15px/22px 'Source Sans Pro',
-    'Helvetica Neue',
-    sans-serif;
-  padding: 0;
-  width: 180px;
-}
+                .mapboxgl-popup-content {
+                font:
+                    400 15px/22px 'Source Sans Pro',
+                    'Helvetica Neue',
+                    sans-serif;
+                padding: 0;
+                width: 180px;
+                }
 
-.mapboxgl-popup-content h3 {
-  background: #91c949;
-  color: #fff;
-  margin: 0;
-  padding: 10px;
-  border-radius: 3px 3px 0 0;
-  font-weight: 700;
-  margin-top: -15px;
-}
+                .mapboxgl-popup-content h3 {
+                background: #91c949;
+                color: #fff;
+                margin: 0;
+                padding: 10px;
+                border-radius: 3px 3px 0 0;
+                font-weight: 700;
+                margin-top: -15px;
+                }
 
-.mapboxgl-popup-content h4 {
-  margin: 0;
-  padding: 10px;
-  font-weight: 400;
-}
+                .mapboxgl-popup-content h4 {
+                margin: 0;
+                padding: 10px;
+                font-weight: 400;
+                }
 
-.mapboxgl-popup-content div {
-  padding: 10px;
-}
+                .mapboxgl-popup-content div {
+                padding: 10px;
+                }
 
-.mapboxgl-popup-anchor-top > .mapboxgl-popup-content {
-  margin-top: 15px;
-}
+                .mapboxgl-popup-anchor-top > .mapboxgl-popup-content {
+                margin-top: 15px;
+                }
 
-.mapboxgl-popup-anchor-top > .mapboxgl-popup-tip {
-  border-bottom-color: #91c949;
-}
+                .mapboxgl-popup-anchor-top > .mapboxgl-popup-tip {
+                border-bottom-color: #91c949;
+                }
 
-.marker {
-  border: none;
-  cursor: pointer;
-  height: 24px;
-  width: 24px;
-}
-  .mapboxgl-popup {
-  padding-bottom: 50px;
-}
+                .marker {
+                border: none;
+                cursor: pointer;
+                height: 24px;
+                width: 24px;
+                }
+                .mapboxgl-popup {
+                padding-bottom: 50px;
+                }
           `;
       const $c = $(container);
       $c.css({ position: "relative", width: "100%", height: "400px" });
@@ -202,49 +202,21 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
       this.map.scrollZoom.disable();
 
       this.map.on("load", () => {
-        /* Add the data to your map as a layer */
-        // this.map.addLayer({
-        //   id: "locations",
-        //   type: "circle",
-        //   /* Add a GeoJSON source containing place coordinates and information. */
-        //   source: {
-        //     type: "geojson",
-        //     data: this.geojsonFeature,
-        //   },
-        // });
-
         this.map.addSource("places", {
           type: "geojson",
           data: this.geojsonFeature,
         });
-
+        // 2) fit the map to the data bounds
+        const bounds = new mapboxgl.LngLatBounds();
+        this.geojsonFeature.features.forEach((f) => {
+          bounds.extend(f.geometry.coordinates);
+        });
+        this.map.fitBounds(bounds, {
+          padding: 40,
+          maxZoom: 12, // optional: don’t zoom in past this
+          duration: 0, // optional: set to 0 for no animation
+        });
         this.addMarkers();
-
-        // this.map.on("click", (event) => {
-        //   /* Determine if a feature in the "locations" layer exists at that point. */
-        //   const features = this.map.queryRenderedFeatures(event.point, {
-        //     layers: ["locations"],
-        //   });
-
-        //   /* If it does not exist, return */
-        //   if (!features.length) return;
-
-        //   const clickedPoint = features[0];
-
-        //   /* Fly to the point */
-        //   this.flyToStore(clickedPoint);
-
-        //   /* Close all other popups and display popup for clicked store */
-        //   this.createPopUp(clickedPoint);
-
-        //   /* Highlight listing in sidebar (and remove highlight for all other listings) */
-        //   const activeItem = document.getElementsByClassName("active");
-        //   if (activeItem[0]) {
-        //     activeItem[0].classList.remove("active");
-        //   }
-        //   const listing = document.getElementById(`listing-${clickedPoint.properties.id}`);
-        //   listing.classList.add("active");
-        // });
         this.buildLocationList(this.geojsonFeature);
       });
 
@@ -451,4 +423,4 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
 
   return BasicControl;
 });
-//v17
+//v18
