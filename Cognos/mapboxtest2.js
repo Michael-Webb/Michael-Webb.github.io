@@ -138,7 +138,9 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
                     'Helvetica Neue',
                     sans-serif;
                 padding: 0;
-                width: 180px;
+                max-height: 200px;      /* ← new */
+                overflow-y: auto;       /* ← new */
+
                 }
 
                 .mapboxgl-popup-content h3 {
@@ -395,7 +397,7 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
       html += `</div>`;
 
       // 3️⃣ Create and add the popup to the map
-      const popup = new mapboxgl.Popup({ closeOnClick: true })
+      const popup = new mapboxgl.Popup({ closeOnClick: true, maxWidth: "300px" })
         .setLngLat(currentFeature.geometry.coordinates)
         .setHTML(html)
         .addTo(this.map);
@@ -466,4 +468,4 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
 
   return BasicControl;
 });
-//v22
+//v23
