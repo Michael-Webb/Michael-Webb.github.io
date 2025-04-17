@@ -246,38 +246,46 @@ define(() => {
         // --- Example Usage ---
         showExampleDialog() {
             const dialogConfig = {
-                title: "My Custom Advanced Dialog",
-                message: "This is the message content for the custom dialog.",
-                type: 'info',
-                width: '600px',
+                title: "Initial Example Dialog",
+                message: "Click OK to see an info dialog, or Cancel to see a warning dialog.",
+                type: 'info', // Initial dialog type
+                width: '500px', // Adjusted width slightly
                 buttons: [
-                    'ok',
-                    'cancel',
-                    {
-                        // --- CORRECTED BUTTON DEFINITION ---
-                        // Only provide properties the MST model likely expects.
-                        // 'BaseDialog' will determine the visual style (primary/secondary)
-                        // based on the defaultId or its internal logic.
-                        text: "Special Action",
-                        defaultId: 'special' // Use defaultId to identify the button
-                        // --- END CORRECTION ---
-                    }
+                    'ok',     // Standard OK button
+                    'cancel'  // Standard Cancel button
                 ],
                 callback: {
                     general: (buttonInfo) => {
-                        console.log(`Dialog button clicked: ${buttonInfo.btn}`);
+                        console.log(`Initial Dialog button clicked: ${buttonInfo.btn}`); // Log which button was clicked
+
+                        // The first dialog will close automatically after this callback runs
+                        // because we used standard 'ok' and 'cancel' buttons.
+
                         if (buttonInfo.btn === 'ok') {
-                            console.log("OK action confirmed!");
+                            // --- Show the INFO dialog ---
+                            console.log("OK clicked. Opening INFO dialog...");
+                            const okDialogConfig = {
+                                title: "Information",
+                                message: "This dialog was triggered by clicking OK.",
+                                type: 'info', // Set type to info
+                                buttons: ['ok'] // Simple OK button for the second dialog
+                            };
+                            // IMPORTANT: Use 'this' which refers to the AdvancedControl instance
+                            this.createCustomDialog(okDialogConfig);
+                            // --- End INFO dialog ---
+
                         } else if (buttonInfo.btn === 'cancel') {
-                            console.log("Dialog cancelled.");
-                        } else if (buttonInfo.btn === 'special') {
-                            console.log("Performing special action...");
-                            alert("Special Action Performed!");
-                            // If this custom button should close the dialog, you might need
-                            // to explicitly call the removeDialog service method here:
-                            // try {
-                            //    this.GlassContext.getCoreSvc('.Dialog')?.removeDialog('special');
-                            // } catch(e) { console.error("Error closing dialog", e); }
+                            // --- Show the WARNING dialog ---
+                            console.log("Cancel clicked. Opening WARNING dialog...");
+                            const cancelDialogConfig = {
+                                title: "Warning Confirmation",
+                                message: "This dialog was triggered by clicking Cancel.",
+                                type: 'warning', // Set type to warning
+                                buttons: ['ok'] // Simple OK button for the second dialog
+                            };
+                            // IMPORTANT: Use 'this' which refers to the AdvancedControl instance
+                            this.createCustomDialog(cancelDialogConfig);
+                             // --- End WARNING dialog ---
                         }
                     },
                 },
@@ -329,4 +337,4 @@ define(() => {
   
     return AdvancedControl;
   });
-  
+  //v4
