@@ -203,9 +203,10 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
 
         this.map.on("click", (event) => {
           /* Determine if a feature in the "locations" layer exists at that point. */
-          const features = map.queryRenderedFeatures(event.point, {
+          const features = this.map.queryRenderedFeatures(event.point, {
             layers: ["locations"],
           });
+          
 
           /* If it does not exist, return */
           if (!features.length) return;
@@ -213,10 +214,10 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
           const clickedPoint = features[0];
 
           /* Fly to the point */
-          self.flyToStore(clickedPoint);
+          this.flyToStore(clickedPoint);
 
           /* Close all other popups and display popup for clicked store */
-          self.createPopUp(clickedPoint);
+          this.createPopUp(clickedPoint);
 
           /* Highlight listing in sidebar (and remove highlight for all other listings) */
           const activeItem = document.getElementsByClassName("active");
@@ -344,8 +345,8 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
         link.addEventListener("click", function () {
           for (const feature of stores.features) {
             if (this.id === `link-${feature.properties.id}`) {
-              flyToStore(feature);
-              createPopUp(feature);
+              this.flyToStore(feature);
+              this.createPopUp(feature);
             }
           }
           const activeItem = document.getElementsByClassName("active");
@@ -390,4 +391,4 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
 
   return BasicControl;
 });
-//v13
+//v14
