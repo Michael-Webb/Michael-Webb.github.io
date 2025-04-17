@@ -374,7 +374,7 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
 
       const popup = new mapboxgl.Popup({ closeOnClick: false })
         .setLngLat(currentFeature.geometry.coordinates)
-        .setHTML(`<h3>Sweetgreen</h3><h4>${currentFeature.properties.address}</h4>`)
+        .setHTML(`<h3>${currentFeature.properties.name}</h3><h4>Longitude: ${currentFeature.properties.Longitude} Latitude:${currentFeature.properties.Latitude} </h4>`)
         .addTo(this.map);
     }
 
@@ -423,4 +423,4 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
 
   return BasicControl;
 });
-//v18
+//v19
