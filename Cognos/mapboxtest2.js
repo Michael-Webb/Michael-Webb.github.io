@@ -395,7 +395,7 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
       html += `</div>`;
 
       // 3️⃣ Create and add the popup to the map
-      const popup = new mapboxgl.Popup({ closeOnClick: false })
+      const popup = new mapboxgl.Popup({ closeOnClick: true })
         .setLngLat(currentFeature.geometry.coordinates)
         .setHTML(html)
         .addTo(this.map);
@@ -466,4 +466,4 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
 
   return BasicControl;
 });
-//v20
+//v21
