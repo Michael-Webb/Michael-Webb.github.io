@@ -17,7 +17,7 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
       const cid = oControlHost.container.id;
       // Set basic layout styles for the container
       container.style.display = "flex";
-      container.style.height = "500px";
+      container.style.height = "800px";
       container.style.width = "100%";
 
       // Create the HTML structure inside the container
@@ -180,7 +180,7 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
                 }
           `;
       const $c = $(container);
-      $c.css({ position: "relative", width: "100%", height: "400px" });
+      $c.css({ position: "relative", width: "100%", height: "800px" });
       document.head.appendChild(style);
       // 2) inject the Mapbox CSS
       if (!BasicControl._stylesInjected) {
@@ -466,4 +466,4 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
 
   return BasicControl;
 });
-//v21
+//v22
