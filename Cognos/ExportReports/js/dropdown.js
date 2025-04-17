@@ -4,25 +4,26 @@ define(() => {
     class DropdownControl {
       constructor() {
         this.oControlHost = null;
-        this._rows = [];
+        this.GlassContext = null;
+        this._oDataStore = null;
       }
   
-      // 1. Grab the host and signal ready
       initialize(oControlHost, fnDoneInitializing) {
         this.oControlHost = oControlHost;
+        // grab the GlassContext for dialogs (if available)
+        const app = oControlHost.page && oControlHost.page.application;
+        this.GlassContext = app && app.GlassContext ? app.GlassContext : null;
         fnDoneInitializing();
       }
   
-      // 2. Capture the first (and only) data store
       setData(oControlHost, oDataStore) {
+        // we only care about the first (and only) store
         if (oDataStore.index === 0) {
-          this._rows = oDataStore.getData();
+          this._oDataStore = oDataStore;
         }
       }
   
-      // 3. Draw a single button to open our “example” dialog
       draw(oControlHost) {
-        this.oControlHost = oControlHost;
         const c = oControlHost.container;
         c.innerHTML = "";
         const btn = document.createElement("button");
@@ -31,30 +32,37 @@ define(() => {
         c.appendChild(btn);
       }
   
-      // 4. Build and launch a Glass dialog whose htmlContent is our <select>
       showExampleDialog() {
-        // unique ID so multiple dialogs never clash
-        const selectId = this.oControlHost.generateUniqueID();
-        // assume each row object has exactly one property — grab its first key
-        const options = this._rows
-          .map(row => {
-            const key = Object.keys(row)[0];
-            const v = row[key];
-            return `<option value="${v}">${v}</option>`;
-          })
-          .join("");
+        if (!this._oDataStore) {
+          alert("No data available to build dropdown.");
+          return;
+        }
   
+        const ds = this._oDataStore;
+        // assume exactly one column
+        const colName = ds.columnNames[0];
+        const colIndex = ds.getColumnIndex(colName);
+  
+        // build <option>s
+        let optionsHtml = `<option value="">-- Select --</option>`;
+        for (let i = 0; i < ds.rowCount; i++) {
+          const v = ds.getCellValue(i, colIndex);
+          optionsHtml += `<option value="${v}">${v}</option>`;
+        }
+  
+        // unique ID so it won’t collide
+        const selectId = this.oControlHost.generateUniqueID();
         const htmlContent = `
           <div style="margin:10px 0;">
-            <label for="${selectId}">Choose a value:</label><br/>
+            <label for="${selectId}">Choose ${colName}:</label><br/>
             <select id="${selectId}">
-              <option value="">-- Select --</option>
-              ${options}
+              ${optionsHtml}
             </select>
-          </div>`;
+          </div>
+        `;
   
         const dialogConfig = {
-          title: "Select from Data Store",
+          title: `Select a ${colName}`,
           htmlContent,
           type: "default",
           buttons: ["ok", "cancel"],
@@ -63,21 +71,31 @@ define(() => {
               const sel = document.getElementById(selectId);
               const chosen = sel ? sel.value : null;
               console.log("User selected:", chosen);
-              // If you want this control to pass parameters back:
+              // you could also do:
               // this.oControlHost.valueChanged();
-              // store chosen somewhere for getParameters()
+              // and stash `chosen` on `this` for getParameters()
             }
           }
         };
   
-        // GlassContext must have been grabbed by Cognos; this is standard
-        const dlgSvc = this.oControlHost
-          .page
-          .application
-          .GlassContext
-          .getCoreSvc(".Dialog");
-        dlgSvc.createDialog(dialogConfig);
+        if (
+          this.GlassContext &&
+          this.GlassContext.getCoreSvc &&
+          typeof this.GlassContext.getCoreSvc === "function"
+        ) {
+          const dlgSvc = this.GlassContext.getCoreSvc(".Dialog");
+          dlgSvc.createDialog(dialogConfig);
+        } else {
+          alert("Dialog service unavailable.");
+        }
       }
+  
+      // (optional stubs you can implement if you need them)
+      destroy(oControlHost) {}
+      show(oControlHost) {}
+      hide(oControlHost) {}
+      isInValidState(oControlHost) { return true; }
+      getParameters(oControlHost) { return null; }
     }
   
     return DropdownControl;
