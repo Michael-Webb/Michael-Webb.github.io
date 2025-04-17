@@ -1,0 +1,14 @@
+{
+    "name": "Mapbox Extension",
+    "schemaVersion": "1.0",
+    "extensions": [
+      {
+        "perspective": "common",
+        "comment": "This zip simply contains JavaScript file to be used in Mapbox reports. It should not affect any perspective, other than to make the js file available.",
+        "features": [ {
+          "id": "mapBox"
+        }]
+      }
+    ]
+  }
+  
