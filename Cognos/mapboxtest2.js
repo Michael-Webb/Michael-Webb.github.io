@@ -213,10 +213,10 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
           const clickedPoint = features[0];
 
           /* Fly to the point */
-          this.flyToStore(clickedPoint);
+          self.flyToStore(clickedPoint);
 
           /* Close all other popups and display popup for clicked store */
-          this.createPopUp(clickedPoint);
+          self.createPopUp(clickedPoint);
 
           /* Highlight listing in sidebar (and remove highlight for all other listings) */
           const activeItem = document.getElementsByClassName("active");
@@ -370,7 +370,7 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
       }
     }
     flyToStore(currentFeature) {
-      map.flyTo({
+      this.map.flyTo({
         center: currentFeature.geometry.coordinates,
         zoom: 15,
       });
@@ -384,7 +384,7 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
       const popup = new mapboxgl.Popup({ closeOnClick: false })
         .setLngLat(currentFeature.geometry.coordinates)
         .setHTML(`<h3>Sweetgreen</h3><h4>${currentFeature.properties.address}</h4>`)
-        .addTo(map);
+        .addTo(this.map);
     }
   }
 
