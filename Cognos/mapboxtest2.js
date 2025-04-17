@@ -88,7 +88,7 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
 
       this.map = new mapboxgl.Map({
         container: container.querySelector("#map"),
-        style: "mapbox://styles/mapbox/light-11",
+        style: "mapbox://styles/mapbox/light-v11",
         center: [30, 15],
         zoom: 1,
       });
@@ -217,4 +217,4 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
 
   return BasicControl;
 });
-//v4
+//v5
