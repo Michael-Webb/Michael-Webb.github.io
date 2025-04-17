@@ -17,8 +17,8 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
       const cid = oControlHost.container.id;
       // Set basic layout styles for the container
       container.style.display = "flex";
-    //   container.style.height = "100%";
-    //   container.style.width = "100%";
+      //   container.style.height = "100%";
+      //   container.style.width = "100%";
 
       // Create the HTML structure inside the container
       container.innerHTML = `
@@ -227,10 +227,15 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
         this.buildLocationList(this.geojsonFeature);
 
         this.map.on("click", () => {
+          // reset the view
           this.map.fitBounds(this._initialBounds, {
             padding: this._initialPadding,
             duration: 300,
           });
+
+          // deselect any active listing
+          const prev = this._container.querySelector(".listings .item.active");
+          if (prev) prev.classList.remove("active");
         });
       });
 
@@ -401,6 +406,11 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
         .setLngLat(currentFeature.geometry.coordinates)
         .setHTML(html)
         .addTo(this.map);
+      // whenever the popup closes, clear the sidebar
+      popup.on("close", () => {
+        const prev = this._container.querySelector(".listings .item.active");
+        if (prev) prev.classList.remove("active");
+      });
 
       // 4️⃣ Prevent clicks inside the popup from bubbling up to the map
       popup.getElement().addEventListener("click", (e) => e.stopPropagation());
@@ -468,4 +478,4 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
 
   return BasicControl;
 });
-//v26
+//v27
