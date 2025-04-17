@@ -278,50 +278,48 @@ define(() => {
       }
     }
 
-     // --- Example Usage (REVISED CALLBACKS - SPECIFIC ONLY) ---
-     showExampleDialog() {
-        const dialogConfig = {
-            title: "Initial Example Dialog",
-            message: "Click OK to see an info dialog, or Cancel to see a warning dialog.",
-            type: 'info',
-            width: '500px',
-            buttons: [ 'ok', 'cancel' ], // Standard buttons
-            callback: {
-                // --- Logic moved to SPECIFIC callbacks ---
-                ok: () => {
-                    console.log("Specific OK callback executed. Opening INFO dialog...");
-                    const okDialogConfig = {
-                        title: "Information",
-                        message: "This dialog was triggered by clicking OK.",
-                        type: 'info',
-                        buttons: ['ok']
-                    };
-                    // Call the next dialog creation from here
-                    this.createCustomDialog(okDialogConfig);
-                    // NOTE: No need to manually close the first dialog here,
-                    // the framework handles it after this callback finishes.
-                },
-                cancel: () => {
-                    console.log("Specific Cancel callback executed. Opening WARNING dialog...");
-                    const cancelDialogConfig = {
-                        title: "Warning Confirmation",
-                        message: "This dialog was triggered by clicking Cancel.",
-                        type: 'warning',
-                        buttons: ['ok']
-                    };
-                    // Call the next dialog creation from here
-                    this.createCustomDialog(cancelDialogConfig);
-                    // NOTE: No need to manually close the first dialog here.
-                }
-                // Removed the 'general' callback as it's not needed for this logic
-                // and potentially caused the notifier registration issue.
-                // --- END SPECIFIC CALLBACKS ---
-            },
-             showCloseX: true,
-             className: 'my-custom-dialog-class'
-        };
+    // --- Example Usage (REVISED CALLBACKS - SPECIFIC ONLY) ---
+    showExampleDialog() {
+      const dialogConfig = {
+        title: "Initial Example Dialog",
+        message: "Click OK to see an info dialog, or Cancel to see a warning dialog.",
+        type: "info",
+        width: "500px",
+        buttons: ["ok", "cancel"], // Standard buttons
+        callback: {
+          // --- Logic placed in SPECIFIC callbacks ---
+          ok: () => {
+            // Use arrow function for correct 'this'
+            console.log("Specific OK callback executed. Opening INFO dialog...");
+            const okDialogConfig = {
+              title: "Information",
+              message: "This dialog was triggered by clicking OK.",
+              type: "info",
+              buttons: ["ok"],
+            };
+            // Call the next dialog creation from here
+            this.createCustomDialog(okDialogConfig);
+          },
+          cancel: () => {
+            // Use arrow function for correct 'this'
+            console.log("Specific Cancel callback executed. Opening WARNING dialog...");
+            const cancelDialogConfig = {
+              title: "Warning Confirmation",
+              message: "This dialog was triggered by clicking Cancel.",
+              type: "warning",
+              buttons: ["ok"],
+            };
+            // Call the next dialog creation from here
+            this.createCustomDialog(cancelDialogConfig);
+          },
+          // NO 'general' callback here
+          // --- END SPECIFIC CALLBACKS ---
+        },
+        showCloseX: true,
+        className: "my-custom-dialog-class",
+      };
 
-        this.createCustomDialog(dialogConfig);
+      this.createCustomDialog(dialogConfig);
     }
 
     showSimplerDialog() {
@@ -336,4 +334,4 @@ define(() => {
 
   return AdvancedControl;
 });
-//v9
+//v10
