@@ -97,7 +97,7 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
 
       this.map.on("load", () => {
         /* Add the data to your map as a layer */
-        map.addLayer({
+        this.map.addLayer({
           id: "locations",
           type: "circle",
           /* Add a GeoJSON source containing place coordinates and information. */
@@ -217,4 +217,4 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
 
   return BasicControl;
 });
-//v5
+//v6
