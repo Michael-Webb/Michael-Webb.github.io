@@ -280,46 +280,49 @@ define(() => {
 
     // --- Example Usage (REVISED CALLBACKS - SPECIFIC ONLY) ---
     showExampleDialog() {
-      const dialogConfig = {
-        title: "Initial Example Dialog",
-        message: "Click OK to see an info dialog, or Cancel to see a warning dialog.",
-        type: "info",
-        width: "500px",
-        buttons: ["ok", "cancel"], // Standard buttons
-        callback: {
-          // --- Logic placed in SPECIFIC callbacks ---
-          ok: () => {
-            // Use arrow function for correct 'this'
-            console.log("Specific OK callback executed. Opening INFO dialog...");
-            const okDialogConfig = {
-              title: "Information",
-              message: "This dialog was triggered by clicking OK.",
-              type: "info",
-              buttons: ["ok"],
-            };
-            // Call the next dialog creation from here
-            this.createCustomDialog(okDialogConfig);
-          },
-          cancel: () => {
-            // Use arrow function for correct 'this'
-            console.log("Specific Cancel callback executed. Opening WARNING dialog...");
-            const cancelDialogConfig = {
-              title: "Warning Confirmation",
-              message: "This dialog was triggered by clicking Cancel.",
-              type: "warning",
-              buttons: ["ok"],
-            };
-            // Call the next dialog creation from here
-            this.createCustomDialog(cancelDialogConfig);
-          },
-          // NO 'general' callback here
-          // --- END SPECIFIC CALLBACKS ---
-        },
-        showCloseX: true,
-        className: "my-custom-dialog-class",
-      };
+        const dialogConfig = {
+            title: "Initial Example Dialog",
+            message: "Click OK to see an info dialog, or Cancel to see a warning dialog.",
+            type: 'info',
+            width: '500px',
+            buttons: [ 'ok', 'cancel' ],
+            callback: {
+                ok: () => { // Specific callback for OK
+                    console.log("Specific OK callback executed. Scheduling INFO dialog...");
+                    // Use setTimeout to decouple the next dialog creation
+                    setTimeout(() => {
+                        console.log("setTimeout: Creating INFO dialog now.");
+                        const okDialogConfig = {
+                            title: "Information",
+                            message: "This dialog was triggered by clicking OK.",
+                            type: 'info',
+                            buttons: ['ok']
+                        };
+                        this.createCustomDialog(okDialogConfig);
+                    }, 0); // Delay of 0ms pushes it to the next event loop tick
+                },
+                cancel: () => { // Specific callback for Cancel
+                    console.log("Specific Cancel callback executed. Scheduling WARNING dialog...");
+                    // Use setTimeout to decouple the next dialog creation
+                    setTimeout(() => {
+                        console.log("setTimeout: Creating WARNING dialog now.");
+                        const cancelDialogConfig = {
+                            title: "Warning Confirmation",
+                            message: "This dialog was triggered by clicking Cancel.",
+                            type: 'warning',
+                            buttons: ['ok']
+                        };
+                        this.createCustomDialog(cancelDialogConfig);
+                    }, 0); // Delay of 0ms pushes it to the next event loop tick
+                }
+                // No 'general' callback needed here
+            },
+            callbackScope: { ok: this, cancel: this },
+             showCloseX: true,
+             className: 'my-custom-dialog-class'
+        };
 
-      this.createCustomDialog(dialogConfig);
+        this.createCustomDialog(dialogConfig);
     }
 
     showSimplerDialog() {
@@ -334,4 +337,4 @@ define(() => {
 
   return AdvancedControl;
 });
-//v10
+//v11
