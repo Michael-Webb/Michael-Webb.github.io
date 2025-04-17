@@ -172,10 +172,12 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
       $c.css({ position: "relative", width: "100%", height: "400px" });
       document.head.appendChild(style);
       // 2) inject the Mapbox CSS
-      $("head").append(
-        `<link href="https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet" />`
-      );
-      BasicControl._stylesInjected = true;
+      if (!BasicControl._stylesInjected) {
+        $("head").append(
+          `<link href="https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet" />`
+        );
+        BasicControl._stylesInjected = true;
+      }
 
       // 3) create the map
       mapboxgl.accessToken = oControlHost.configuration.Key || "";
@@ -206,7 +208,6 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
           const features = this.map.queryRenderedFeatures(event.point, {
             layers: ["locations"],
           });
-          
 
           /* If it does not exist, return */
           if (!features.length) return;
@@ -330,6 +331,7 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
     }
 
     buildLocationList(stores) {
+      const self = this;
       const listings = document.getElementById("listings");
       for (const feature of stores.features) {
         const { properties } = feature;
@@ -339,28 +341,27 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
 
         // title
         const link = listing.appendChild(document.createElement("a"));
+        link.id = `link-${properties.id}`;
         link.href = "#";
         link.className = "title";
         link.innerText = properties.name;
-        link.addEventListener("click", function () {
-          for (const feature of stores.features) {
-            if (this.id === `link-${feature.properties.id}`) {
-              this.flyToStore(feature);
-              this.createPopUp(feature);
-            }
-          }
-          const activeItem = document.getElementsByClassName("active");
-          if (activeItem[0]) {
-            activeItem[0].classList.remove("active");
-          }
-          this.parentNode.classList.add("active");
+
+        link.addEventListener("click", function (evt) {
+          // use self instead of this
+          self.flyToStore(feature);
+          self.createPopUp(feature);
+
+          // toggle active class
+          const prev = listings.querySelector(".item.active");
+          if (prev) prev.classList.remove("active");
+          listing.classList.add("active");
+
+          evt.preventDefault();
         });
 
         // details container
         const details = listing.appendChild(document.createElement("div"));
-
-        // Now dynamically append each extra prop
-        for (const col of this._extraProps) {
+        for (const col of self._extraProps) {
           const val = properties[col];
           if (val != null && val !== "") {
             const row = document.createElement("div");
@@ -391,4 +392,4 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
 
   return BasicControl;
 });
-//v14
+//v15
