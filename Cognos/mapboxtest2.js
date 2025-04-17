@@ -167,6 +167,17 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
 .mapboxgl-popup-anchor-top > .mapboxgl-popup-tip {
   border-bottom-color: #91c949;
 }
+
+.marker {
+  border: none;
+  cursor: pointer;
+  height: 56px;
+  width: 56px;
+  background-image: url('marker.png');
+}
+  .mapboxgl-popup {
+  padding-bottom: 50px;
+}
           `;
       const $c = $(container);
       $c.css({ position: "relative", width: "100%", height: "400px" });
@@ -193,41 +204,48 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
 
       this.map.on("load", () => {
         /* Add the data to your map as a layer */
-        this.map.addLayer({
-          id: "locations",
-          type: "circle",
-          /* Add a GeoJSON source containing place coordinates and information. */
-          source: {
-            type: "geojson",
-            data: this.geojsonFeature,
-          },
+        // this.map.addLayer({
+        //   id: "locations",
+        //   type: "circle",
+        //   /* Add a GeoJSON source containing place coordinates and information. */
+        //   source: {
+        //     type: "geojson",
+        //     data: this.geojsonFeature,
+        //   },
+        // });
+
+        this.map.addSource("places", {
+          type: "geojson",
+          data: this.geojsonFeature,
         });
 
-        this.map.on("click", (event) => {
-          /* Determine if a feature in the "locations" layer exists at that point. */
-          const features = this.map.queryRenderedFeatures(event.point, {
-            layers: ["locations"],
-          });
+        this.addMarkers();
 
-          /* If it does not exist, return */
-          if (!features.length) return;
+        // this.map.on("click", (event) => {
+        //   /* Determine if a feature in the "locations" layer exists at that point. */
+        //   const features = this.map.queryRenderedFeatures(event.point, {
+        //     layers: ["locations"],
+        //   });
 
-          const clickedPoint = features[0];
+        //   /* If it does not exist, return */
+        //   if (!features.length) return;
 
-          /* Fly to the point */
-          this.flyToStore(clickedPoint);
+        //   const clickedPoint = features[0];
 
-          /* Close all other popups and display popup for clicked store */
-          this.createPopUp(clickedPoint);
+        //   /* Fly to the point */
+        //   this.flyToStore(clickedPoint);
 
-          /* Highlight listing in sidebar (and remove highlight for all other listings) */
-          const activeItem = document.getElementsByClassName("active");
-          if (activeItem[0]) {
-            activeItem[0].classList.remove("active");
-          }
-          const listing = document.getElementById(`listing-${clickedPoint.properties.id}`);
-          listing.classList.add("active");
-        });
+        //   /* Close all other popups and display popup for clicked store */
+        //   this.createPopUp(clickedPoint);
+
+        //   /* Highlight listing in sidebar (and remove highlight for all other listings) */
+        //   const activeItem = document.getElementsByClassName("active");
+        //   if (activeItem[0]) {
+        //     activeItem[0].classList.remove("active");
+        //   }
+        //   const listing = document.getElementById(`listing-${clickedPoint.properties.id}`);
+        //   listing.classList.add("active");
+        // });
         this.buildLocationList(this.geojsonFeature);
       });
 
@@ -388,8 +406,38 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
         .setHTML(`<h3>Sweetgreen</h3><h4>${currentFeature.properties.address}</h4>`)
         .addTo(this.map);
     }
+
+    addMarkers() {
+      // if no data, bail
+      if (!this.geojsonFeature || !Array.isArray(this.geojsonFeature.features)) {
+        console.warn("BasicControl.addMarkers: no features to render");
+        return;
+      }
+
+      for (const feature of this.geojsonFeature.features) {
+        const el = document.createElement("div");
+        el.id = `marker-${feature.properties.id}`;
+        el.className = "marker";
+
+        el.addEventListener("click", (evt) => {
+          // fly & popup
+          this.flyToStore(feature);
+          this.createPopUp(feature);
+
+          // highlight sidebar
+          const prev = document.querySelector(".item.active");
+          if (prev) prev.classList.remove("active");
+          const listing = document.getElementById(`listing-${feature.properties.id}`);
+          if (listing) listing.classList.add("active");
+
+          evt.stopPropagation();
+        });
+
+        new mapboxgl.Marker(el, { offset: [0, -23] }).setLngLat(feature.geometry.coordinates).addTo(this.map);
+      }
+    }
   }
 
   return BasicControl;
 });
-//v15
+//v16
