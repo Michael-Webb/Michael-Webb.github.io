@@ -166,13 +166,7 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
     }
 
     draw(oControlHost) {
-      // if map already loaded, draw immediately; otherwise queue it
-      //   if (this.map.loaded()) {
-      //     this._drawMarkers();
-      //   } else {
-      //     this.map.once("load", () => this._drawMarkers());
-      //   }
-      // }
+
     }
 
     _drawMarkers() {
@@ -201,104 +195,107 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
     }
 
     setData(oControlHost, oDataStore) {
-      // 1) Read & trim your configured column‑names (fallback to defaults)
-      const nameCol = oControlHost.configuration.Name?.trim() || "Name";
-      const latCol = oControlHost.configuration.Latitude?.trim() || "Latitude";
-      const lngCol = oControlHost.configuration.Longitude?.trim() || "Longitude";
-
-      // 2) Lookup their indices (→ NaN if not found)
-      const iName = oDataStore.getColumnIndex(nameCol);
-      const iLat = oDataStore.getColumnIndex(latCol);
-      const iLng = oDataStore.getColumnIndex(lngCol);
-
-      // 3) Bail out early if any are missing
-      if (Number.isNaN(iName) || Number.isNaN(iLat) || Number.isNaN(iLng)) {
-        console.error(
-          "BasicControl.setData: missing column(s)",
-          { nameCol, iName },
-          { latCol, iLat },
-          { lngCol, iLng }
-        );
-        return;
-      }
-
-      // 4) Build the points array, skipping rows with bad data
-      this.points = [];
-      for (let row = 0; row < oDataStore.rowCount; row++) {
-        const rawName = oDataStore.getCellValue(row, iName);
-        const rawLat = oDataStore.getCellValue(row, iLat);
-        const rawLng = oDataStore.getCellValue(row, iLng);
-
-        const lat = parseFloat(rawLat),
-          lng = parseFloat(rawLng);
-
-        if (rawName == null || rawName === "" || Number.isNaN(lat) || Number.isNaN(lng)) {
-          console.warn(`BasicControl.setData: skipping row ${row}`, { rawName, rawLat, rawLng });
-          continue;
+        // 1) Read & trim your configured column‑names (fallback to defaults)
+        const nameCol = oControlHost.configuration.Name?.trim()         || "Name";
+        const latCol  = oControlHost.configuration.Latitude?.trim()     || "Latitude";
+        const lngCol  = oControlHost.configuration.Longitude?.trim()    || "Longitude";
+        // NEW: an array of extra‐properties you want to pull in
+        const propCols = Array.isArray(oControlHost.configuration.properties)
+          ? oControlHost.configuration.properties.map(p => p.trim())
+          : [];
+      
+        // 2) Lookup their indices
+        const iName = oDataStore.getColumnIndex(nameCol);
+        const iLat  = oDataStore.getColumnIndex(latCol);
+        const iLng  = oDataStore.getColumnIndex(lngCol);
+        const propIndices = {};
+        for (const col of propCols) {
+          const idx = oDataStore.getColumnIndex(col);
+          if (Number.isNaN(idx)) {
+            console.warn(`BasicControl.setData: missing property column "${col}"`);
+          } else {
+            propIndices[col] = idx;
+          }
         }
-
-        this.points.push({ name: rawName, lat, lng });
+      
+        // 3) Bail out early if any of the three essentials are missing
+        if ([iName, iLat, iLng].some(Number.isNaN)) {
+          console.error("BasicControl.setData: missing core column(s)", { nameCol, latCol, lngCol });
+          return;
+        }
+      
+        // 4) Build your GeoJSON
+        this.geojsonFeature = { type: "FeatureCollection", features: [] };
+      
+        for (let row = 0; row < oDataStore.rowCount; row++) {
+          const rawName = oDataStore.getCellValue(row, iName);
+          const rawLat  = oDataStore.getCellValue(row, iLat);
+          const rawLng  = oDataStore.getCellValue(row, iLng);
+      
+          const lat = parseFloat(rawLat),
+                lng = parseFloat(rawLng);
+      
+          if (!rawName || Number.isNaN(lat) || Number.isNaN(lng)) {
+            console.warn(`BasicControl.setData: skipping row ${row}`, { rawName, rawLat, rawLng });
+            continue;
+          }
+      
+          // assemble the properties object
+          const props = { name: rawName };
+          for (const col of propCols) {
+            const idx = propIndices[col];
+            props[col] = idx != null
+              ? oDataStore.getCellValue(row, idx)
+              : null;
+          }
+      
+          this.geojsonFeature.features.push({
+            type: "Feature",
+            geometry: { type: "Point", coordinates: [lng, lat] },
+            properties: props
+          });
+        }
+      
+        // assign a numeric id on each feature
+        this.geojsonFeature.features.forEach((f, i) => f.properties.id = i);
+      
+        // stash the list of extra columns for later
+        this._extraProps = propCols;
+      
+        this._dataReady = true;
       }
-
-      // 5) Flag that data is ready for your draw logic
-
-      this.geojsonFeature = {
-        type: "FeatureCollection",
-        features: [],
-      };
-
-      var iRowCount = oDataStore.rowCount;
-      for (var iRow = 0; iRow < iRowCount; iRow++) {
-        var feature = {};
-        feature["type"] = "Feature";
-        feature["geometry"] = {
-          type: "Point",
-          coordinates: [
-            parseFloat(oDataStore.getCellValue(iRow, iLng)),
-            parseFloat(oDataStore.getCellValue(iRow, iLat)),
-          ],
-        };
-        feature["properties"] = { name: oDataStore.getCellValue(iRow, iName) };
-        this.geojsonFeature["features"].push(feature);
-      }
-      this.geojsonFeature.features.forEach(function (location, i) {
-        location.properties.id = i;
-      });
-
-      this._dataReady = true;
-    }
-
-    buildLocationList(stores) {
-      for (const store of stores.features) {
-        /* Add a new listing section to the sidebar. */
+      
+      buildLocationList(stores) {
         const listings = document.getElementById("listings");
-        const listing = listings.appendChild(document.createElement("div"));
-        /* Assign a unique `id` to the listing. */
-        listing.id = `listing-${store.properties.id}`;
-        /* Assign the `item` class to each listing for styling. */
-        listing.className = "item";
-
-        /* Add the link to the individual listing created above. */
-        const link = listing.appendChild(document.createElement("a"));
-        link.href = "#";
-        link.className = "title";
-        link.id = `link-${store.properties.id}`;
-        link.innerHTML = `${store.properties.address}`;
-
-        /* Add details to the individual listing. */
-        const details = listing.appendChild(document.createElement("div"));
-        details.innerHTML = `${store.properties.city}`;
-        if (store.properties.phone) {
-          details.innerHTML += ` &middot; ${store.properties.phoneFormatted}`;
-        }
-        if (store.properties.distance) {
-          const roundedDistance = Math.round(store.properties.distance * 100) / 100;
-          details.innerHTML += `<div><strong>${roundedDistance} miles away</strong></div>`;
+        for (const feature of stores.features) {
+          const { properties } = feature;
+          const listing = listings.appendChild(document.createElement("div"));
+          listing.id        = `listing-${properties.id}`;
+          listing.className = "item";
+      
+          // title
+          const link = listing.appendChild(document.createElement("a"));
+          link.href      = "#";
+          link.className = "title";
+          link.innerText = properties.name;
+      
+          // details container
+          const details = listing.appendChild(document.createElement("div"));
+      
+          // Now dynamically append each extra prop
+          for (const col of this._extraProps) {
+            const val = properties[col];
+            if (val != null && val !== "") {
+              const row = document.createElement("div");
+              row.innerText = `${col}: ${val}`;
+              details.appendChild(row);
+            }
+          }
         }
       }
-    }
+      
   }
 
   return BasicControl;
 });
-//v8
+//v9
