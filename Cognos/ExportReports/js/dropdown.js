@@ -75,7 +75,8 @@ define(() => {
               // this.oControlHost.valueChanged();
               // and stash `chosen` on `this` for getParameters()
             }
-          }
+          },
+          callbackScope: { ok: this }
         };
   
         if (
@@ -100,4 +101,4 @@ define(() => {
   
     return DropdownControl;
   });
-  //v2
+  //v3
