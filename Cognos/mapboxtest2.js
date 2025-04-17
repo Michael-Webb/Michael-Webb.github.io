@@ -75,12 +75,65 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
                   line-height: 60px;
                   padding: 0 10px;
               }
+
+              .listings {
+                  height: 100%;
+                  overflow: auto;
+                  padding-bottom: 60px;
+                  }
+
+              .listings .item {
+                    border-bottom: 1px solid #eee;
+                    padding: 10px;
+                    text-decoration: none;
+                    }
+
+                    .listings .item:last-child {
+                    border-bottom: none;
+                    }
+
+                    .listings .item .title {
+                    display: block;
+                    color: #00853e;
+                    font-weight: 700;
+                    }
+
+                    .listings .item .title small {
+                    font-weight: 400;
+                    }
+
+                    .listings .item.active .title,
+                    .listings .item .title:hover {
+                    color: #8cc63f;
+                    }
+
+                    .listings .item.active {
+                    background-color: #f8f8f8;
+                    }
+
+                    ::-webkit-scrollbar {
+                    width: 3px;
+                    height: 3px;
+                    border-left: 0;
+                    background: rgba(0 0 0 0.1);
+                    }
+
+                    ::-webkit-scrollbar-track {
+                    background: none;
+                    }
+
+                    ::-webkit-scrollbar-thumb {
+                    background: #00853e;
+                    border-radius: 0;
+                    }
           `;
       const $c = $(container);
       $c.css({ position: "relative", width: "100%", height: "400px" });
       document.head.appendChild(style);
       // 2) inject the Mapbox CSS
-      $("head").append(`<link href="https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet" />`);
+      $("head").append(
+        `<link href="https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet" />`
+      );
       BasicControl._stylesInjected = true;
 
       // 3) create the map
@@ -106,6 +159,7 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
             data: this.geojsonFeature,
           },
         });
+        this.buildLocationList(this.geojsonFeature);
       });
 
       fnDoneInitializing();
@@ -213,8 +267,38 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
 
       this._dataReady = true;
     }
+
+    buildLocationList(stores) {
+      for (const store of stores.features) {
+        /* Add a new listing section to the sidebar. */
+        const listings = document.getElementById("listings");
+        const listing = listings.appendChild(document.createElement("div"));
+        /* Assign a unique `id` to the listing. */
+        listing.id = `listing-${store.properties.id}`;
+        /* Assign the `item` class to each listing for styling. */
+        listing.className = "item";
+
+        /* Add the link to the individual listing created above. */
+        const link = listing.appendChild(document.createElement("a"));
+        link.href = "#";
+        link.className = "title";
+        link.id = `link-${store.properties.id}`;
+        link.innerHTML = `${store.properties.address}`;
+
+        /* Add details to the individual listing. */
+        const details = listing.appendChild(document.createElement("div"));
+        details.innerHTML = `${store.properties.city}`;
+        if (store.properties.phone) {
+          details.innerHTML += ` &middot; ${store.properties.phoneFormatted}`;
+        }
+        if (store.properties.distance) {
+          const roundedDistance = Math.round(store.properties.distance * 100) / 100;
+          details.innerHTML += `<div><strong>${roundedDistance} miles away</strong></div>`;
+        }
+      }
+    }
   }
 
   return BasicControl;
 });
-//v7
+//v8
