@@ -1,4 +1,4 @@
-define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.11.0/mapbox-gl.js", "jquery"], function (mapboxgl, $) {
+define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery"], function (mapboxgl, $) {
   "use strict";
 
   class BasicControl {
@@ -80,7 +80,7 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.11.0/mapbox-gl.js", "jquer
       $c.css({ position: "relative", width: "100%", height: "400px" });
       document.head.appendChild(style);
       // 2) inject the Mapbox CSS
-      $("head").append(`<link href="https://api.mapbox.com/mapbox-gl-js/v3.11.0/mapbox-gl.css" rel="stylesheet" />`);
+      $("head").append(`<link href="https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet" />`);
       BasicControl._stylesInjected = true;
 
       // 3) create the map
@@ -217,4 +217,4 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.11.0/mapbox-gl.js", "jquer
 
   return BasicControl;
 });
-//v3
+//v4
