@@ -126,6 +126,47 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
                     background: #00853e;
                     border-radius: 0;
                     }
+            /* Marker tweaks */
+.mapboxgl-popup-close-button {
+  display: none;
+}
+
+.mapboxgl-popup-content {
+  font:
+    400 15px/22px 'Source Sans Pro',
+    'Helvetica Neue',
+    sans-serif;
+  padding: 0;
+  width: 180px;
+}
+
+.mapboxgl-popup-content h3 {
+  background: #91c949;
+  color: #fff;
+  margin: 0;
+  padding: 10px;
+  border-radius: 3px 3px 0 0;
+  font-weight: 700;
+  margin-top: -15px;
+}
+
+.mapboxgl-popup-content h4 {
+  margin: 0;
+  padding: 10px;
+  font-weight: 400;
+}
+
+.mapboxgl-popup-content div {
+  padding: 10px;
+}
+
+.mapboxgl-popup-anchor-top > .mapboxgl-popup-content {
+  margin-top: 15px;
+}
+
+.mapboxgl-popup-anchor-top > .mapboxgl-popup-tip {
+  border-bottom-color: #91c949;
+}
           `;
       const $c = $(container);
       $c.css({ position: "relative", width: "100%", height: "400px" });
@@ -159,15 +200,39 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
             data: this.geojsonFeature,
           },
         });
+
+        this.map.on("click", (event) => {
+          /* Determine if a feature in the "locations" layer exists at that point. */
+          const features = map.queryRenderedFeatures(event.point, {
+            layers: ["locations"],
+          });
+
+          /* If it does not exist, return */
+          if (!features.length) return;
+
+          const clickedPoint = features[0];
+
+          /* Fly to the point */
+          this.flyToStore(clickedPoint);
+
+          /* Close all other popups and display popup for clicked store */
+          this.createPopUp(clickedPoint);
+
+          /* Highlight listing in sidebar (and remove highlight for all other listings) */
+          const activeItem = document.getElementsByClassName("active");
+          if (activeItem[0]) {
+            activeItem[0].classList.remove("active");
+          }
+          const listing = document.getElementById(`listing-${clickedPoint.properties.id}`);
+          listing.classList.add("active");
+        });
         this.buildLocationList(this.geojsonFeature);
       });
 
       fnDoneInitializing();
     }
 
-    draw(oControlHost) {
-
-    }
+    draw(oControlHost) {}
 
     _drawMarkers() {
       if (this.points.length === 0) {
@@ -195,107 +260,134 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
     }
 
     setData(oControlHost, oDataStore) {
-        // 1) Read & trim your configured column‑names (fallback to defaults)
-        const nameCol = oControlHost.configuration.Name?.trim()         || "Name";
-        const latCol  = oControlHost.configuration.Latitude?.trim()     || "Latitude";
-        const lngCol  = oControlHost.configuration.Longitude?.trim()    || "Longitude";
-        // NEW: an array of extra‐properties you want to pull in
-        const propCols = Array.isArray(oControlHost.configuration.Properties)
-          ? oControlHost.configuration.Properties.map(p => p.trim())
-          : [];
-      
-        // 2) Lookup their indices
-        const iName = oDataStore.getColumnIndex(nameCol);
-        const iLat  = oDataStore.getColumnIndex(latCol);
-        const iLng  = oDataStore.getColumnIndex(lngCol);
-        const propIndices = {};
-        for (const col of propCols) {
-          const idx = oDataStore.getColumnIndex(col);
-          if (Number.isNaN(idx)) {
-            console.warn(`BasicControl.setData: missing property column "${col}"`);
-          } else {
-            propIndices[col] = idx;
-          }
+      // 1) Read & trim your configured column‑names (fallback to defaults)
+      const nameCol = oControlHost.configuration.Name?.trim() || "Name";
+      const latCol = oControlHost.configuration.Latitude?.trim() || "Latitude";
+      const lngCol = oControlHost.configuration.Longitude?.trim() || "Longitude";
+      // NEW: an array of extra‐properties you want to pull in
+      const propCols = Array.isArray(oControlHost.configuration.Properties)
+        ? oControlHost.configuration.Properties.map((p) => p.trim())
+        : [];
+
+      // 2) Lookup their indices
+      const iName = oDataStore.getColumnIndex(nameCol);
+      const iLat = oDataStore.getColumnIndex(latCol);
+      const iLng = oDataStore.getColumnIndex(lngCol);
+      const propIndices = {};
+      for (const col of propCols) {
+        const idx = oDataStore.getColumnIndex(col);
+        if (Number.isNaN(idx)) {
+          console.warn(`BasicControl.setData: missing property column "${col}"`);
+        } else {
+          propIndices[col] = idx;
         }
-      
-        // 3) Bail out early if any of the three essentials are missing
-        if ([iName, iLat, iLng].some(Number.isNaN)) {
-          console.error("BasicControl.setData: missing core column(s)", { nameCol, latCol, lngCol });
-          return;
-        }
-      
-        // 4) Build your GeoJSON
-        this.geojsonFeature = { type: "FeatureCollection", features: [] };
-      
-        for (let row = 0; row < oDataStore.rowCount; row++) {
-          const rawName = oDataStore.getCellValue(row, iName);
-          const rawLat  = oDataStore.getCellValue(row, iLat);
-          const rawLng  = oDataStore.getCellValue(row, iLng);
-      
-          const lat = parseFloat(rawLat),
-                lng = parseFloat(rawLng);
-      
-          if (!rawName || Number.isNaN(lat) || Number.isNaN(lng)) {
-            console.warn(`BasicControl.setData: skipping row ${row}`, { rawName, rawLat, rawLng });
-            continue;
-          }
-      
-          // assemble the properties object
-          const props = { name: rawName };
-          for (const col of propCols) {
-            const idx = propIndices[col];
-            props[col] = idx != null
-              ? oDataStore.getCellValue(row, idx)
-              : null;
-          }
-      
-          this.geojsonFeature.features.push({
-            type: "Feature",
-            geometry: { type: "Point", coordinates: [lng, lat] },
-            properties: props
-          });
-        }
-      
-        // assign a numeric id on each feature
-        this.geojsonFeature.features.forEach((f, i) => f.properties.id = i);
-      
-        // stash the list of extra columns for later
-        this._extraProps = propCols;
-      
-        this._dataReady = true;
       }
-      
-      buildLocationList(stores) {
-        const listings = document.getElementById("listings");
-        for (const feature of stores.features) {
-          const { properties } = feature;
-          const listing = listings.appendChild(document.createElement("div"));
-          listing.id        = `listing-${properties.id}`;
-          listing.className = "item";
-      
-          // title
-          const link = listing.appendChild(document.createElement("a"));
-          link.href      = "#";
-          link.className = "title";
-          link.innerText = properties.name;
-      
-          // details container
-          const details = listing.appendChild(document.createElement("div"));
-      
-          // Now dynamically append each extra prop
-          for (const col of this._extraProps) {
-            const val = properties[col];
-            if (val != null && val !== "") {
-              const row = document.createElement("div");
-              row.innerText = `${col}: ${val}`;
-              details.appendChild(row);
+
+      // 3) Bail out early if any of the three essentials are missing
+      if ([iName, iLat, iLng].some(Number.isNaN)) {
+        console.error("BasicControl.setData: missing core column(s)", { nameCol, latCol, lngCol });
+        return;
+      }
+
+      // 4) Build your GeoJSON
+      this.geojsonFeature = { type: "FeatureCollection", features: [] };
+
+      for (let row = 0; row < oDataStore.rowCount; row++) {
+        const rawName = oDataStore.getCellValue(row, iName);
+        const rawLat = oDataStore.getCellValue(row, iLat);
+        const rawLng = oDataStore.getCellValue(row, iLng);
+
+        const lat = parseFloat(rawLat),
+          lng = parseFloat(rawLng);
+
+        if (!rawName || Number.isNaN(lat) || Number.isNaN(lng)) {
+          console.warn(`BasicControl.setData: skipping row ${row}`, { rawName, rawLat, rawLng });
+          continue;
+        }
+
+        // assemble the properties object
+        const props = { name: rawName };
+        for (const col of propCols) {
+          const idx = propIndices[col];
+          props[col] = idx != null ? oDataStore.getCellValue(row, idx) : null;
+        }
+
+        this.geojsonFeature.features.push({
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [lng, lat] },
+          properties: props,
+        });
+      }
+
+      // assign a numeric id on each feature
+      this.geojsonFeature.features.forEach((f, i) => (f.properties.id = i));
+
+      // stash the list of extra columns for later
+      this._extraProps = propCols;
+
+      this._dataReady = true;
+    }
+
+    buildLocationList(stores) {
+      const listings = document.getElementById("listings");
+      for (const feature of stores.features) {
+        const { properties } = feature;
+        const listing = listings.appendChild(document.createElement("div"));
+        listing.id = `listing-${properties.id}`;
+        listing.className = "item";
+
+        // title
+        const link = listing.appendChild(document.createElement("a"));
+        link.href = "#";
+        link.className = "title";
+        link.innerText = properties.name;
+        link.addEventListener("click", function () {
+          for (const feature of stores.features) {
+            if (this.id === `link-${feature.properties.id}`) {
+              flyToStore(feature);
+              createPopUp(feature);
             }
           }
+          const activeItem = document.getElementsByClassName("active");
+          if (activeItem[0]) {
+            activeItem[0].classList.remove("active");
+          }
+          this.parentNode.classList.add("active");
+        });
+
+        // details container
+        const details = listing.appendChild(document.createElement("div"));
+
+        // Now dynamically append each extra prop
+        for (const col of this._extraProps) {
+          const val = properties[col];
+          if (val != null && val !== "") {
+            const row = document.createElement("div");
+            row.innerText = `${col}: ${val}`;
+            details.appendChild(row);
+          }
         }
       }
-      
+    }
+    flyToStore(currentFeature) {
+      map.flyTo({
+        center: currentFeature.geometry.coordinates,
+        zoom: 15,
+      });
+    }
+
+    createPopUp(currentFeature) {
+      const popUps = document.getElementsByClassName("mapboxgl-popup");
+      /** Check if there is already a popup on the map and if so, remove it */
+      if (popUps[0]) popUps[0].remove();
+
+      const popup = new mapboxgl.Popup({ closeOnClick: false })
+        .setLngLat(currentFeature.geometry.coordinates)
+        .setHTML(`<h3>Sweetgreen</h3><h4>${currentFeature.properties.address}</h4>`)
+        .addTo(map);
+    }
   }
 
   return BasicControl;
 });
-//v11
+//v12
