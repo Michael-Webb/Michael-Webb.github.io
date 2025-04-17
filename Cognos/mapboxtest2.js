@@ -200,8 +200,8 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
         feature["geometry"] = {
           type: "Point",
           coordinates: [
-            parseFloat(oDataStore.getCellValue(iRow, iLat)),
             parseFloat(oDataStore.getCellValue(iRow, iLng)),
+            parseFloat(oDataStore.getCellValue(iRow, iLat)),
           ],
         };
         feature["properties"] = { name: oDataStore.getCellValue(iRow, iName) };
@@ -217,4 +217,4 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
 
   return BasicControl;
 });
-//v6
+//v7
