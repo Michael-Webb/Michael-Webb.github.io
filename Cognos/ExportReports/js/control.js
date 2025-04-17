@@ -278,54 +278,50 @@ define(() => {
       }
     }
 
-    // --- Example Usage ---
-    showExampleDialog() {
-      const dialogConfig = {
-        title: "Initial Example Dialog",
-        message: "Click OK to see an info dialog, or Cancel to see a warning dialog.",
-        type: "info",
-        width: "500px",
-        buttons: ["ok", "cancel"],
-        callback: {
-          // Specific async callback for OK
-          ok: async () => {
-            console.log("Specific OK callback starting. Opening INFO dialog...");
-            // It's generally okay to call synchronous code here
-            const okDialogConfig = {
-              title: "Information",
-              message: "This dialog was triggered by clicking OK.",
-              type: "info",
-              buttons: ["ok"],
-            };
-            // Call the dialog creation - this happens *after* the
-            // removeDialog process for the first dialog might have already started.
-            this.createCustomDialog(okDialogConfig);
-            console.log("Specific OK callback finished.");
-            // No explicit return needed for async void
-          },
-          // Specific async callback for Cancel
-          cancel: async () => {
-            console.log("Specific Cancel callback starting. Opening WARNING dialog...");
-            const cancelDialogConfig = {
-              title: "Warning Confirmation",
-              message: "This dialog was triggered by clicking Cancel.",
-              type: "warning",
-              buttons: ["ok","cancel"],
-            };
-            this.createCustomDialog(cancelDialogConfig);
-            console.log("Specific Cancel callback finished.");
-          },
-          // You could still have a general callback for other logic if needed,
-          // but the primary action is now in the specific ones.
-          // general: (buttonInfo) => {
-          //     console.log(`General callback executed for: ${buttonInfo.btn}`);
-          // }
-        },
-        showCloseX: true,
-        className: "my-custom-dialog-class",
-      };
+     // --- Example Usage (REVISED CALLBACKS - SPECIFIC ONLY) ---
+     showExampleDialog() {
+        const dialogConfig = {
+            title: "Initial Example Dialog",
+            message: "Click OK to see an info dialog, or Cancel to see a warning dialog.",
+            type: 'info',
+            width: '500px',
+            buttons: [ 'ok', 'cancel' ], // Standard buttons
+            callback: {
+                // --- Logic moved to SPECIFIC callbacks ---
+                ok: () => {
+                    console.log("Specific OK callback executed. Opening INFO dialog...");
+                    const okDialogConfig = {
+                        title: "Information",
+                        message: "This dialog was triggered by clicking OK.",
+                        type: 'info',
+                        buttons: ['ok']
+                    };
+                    // Call the next dialog creation from here
+                    this.createCustomDialog(okDialogConfig);
+                    // NOTE: No need to manually close the first dialog here,
+                    // the framework handles it after this callback finishes.
+                },
+                cancel: () => {
+                    console.log("Specific Cancel callback executed. Opening WARNING dialog...");
+                    const cancelDialogConfig = {
+                        title: "Warning Confirmation",
+                        message: "This dialog was triggered by clicking Cancel.",
+                        type: 'warning',
+                        buttons: ['ok']
+                    };
+                    // Call the next dialog creation from here
+                    this.createCustomDialog(cancelDialogConfig);
+                    // NOTE: No need to manually close the first dialog here.
+                }
+                // Removed the 'general' callback as it's not needed for this logic
+                // and potentially caused the notifier registration issue.
+                // --- END SPECIFIC CALLBACKS ---
+            },
+             showCloseX: true,
+             className: 'my-custom-dialog-class'
+        };
 
-      this.createCustomDialog(dialogConfig);
+        this.createCustomDialog(dialogConfig);
     }
 
     showSimplerDialog() {
@@ -340,4 +336,4 @@ define(() => {
 
   return AdvancedControl;
 });
-//v8
+//v9
