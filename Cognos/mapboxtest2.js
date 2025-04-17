@@ -200,7 +200,7 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
         const latCol  = oControlHost.configuration.Latitude?.trim()     || "Latitude";
         const lngCol  = oControlHost.configuration.Longitude?.trim()    || "Longitude";
         // NEW: an array of extra‐properties you want to pull in
-        const propCols = Array.isArray(oControlHost.configuration.properties)
+        const propCols = Array.isArray(oControlHost.configuration.Properties)
           ? oControlHost.configuration.Properties.map(p => p.trim())
           : [];
       
@@ -298,4 +298,4 @@ define(["https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js", "jquery
 
   return BasicControl;
 });
-//v10
+//v11
