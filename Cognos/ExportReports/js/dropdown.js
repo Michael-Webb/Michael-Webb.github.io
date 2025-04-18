@@ -26,38 +26,56 @@ define(() => {
         return;
       }
       
-      // Try to import React as ES modules
-      this.importReactModules(fnDoneInitializing);
+      // Load React from CDN
+      this.loadScriptsFromCDN(fnDoneInitializing);
     }
     
-    importReactModules(fnDoneInitializing) {
-      console.log("Attempting to import React modules");
+    loadScriptsFromCDN(fnDoneInitializing) {
+      const reactScript = document.createElement('script');
+      reactScript.src = 'https://unpkg.com/react@17/umd/react.production.min.js';
+      reactScript.crossOrigin = 'anonymous';
       
-      // Create an async function to use dynamic import
-      const loadModules = async () => {
-        try {
-          // Try dynamic imports
-          const reactModule = await import('https://esm.sh/react@17');
-          const reactDOMModule = await import('https://esm.sh/react-dom@17');
-          
-          console.log("Successfully imported React modules");
-          this.React = reactModule.default;
-          this.ReactDOM = reactDOMModule.default;
-          
-          // Also make them available globally (but in a safe way)
-          if (!window.React) window.React = this.React;
-          if (!window.ReactDOM) window.ReactDOM = this.ReactDOM;
-        } catch (error) {
-          console.error("Failed to import React modules:", error);
-          // We'll continue without React in this case
-        } finally {
-          // Always call the callback to continue initialization
-          fnDoneInitializing();
+      const reactDOMScript = document.createElement('script');
+      reactDOMScript.src = 'https://unpkg.com/react-dom@17/umd/react-dom.production.min.js';
+      reactDOMScript.crossOrigin = 'anonymous';
+      
+      // Set up tracking for script loading
+      let scriptsLoaded = 0;
+      const totalScripts = 2;
+      
+      const checkAllScriptsLoaded = () => {
+        scriptsLoaded++;
+        if (scriptsLoaded === totalScripts) {
+          // Both scripts loaded, check if React is now available
+          if (window.React && window.ReactDOM) {
+            console.log("Successfully loaded React from CDN");
+            this.React = window.React;
+            this.ReactDOM = window.ReactDOM;
+            fnDoneInitializing();
+          } else {
+            console.error("React scripts loaded but React objects not found in window");
+            fnDoneInitializing(); // Continue without React
+          }
         }
       };
       
-      // Execute the async function
-      loadModules();
+      // Set up event handlers
+      reactScript.onload = checkAllScriptsLoaded;
+      reactDOMScript.onload = checkAllScriptsLoaded;
+      
+      reactScript.onerror = (e) => {
+        console.error("Failed to load React from CDN:", e);
+        fnDoneInitializing(); // Continue without React
+      };
+      
+      reactDOMScript.onerror = (e) => {
+        console.error("Failed to load ReactDOM from CDN:", e);
+        fnDoneInitializing(); // Continue without React
+      };
+      
+      // Add scripts to document
+      document.head.appendChild(reactScript);
+      document.head.appendChild(reactDOMScript);
     }
 
     setData(oControlHost, oDataStore) {
@@ -234,66 +252,9 @@ define(() => {
       // Create a unique ID for the select element
       const selectId = this.oControlHost.generateUniqueID();
       
-      // Create dialog HTML content with React component if available
-      let htmlContent;
-      
-      if (this.React && this.ReactDOM) {
-        // Use React to generate HTML string
-        const tempDiv = document.createElement('div');
-        
-        const DialogContent = () => {
-          const React = this.React;
-          const [value, setValue] = React.useState('');
-          
-          // Create a global reference for accessing the value from the dialog callback
-          window[`dialog_selected_value_${selectId}`] = value;
-          
-          const handleChange = (e) => {
-            const newValue = e.target.value;
-            setValue(newValue);
-            window[`dialog_selected_value_${selectId}`] = newValue;
-          };
-          
-          return React.createElement('div', { style: { margin: '10px 0' } },
-            React.createElement('p', null, 'Please make a selection from the dropdown below:'),
-            React.createElement('label', { htmlFor: selectId }, `Choose ${colName}:`),
-            React.createElement('br'),
-            React.createElement('select', { 
-              id: selectId,
-              value: value,
-              onChange: handleChange,
-              style: { width: '100%', padding: '5px', marginTop: '5px' }
-            },
-              React.createElement('option', { value: '' }, '-- Select --'),
-              options.map((option, index) => 
-                React.createElement('option', { key: index, value: option }, option)
-              )
-            ),
-            React.createElement('p', null, 
-              React.createElement('small', null, 
-                'Click ',
-                React.createElement('strong', null, 'OK'),
-                ' to continue or ',
-                React.createElement('strong', null, 'Cancel'),
-                ' to go back.'
-              )
-            )
-          );
-        };
-        
-        try {
-          // Render to get HTML
-          this.ReactDOM.render(this.React.createElement(DialogContent), tempDiv);
-          htmlContent = tempDiv.innerHTML;
-        } catch (error) {
-          console.error("Error rendering React dialog content:", error);
-          // Fall back to vanilla HTML
-          htmlContent = this.createVanillaDialogHTML(selectId, colName, options);
-        }
-      } else {
-        // Use vanilla HTML
-        htmlContent = this.createVanillaDialogHTML(selectId, colName, options);
-      }
+      // IMPORTANT CHANGE: Instead of trying to use React to render HTML content for the dialog,
+      // which might not work properly, let's use vanilla HTML for the dialog
+      const htmlContent = this.createVanillaDialogHTML(selectId, colName, options);
       
       // Store a reference to this for use in callbacks
       const self = this;
@@ -308,19 +269,9 @@ define(() => {
           general: function(response) {
             console.log("Button clicked:", response.btn);
             
-            // Get the selected value
-            let selectedValue;
-            
-            // Try to get from global var first (if React was used)
-            if (window[`dialog_selected_value_${selectId}`]) {
-              selectedValue = window[`dialog_selected_value_${selectId}`];
-              // Clean up
-              delete window[`dialog_selected_value_${selectId}`];
-            } else {
-              // Fall back to getting from DOM
-              const selectElement = document.getElementById(selectId);
-              selectedValue = selectElement ? selectElement.value : "";
-            }
+            // Get the selected value directly from the DOM
+            const selectElement = document.getElementById(selectId);
+            const selectedValue = selectElement ? selectElement.value : "";
             
             if (response.btn === "ok") {
               setTimeout(function() {
@@ -354,6 +305,7 @@ define(() => {
       this.createCustomDialog(dialogConfig);
     }
     
+    // Helper method to create vanilla HTML for the dialog
     createVanillaDialogHTML(selectId, columnName, options) {
       // Build options HTML
       let optionsHtml = `<option value="">-- Select --</option>`;
@@ -407,4 +359,4 @@ define(() => {
 
   return DropdownControl;
 });
-//v19
+//v20
