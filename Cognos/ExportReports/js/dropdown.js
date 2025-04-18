@@ -1,4 +1,4 @@
-define(() => {
+define(('react','react-dom'),(React,ReactDOM) => {
   "use strict";
 
   class DropdownControl {
@@ -166,4 +166,4 @@ define(() => {
 
   return DropdownControl;
 });
-//v10
+//v11
