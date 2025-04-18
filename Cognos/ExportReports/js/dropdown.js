@@ -13,6 +13,7 @@ define(() => {
       // grab the GlassContext for dialogs (if available)
       const app = oControlHost.page && oControlHost.page.application;
       this.GlassContext = app && app.GlassContext ? app.GlassContext : null;
+      console.log(this.GlassContext)
       // continue initialization immediately
       fnDoneInitializing();
     }
@@ -196,4 +197,4 @@ define(() => {
 
   return DropdownControl;
 });
-//v34
+//v35
