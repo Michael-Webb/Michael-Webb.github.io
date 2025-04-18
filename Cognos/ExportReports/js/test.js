@@ -159,7 +159,7 @@ define([], // No explicit dependencies needed beyond what Cognos provides
                   dialogService.createDialog({
                       title: "Action Result",
                       message: message,
-                      type: "success",
+                      type: "warning",
                       buttons: ["ok"] // Just an acknowledgement
                   });
               } catch (error) {
@@ -173,3 +173,4 @@ define([], // No explicit dependencies needed beyond what Cognos provides
       return SimpleDialogControl;
     }
   );
+  //v2
