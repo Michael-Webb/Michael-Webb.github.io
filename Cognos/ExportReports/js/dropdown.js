@@ -8,6 +8,7 @@ define(() => {
       this._oDataStore = null;
       this.React = null;
       this.ReactDOM = null;
+      this.componentLibraries = {};
       this.selectedValue = '';
     }
 
@@ -22,60 +23,140 @@ define(() => {
         console.log("Found React in global scope");
         this.React = window.React;
         this.ReactDOM = window.ReactDOM;
-        fnDoneInitializing();
+        
+        // Load component libraries after React is available
+        this.loadComponentLibraries().then(() => {
+          fnDoneInitializing();
+        });
         return;
       }
       
-      // Load React from CDN
-      this.loadScriptsFromCDN(fnDoneInitializing);
+      // Load React from CDN, then load component libraries
+      this.loadReactFromCDN().then(() => {
+        return this.loadComponentLibraries();
+      }).finally(() => {
+        fnDoneInitializing();
+      });
     }
     
-    loadScriptsFromCDN(fnDoneInitializing) {
-      const reactScript = document.createElement('script');
-      reactScript.src = 'https://unpkg.com/react@17/umd/react.production.min.js';
-      reactScript.crossOrigin = 'anonymous';
-      
-      const reactDOMScript = document.createElement('script');
-      reactDOMScript.src = 'https://unpkg.com/react-dom@17/umd/react-dom.production.min.js';
-      reactDOMScript.crossOrigin = 'anonymous';
-      
-      // Set up tracking for script loading
-      let scriptsLoaded = 0;
-      const totalScripts = 2;
-      
-      const checkAllScriptsLoaded = () => {
-        scriptsLoaded++;
-        if (scriptsLoaded === totalScripts) {
-          // Both scripts loaded, check if React is now available
-          if (window.React && window.ReactDOM) {
-            console.log("Successfully loaded React from CDN");
-            this.React = window.React;
-            this.ReactDOM = window.ReactDOM;
-            fnDoneInitializing();
-          } else {
-            console.error("React scripts loaded but React objects not found in window");
-            fnDoneInitializing(); // Continue without React
+    loadReactFromCDN() {
+      return new Promise((resolve, reject) => {
+        const reactScript = document.createElement('script');
+        reactScript.src = 'https://unpkg.com/react@17/umd/react.production.min.js';
+        reactScript.crossOrigin = 'anonymous';
+        
+        const reactDOMScript = document.createElement('script');
+        reactDOMScript.src = 'https://unpkg.com/react-dom@17/umd/react-dom.production.min.js';
+        reactDOMScript.crossOrigin = 'anonymous';
+        
+        // Set up tracking for script loading
+        let scriptsLoaded = 0;
+        const totalScripts = 2;
+        
+        const checkAllScriptsLoaded = () => {
+          scriptsLoaded++;
+          if (scriptsLoaded === totalScripts) {
+            // Both scripts loaded, check if React is now available
+            if (window.React && window.ReactDOM) {
+              console.log("Successfully loaded React from CDN");
+              this.React = window.React;
+              this.ReactDOM = window.ReactDOM;
+              resolve();
+            } else {
+              console.error("React scripts loaded but React objects not found in window");
+              reject(new Error("React not found in window"));
+            }
           }
+        };
+        
+        // Set up event handlers
+        reactScript.onload = checkAllScriptsLoaded;
+        reactDOMScript.onload = checkAllScriptsLoaded;
+        
+        reactScript.onerror = (e) => {
+          console.error("Failed to load React from CDN:", e);
+          reject(new Error("Failed to load React"));
+        };
+        
+        reactDOMScript.onerror = (e) => {
+          console.error("Failed to load ReactDOM from CDN:", e);
+          reject(new Error("Failed to load ReactDOM"));
+        };
+        
+        // Add scripts to document
+        document.head.appendChild(reactScript);
+        document.head.appendChild(reactDOMScript);
+      });
+    }
+    
+    loadComponentLibraries() {
+      // Only try to load component libraries if React is available
+      if (!this.React || !this.ReactDOM) {
+        return Promise.resolve();
+      }
+      
+      return Promise.all([
+        // Example: Load Material-UI
+        this.loadLibrary('https://unpkg.com/@material-ui/core@4.12.4/umd/material-ui.production.min.js', 'MaterialUI'),
+        
+        // Example: Load React Bootstrap (requires jQuery and Popper.js)
+        this.loadLibrary('https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js', 'jQuery')
+          .then(() => this.loadLibrary('https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js', 'Popper'))
+          .then(() => this.loadLibrary('https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js', 'Bootstrap'))
+          .then(() => this.loadLibrary('https://cdn.jsdelivr.net/npm/react-bootstrap@1.6.1/dist/react-bootstrap.min.js', 'ReactBootstrap')),
+        
+        // Example: Load Ant Design
+        this.loadLibrary('https://cdn.jsdelivr.net/npm/antd@4.16.13/dist/antd.min.js', 'antd')
+          .then(() => {
+            // Load Ant Design CSS
+            const antdCSS = document.createElement('link');
+            antdCSS.rel = 'stylesheet';
+            antdCSS.href = 'https://cdn.jsdelivr.net/npm/antd@4.16.13/dist/antd.min.css';
+            document.head.appendChild(antdCSS);
+          })
+      ]).catch(error => {
+        console.error("Error loading component libraries:", error);
+        // Continue even if some libraries fail to load
+      });
+    }
+    
+    loadLibrary(url, globalName) {
+      return new Promise((resolve, reject) => {
+        // Skip if already loaded
+        if (window[globalName] || this.componentLibraries[globalName]) {
+          console.log(`${globalName} already loaded`);
+          
+          // Store reference if it exists globally
+          if (window[globalName]) {
+            this.componentLibraries[globalName] = window[globalName];
+          }
+          
+          resolve();
+          return;
         }
-      };
-      
-      // Set up event handlers
-      reactScript.onload = checkAllScriptsLoaded;
-      reactDOMScript.onload = checkAllScriptsLoaded;
-      
-      reactScript.onerror = (e) => {
-        console.error("Failed to load React from CDN:", e);
-        fnDoneInitializing(); // Continue without React
-      };
-      
-      reactDOMScript.onerror = (e) => {
-        console.error("Failed to load ReactDOM from CDN:", e);
-        fnDoneInitializing(); // Continue without React
-      };
-      
-      // Add scripts to document
-      document.head.appendChild(reactScript);
-      document.head.appendChild(reactDOMScript);
+        
+        const script = document.createElement('script');
+        script.src = url;
+        script.crossOrigin = 'anonymous';
+        
+        script.onload = () => {
+          if (window[globalName]) {
+            console.log(`Successfully loaded ${globalName}`);
+            this.componentLibraries[globalName] = window[globalName];
+            resolve();
+          } else {
+            console.warn(`${globalName} script loaded but global not found`);
+            resolve(); // Continue anyway
+          }
+        };
+        
+        script.onerror = (e) => {
+          console.error(`Failed to load ${globalName} from ${url}:`, e);
+          reject(new Error(`Failed to load ${globalName}`));
+        };
+        
+        document.head.appendChild(script);
+      });
     }
 
     setData(oControlHost, oDataStore) {
@@ -99,13 +180,155 @@ define(() => {
       const buttonContainer = document.createElement("div");
       buttonContainer.style.margin = "10px 0";
       
-      const button = document.createElement("button");
-      button.textContent = "Open Dropdown Dialog";
-      button.style.padding = "10px 15px";
-      button.addEventListener("click", () => this.showExampleDialog());
+      // Use any loaded component library to enhance the UI
+      if (this.React && this.componentLibraries.MaterialUI) {
+        this.drawWithMaterialUI(c);
+      } else if (this.React && this.componentLibraries.antd) {
+        this.drawWithAntDesign(c);
+      } else if (this.React && this.componentLibraries.ReactBootstrap) {
+        this.drawWithReactBootstrap(c);
+      } else if (this.React) {
+        // Fallback to regular React
+        this.drawWithReact(c);
+      } else {
+        // Fallback to vanilla JS
+        const button = document.createElement("button");
+        button.textContent = "Open Dropdown Dialog";
+        button.style.padding = "10px 15px";
+        button.addEventListener("click", () => this.showExampleDialog());
+        
+        buttonContainer.appendChild(button);
+        c.appendChild(buttonContainer);
+      }
+    }
+    
+    drawWithMaterialUI(container) {
+      const React = this.React;
+      const ReactDOM = this.ReactDOM;
+      const MaterialUI = this.componentLibraries.MaterialUI;
       
-      buttonContainer.appendChild(button);
-      c.appendChild(buttonContainer);
+      // Create root element for React
+      const reactRoot = document.createElement("div");
+      container.appendChild(reactRoot);
+      
+      // Create a component using Material-UI
+      const MaterialUIComponent = () => {
+        return React.createElement(
+          MaterialUI.Button, 
+          { 
+            variant: 'contained', 
+            color: 'primary',
+            onClick: () => this.showExampleDialog()
+          }, 
+          'Open Dropdown Dialog'
+        );
+      };
+      
+      try {
+        ReactDOM.render(React.createElement(MaterialUIComponent), reactRoot);
+      } catch (error) {
+        console.error("Error rendering Material-UI component:", error);
+        // Fallback
+        container.removeChild(reactRoot);
+        this.drawWithReact(container);
+      }
+    }
+    
+    drawWithAntDesign(container) {
+      const React = this.React;
+      const ReactDOM = this.ReactDOM;
+      const antd = this.componentLibraries.antd;
+      
+      // Create root element for React
+      const reactRoot = document.createElement("div");
+      container.appendChild(reactRoot);
+      
+      // Create a component using Ant Design
+      const AntComponent = () => {
+        return React.createElement(
+          antd.Button, 
+          { 
+            type: 'primary',
+            onClick: () => this.showExampleDialog()
+          }, 
+          'Open Dropdown Dialog'
+        );
+      };
+      
+      try {
+        ReactDOM.render(React.createElement(AntComponent), reactRoot);
+      } catch (error) {
+        console.error("Error rendering Ant Design component:", error);
+        // Fallback
+        container.removeChild(reactRoot);
+        this.drawWithReact(container);
+      }
+    }
+    
+    drawWithReactBootstrap(container) {
+      const React = this.React;
+      const ReactDOM = this.ReactDOM;
+      const ReactBootstrap = this.componentLibraries.ReactBootstrap;
+      
+      // Create root element for React
+      const reactRoot = document.createElement("div");
+      container.appendChild(reactRoot);
+      
+      // Create a component using React Bootstrap
+      const BootstrapComponent = () => {
+        return React.createElement(
+          ReactBootstrap.Button, 
+          { 
+            variant: 'primary',
+            onClick: () => this.showExampleDialog()
+          }, 
+          'Open Dropdown Dialog'
+        );
+      };
+      
+      try {
+        ReactDOM.render(React.createElement(BootstrapComponent), reactRoot);
+      } catch (error) {
+        console.error("Error rendering React Bootstrap component:", error);
+        // Fallback
+        container.removeChild(reactRoot);
+        this.drawWithReact(container);
+      }
+    }
+    
+    drawWithReact(container) {
+      const React = this.React;
+      const ReactDOM = this.ReactDOM;
+      
+      // Create a div for React to render into
+      const reactRoot = document.createElement("div");
+      container.appendChild(reactRoot);
+      
+      // Create a simple React button component
+      const ButtonComponent = () => {
+        return React.createElement(
+          'button',
+          {
+            onClick: () => this.showExampleDialog(),
+            style: { padding: '10px 15px', cursor: 'pointer' }
+          },
+          'Open Dropdown Dialog'
+        );
+      };
+      
+      try {
+        // Render the React component
+        ReactDOM.render(React.createElement(ButtonComponent), reactRoot);
+      } catch (error) {
+        console.error("Error rendering React component:", error);
+        // If React rendering fails, fall back to vanilla JS
+        container.removeChild(reactRoot);
+        const button = document.createElement("button");
+        button.textContent = "Open Dropdown Dialog";
+        button.style.padding = "10px 15px";
+        button.addEventListener("click", () => this.showExampleDialog());
+        container.appendChild(button);
+      }
     }
 
     showExampleDialog() {
@@ -129,8 +352,15 @@ define(() => {
       
       let htmlContent;
       
-      // If React is available, use it to create the dialog content
-      if (this.React && this.ReactDOM) {
+      // If React and a component library are available, use them
+      if (this.React && this.componentLibraries.MaterialUI) {
+        htmlContent = this.createMaterialUIDialogHTML(selectId, colName, options);
+      } else if (this.React && this.componentLibraries.antd) {
+        htmlContent = this.createAntDesignDialogHTML(selectId, colName, options);
+      } else if (this.React && this.componentLibraries.ReactBootstrap) {
+        htmlContent = this.createReactBootstrapDialogHTML(selectId, colName, options);
+      } else if (this.React) {
+        // Fallback to basic React
         htmlContent = this.createReactDialogHTML(selectId, colName, options);
       } else {
         // Fall back to vanilla HTML
@@ -179,6 +409,268 @@ define(() => {
       this.createCustomDialog(dialogConfig);
     }
     
+    createMaterialUIDialogHTML(selectId, columnName, options) {
+      try {
+        const React = this.React;
+        const ReactDOM = this.ReactDOM;
+        const MaterialUI = this.componentLibraries.MaterialUI;
+        
+        // Create a temporary div to render React to HTML
+        const tempDiv = document.createElement('div');
+        
+        // Create a Material-UI component
+        const MaterialUIDropdown = () => {
+          const [value, setValue] = React.useState('');
+          
+          const handleChange = (event) => {
+            setValue(event.target.value);
+          };
+          
+          return React.createElement(
+            'div',
+            { style: { margin: '10px 0' } },
+            React.createElement(
+              'p',
+              null,
+              'Please make a selection from the dropdown below:'
+            ),
+            React.createElement(
+              MaterialUI.FormControl,
+              { fullWidth: true, variant: 'outlined' },
+              React.createElement(
+                MaterialUI.InputLabel,
+                { id: `${selectId}-label` },
+                `Choose ${columnName}`
+              ),
+              React.createElement(
+                MaterialUI.Select,
+                {
+                  labelId: `${selectId}-label`,
+                  id: selectId,
+                  value: value,
+                  onChange: handleChange,
+                  label: `Choose ${columnName}`
+                },
+                React.createElement(
+                  MaterialUI.MenuItem,
+                  { value: '' },
+                  '-- Select --'
+                ),
+                options.map((option, index) => 
+                  React.createElement(
+                    MaterialUI.MenuItem,
+                    { key: index, value: option },
+                    option
+                  )
+                )
+              )
+            ),
+            React.createElement(
+              'p',
+              null,
+              React.createElement(
+                'small',
+                null,
+                'Click ',
+                React.createElement('strong', null, 'OK'),
+                ' to continue or ',
+                React.createElement('strong', null, 'Cancel'),
+                ' to go back.'
+              )
+            )
+          );
+        };
+        
+        // Render to get HTML
+        ReactDOM.render(React.createElement(MaterialUIDropdown), tempDiv);
+        return tempDiv.innerHTML;
+      } catch (error) {
+        console.error("Error creating Material-UI dialog content:", error);
+        // Fall back to vanilla HTML
+        return this.createVanillaDialogHTML(selectId, columnName, options);
+      }
+    }
+    
+    createAntDesignDialogHTML(selectId, columnName, options) {
+      try {
+        const React = this.React;
+        const ReactDOM = this.ReactDOM;
+        const antd = this.componentLibraries.antd;
+        
+        // Create a temporary div to render React to HTML
+        const tempDiv = document.createElement('div');
+        
+        // Create an Ant Design component
+        const AntDropdown = () => {
+          const [value, setValue] = React.useState('');
+          
+          const handleChange = (value) => {
+            setValue(value);
+            // Also update the DOM element for the dialog callback
+            setTimeout(() => {
+              const selectElement = document.getElementById(selectId);
+              if (selectElement) {
+                selectElement.value = value;
+              }
+            }, 0);
+          };
+          
+          // Create a hidden select element for the dialog to access the value
+          const hiddenSelect = React.createElement(
+            'select',
+            {
+              id: selectId,
+              style: { display: 'none' },
+              value: value
+            },
+            options.map((option, index) => 
+              React.createElement('option', { key: index, value: option }, option)
+            )
+          );
+          
+          return React.createElement(
+            'div',
+            { style: { margin: '10px 0' } },
+            React.createElement(
+              'p',
+              null,
+              'Please make a selection from the dropdown below:'
+            ),
+            React.createElement(
+              'div',
+              null,
+              React.createElement(
+                'label',
+                { htmlFor: `${selectId}-antd` },
+                `Choose ${columnName}:`
+              ),
+              React.createElement('br'),
+              React.createElement(
+                antd.Select,
+                {
+                  id: `${selectId}-antd`,
+                  style: { width: '100%' },
+                  placeholder: '-- Select --',
+                  onChange: handleChange,
+                  value: value
+                },
+                options.map((option, index) => 
+                  React.createElement(
+                    antd.Select.Option,
+                    { key: index, value: option },
+                    option
+                  )
+                )
+              ),
+              hiddenSelect
+            ),
+            React.createElement(
+              'p',
+              null,
+              React.createElement(
+                'small',
+                null,
+                'Click ',
+                React.createElement('strong', null, 'OK'),
+                ' to continue or ',
+                React.createElement('strong', null, 'Cancel'),
+                ' to go back.'
+              )
+            )
+          );
+        };
+        
+        // Render to get HTML
+        ReactDOM.render(React.createElement(AntDropdown), tempDiv);
+        return tempDiv.innerHTML;
+      } catch (error) {
+        console.error("Error creating Ant Design dialog content:", error);
+        // Fall back to vanilla HTML
+        return this.createVanillaDialogHTML(selectId, columnName, options);
+      }
+    }
+    
+    createReactBootstrapDialogHTML(selectId, columnName, options) {
+      try {
+        const React = this.React;
+        const ReactDOM = this.ReactDOM;
+        const ReactBootstrap = this.componentLibraries.ReactBootstrap;
+        
+        // Create a temporary div to render React to HTML
+        const tempDiv = document.createElement('div');
+        
+        // Create a React Bootstrap component
+        const BootstrapDropdown = () => {
+          const [value, setValue] = React.useState('');
+          
+          const handleChange = (e) => {
+            setValue(e.target.value);
+          };
+          
+          return React.createElement(
+            'div',
+            { style: { margin: '10px 0' } },
+            React.createElement(
+              'p',
+              null,
+              'Please make a selection from the dropdown below:'
+            ),
+            React.createElement(
+              ReactBootstrap.Form.Group,
+              null,
+              React.createElement(
+                ReactBootstrap.Form.Label,
+                null,
+                `Choose ${columnName}:`
+              ),
+              React.createElement(
+                ReactBootstrap.Form.Control,
+                {
+                  id: selectId,
+                  as: 'select',
+                  value: value,
+                  onChange: handleChange
+                },
+                React.createElement(
+                  'option',
+                  { value: '' },
+                  '-- Select --'
+                ),
+                options.map((option, index) => 
+                  React.createElement(
+                    'option',
+                    { key: index, value: option },
+                    option
+                  )
+                )
+              )
+            ),
+            React.createElement(
+              'p',
+              null,
+              React.createElement(
+                'small',
+                null,
+                'Click ',
+                React.createElement('strong', null, 'OK'),
+                ' to continue or ',
+                React.createElement('strong', null, 'Cancel'),
+                ' to go back.'
+              )
+            )
+          );
+        };
+        
+        // Render to get HTML
+        ReactDOM.render(React.createElement(BootstrapDropdown), tempDiv);
+        return tempDiv.innerHTML;
+      } catch (error) {
+        console.error("Error creating React Bootstrap dialog content:", error);
+        // Fall back to vanilla HTML
+        return this.createVanillaDialogHTML(selectId, columnName, options);
+      }
+    }
+    
     // Method to create React-based dialog HTML (pre-rendered to string)
     createReactDialogHTML(selectId, columnName, options) {
       try {
@@ -191,8 +683,6 @@ define(() => {
           
           const handleChange = (e) => {
             setSelectedValue(e.target.value);
-            // Also update a global reference for the dialog callback
-            window[`dialog_selected_value_${selectId}`] = e.target.value;
           };
           
           return this.React.createElement('div', { style: { margin: '10px 0' } },
@@ -286,4 +776,4 @@ define(() => {
 
   return DropdownControl;
 });
-//v21
+//v22
