@@ -54,7 +54,7 @@ define(() => {
       btn.textContent = "Launch Custom Dialog";
       btn.style.margin = "5px";
       btn.addEventListener("click", () => {
-        __glassAppController.glassContext.showMessage(
+        this.GlassContext.showMessage(
           // 1) message body
           "Are you sure you want to proceed with this action?",
           // 2) title
@@ -196,4 +196,4 @@ define(() => {
 
   return DropdownControl;
 });
-//v33
+//v34
