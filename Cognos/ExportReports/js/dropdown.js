@@ -50,7 +50,7 @@ define(() => {
         optionsHtml += `<option value="${v}">${v}</option>`;
       }
 
-      // unique ID so it won’t collide
+      // unique ID so it won't collide
       const selectId = this.oControlHost.generateUniqueID();
       const htmlContent = `
           <div style="margin:10px 0;">
@@ -61,43 +61,64 @@ define(() => {
           </div>
         `;
 
+      // Store a reference to this for use in callbacks
+      const self = this;
+
       const dialogConfig = {
         title: `Select a ${colName}`,
         message: htmlContent,
         htmlContent: true,
         type: "info",
-        buttons: ["ok", "cancel"],
+        buttons: [
+          {
+            text: "Continue",  // Custom text
+            defaultId: "ok"    // Maps to standard "ok" behavior
+          },
+          {
+            text: "Go Back",   // Custom text
+            defaultId: "cancel" // Maps to standard "cancel" behavior
+          }
+        ],
         callback: {
-          ok: () => {
-            const sel = document.getElementById(selectId);
-            const chosen = sel ? sel.value : null;
-            console.log("User selected:", chosen);
-          },
-          cancel: () => {
-            if (this.GlassContext && this.GlassContext.getCoreSvc && typeof this.GlassContext.getCoreSvc === "function") {
-              this.GlassContext.getCoreSvc(".Dialog").createDialog({
-                title: "Warning Confirmation",
-                message: "Triggered by clicking Cancel.",
-                htmlContent: false,
-                type: "warning",
-                buttons: ["ok"],
-              });
-            } else {
-              alert("Dialog service unavailable.");
+          general: function(response) {
+            console.log("Button clicked:", response.btn);
+            
+            // Get the selected value
+            const selectElement = document.getElementById(selectId);
+            const selectedValue = selectElement ? selectElement.value : "";
+            
+            if (response.btn === "ok") {
+              setTimeout(function() {
+                self.createCustomDialog({
+                  title: "Selection Made",
+                  message: selectedValue ? 
+                    `You selected: <strong>${selectedValue}</strong>` : 
+                    "No value was selected.",
+                  type: "info",
+                  buttons: ["ok"],
+                  htmlContent: true
+                });
+              }, 100);
+            } else if (response.btn === "cancel") {
+              setTimeout(function() {
+                self.createCustomDialog({
+                  title: "Selection Cancelled",
+                  message: "You cancelled the selection process.",
+                  type: "warning",
+                  buttons: ["ok"],
+                  htmlContent: true
+                });
+              }, 100);
             }
-          },
+          }
         },
-        callbackScope: { ok: this, cancel: this },
-        showCloseX: false,
+        width: "500px",
+        className: "dropdown-selection-dialog"
       };
 
-      if (this.GlassContext && this.GlassContext.getCoreSvc && typeof this.GlassContext.getCoreSvc === "function") {
-        const dlgSvc = this.GlassContext.getCoreSvc(".Dialog");
-        dlgSvc.createDialog(dialogConfig);
-      } else {
-        alert("Dialog service unavailable.");
-      }
+      this.createCustomDialog(dialogConfig);
     }
+
     /**
      * @private Internal helper method.
      * Creates and displays a custom dialog using the Glass framework's Dialog service.
@@ -152,4 +173,4 @@ define(() => {
 
   return DropdownControl;
 });
-//v8
+//v9
