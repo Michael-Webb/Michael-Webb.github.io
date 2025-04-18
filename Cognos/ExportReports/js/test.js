@@ -2,7 +2,7 @@
  * Simple Custom Control Definition using AMD (Asynchronous Module Definition)
  * This control demonstrates launching a standard dialog via GlassContext.
  */
-define([], function () {
+define(["jquery"], function ($) {
   // No explicit dependencies needed beyond what Cognos provides
   "use strict";
 
@@ -10,6 +10,8 @@ define([], function () {
     constructor() {
       this.oControlHost = null;
       this.GlassContext = null;
+      this._globalCheckPerformed = false; // Flag to ensure one-time check
+      this._boundPerformGlobalCheck = this._performGlobalCheck.bind(this); // Pre-bind for ready()
       console.log("SimpleDialogControl instance created.");
     }
 
@@ -65,17 +67,22 @@ define([], function () {
       console.log("SimpleDialogControl: draw called.");
       const container = oControlHost.container;
 
-      // --- Add console log for the global context ---
-      console.log("SimpleDialogControl (draw): Checking window.__glassAppController.glassContext...");
-      if (window.__glassAppController && window.__glassAppController.glassContext) {
-        console.log(
-          "SimpleDialogControl (draw): window.__glassAppController.glassContext FOUND:",
-          window.__glassAppController.glassContext
-        );
-      } else if (window.__glassAppController) {
-        console.warn("SimpleDialogControl (draw): window.__glassAppController FOUND, but .glassContext is MISSING.");
+      // --- Schedule the check to run ONCE after DOM ready, triggered by the FIRST draw ---
+      if (!this._globalCheckPerformed) {
+        this._globalCheckPerformed = true; // Set flag immediately to prevent rescheduling
+        console.log("SimpleDialogControl: Scheduling global context check for DOM ready (on first draw)...");
+        // Use jQuery's ready handler. It executes immediately if DOM is already ready,
+        // otherwise it queues the function until DOMContentLoaded fires.
+        $(document).ready(this._boundPerformGlobalCheck);
+      }
+
+      if (Application && Application.GlassContext) {
+        console.log("SimpleDialogControl (draw): Application.GlassContext FOUND:", Application.GlassContext);
+      } else if (Application) {
+        console.log("Application", Application);
+        console.warn("SimpleDialogControl (draw): Application FOUND, but .GlassContext is MISSING.");
       } else {
-        console.warn("SimpleDialogControl (draw): window.__glassAppController is MISSING.");
+        console.warn("SimpleDialogControl (draw): Application is MISSING.");
       }
 
       // Clear any previous content
@@ -195,4 +202,4 @@ define([], function () {
   // Return the class constructor for the AMD module system
   return SimpleDialogControl;
 });
-//v6
+//v7
