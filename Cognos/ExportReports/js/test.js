@@ -88,83 +88,93 @@ define([], function () { // No explicit dependencies needed beyond what Cognos p
     /**
      * Method to configure and display the dialog using the .Dialog service.
      */
-    showDialog() {
-      console.log("SimpleDialogControl: showDialog initiated.");
-      if (!this.GlassContext) {
-        console.error("SimpleDialogControl: Cannot show dialog, GlassContext is not available.");
-        alert("Error: Dialog functionality is unavailable.");
-        return;
-      }
-
-      const dialogConfig = {
-        title: "Standard Dialog Example",
-        message: "This dialog uses standard 'ok' and 'cancel' buttons. Click one to see the console log.",
-        type: "info",
-        buttons: ["ok", "cancel"], // Standard button IDs
-        callback: {
-          // --- Use ONLY the general callback ---
-          general: (response) => {
-            console.log(`SimpleDialogControl: General callback executed for button: ${response.btn}`);
-            // We don't need to manually call removeDialog here,
-            // the service should do that implicitly *after* this callback finishes.
-            // The service *should* call this registered 'general' callback correctly via the notifier.
-
-            if (response.btn === "ok") {
-              console.log("SimpleDialogControl: Processing 'OK' action.");
-              this.showResultDialog("OK Clicked!");
-            } else if (response.btn === "cancel") {
-              console.log("SimpleDialogControl: Processing 'Cancel' action.");
-              this.showResultDialog("Cancel Clicked!");
-            } else {
-              console.log(`SimpleDialogControl: Processing '${response.btn}' action (likely 'close').`);
-              // Handle 'close' (from 'X' or Esc) if necessary
-            }
-          },
-          // --- Remove specific 'ok' and 'cancel' keys ---
-          // ok: () => { ... }, // REMOVED
-          // cancel: () => { ... } // REMOVED
-        },
-        width: "450px",
-      };
-
-      try {
-        console.log("SimpleDialogControl: Attempting to get .Dialog service...");
-        const dialogService = this.GlassContext.getCoreSvc(".Dialog");
-        if (!dialogService || typeof dialogService.createDialog !== "function") {
-          throw new Error("Dialog service (.Dialog) or its createDialog method not found.");
-        }
-        console.log("SimpleDialogControl: Calling createDialog with config:", dialogConfig);
-        dialogService.createDialog(dialogConfig);
-        console.log("SimpleDialogControl: createDialog called successfully.");
-      } catch (error) {
-        console.error("SimpleDialogControl: Error creating dialog:", error);
-        alert(`Dialog Creation Error: ${error.message}\nTitle: ${dialogConfig.title}`);
-      }
-    }
-
-    /**
-     * Helper to show a follow-up confirmation.
+        /**
+     * Method to configure and display the dialog using the .Dialog service.
      */
-    showResultDialog(message) {
-      if (!this.GlassContext) return;
-      try {
-        const dialogService = this.GlassContext.getCoreSvc(".Dialog");
-        if (!dialogService) {
-          throw new Error("Dialog service missing");
-        }
-        dialogService.createDialog({
-          title: "Action Result",
-          message: message,
-          type: "info", // Use 'info' as 'success' is not valid
-          buttons: ["ok"],
-        });
-      } catch (error) {
-        console.error("SimpleDialogControl: Error showing result dialog:", error);
-      }
-    }
+        showDialog() {
+            console.log("SimpleDialogControl: showDialog initiated.");
+            if (!this.GlassContext) {
+              console.error("SimpleDialogControl: Cannot show dialog, GlassContext is not available.");
+              alert("Error: Dialog functionality is unavailable.");
+              return;
+            }
+      
+            const dialogConfig = {
+              title: "Standard Dialog Example",
+              message: "This dialog uses standard 'ok' and 'cancel' buttons. Click one to see the console log.",
+              type: "info",
+              buttons: ["ok", "cancel"],
+              callback: {
+                general: (response) => {
+                  console.log(`SimpleDialogControl: General callback executed for button: ${response.btn}`);
+      
+                  // --- Defer actions using setTimeout ---
+                  // Use a very short delay (0 or 1ms) to allow the current execution
+                  // stack (potentially including BaseDialog.hide) to finish before
+                  // trying to show the next dialog.
+                  setTimeout(() => {
+                      console.log(`SimpleDialogControl: setTimeout executing for button: ${response.btn}`);
+                      if (response.btn === 'ok') {
+                        console.log("SimpleDialogControl: Processing 'OK' action inside setTimeout.");
+                        this.showResultDialog("OK Clicked!");
+                      } else if (response.btn === 'cancel') {
+                        console.log("SimpleDialogControl: Processing 'Cancel' action inside setTimeout.");
+                        this.showResultDialog("Cancel Clicked!");
+                      } else {
+                         console.log(`SimpleDialogControl: Processing '${response.btn}' action (likely 'close') inside setTimeout.`);
+                         // Potentially show a "closed" message or do nothing
+                      }
+                  }, 1); // Use a minimal delay (0 or 1 often works)
+                  // --- End Deferral ---
+      
+                  // IMPORTANT: The original dialog is likely already closing *before*
+                  // the setTimeout callback runs due to BaseDialog.hide().
+                  // The logic inside the setTimeout essentially runs *after* the close.
+                }
+              },
+              width: "450px",
+            };
+      
+            try {
+              console.log("SimpleDialogControl: Attempting to get .Dialog service...");
+              const dialogService = this.GlassContext.getCoreSvc(".Dialog");
+              if (!dialogService || typeof dialogService.createDialog !== 'function') {
+                 throw new Error("Dialog service (.Dialog) or its createDialog method not found.");
+              }
+              console.log("SimpleDialogControl: Calling createDialog with config:", dialogConfig);
+              dialogService.createDialog(dialogConfig);
+              console.log("SimpleDialogControl: createDialog called successfully.");
+            } catch (error) {
+              console.error("SimpleDialogControl: Error creating dialog:", error);
+              alert(`Dialog Creation Error: ${error.message}\nTitle: ${dialogConfig.title}`);
+            }
+          }
+      
+          /**
+           * Helper to show a follow-up confirmation.
+           */
+          showResultDialog(message) {
+              if (!this.GlassContext) {
+                  console.log("SimpleDialogControl: Cannot show result dialog, GlassContext missing.");
+                  return;
+              }
+               try {
+                  const dialogService = this.GlassContext.getCoreSvc(".Dialog");
+                   if (!dialogService) { throw new Error("Dialog service missing for result dialog."); }
+                   console.log(`SimpleDialogControl: Showing result dialog with message: "${message}"`);
+                  dialogService.createDialog({
+                      title: "Action Result",
+                      message: message,
+                      type: "info",
+                      buttons: ["ok"]
+                  });
+              } catch (error) {
+                  console.error("SimpleDialogControl: Error showing result dialog:", error);
+              }
+          }
   }
 
   // Return the class constructor for the AMD module system
   return SimpleDialogControl;
 });
-//v3
+//v4
