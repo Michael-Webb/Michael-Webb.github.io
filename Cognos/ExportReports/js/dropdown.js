@@ -76,46 +76,39 @@ define(() => {
         message: htmlContent,
         htmlContent: true,
         type: "info",
-        buttons: [
-          // Custom text but with a defaultId of "ok"
-          {
-            text: "Proceed", // Custom text
-            defaultId: "ok", // Standard ID for callback handling
-          },
-          // Custom text but with a defaultId of "cancel"
-          {
-            text: "Really Cancel",
-            defaultId: "cancel",
-          },
-        ],
+        buttons: ["ok","cancel"],
         callback: {
-          general: function (response) {
+          general: function(response) {
             console.log("Button clicked:", response.btn);
+            
+            // Get the selected value
             const selectElement = document.getElementById(selectId);
             const selectedValue = selectElement ? selectElement.value : "";
-
+            
             if (response.btn === "ok") {
-              setTimeout(() => {
+              setTimeout(function() {
                 self.createCustomDialog({
                   title: "Selection Made",
-                  message: selectedValue ? `You selected: <strong>${selectedValue}</strong>` : "No value was selected.",
+                  message: selectedValue ? 
+                    `You selected: <strong>${selectedValue}</strong>` : 
+                    "No value was selected.",
                   type: "info",
                   buttons: ["ok"],
-                  htmlContent: true,
+                  htmlContent: true
                 });
               }, 100);
-            } else {
-              setTimeout(() => {
+            } else if (response.btn === "cancel") {
+              setTimeout(function() {
                 self.createCustomDialog({
                   title: "Selection Cancelled",
                   message: "You cancelled the selection process.",
                   type: "warning",
                   buttons: ["ok"],
-                  htmlContent: true,
+                  htmlContent: true
                 });
               }, 100);
             }
-          },
+          }
         },
         width: "500px",
         className: "dropdown-selection-dialog",
@@ -169,4 +162,4 @@ define(() => {
 
   return DropdownControl;
 });
-//v28
+//v29
