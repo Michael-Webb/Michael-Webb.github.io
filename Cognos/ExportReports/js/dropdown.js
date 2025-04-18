@@ -1,4 +1,4 @@
-define([], () => {
+define(() => {
   "use strict";
 
   class DropdownControl {
@@ -6,6 +6,8 @@ define([], () => {
       this.oControlHost = null;
       this.GlassContext = null;
       this._oDataStore = null;
+      this.React = null;
+      this.ReactDOM = null;
     }
 
     initialize(oControlHost, fnDoneInitializing) {
@@ -13,14 +15,66 @@ define([], () => {
       // grab the GlassContext for dialogs (if available)
       const app = oControlHost.page && oControlHost.page.application;
       this.GlassContext = app && app.GlassContext ? app.GlassContext : null;
-      require(["react","react-dom"], this.dependenciesLoaded.bind(this, fnDoneInitializing));
-      fnDoneInitializing();
+
+      // First check if React is already available globally
+      if (window.React && window.ReactDOM) {
+        console.log("Found React in global scope");
+        this.React = window.React;
+        this.ReactDOM = window.ReactDOM;
+        fnDoneInitializing();
+        return;
+      }
+
+      // Load React from CDN
+      this.loadScriptsFromCDN(fnDoneInitializing);
     }
-    dependenciesLoaded(fnDoneInitializing, React, ReactDOM) {
-      this.React = React;
-      this.ReactDOM = ReactDOM;
-      console.log("React and ReactDOM loaded successfully");
-      fnDoneInitializing();
+
+    loadScriptsFromCDN(fnDoneInitializing) {
+      const reactScript = document.createElement("script");
+      reactScript.src = "https://unpkg.com/react@17/umd/react.production.min.js";
+      reactScript.crossOrigin = "anonymous";
+
+      const reactDOMScript = document.createElement("script");
+      reactDOMScript.src = "https://unpkg.com/react-dom@17/umd/react-dom.production.min.js";
+      reactDOMScript.crossOrigin = "anonymous";
+
+      // Set up tracking for script loading
+      let scriptsLoaded = 0;
+      const totalScripts = 2;
+
+      const checkAllScriptsLoaded = () => {
+        scriptsLoaded++;
+        if (scriptsLoaded === totalScripts) {
+          // Both scripts loaded, check if React is now available
+          if (window.React && window.ReactDOM) {
+            console.log("Successfully loaded React from CDN");
+            this.React = window.React;
+            this.ReactDOM = window.ReactDOM;
+            fnDoneInitializing();
+          } else {
+            console.error("React scripts loaded but React objects not found in window");
+            fnDoneInitializing(); // Continue without React
+          }
+        }
+      };
+
+      // Set up event handlers
+      reactScript.onload = checkAllScriptsLoaded;
+      reactDOMScript.onload = checkAllScriptsLoaded;
+
+      reactScript.onerror = (e) => {
+        console.error("Failed to load React from CDN:", e);
+        fnDoneInitializing(); // Continue without React
+      };
+
+      reactDOMScript.onerror = (e) => {
+        console.error("Failed to load ReactDOM from CDN:", e);
+        fnDoneInitializing(); // Continue without React
+      };
+
+      // Add scripts to document
+      document.head.appendChild(reactScript);
+      document.head.appendChild(reactDOMScript);
     }
 
     setData(oControlHost, oDataStore) {
@@ -173,4 +227,4 @@ define([], () => {
 
   return DropdownControl;
 });
-//v14
+//v15
