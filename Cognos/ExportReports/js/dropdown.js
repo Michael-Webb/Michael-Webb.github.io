@@ -46,8 +46,41 @@ define(() => {
         c.textContent = "No data available.";
         return;
       }
-
+      this.createShowMessageButton(c);
       this.createDialogButton(c, info.columnName, info.options);
+    }
+    createShowMessageButton(container) {
+      const btn = document.createElement("button");
+      btn.textContent = "Launch Custom Dialog";
+      btn.style.margin = "5px";
+      btn.addEventListener("click", () => {
+        __glassAppController.glassContext.showMessage(
+          // 1) message body
+          "Are you sure you want to proceed with this action?",
+          // 2) title
+          "Please Confirm",
+          // 3) icon type
+          "warning",
+          // 4) buttons array with custom labels
+          [
+            { text: "👍 Yes, go ahead", defaultId: "ok" },
+            { text: "👎 No, take me back", defaultId: "cancel" }
+          ],
+          // 5) width
+          "400px",
+          // 6) callback
+          (responseBtn) => {
+            if (responseBtn === "ok") {
+              console.log("User confirmed 👍");
+            } else {
+              console.log("User cancelled 👎");
+            }
+          },
+          // 7) htmlContent? (false since our message is plain text)
+          false
+        );
+      });
+      container.appendChild(btn);
     }
 
     createDialogButton(container, columnName, options) {
@@ -163,4 +196,4 @@ define(() => {
 
   return DropdownControl;
 });
-//v32
+//v33
