@@ -13,7 +13,7 @@ define(() => {
       // grab the GlassContext for dialogs (if available)
       const app = oControlHost.page && oControlHost.page.application;
       this.GlassContext = app && app.GlassContext ? app.GlassContext : null;
-      console.log(this.GlassContext)
+      console.log(this.GlassContext);
       // continue initialization immediately
       fnDoneInitializing();
     }
@@ -65,7 +65,7 @@ define(() => {
           // 4) buttons array with custom labels
           [
             { text: "Yes, go ahead", defaultId: "ok" },
-            { text: "No, take me back", defaultId: "cancel" }
+            { text: "No, take me back", defaultId: "cancel" },
           ],
           // 5) width
           "400px",
@@ -111,8 +111,8 @@ define(() => {
         htmlContent: true,
         type: "info",
         buttons: [
-          { defaultId: "ok", text: "Finish" }, // keeps ID "ok" for your callback but shows "Finish"
-          { defaultId: "cancel", text: "Cancel" }, // you can also override cancel if you like],
+          { text: "Finish", defaultId: "ok", type:"primary" }, // keeps ID "ok" for your callback but shows "Finish"
+          { text: "Cancel", defaultId: "cancel",type:"secondary" }, // you can also override cancel if you like],
         ],
         callback: {
           general: function (response) {
@@ -197,4 +197,4 @@ define(() => {
 
   return DropdownControl;
 });
-//v35
+//v36
