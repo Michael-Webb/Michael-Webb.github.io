@@ -1,4 +1,4 @@
-define(["react", "react-dom"], (React, ReactDOM) => {
+define([], () => {
   "use strict";
 
   class DropdownControl {
@@ -13,8 +13,7 @@ define(["react", "react-dom"], (React, ReactDOM) => {
       // grab the GlassContext for dialogs (if available)
       const app = oControlHost.page && oControlHost.page.application;
       this.GlassContext = app && app.GlassContext ? app.GlassContext : null;
-      //require(["react"], this.dependenciesLoaded.bind(this, fnDoneInitializing));
-
+      require(["react","react-dom"], this.dependenciesLoaded.bind(this, fnDoneInitializing));
       fnDoneInitializing();
     }
     dependenciesLoaded(fnDoneInitializing, oModule) {
@@ -171,4 +170,4 @@ define(["react", "react-dom"], (React, ReactDOM) => {
 
   return DropdownControl;
 });
-//v12
+//v13
