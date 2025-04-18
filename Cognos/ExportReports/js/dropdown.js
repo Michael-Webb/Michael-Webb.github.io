@@ -101,8 +101,8 @@ define(() => {
                     message: "Are you sure you want to proceed with this action?",
                     type: "warning",
                     buttons: [
-                        { text: "Yes, go ahead", defaultId: "ok", type: "primary"}, // Use object format
-                        { text: "No, take me back", defaultId: "cancel", type: "secondary" } // Use object format
+                        { text: "Yes, go ahead", defaultId: "ok"}, // Use object format
+                        { text: "No, take me back", defaultId: "cancel" } // Use object format
                     ],
                     width: "400px",
                     callback: {
@@ -175,8 +175,8 @@ define(() => {
         htmlContent: true,    // IMPORTANT: Tell the dialog to render HTML
         type: "info",         // Icon type
         buttons: [
-          { text: "Finish", defaultId: "ok", type: "primary" },
-          { text: "Cancel", defaultId: "cancel", type: "secondary" },
+          { text: "Finish", defaultId: "ok" },
+          { text: "Cancel", defaultId: "cancel"},
         ],
         callback: {
           // Use arrow function for 'this' to correctly refer to DropdownControl instance
@@ -278,4 +278,4 @@ define(() => {
 
   return DropdownControl;
 });
-//v38
+//v39
