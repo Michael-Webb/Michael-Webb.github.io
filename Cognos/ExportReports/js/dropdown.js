@@ -95,17 +95,142 @@ define(() => {
         return;
       }
       
-      // Create a simple button to open the dialog
+      // Get data from store
+      const ds = this._oDataStore;
+      const colName = ds.columnNames[0];
+      const colIndex = ds.getColumnIndex(colName);
+      
+      // Extract options
+      const options = [];
+      for (let i = 0; i < ds.rowCount; i++) {
+        options.push(ds.getCellValue(i, colIndex));
+      }
+      
+      // If React is available, use it
+      if (this.React && this.ReactDOM) {
+        this.drawWithReact(c, colName, options);
+      } else {
+        // Fallback to vanilla JS
+        this.drawWithVanillaJS(c, colName, options);
+      }
+    }
+    
+    drawWithReact(container, columnName, options) {
+      const React = this.React;
+      const ReactDOM = this.ReactDOM;
+      
+      // Create a div for React to render into
+      const reactRoot = document.createElement("div");
+      container.appendChild(reactRoot);
+      
+      // Create a simple React component
+      const DropdownComponent = () => {
+        const [selectedValue, setSelectedValue] = React.useState('');
+        
+        const handleChange = (e) => {
+          setSelectedValue(e.target.value);
+          // Store the selected value in the control
+          this.selectedValue = e.target.value;
+        };
+        
+        const handleClick = () => {
+          this.showExampleDialog();
+        };
+        
+        return React.createElement('div', { className: 'dropdown-container', style: { margin: '10px 0' } },
+          React.createElement('label', { htmlFor: 'react-dropdown' }, `Choose ${columnName}:`),
+          React.createElement('br'),
+          React.createElement('select', {
+            id: 'react-dropdown',
+            value: selectedValue,
+            onChange: handleChange,
+            style: { width: '100%', padding: '5px', marginTop: '5px' }
+          },
+            React.createElement('option', { value: '' }, '-- Select --'),
+            options.map((option, index) => 
+              React.createElement('option', { key: index, value: option }, option)
+            )
+          ),
+          React.createElement('div', { style: { marginTop: '10px' } },
+            React.createElement('button', { 
+              onClick: handleClick,
+              style: { padding: '5px 10px' }
+            }, 'Open Dialog')
+          )
+        );
+      };
+      
+      try {
+        // Render the React component
+        ReactDOM.render(React.createElement(DropdownComponent), reactRoot);
+        console.log("React component rendered successfully");
+      } catch (error) {
+        console.error("Error rendering React component:", error);
+        // If React rendering fails, fall back to vanilla JS
+        container.removeChild(reactRoot);
+        this.drawWithVanillaJS(container, columnName, options);
+      }
+    }
+    
+    drawWithVanillaJS(container, columnName, options) {
+      // Create dropdown container
+      const dropdownContainer = document.createElement("div");
+      dropdownContainer.className = "dropdown-container";
+      dropdownContainer.style.margin = "10px 0";
+      
+      // Create label
+      const label = document.createElement("label");
+      label.setAttribute("for", "control-dropdown");
+      label.textContent = `Choose ${columnName}:`;
+      dropdownContainer.appendChild(label);
+      
+      // Add line break
+      dropdownContainer.appendChild(document.createElement("br"));
+      
+      // Create select element
+      const select = document.createElement("select");
+      select.id = "control-dropdown";
+      select.style.width = "100%";
+      select.style.padding = "5px";
+      select.style.marginTop = "5px";
+      
+      // Add default option
+      const defaultOption = document.createElement("option");
+      defaultOption.value = "";
+      defaultOption.textContent = "-- Select --";
+      select.appendChild(defaultOption);
+      
+      // Add options from data
+      options.forEach((value, index) => {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = value;
+        select.appendChild(option);
+      });
+      
+      // Add change event listener
+      select.addEventListener("change", (e) => {
+        this.selectedValue = e.target.value;
+        console.log("Selected value:", this.selectedValue);
+      });
+      
+      // Add select to container
+      dropdownContainer.appendChild(select);
+      
+      // Create button
       const buttonContainer = document.createElement("div");
-      buttonContainer.style.margin = "10px 0";
+      buttonContainer.style.marginTop = "10px";
       
       const button = document.createElement("button");
-      button.textContent = "Open Dropdown Dialog";
-      button.style.padding = "10px 15px";
+      button.textContent = "Open Dialog";
+      button.style.padding = "5px 10px";
       button.addEventListener("click", () => this.showExampleDialog());
       
       buttonContainer.appendChild(button);
-      c.appendChild(buttonContainer);
+      dropdownContainer.appendChild(buttonContainer);
+      
+      // Add dropdown container to main container
+      container.appendChild(dropdownContainer);
     }
 
     showExampleDialog() {
@@ -127,15 +252,9 @@ define(() => {
       // Create a unique ID for the select element
       const selectId = this.oControlHost.generateUniqueID();
       
-      let htmlContent;
-      
-      // If React is available, use it to create the dialog content
-      if (this.React && this.ReactDOM) {
-        htmlContent = this.createReactDialogHTML(selectId, colName, options);
-      } else {
-        // Fall back to vanilla HTML
-        htmlContent = this.createVanillaDialogHTML(selectId, colName, options);
-      }
+      // IMPORTANT CHANGE: Instead of trying to use React to render HTML content for the dialog,
+      // which might not work properly, let's use vanilla HTML for the dialog
+      const htmlContent = this.createVanillaDialogHTML(selectId, colName, options);
       
       // Store a reference to this for use in callbacks
       const self = this;
@@ -155,9 +274,6 @@ define(() => {
             const selectedValue = selectElement ? selectElement.value : "";
             
             if (response.btn === "ok") {
-              // Store the selected value
-              self.selectedValue = selectedValue;
-              
               setTimeout(function() {
                 self.createCustomDialog({
                   title: "Selection Made",
@@ -165,6 +281,16 @@ define(() => {
                     `You selected: <strong>${selectedValue}</strong>` : 
                     "No value was selected.",
                   type: "info",
+                  buttons: ["ok"],
+                  htmlContent: true
+                });
+              }, 100);
+            } else if (response.btn === "cancel") {
+              setTimeout(function() {
+                self.createCustomDialog({
+                  title: "Selection Cancelled",
+                  message: "You cancelled the selection process.",
+                  type: "warning",
                   buttons: ["ok"],
                   htmlContent: true
                 });
@@ -177,59 +303,6 @@ define(() => {
       };
 
       this.createCustomDialog(dialogConfig);
-    }
-    
-    // Method to create React-based dialog HTML (pre-rendered to string)
-    createReactDialogHTML(selectId, columnName, options) {
-      try {
-        // Create a temporary div to render React to HTML
-        const tempDiv = document.createElement('div');
-        
-        // Create a simple React component
-        const DropdownComponent = () => {
-          const [selectedValue, setSelectedValue] = this.React.useState('');
-          
-          const handleChange = (e) => {
-            setSelectedValue(e.target.value);
-            // Also update a global reference for the dialog callback
-            window[`dialog_selected_value_${selectId}`] = e.target.value;
-          };
-          
-          return this.React.createElement('div', { style: { margin: '10px 0' } },
-            this.React.createElement('p', null, 'Please make a selection from the dropdown below:'),
-            this.React.createElement('label', { htmlFor: selectId }, `Choose ${columnName}:`),
-            this.React.createElement('br'),
-            this.React.createElement('select', { 
-              id: selectId,
-              value: selectedValue,
-              onChange: handleChange,
-              style: { width: '100%', padding: '5px', marginTop: '5px' }
-            },
-              this.React.createElement('option', { value: '' }, '-- Select --'),
-              options.map((option, index) => 
-                this.React.createElement('option', { key: index, value: option }, option)
-              )
-            ),
-            this.React.createElement('p', null, 
-              this.React.createElement('small', null, 
-                'Click ',
-                this.React.createElement('strong', null, 'OK'),
-                ' to continue or ',
-                this.React.createElement('strong', null, 'Cancel'),
-                ' to go back.'
-              )
-            )
-          );
-        };
-        
-        // Render to get HTML
-        this.ReactDOM.render(this.React.createElement(DropdownComponent), tempDiv);
-        return tempDiv.innerHTML;
-      } catch (error) {
-        console.error("Error creating React dialog content:", error);
-        // Fall back to vanilla HTML
-        return this.createVanillaDialogHTML(selectId, columnName, options);
-      }
     }
     
     // Helper method to create vanilla HTML for the dialog
@@ -286,4 +359,4 @@ define(() => {
 
   return DropdownControl;
 });
-//v24
+//v20
