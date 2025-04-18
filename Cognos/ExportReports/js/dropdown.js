@@ -175,8 +175,8 @@ define(() => {
         htmlContent: true,    // IMPORTANT: Tell the dialog to render HTML
         type: "info",         // Icon type
         buttons: [
-          { text: "Finish", defaultId: "ok" },
-          { text: "Cancel", defaultId: "cancel"}
+          { "text": "Finish", "defaultId": "ok" },
+          { "text": "Cancel", "defaultId": "cancel"}
         ],
         callback: {
           // Use arrow function for 'this' to correctly refer to DropdownControl instance
@@ -278,4 +278,4 @@ define(() => {
 
   return DropdownControl;
 });
-//v40
+//v41
