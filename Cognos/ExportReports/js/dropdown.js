@@ -74,13 +74,17 @@ define(() => {
             console.log("User selected:", chosen);
           },
           cancel: () => {
-            this.createCustomDialog({
-              title: "Warning Confirmation",
-              message: "Triggered by clicking Cancel.",
-              htmlContent: false,
-              type: "warning",
-              buttons: ["ok"],
-            });
+            if (this.GlassContext && this.GlassContext.getCoreSvc && typeof this.GlassContext.getCoreSvc === "function") {
+              this.GlassContext.getCoreSvc(".Dialog").createDialog({
+                title: "Warning Confirmation",
+                message: "Triggered by clicking Cancel.",
+                htmlContent: false,
+                type: "warning",
+                buttons: ["ok"],
+              });
+            } else {
+              alert("Dialog service unavailable.");
+            }
           },
         },
         callbackScope: { ok: this, cancel: this },
@@ -148,4 +152,4 @@ define(() => {
 
   return DropdownControl;
 });
-//v6
+//v8
