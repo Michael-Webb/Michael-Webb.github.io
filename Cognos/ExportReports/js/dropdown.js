@@ -63,17 +63,17 @@ define(() => {
           "warning",
           // 4) buttons array with custom labels
           [
-            { text: "👍 Yes, go ahead", defaultId: "ok" },
-            { text: "👎 No, take me back", defaultId: "cancel" }
+            { text: "Yes, go ahead", defaultId: "ok" },
+            { text: "No, take me back", defaultId: "cancel" }
           ],
           // 5) width
           "400px",
           // 6) callback
           (responseBtn) => {
             if (responseBtn === "ok") {
-              console.log("User confirmed 👍");
+              console.log("User confirmed");
             } else {
-              console.log("User cancelled 👎");
+              console.log("User cancelled");
             }
           },
           // 7) htmlContent? (false since our message is plain text)
