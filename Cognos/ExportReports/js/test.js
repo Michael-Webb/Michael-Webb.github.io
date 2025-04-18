@@ -26,7 +26,7 @@ define(["jquery"], function ($) {
 
       // Standard way to get the GlassContext
       const app = oControlHost.page && oControlHost.page.application;
-      this.GlassContext = app && app.GlassContext ? app.GlassContext : null;
+      this.GlassContext = Application.GlassContext.appController.glassContext
 
       if (!this.GlassContext) {
         console.error(
@@ -124,7 +124,10 @@ define(["jquery"], function ($) {
         title: "Standard Dialog Example",
         message: "This dialog uses standard 'ok' and 'cancel' buttons. Click one to see the console log.",
         type: "info",
-        buttons: ["ok", "cancel"],
+        buttons: [
+            { text: "Finish", defaultId: "ok" },
+            { text: "Cancel", defaultId: "cancel" },
+          ],
         callback: {
           general: (response) => {
             console.log(`SimpleDialogControl: General callback executed for button: ${response.btn}`);
@@ -197,27 +200,45 @@ define(["jquery"], function ($) {
         console.error("SimpleDialogControl: Error showing result dialog:", error);
       }
     }
-     /**
-       * The actual check function, executed once the DOM is ready.
-       * This is separated out for clarity and bound in the constructor.
-       */
-     _performGlobalCheck() {
-        console.log("SimpleDialogControl (_performGlobalCheck): DOM ready, performing one-time global check...");
-        if (window.__glassAppController && window.__glassAppController.glassContext) {
-            console.log("SimpleDialogControl (_performGlobalCheck): window.__glassAppController.glassContext FOUND:", window.__glassAppController.glassContext);
-            // Optional: Compare with the context obtained during initialize
-            // console.log("SimpleDialogControl (_performGlobalCheck): Compare with this.GlassContext:",
-            //     this.GlassContext === window.__glassAppController.glassContext);
-        } else if (window.__glassAppController) {
-            console.warn("SimpleDialogControl (_performGlobalCheck): window.__glassAppController FOUND, but .glassContext is MISSING.");
-        } else {
-            console.warn("SimpleDialogControl (_performGlobalCheck): window.__glassAppController is MISSING.");
+    /**
+     * The actual check function, executed once the DOM is ready.
+     * This is separated out for clarity and bound in the constructor.
+     */
+    _performGlobalCheck() {
+      console.log("SimpleDialogControl (_performGlobalCheck): DOM ready, performing one-time global check...");
+      if (window.__glassAppController && window.__glassAppController.glassContext) {
+        console.log(
+          "SimpleDialogControl (_performGlobalCheck): window.__glassAppController.glassContext FOUND:",
+          window.__glassAppController.glassContext
+        );
+        // Optional: Compare with the context obtained during initialize
+        // console.log("SimpleDialogControl (_performGlobalCheck): Compare with this.GlassContext:",
+        //     this.GlassContext === window.__glassAppController.glassContext);
+      } else if (window.__glassAppController) {
+        console.warn(
+          "SimpleDialogControl (_performGlobalCheck): window.__glassAppController FOUND, but .glassContext is MISSING."
+        );
+      } else {
+        console.warn("SimpleDialogControl (_performGlobalCheck): window.__glassAppController is MISSING.");
+      }
+      // No need to set the flag here, it was set in draw()
+    }
+    _performCheckWhenAppReadyPolling() {
+      console.log("Checking for specific AppController (Polling)...");
+      const targetController = window.SomeReportStudioGlobal?.AppController; // Adjust path
+      if (targetController) {
+        console.log("Specific AppController found via polling:", targetController);
+        if (this._pollIntervalId) {
+          clearInterval(this._pollIntervalId);
+          this._pollIntervalId = null;
         }
-        // No need to set the flag here, it was set in draw()
+      } else {
+        console.log("Specific AppController not found yet...");
+      }
     }
   }
 
   // Return the class constructor for the AMD module system
   return SimpleDialogControl;
 });
-//v8
+//v9
