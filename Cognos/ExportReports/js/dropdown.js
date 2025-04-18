@@ -52,12 +52,16 @@ define(() => {
 
       // unique ID so it won't collide
       const selectId = this.oControlHost.generateUniqueID();
+
+      // Add instructions to explain the buttons
       const htmlContent = `
           <div style="margin:10px 0;">
+            <p>Please make a selection from the dropdown below:</p>
             <label for="${selectId}">Choose ${colName}:</label><br/>
             <select id="${selectId}">
               ${optionsHtml}
             </select>
+            <p><small>Click <strong>OK</strong> to continue or <strong>Cancel</strong> to go back.</small></p>
           </div>
         `;
 
@@ -69,51 +73,40 @@ define(() => {
         message: htmlContent,
         htmlContent: true,
         type: "info",
-        buttons: [
-          {
-            text: "Continue",  // Custom text
-            defaultId: "ok"    // Maps to standard "ok" behavior
-          },
-          {
-            text: "Go Back",   // Custom text
-            defaultId: "cancel" // Maps to standard "cancel" behavior
-          }
-        ],
+        buttons: ["ok", "cancel"], // Use standard button types
         callback: {
-          general: function(response) {
+          general: function (response) {
             console.log("Button clicked:", response.btn);
-            
+
             // Get the selected value
             const selectElement = document.getElementById(selectId);
             const selectedValue = selectElement ? selectElement.value : "";
-            
+
             if (response.btn === "ok") {
-              setTimeout(function() {
+              setTimeout(function () {
                 self.createCustomDialog({
                   title: "Selection Made",
-                  message: selectedValue ? 
-                    `You selected: <strong>${selectedValue}</strong>` : 
-                    "No value was selected.",
+                  message: selectedValue ? `You selected: <strong>${selectedValue}</strong>` : "No value was selected.",
                   type: "info",
                   buttons: ["ok"],
-                  htmlContent: true
+                  htmlContent: true,
                 });
               }, 100);
             } else if (response.btn === "cancel") {
-              setTimeout(function() {
+              setTimeout(function () {
                 self.createCustomDialog({
                   title: "Selection Cancelled",
                   message: "You cancelled the selection process.",
                   type: "warning",
                   buttons: ["ok"],
-                  htmlContent: true
+                  htmlContent: true,
                 });
               }, 100);
             }
-          }
+          },
         },
         width: "500px",
-        className: "dropdown-selection-dialog"
+        className: "dropdown-selection-dialog",
       };
 
       this.createCustomDialog(dialogConfig);
@@ -173,4 +166,4 @@ define(() => {
 
   return DropdownControl;
 });
-//v9
+//v10
