@@ -77,8 +77,8 @@ define(() => {
         htmlContent: true,
         type: "info",
         buttons: [
-          { defaultId: "ok", text: "Finish" }, // keeps ID "ok" for your callback but shows "Finish"
-          { defaultId: "cancel", text: "Cancel" }, // you can also override cancel if you like],
+          { id: "ok", text: "Finish" }, // keeps ID "ok" for your callback but shows "Finish"
+          { id: "cancel", text: "Cancel" }, // you can also override cancel if you like],
         ],
         callback: {
           general: function (response) {
@@ -163,4 +163,4 @@ define(() => {
 
   return DropdownControl;
 });
-//v30
+//v31
