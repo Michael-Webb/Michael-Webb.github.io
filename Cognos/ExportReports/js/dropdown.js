@@ -16,7 +16,10 @@ define([], () => {
       require(["react","react-dom"], this.dependenciesLoaded.bind(this, fnDoneInitializing));
       fnDoneInitializing();
     }
-    dependenciesLoaded(fnDoneInitializing, oModule) {
+    dependenciesLoaded(fnDoneInitializing, React, ReactDOM) {
+      this.React = React;
+      this.ReactDOM = ReactDOM;
+      console.log("React and ReactDOM loaded successfully");
       fnDoneInitializing();
     }
 
@@ -170,4 +173,4 @@ define([], () => {
 
   return DropdownControl;
 });
-//v13
+//v14
