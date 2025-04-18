@@ -26,7 +26,7 @@ define(["jquery"], function ($) {
 
       // Standard way to get the GlassContext
       const app = oControlHost.page && oControlHost.page.application;
-      this.GlassContext = Application.GlassContext.appController.glassContext
+      this.GlassContext = Application.GlassContext.appController.glassContext;
 
       if (!this.GlassContext) {
         console.error(
@@ -64,7 +64,8 @@ define(["jquery"], function ($) {
      * @param {object} oControlHost - The control host object.
      */
     draw(oControlHost) {
-      console.log("SimpleDialogControl: draw called.");
+      this.GlassContext = Application.GlassContext.appController.glassContext;
+      console.log("SimpleDialogControl: draw called.",this.GlassContext);
       const container = oControlHost.container;
 
       // --- Schedule the check to run ONCE after DOM ready, triggered by the FIRST draw ---
@@ -75,15 +76,8 @@ define(["jquery"], function ($) {
         // otherwise it queues the function until DOMContentLoaded fires.
         $(document).ready(this._boundPerformGlobalCheck);
       }
-
-      if (Application && Application.GlassContext) {
-        console.log("SimpleDialogControl (draw): Application.GlassContext FOUND:", Application.GlassContext);
-      } else if (Application) {
         console.log("Application", Application);
-        console.warn("SimpleDialogControl (draw): Application FOUND, but .GlassContext is MISSING.");
-      } else {
-        console.warn("SimpleDialogControl (draw): Application is MISSING.");
-      }
+
 
       // Clear any previous content
       container.innerHTML = "";
@@ -105,10 +99,6 @@ define(["jquery"], function ($) {
       container.appendChild(button);
       console.log("SimpleDialogControl: Button added to container.");
     }
-
-    /**
-     * Method to configure and display the dialog using the .Dialog service.
-     */
     /**
      * Method to configure and display the dialog using the .Dialog service.
      */
@@ -125,9 +115,9 @@ define(["jquery"], function ($) {
         message: "This dialog uses standard 'ok' and 'cancel' buttons. Click one to see the console log.",
         type: "info",
         buttons: [
-            { text: "Finish", defaultId: "ok" },
-            { text: "Cancel", defaultId: "cancel" },
-          ],
+          { text: "Finish", defaultId: "ok" },
+          { text: "Cancel", defaultId: "cancel" },
+        ],
         callback: {
           general: (response) => {
             console.log(`SimpleDialogControl: General callback executed for button: ${response.btn}`);
