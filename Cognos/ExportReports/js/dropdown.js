@@ -17,7 +17,7 @@ define(() => {
       const app = oControlHost.page && oControlHost.page.application;
       this.GlassContext = app && app.GlassContext ? app.GlassContext : null;
       
-      // First check if React is already available globally
+      // Check if React is already available as a global without RequireJS
       if (window.React && window.ReactDOM) {
         console.log("Found React in global scope");
         this.React = window.React;
@@ -26,56 +26,65 @@ define(() => {
         return;
       }
       
-      // Load React from CDN
-      this.loadScriptsFromCDN(fnDoneInitializing);
+      // Load React with a namespace to avoid conflicts with RequireJS
+      this.loadScriptsWithNamespace(fnDoneInitializing);
     }
     
-    loadScriptsFromCDN(fnDoneInitializing) {
-      const reactScript = document.createElement('script');
-      reactScript.src = 'https://unpkg.com/react@17/umd/react.production.min.js';
-      reactScript.crossOrigin = 'anonymous';
+    loadScriptsWithNamespace(fnDoneInitializing) {
+      // Create a unique namespace for React to avoid global conflicts
+      const namespace = `ReactNS_${Date.now()}`;
+      window[namespace] = {};
       
-      const reactDOMScript = document.createElement('script');
-      reactDOMScript.src = 'https://unpkg.com/react-dom@17/umd/react-dom.production.min.js';
-      reactDOMScript.crossOrigin = 'anonymous';
+      // Function to create and append a script tag
+      const loadScript = (src, callback) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.async = true;
+        script.crossOrigin = 'anonymous';
+        
+        script.onload = callback;
+        script.onerror = (e) => {
+          console.error(`Failed to load script from ${src}:`, e);
+          callback(); // Continue even if loading fails
+        };
+        
+        document.head.appendChild(script);
+      };
       
-      // Set up tracking for script loading
-      let scriptsLoaded = 0;
-      const totalScripts = 2;
-      
-      const checkAllScriptsLoaded = () => {
-        scriptsLoaded++;
-        if (scriptsLoaded === totalScripts) {
-          // Both scripts loaded, check if React is now available
-          if (window.React && window.ReactDOM) {
-            console.log("Successfully loaded React from CDN");
-            this.React = window.React;
-            this.ReactDOM = window.ReactDOM;
-            fnDoneInitializing();
-          } else {
-            console.error("React scripts loaded but React objects not found in window");
-            fnDoneInitializing(); // Continue without React
+      // Create a tiny wrapper script that will assign React to our namespace
+      const createNamespaceScript = (libraryName) => {
+        const script = document.createElement('script');
+        script.textContent = `
+          if (window.${libraryName} && !window.${namespace}.${libraryName}) {
+            window.${namespace}.${libraryName} = window.${libraryName};
+            window.${libraryName} = undefined; // Remove from global scope to avoid conflicts
           }
-        }
+        `;
+        document.head.appendChild(script);
       };
       
-      // Set up event handlers
-      reactScript.onload = checkAllScriptsLoaded;
-      reactDOMScript.onload = checkAllScriptsLoaded;
-      
-      reactScript.onerror = (e) => {
-        console.error("Failed to load React from CDN:", e);
-        fnDoneInitializing(); // Continue without React
-      };
-      
-      reactDOMScript.onerror = (e) => {
-        console.error("Failed to load ReactDOM from CDN:", e);
-        fnDoneInitializing(); // Continue without React
-      };
-      
-      // Add scripts to document
-      document.head.appendChild(reactScript);
-      document.head.appendChild(reactDOMScript);
+      // Load React in sequence
+      loadScript('https://unpkg.com/react@17/umd/react.production.min.js', () => {
+        // Move React to namespace
+        createNamespaceScript('React');
+        
+        // Load ReactDOM
+        loadScript('https://unpkg.com/react-dom@17/umd/react-dom.production.min.js', () => {
+          // Move ReactDOM to namespace
+          createNamespaceScript('ReactDOM');
+          
+          // Check if we have React in our namespace
+          if (window[namespace] && window[namespace].React && window[namespace].ReactDOM) {
+            console.log(`Successfully loaded React into ${namespace}`);
+            this.React = window[namespace].React;
+            this.ReactDOM = window[namespace].ReactDOM;
+          } else {
+            console.error("Failed to properly load React into namespace");
+          }
+          
+          fnDoneInitializing();
+        });
+      });
     }
 
     setData(oControlHost, oDataStore) {
@@ -249,13 +258,6 @@ define(() => {
         options.push(ds.getCellValue(i, colIndex));
       }
       
-      // Build options HTML
-      let optionsHtml = `<option value="">-- Select --</option>`;
-      for (let i = 0; i < options.length; i++) {
-        const value = options[i];
-        optionsHtml += `<option value="${value}">${value}</option>`;
-      }
-      
       // Create a unique ID for the select element
       const selectId = this.oControlHost.generateUniqueID();
       
@@ -263,14 +265,14 @@ define(() => {
       let htmlContent;
       
       if (this.React && this.ReactDOM) {
-        // Create a temporary div to render React to HTML
+        // Use React to generate HTML string
         const tempDiv = document.createElement('div');
         
-        // Use React to generate the dialog content
         const DialogContent = () => {
-          const [value, setValue] = this.React.useState('');
+          const React = this.React;
+          const [value, setValue] = React.useState('');
           
-          // Store the value in a global variable that will persist
+          // Create a global reference for accessing the value from the dialog callback
           window[`dialog_selected_value_${selectId}`] = value;
           
           const handleChange = (e) => {
@@ -279,48 +281,45 @@ define(() => {
             window[`dialog_selected_value_${selectId}`] = newValue;
           };
           
-          return this.React.createElement('div', { style: { margin: '10px 0' } },
-            this.React.createElement('p', null, 'Please make a selection from the dropdown below:'),
-            this.React.createElement('label', { htmlFor: selectId }, `Choose ${colName}:`),
-            this.React.createElement('br'),
-            this.React.createElement('select', { 
+          return React.createElement('div', { style: { margin: '10px 0' } },
+            React.createElement('p', null, 'Please make a selection from the dropdown below:'),
+            React.createElement('label', { htmlFor: selectId }, `Choose ${colName}:`),
+            React.createElement('br'),
+            React.createElement('select', { 
               id: selectId,
               value: value,
               onChange: handleChange,
               style: { width: '100%', padding: '5px', marginTop: '5px' }
             },
-              this.React.createElement('option', { value: '' }, '-- Select --'),
+              React.createElement('option', { value: '' }, '-- Select --'),
               options.map((option, index) => 
-                this.React.createElement('option', { key: index, value: option }, option)
+                React.createElement('option', { key: index, value: option }, option)
               )
             ),
-            this.React.createElement('p', null, 
-              this.React.createElement('small', null, 
+            React.createElement('p', null, 
+              React.createElement('small', null, 
                 'Click ',
-                this.React.createElement('strong', null, 'OK'),
+                React.createElement('strong', null, 'OK'),
                 ' to continue or ',
-                this.React.createElement('strong', null, 'Cancel'),
+                React.createElement('strong', null, 'Cancel'),
                 ' to go back.'
               )
             )
           );
         };
         
-        // Render to get HTML
-        this.ReactDOM.render(this.React.createElement(DialogContent), tempDiv);
-        htmlContent = tempDiv.innerHTML;
+        try {
+          // Render to get HTML
+          this.ReactDOM.render(this.React.createElement(DialogContent), tempDiv);
+          htmlContent = tempDiv.innerHTML;
+        } catch (error) {
+          console.error("Error rendering React dialog content:", error);
+          // Fall back to vanilla HTML
+          htmlContent = this.createVanillaDialogHTML(selectId, colName, options);
+        }
       } else {
-        // Fallback to vanilla HTML string
-        htmlContent = `
-          <div style="margin:10px 0;">
-            <p>Please make a selection from the dropdown below:</p>
-            <label for="${selectId}">Choose ${colName}:</label><br/>
-            <select id="${selectId}" style="width:100%; padding:5px; margin-top:5px;">
-              ${optionsHtml}
-            </select>
-            <p><small>Click <strong>OK</strong> to continue or <strong>Cancel</strong> to go back.</small></p>
-          </div>
-        `;
+        // Use vanilla HTML
+        htmlContent = this.createVanillaDialogHTML(selectId, colName, options);
       }
       
       // Store a reference to this for use in callbacks
@@ -381,6 +380,26 @@ define(() => {
 
       this.createCustomDialog(dialogConfig);
     }
+    
+    createVanillaDialogHTML(selectId, columnName, options) {
+      // Build options HTML
+      let optionsHtml = `<option value="">-- Select --</option>`;
+      for (let i = 0; i < options.length; i++) {
+        const value = options[i];
+        optionsHtml += `<option value="${value}">${value}</option>`;
+      }
+      
+      return `
+        <div style="margin:10px 0;">
+          <p>Please make a selection from the dropdown below:</p>
+          <label for="${selectId}">Choose ${columnName}:</label><br/>
+          <select id="${selectId}" style="width:100%; padding:5px; margin-top:5px;">
+            ${optionsHtml}
+          </select>
+          <p><small>Click <strong>OK</strong> to continue or <strong>Cancel</strong> to go back.</small></p>
+        </div>
+      `;
+    }
 
     createCustomDialog(config) {
       if (!this.GlassContext) {
@@ -399,7 +418,7 @@ define(() => {
           console.error("Glass Dialog service or createDialog method not found.");
           alert(`Dialog Error: Service unavailable.\nTitle: ${config.title}`);
           return;
-      }
+        }
         console.log("Creating Glass dialog with config:", config);
         dialogService.createDialog(config);
       } catch (error) {
@@ -415,4 +434,4 @@ define(() => {
 
   return DropdownControl;
 });
-//v17
+//v18
