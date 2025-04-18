@@ -17,7 +17,7 @@ define(() => {
       const app = oControlHost.page && oControlHost.page.application;
       this.GlassContext = app && app.GlassContext ? app.GlassContext : null;
       
-      // Check if React is already available as a global without RequireJS
+      // First check if React is already available globally
       if (window.React && window.ReactDOM) {
         console.log("Found React in global scope");
         this.React = window.React;
@@ -26,65 +26,38 @@ define(() => {
         return;
       }
       
-      // Load React with a namespace to avoid conflicts with RequireJS
-      this.loadScriptsWithNamespace(fnDoneInitializing);
+      // Try to import React as ES modules
+      this.importReactModules(fnDoneInitializing);
     }
     
-    loadScriptsWithNamespace(fnDoneInitializing) {
-      // Create a unique namespace for React to avoid global conflicts
-      const namespace = `ReactNS_${Date.now()}`;
-      window[namespace] = {};
+    importReactModules(fnDoneInitializing) {
+      console.log("Attempting to import React modules");
       
-      // Function to create and append a script tag
-      const loadScript = (src, callback) => {
-        const script = document.createElement('script');
-        script.src = src;
-        script.async = true;
-        script.crossOrigin = 'anonymous';
-        
-        script.onload = callback;
-        script.onerror = (e) => {
-          console.error(`Failed to load script from ${src}:`, e);
-          callback(); // Continue even if loading fails
-        };
-        
-        document.head.appendChild(script);
-      };
-      
-      // Create a tiny wrapper script that will assign React to our namespace
-      const createNamespaceScript = (libraryName) => {
-        const script = document.createElement('script');
-        script.textContent = `
-          if (window.${libraryName} && !window.${namespace}.${libraryName}) {
-            window.${namespace}.${libraryName} = window.${libraryName};
-            window.${libraryName} = undefined; // Remove from global scope to avoid conflicts
-          }
-        `;
-        document.head.appendChild(script);
-      };
-      
-      // Load React in sequence
-      loadScript('https://unpkg.com/react@17/umd/react.production.min.js', () => {
-        // Move React to namespace
-        createNamespaceScript('React');
-        
-        // Load ReactDOM
-        loadScript('https://unpkg.com/react-dom@17/umd/react-dom.production.min.js', () => {
-          // Move ReactDOM to namespace
-          createNamespaceScript('ReactDOM');
+      // Create an async function to use dynamic import
+      const loadModules = async () => {
+        try {
+          // Try dynamic imports
+          const reactModule = await import('https://esm.sh/react@17');
+          const reactDOMModule = await import('https://esm.sh/react-dom@17');
           
-          // Check if we have React in our namespace
-          if (window[namespace] && window[namespace].React && window[namespace].ReactDOM) {
-            console.log(`Successfully loaded React into ${namespace}`);
-            this.React = window[namespace].React;
-            this.ReactDOM = window[namespace].ReactDOM;
-          } else {
-            console.error("Failed to properly load React into namespace");
-          }
+          console.log("Successfully imported React modules");
+          this.React = reactModule.default;
+          this.ReactDOM = reactDOMModule.default;
           
+          // Also make them available globally (but in a safe way)
+          if (!window.React) window.React = this.React;
+          if (!window.ReactDOM) window.ReactDOM = this.ReactDOM;
+        } catch (error) {
+          console.error("Failed to import React modules:", error);
+          // We'll continue without React in this case
+        } finally {
+          // Always call the callback to continue initialization
           fnDoneInitializing();
-        });
-      });
+        }
+      };
+      
+      // Execute the async function
+      loadModules();
     }
 
     setData(oControlHost, oDataStore) {
@@ -434,4 +407,4 @@ define(() => {
 
   return DropdownControl;
 });
-//v18
+//v19
