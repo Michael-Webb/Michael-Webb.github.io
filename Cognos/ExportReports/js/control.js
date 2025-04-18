@@ -540,9 +540,7 @@ define(() => {
        */
       setData(oControlHost, oDataStore) {
         console.log(`AdvancedControl: setData called for Data Store - Index: ${oDataStore.index}, Name: "${oDataStore.name}"`);
-  
-        // --- Choose a strategy to store the data store reference ---
-  
+    
         // Strategy 1: Store only the first/primary data store received.
         if (!this.m_oDataStore) { // Store only the first one
             this.m_oDataStore = oDataStore;
@@ -561,17 +559,6 @@ define(() => {
         } else {
           console.warn(`   Data store at index ${oDataStore.index} has no name, cannot store by name.`);
         }
-  
-        // --- Optional: Immediately fetch and use data (consider performance for large datasets) ---
-        // try {
-        //    const data = oDataStore.getData();
-        //    console.log(`   Data fetched immediately: ${data.length} rows.`);
-        //    // TODO: Process the data immediately if needed.
-        //    // Note: If UI depends on this, you might need to trigger a redraw:
-        //    // if (this.oControlHost) this.draw(this.oControlHost);
-        // } catch (e) {
-        //    console.error(`   Error calling getData() for data store ${oDataStore.name || oDataStore.index}:`, e);
-        // }
       }
   
       // --- Custom Methods (Not part of standard Cognos lifecycle) ---
@@ -584,15 +571,14 @@ define(() => {
        *
        * @param {object} config - The configuration object for the Glass dialog.
        * @param {string} config.title - Dialog title (Required).
-       * @param {string} [config.message] - Plain text message body. (Use this OR htmlContent).
-       * @param {string} [config.htmlContent] - HTML content for the body. (Use this OR message. Use with caution for XSS).
-       * @param {('info'|'error'|'warning'|'share'|'embed'|'question'|'default')} [config.type='info'] - Dialog type/style.
-       * @param {Array<string>} [config.buttons=['ok', 'cancel']] - Standard buttons (e.g., 'ok', 'cancel', 'yes', 'no', 'close').
+       * @param {string} [config.message] - Plain text message body.
+       * @param {string} [config.htmlContent] - boolean value. does the message body contain html content?
+       * @param {('info'|'error'|'warning'|'share'|'embed'|'default')} [config.type='info'] - Dialog type/style.
+       * @param {Array<string>} [config.buttons=['ok', 'cancel']] - Standard buttons (e.g., 'ok', 'cancel').
        * @param {object} [config.callback] - Callbacks for button actions (e.g., `ok: () => {...}`, `cancel: () => {...}`).
        * @param {object} [config.callbackScope] - `this` context for specific callbacks (e.g., `{ ok: this }`).
        * @param {string} [config.width] - Dialog width (e.g., '500px').
        * @param {boolean} [config.showCloseX=true] - Show 'X' in header.
-       * // ... include other relevant config options as needed ...
        *
        * @example
        * this.createCustomDialog({ title: "Success", message: "Operation complete.", type: "info", buttons: ["ok"] });

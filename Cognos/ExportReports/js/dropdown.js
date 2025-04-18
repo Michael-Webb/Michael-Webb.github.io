@@ -72,19 +72,19 @@ define(() => {
             const sel = document.getElementById(selectId);
             const chosen = sel ? sel.value : null;
             console.log("User selected:", chosen);
-            // this.oControlHost.valueChanged();
-            // and stash `chosen` on `this` for getParameters()
           },
           cancel: () => {
             this.createCustomDialog({
               title: "Warning Confirmation",
               message: "Triggered by clicking Cancel.",
+              htmlContent: false,
               type: "warning",
               buttons: ["ok"],
             });
           },
         },
         callbackScope: { ok: this, cancel: this },
+        showCloseX: false,
       };
 
       if (this.GlassContext && this.GlassContext.getCoreSvc && typeof this.GlassContext.getCoreSvc === "function") {
@@ -93,17 +93,6 @@ define(() => {
       } else {
         alert("Dialog service unavailable.");
       }
-    }
-
-    // (optional stubs you can implement if you need them)
-    destroy(oControlHost) {}
-    show(oControlHost) {}
-    hide(oControlHost) {}
-    isInValidState(oControlHost) {
-      return true;
-    }
-    getParameters(oControlHost) {
-      return null;
     }
   }
 
