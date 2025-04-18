@@ -176,7 +176,7 @@ define(() => {
         type: "info",         // Icon type
         buttons: [
           { text: "Finish", defaultId: "ok" },
-          { text: "Cancel", defaultId: "cancel"},
+          { text: "Cancel", defaultId: "cancel"}
         ],
         callback: {
           // Use arrow function for 'this' to correctly refer to DropdownControl instance
@@ -278,4 +278,4 @@ define(() => {
 
   return DropdownControl;
 });
-//v39
+//v40
