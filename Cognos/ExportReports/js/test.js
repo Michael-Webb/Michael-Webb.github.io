@@ -197,9 +197,27 @@ define(["jquery"], function ($) {
         console.error("SimpleDialogControl: Error showing result dialog:", error);
       }
     }
+     /**
+       * The actual check function, executed once the DOM is ready.
+       * This is separated out for clarity and bound in the constructor.
+       */
+     _performGlobalCheck() {
+        console.log("SimpleDialogControl (_performGlobalCheck): DOM ready, performing one-time global check...");
+        if (window.__glassAppController && window.__glassAppController.glassContext) {
+            console.log("SimpleDialogControl (_performGlobalCheck): window.__glassAppController.glassContext FOUND:", window.__glassAppController.glassContext);
+            // Optional: Compare with the context obtained during initialize
+            // console.log("SimpleDialogControl (_performGlobalCheck): Compare with this.GlassContext:",
+            //     this.GlassContext === window.__glassAppController.glassContext);
+        } else if (window.__glassAppController) {
+            console.warn("SimpleDialogControl (_performGlobalCheck): window.__glassAppController FOUND, but .glassContext is MISSING.");
+        } else {
+            console.warn("SimpleDialogControl (_performGlobalCheck): window.__glassAppController is MISSING.");
+        }
+        // No need to set the flag here, it was set in draw()
+    }
   }
 
   // Return the class constructor for the AMD module system
   return SimpleDialogControl;
 });
-//v7
+//v8
