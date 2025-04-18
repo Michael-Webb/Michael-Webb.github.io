@@ -14,6 +14,12 @@ define(() => {
       const app = oControlHost.page && oControlHost.page.application;
       this.GlassContext = app && app.GlassContext ? app.GlassContext : null;
       console.log("DropdownControl Initialized. GlassContext available:", !!this.GlassContext);
+      if(Application){
+        console.log("APPLICATION",Application)
+      }
+      if(GlassContext){
+        console.log("GlassContext",GlassContext)
+      }
       fnDoneInitializing();
     }
 
@@ -278,4 +284,4 @@ define(() => {
 
   return DropdownControl;
 });
-//v41
+//v42
