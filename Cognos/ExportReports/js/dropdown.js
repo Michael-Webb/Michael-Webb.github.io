@@ -76,39 +76,40 @@ define(() => {
         message: htmlContent,
         htmlContent: true,
         type: "info",
-        buttons: ["ok","cancel"],
+        buttons: [
+          { defaultId: "ok", text: "Finish" }, // keeps ID "ok" for your callback but shows "Finish"
+          { defaultId: "cancel", text: "Cancel" }, // you can also override cancel if you like],
+        ],
         callback: {
-          general: function(response) {
+          general: function (response) {
             console.log("Button clicked:", response.btn);
-            
+
             // Get the selected value
             const selectElement = document.getElementById(selectId);
             const selectedValue = selectElement ? selectElement.value : "";
-            
+
             if (response.btn === "ok") {
-              setTimeout(function() {
+              setTimeout(function () {
                 self.createCustomDialog({
                   title: "Selection Made",
-                  message: selectedValue ? 
-                    `You selected: <strong>${selectedValue}</strong>` : 
-                    "No value was selected.",
+                  message: selectedValue ? `You selected: <strong>${selectedValue}</strong>` : "No value was selected.",
                   type: "info",
                   buttons: ["ok"],
-                  htmlContent: true
+                  htmlContent: true,
                 });
               }, 100);
             } else if (response.btn === "cancel") {
-              setTimeout(function() {
+              setTimeout(function () {
                 self.createCustomDialog({
                   title: "Selection Cancelled",
                   message: "You cancelled the selection process.",
                   type: "warning",
                   buttons: ["ok"],
-                  htmlContent: true
+                  htmlContent: true,
                 });
               }, 100);
             }
-          }
+          },
         },
         width: "500px",
         className: "dropdown-selection-dialog",
@@ -162,4 +163,4 @@ define(() => {
 
   return DropdownControl;
 });
-//v29
+//v30
