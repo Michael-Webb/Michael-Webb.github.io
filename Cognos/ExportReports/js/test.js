@@ -63,6 +63,7 @@ define([], function () { // No explicit dependencies needed beyond what Cognos p
     draw(oControlHost) {
       console.log("SimpleDialogControl: draw called.");
       const container = oControlHost.container;
+      console.log("window glassContext",window.__glassAppController.glassContext)
 
       // Clear any previous content
       container.innerHTML = "";
@@ -177,4 +178,4 @@ define([], function () { // No explicit dependencies needed beyond what Cognos p
   // Return the class constructor for the AMD module system
   return SimpleDialogControl;
 });
-//v4
+//v5
