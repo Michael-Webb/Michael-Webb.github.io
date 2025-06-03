@@ -1,4 +1,16 @@
 /**
+ * @typedef {Object} Parameter
+ * @property {string} parameter - The parameter name.
+ * @property {Array.<{use: string, display?: string}>} values - The array of value objects.
+ */
+
+/**
+ * @typedef {Object} RangeParameter
+ * @property {string} parameter - The parameter name.
+ * @property {Array.<{start: {use: string, display?: string}, end: {use: string, display?: string}}>} values - The array of range value objects.
+ */
+
+/**
  * @class AdvancedControl
  * @classdesc Represents a custom Cognos control with lifecycle methods.
  */
@@ -28,6 +40,9 @@ define(() => {
      */
     draw(oControlHost) {
       console.log("draw");
+      // Example: create a <select> element and store as this.m_sel
+      // this.m_sel = document.createElement("select");
+      // oControlHost.container.appendChild(this.m_sel);
     }
 
     /**
@@ -65,20 +80,33 @@ define(() => {
      * Used to control enabling of "Next" or "Finish" buttons in prompts.
      *
      * @param {object} oControlHost - The host object for this control.
-     * @returns {void}
+     * @returns {boolean} True if the control is in a valid state, false otherwise.
      */
     isInValidState(oControlHost) {
       console.log("isInValidState");
+      // Replace with actual validation logic; example returns true if a selection exists
+      return (this.m_sel && this.m_sel.selectedIndex > 0);
     }
 
     /**
      * Retrieves the current parameter values from the control. This method is optional.
      *
      * @param {object} oControlHost - The host object for this control.
-     * @returns {void}
+     * @returns {Array.<Parameter>|Array.<RangeParameter>|null} The array of Parameter or RangeParameter objects, or null if none.
      */
     getParameters(oControlHost) {
       console.log("getParameters");
+      // Example implementation using a <select> stored in this.m_sel
+      if (!this.m_sel || this.m_sel.selectedIndex < 1) {
+        return null;
+      }
+      const { value } = this.m_sel.options[this.m_sel.selectedIndex];
+      return [
+        {
+          parameter: "parameter1",
+          values: [{ use: value }]
+        }
+      ];
     }
 
     /**
@@ -91,6 +119,7 @@ define(() => {
     setData(oControlHost, oDataStore) {
       console.log("setData");
       console.log("oDataStore", oDataStore);
+      this.m_oDataStores = this.m_oDataStores || {};
       this.m_oDataStores[oDataStore.name] = oDataStore;
     }
   }
