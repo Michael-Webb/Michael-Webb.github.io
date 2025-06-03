@@ -3,7 +3,7 @@ define(() => {
 
   class AdvancedControl {
     initialize(oControlHost, fnDoneInitializing) {
-      console.log("draw", oControlHost);
+      console.log("initialize", oControlHost);
       console.log("oControlHost", oControlHost);
       fnDoneInitializing();
     }
@@ -27,6 +27,7 @@ define(() => {
     }
     setData(oControlHost, oDataStore) {
       console.log("setData");
+      console.log("oDataStore", oDataStore);
     }
   }
 
