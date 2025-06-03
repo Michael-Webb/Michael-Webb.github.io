@@ -1,0 +1,17 @@
+{
+  "name": "cognosextensionbuilder",
+  "version": "0.0.0",
+  "description": "Create, validate, test and deploy modern cognos extensions using the REST API. ",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Michael Webb",
+  "license": "MIT",
+  "dependencies": {
+    "grunt": "^1.6.1"
+  },
+  "devDependencies": {
+    "grunt-contrib-concat": "^2.1.0"
+  }
+}
